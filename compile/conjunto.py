@@ -35,10 +35,10 @@ import numpy as np
 from pydantic import BaseModel, ConfigDict
 
 from compile.escribiente import SEGUIDORES, Compilacion, Escribiente
-from core.cam.synth import PerfilLeva
 from core.solido import densidad_de, descontar_taladro, inercia_de_prisma, masa_de_prisma
 from core.units import KgM2, Kilogramos, Longitud, Metros, a_mm, mm
 from core.verdict import Incidencia, Veredicto
+from emit.pieza import Pieza
 
 
 class Cartucho(BaseModel):
@@ -84,16 +84,22 @@ def _postes(maquina: Escribiente) -> list[tuple[float, float]]:
     return [maquina.seguidor(i).pivote for i in range(len(SEGUIDORES))]
 
 
-def _propiedades(perfil: PerfilLeva, maquina: Escribiente) -> tuple[float, float]:
-    """Masa y momento de inercia de una leva respecto del árbol."""
+def _propiedades(pieza: Pieza, maquina: Escribiente) -> tuple[float, float]:
+    """Masa y momento de inercia de una pieza respecto del árbol.
+
+    Se descuentan **todos** sus taladros, no solo el del eje: el pasador de
+    índice también quita material, y una leva con dos agujeros y un solo
+    descuento pesa de más.
+    """
     densidad = densidad_de(maquina.material_leva)
-    masa = float(masa_de_prisma(perfil.perfil, maquina.espesor_leva, densidad))
-    inercia = float(inercia_de_prisma(perfil.perfil, maquina.espesor_leva, densidad))
-    superficie, polar = descontar_taladro(
-        perfil.perfil, (Metros(0.0), Metros(0.0)), maquina.taladro_eje
-    )
-    quitado = superficie * float(maquina.espesor_leva) * densidad
-    return masa - quitado, inercia - polar * float(maquina.espesor_leva) * densidad
+    contorno = np.asarray(pieza.contorno, dtype=np.float64)
+    masa = float(masa_de_prisma(contorno, maquina.espesor_leva, densidad))
+    inercia = float(inercia_de_prisma(contorno, maquina.espesor_leva, densidad))
+    for taladro in pieza.taladros:
+        superficie, polar = descontar_taladro(contorno, taladro.centro, taladro.diametro)
+        masa -= superficie * float(maquina.espesor_leva) * densidad
+        inercia -= polar * float(maquina.espesor_leva) * densidad
+    return masa, inercia
 
 
 def montar(
@@ -120,7 +126,7 @@ def montar(
 
     for indice, nombre in enumerate(SEGUIDORES):
         perfil = compilacion.perfiles[nombre]
-        masa, inercia = _propiedades(perfil, maquina)
+        masa, inercia = _propiedades(compilacion.piezas[indice], maquina)
         masa_total += masa
         inercia_total += inercia
         radio_maximo = max(radio_maximo, perfil.radio_maximo)

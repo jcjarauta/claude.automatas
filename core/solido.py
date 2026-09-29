@@ -138,13 +138,43 @@ def descontar_taladro(
     return superficie, np.pi * radio**4 / 2.0 + superficie * distancia**2
 
 
+def inercia_de_disco(radio: float, espesor: float, densidad: float) -> KgM2:
+    """Momento de inercia de un disco macizo respecto de su eje: J = m·r²/2.
+
+    Para un volante no hace falta el polígono: un disco tiene fórmula cerrada
+    y es la forma que mejor aprovecha la masa.
+    """
+    masa = np.pi * radio**2 * espesor * densidad
+    return KgM2(0.5 * masa * radio**2)
+
+
+def radio_de_disco_para(inercia: KgM2, espesor: float, densidad: float) -> float:
+    """El inverso: qué radio hay que darle a un disco para llegar a esa J.
+
+    Es la pregunta que se hace quien diseña —«¿de qué tamaño tiene que ser el
+    volante?»— y despejarla a mano invita a equivocarse, porque va con la
+    cuarta potencia del radio: doblar el radio multiplica la inercia por
+    dieciséis.
+    """
+    if float(inercia) <= 0.0:
+        return 0.0
+    return float((2.0 * float(inercia) / (np.pi * espesor * densidad)) ** 0.25)
+
+
+def masa_de_disco(radio: float, espesor: float, densidad: float) -> Kilogramos:
+    return Kilogramos(np.pi * radio**2 * espesor * densidad)
+
+
 __all__ = [
     "DENSIDADES",
     "area",
     "centroide",
     "densidad_de",
     "descontar_taladro",
+    "inercia_de_disco",
     "inercia_de_prisma",
+    "masa_de_disco",
     "masa_de_prisma",
     "momento_polar",
+    "radio_de_disco_para",
 ]

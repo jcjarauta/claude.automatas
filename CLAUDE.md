@@ -403,20 +403,26 @@ falla si el esquema versionado se queda atrás.
 pivotes anclados, palanca para el lápiz y tres levas apiladas. Tres números
 que se decidieron midiendo y no eligiendo:
 
-- **Hueco al poste: 5,9 mm** con la caja de escritura por defecto. Los tres
+- **Hueco al poste: 9,0 mm** con la caja de escritura por defecto. Los tres
   postes de seguidor están a 71 mm del árbol y atraviesan los tres planos, así
   que la leva de cada canal gira bajo los postes de los otros dos. **Ese hueco
   encoge cuando la frase crece**, y es el límite de conjunto que decide qué
   frases caben: no lo ve ninguna envolvente de C3, que juzga una leva sola.
-- **Relación seguidor → brazo, 3:1.** Con relación 1 y un barrido de brazo de
+- **Relación seguidor → brazo, 6:1.** Con relación 1 y un barrido de brazo de
   26°, mantener el ángulo de presión por debajo de 30° exige un radio base de
-  110 mm: levas de 240 mm, tres apiladas. Con 3:1 el seguidor barre un tercio
-  y la leva baja a 114 mm. Se paga amplificando por tres el error del perfil y
-  el juego: es la cadena de tolerancias de C4 y es lo que limita subir más.
-- **Radio base 55 mm, rodillo 2 mm.** Es la combinación más pequeña que pasa
-  la envolvente sin autointersecarse.
+  110 mm: levas de 240 mm, tres apiladas. Con 6:1 el seguidor barre un sexto
+  y la leva baja a 108 mm.
+- **Rodillo Ø6 mm: un MR63 (3×6×2,5).** Antes eran Ø4, un diámetro para el que
+  no hay rodamiento decente. Subir a 6:1 fue lo que permitió usar uno normal:
+  con 3:1 ni el MR63 pasaba la curvatura. **Y el error bajó en vez de subir**
+  —de 0,058 a 0,040 mm en la punta—, porque un seguidor que barre menos
+  describe un perfil más plano, y el polígono lo aproxima mejor. Lo que sí se
+  duplica es la amplificación del **juego**, que no está modelado: eso lo mide
+  E4, y es lo que impide subir más la relación.
+- **Radio base 55 mm.** Con el MR63 la relación de curvatura queda en 2,74,
+  por encima del 2,5 recomendado, y desaparece el aviso `curvatura_justa`.
 - **Error de trazo simulado: 0,11 mm** con 720 muestras por vuelta, más
-  0,058 mm que cuesta exportar el perfil como polígono en vez de como curva.
+  0,040 mm que cuesta exportar el perfil como polígono en vez de como curva.
 - **El cartucho pesa 185 g** y su momento de inercia respecto del árbol es de
   2,6 × 10⁻⁴ kg·m². Salen exactos del polígono, sin modelo 3-D: todas las
   piezas son prismas de plancha (`core/solido.py`).
@@ -424,6 +430,14 @@ que se decidieron midiendo y no eligiendo:
 El **calaje** de cada brazo —a qué ángulo se monta sobre el eje de su
 seguidor— es resultado de la compilación, no un parámetro. Va en el informe y
 tiene que llegar al dossier: montarlo mal escribe basura.
+
+### El cartucho es una sola pieza lógica
+
+Cada leva lleva **dos** taladros: el del eje, que centra, y un pasador de
+índice de Ø3 a 18 mm sobre +X, que orienta. El pasador está en el mismo
+ángulo en las tres, así que enhebradas quedan caladas entre sí y el error de
+fase deja de ser posible en vez de ser improbable. Está congelado en
+`docs/contratos.md` y lo defienden cuatro tests.
 
 ### El reductor no es para el par
 
@@ -450,3 +464,19 @@ trabajo lo hace un disco de **75 g**.
 
 **Ese es el motivo de llevar reductor: no el par, el volante.** Y de paso
 sube la velocidad del árbol, que vuelve a bajar la inercia necesaria.
+
+### Y el volante no es el engranaje grande
+
+En una reducción de 3:1 la manivela es el eje **rápido**, así que lleva el
+piñón; la rueda grande va en el árbol de levas, que es el lento. Poner ahí la
+masa cuesta la relación al cuadrado:
+
+| Dónde | Disco de latón de 6 mm que hace falta |
+| --- | --- |
+| En el árbol de levas | Ø88 mm, **313 g** |
+| En el eje de la manivela | Ø48 mm, **92 g** |
+
+Una rueda Z60 de módulo 1 en latón macizo aporta 0,65 × 10⁻⁴ kg·m² de los
+5,5 que hacen falta: **ayuda un 12 %, no es el volante**. `Accionamiento`
+tiene `inercia_en_el_arbol` e `inercia_en_la_manivela` para contarlas, y la
+segunda entra multiplicada por la relación al cuadrado.

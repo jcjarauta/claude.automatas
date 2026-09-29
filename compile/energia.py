@@ -36,10 +36,11 @@ from core.energy.flywheel import (
     desde_vueltas_por_minuto,
     fluctuacion,
     inercia_necesaria,
+    referir,
     vueltas_por_minuto,
 )
 from core.energy.humano import Manivela, Transmision, relacion_minima
-from core.units import TAU, Julios, KgM2, Radianes
+from core.units import TAU, Inercia, Julios, KgM2, Radianes
 from core.verdict import Incidencia, Veredicto
 
 MARGEN_DE_PAR = 1.3
@@ -63,6 +64,12 @@ class Accionamiento(BaseModel):
     carga: CargaSeguidor = Field(default_factory=CargaSeguidor)
     """La misma para los tres seguidores mientras no haya medidas propias.
     Está referida al **eje del seguidor**, no al del brazo."""
+    inercia_en_la_manivela: Inercia = KgM2(0.0)
+    """Lo que ya gira en el eje rápido: el piñón, la manivela y el volante si
+    se pone ahí. Cuenta multiplicado por la relación al cuadrado."""
+    inercia_en_el_arbol: Inercia = KgM2(0.0)
+    """Lo que ya gira en el eje de levas además del cartucho: la rueda grande
+    de la reducción. Cuenta tal cual."""
 
     @property
     def omega(self) -> float:
@@ -80,6 +87,9 @@ class Energia:
     par_maximo: float
     trabajo_por_vuelta: Julios
     inercia_del_cartucho: KgM2
+    inercia_disponible: KgM2
+    """Todo lo que gira, referido al eje de levas: cartucho, rueda grande y
+    lo que haya en la manivela multiplicado por la relación al cuadrado."""
     inercia_necesaria: KgM2
     volante_que_falta: KgM2
     volante_en_la_manivela: KgM2
@@ -146,7 +156,14 @@ def analizar(
 
     variacion = fluctuacion(thetas, pedido)
     hace_falta = inercia_necesaria(variacion.energia, omega, accionamiento.coeficiente_fluctuacion)
-    falta_volante = max(0.0, float(hace_falta) - float(inercia_del_cartucho))
+    # Todo referido al eje de levas. Lo que gira en la manivela cuenta
+    # multiplicado por la relación al cuadrado: ahí está el truco.
+    disponible_total = (
+        float(inercia_del_cartucho)
+        + float(accionamiento.inercia_en_el_arbol)
+        + float(referir(accionamiento.inercia_en_la_manivela, accionamiento.transmision.relacion))
+    )
+    falta_volante = max(0.0, float(hace_falta) - disponible_total)
     # La inercia necesaria va con 1/ω², así que en un eje que gira n veces
     # más deprisa hace falta n² veces menos. Un volante pequeño en la
     # manivela hace el trabajo de uno enorme en el árbol.
@@ -159,8 +176,8 @@ def analizar(
                 mensaje=(
                     f"para que la velocidad no varíe más de un "
                     f"{accionamiento.coeficiente_fluctuacion:.0%} hacen falta "
-                    f"{float(hace_falta) * 1e4:.1f} × 10⁻⁴ kg·m² y el cartucho aporta "
-                    f"{float(inercia_del_cartucho) * 1e4:.1f}"
+                    f"{float(hace_falta) * 1e4:.1f} × 10⁻⁴ kg·m² y lo que ya gira aporta "
+                    f"{disponible_total * 1e4:.1f}"
                 ),
                 sugerencia=(
                     f"un volante de {falta_volante * 1e4:.1f} × 10⁻⁴ kg·m² en el árbol, o "
@@ -179,6 +196,7 @@ def analizar(
         par_maximo=presupuestado.maximo(omega),
         trabajo_por_vuelta=Julios(presupuestado.trabajo(omega)),
         inercia_del_cartucho=inercia_del_cartucho,
+        inercia_disponible=KgM2(disponible_total),
         inercia_necesaria=hace_falta,
         volante_que_falta=KgM2(falta_volante),
         volante_en_la_manivela=KgM2(en_la_manivela),
@@ -192,6 +210,7 @@ def analizar(
             "trabajo_por_vuelta": float(energia.trabajo_por_vuelta),
             "energia_de_fluctuacion": float(variacion.energia),
             "inercia_necesaria": float(hace_falta),
+            "inercia_disponible": disponible_total,
             "volante_que_falta": falta_volante,
             "volante_en_la_manivela": en_la_manivela,
             "vueltas_por_minuto": vueltas_por_minuto(omega),

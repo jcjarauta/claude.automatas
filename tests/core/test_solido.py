@@ -163,3 +163,46 @@ def test_descontar_el_taladro_coincide_con_restarlo_del_poligono():
     _, agujero = descontar_taladro(circulo(externo), (Metros(0.0), Metros(0.0)), Metros(0.01))
     anillo = np.pi * (externo**4 - interno**4) / 2.0
     assert entero - agujero == pytest.approx(anillo, rel=1e-4)
+
+
+# ---------------------------------------------------------------------------
+# Discos: el volante
+# ---------------------------------------------------------------------------
+
+
+def test_la_inercia_de_un_disco_es_media_eme_erre_cuadrado():
+    radio, espesor, densidad = 0.025, 0.006, 8500.0
+    masa = np.pi * radio**2 * espesor * densidad
+    from core.solido import inercia_de_disco, masa_de_disco
+
+    assert float(masa_de_disco(radio, espesor, densidad)) == pytest.approx(masa)
+    assert float(inercia_de_disco(radio, espesor, densidad)) == pytest.approx(0.5 * masa * radio**2)
+
+
+def test_el_disco_coincide_con_el_poligono_que_lo_aproxima():
+    """Dos caminos otra vez: la fórmula cerrada y la integral del polígono."""
+    from core.solido import inercia_de_disco
+
+    radio, espesor, densidad = 0.03, 0.005, 1410.0
+    assert float(inercia_de_disco(radio, espesor, densidad)) == pytest.approx(
+        float(inercia_de_prisma(circulo(radio), mm(5.0), densidad)), rel=1e-4
+    )
+
+
+def test_el_radio_necesario_va_y_vuelve():
+    from core.solido import inercia_de_disco, radio_de_disco_para
+    from core.units import KgM2
+
+    objetivo = KgM2(3.4e-5)
+    radio = radio_de_disco_para(objetivo, 0.006, 8500.0)
+    assert float(inercia_de_disco(radio, 0.006, 8500.0)) == pytest.approx(float(objetivo))
+
+
+def test_doblar_el_radio_multiplica_la_inercia_por_dieciseis():
+    """Va con la cuarta potencia: es la razón de que un volante pequeño en el
+    eje rápido gane a uno grande en el lento."""
+    from core.solido import inercia_de_disco
+
+    uno = float(inercia_de_disco(0.02, 0.006, 8500.0))
+    doble = float(inercia_de_disco(0.04, 0.006, 8500.0))
+    assert doble == pytest.approx(16.0 * uno)

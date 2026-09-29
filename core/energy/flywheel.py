@@ -119,6 +119,19 @@ def fluctuacion_con(inercia: KgM2, energia: Julios, omega_media: float) -> float
     return float(energia) / (float(inercia) * omega_media**2)
 
 
+def referir(inercia: KgM2, relacion: float) -> KgM2:
+    """Lleva una inercia de un eje rápido al eje lento que lo mueve.
+
+    Un volante en un eje que gira `n` veces más deprisa cuenta **n² veces
+    más** visto desde el eje lento, porque la energía cinética va con ω². Es
+    la razón de poner la masa en la manivela y no en el árbol de levas: la
+    misma chapa de latón rinde nueve veces más en una reducción de 3:1.
+    """
+    if relacion <= 0.0:
+        raise ValueError(f"la relación debe ser positiva, no {relacion}")
+    return KgM2(float(inercia) * relacion**2)
+
+
 def vueltas_por_minuto(omega: float) -> float:
     """Para poder hablar de la manivela en unidades de persona."""
     return omega * 60.0 / TAU
@@ -135,5 +148,6 @@ __all__ = [
     "fluctuacion",
     "fluctuacion_con",
     "inercia_necesaria",
+    "referir",
     "vueltas_por_minuto",
 ]

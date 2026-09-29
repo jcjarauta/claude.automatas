@@ -268,3 +268,29 @@ def test_si_ni_con_el_maximo_llega_se_dice():
     """Entonces el problema no es de transmisión: la máquina pide demasiado."""
     thetas = rejilla()
     assert relacion_minima(Manivela(), np.full_like(thetas, 500.0), thetas) is None
+
+
+# ---------------------------------------------------------------------------
+# Referir inercias entre ejes
+# ---------------------------------------------------------------------------
+
+
+def test_una_inercia_en_el_eje_rapido_cuenta_al_cuadrado():
+    """La misma chapa rinde nueve veces más en una reducción de 3:1. Es la
+    razón de poner el volante en la manivela y no en el árbol de levas."""
+    from core.energy.flywheel import referir
+
+    assert float(referir(KgM2(1.0e-4), 3.0)) == pytest.approx(9.0e-4)
+
+
+def test_referir_con_relacion_uno_no_cambia_nada():
+    from core.energy.flywheel import referir
+
+    assert float(referir(KgM2(2.5e-4), 1.0)) == pytest.approx(2.5e-4)
+
+
+def test_una_relacion_negativa_no_tiene_sentido():
+    from core.energy.flywheel import referir
+
+    with pytest.raises(ValueError, match="positiva"):
+        referir(KgM2(1.0e-4), 0.0)

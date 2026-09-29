@@ -128,7 +128,7 @@ def test_el_informe_dice_lo_que_hay_que_saber_para_montar():
         assert nombre in texto
     assert "Calaje" in texto
     assert "Error máximo del trazo" in texto
-    assert "3:1" in texto
+    assert f"{Escribiente().relacion:g}:1" in texto
 
 
 def test_el_informe_no_promete_lo_que_no_ha_medido():

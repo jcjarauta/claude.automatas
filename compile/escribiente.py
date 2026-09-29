@@ -100,8 +100,11 @@ class Escribiente(BaseModel):
     # -- las levas -----------------------------------------------------------
     radio_base: Longitud = mm(55.0)
     brazo_seguidor: Longitud = mm(45.0)
-    radio_rodillo: Longitud = mm(2.0)
-    relacion: float = Field(default=3.0, ge=1.0, le=10.0)
+    radio_rodillo: Longitud = mm(3.0)
+    """Ø6 mm: el exterior de un **MR63 (3×6×2,5)**, que es un rodamiento
+    miniatura corriente y barato. Antes eran 2 mm, un diámetro para el que no
+    existe rodamiento decente y que obligaba a un pasador rozando."""
+    relacion: float = Field(default=6.0, ge=1.0, le=10.0)
     """Cuánto amplifica el varillaje entre seguidor y brazo.
 
     Con relación 1 el seguidor gira lo mismo que el brazo, y para que el
@@ -114,6 +117,12 @@ class Escribiente(BaseModel):
     perfil, el juego de los rodamientos y el desgaste. Es la cadena de
     tolerancias de C4, y es la que decide hasta dónde se puede subir."""
     taladro_eje: Longitud = mm(10.0)
+    pasador_indice: Longitud = mm(3.0)
+    radio_del_pasador: Longitud = mm(18.0)
+    """El taladro del eje centra la leva pero no la orienta: un agujero
+    redondo la deja girar a cualquier ángulo, y una leva calada donde no toca
+    escribe basura. Con un segundo taladro fuera del centro solo hay **una**
+    forma de montarla. Contrato de fase, `docs/contratos.md`."""
     espesor_leva: Longitud = mm(5.0)
     material_leva: str = Field(default="POM 5 mm", min_length=1)
 
@@ -375,15 +384,28 @@ def pieza_de_leva(
     conjunto: str,
     maquina: Escribiente,
 ) -> Pieza:
-    """El perfil, con su taladro de eje y su marca de fase.
+    """El perfil, su taladro de eje, su pasador de índice y su marca de fase.
 
-    La marca de fase va en θ=0. Un cartucho montado desfasado escribe basura,
-    y el dossier la usa para decir cómo se cala.
+    **Una sola referencia de fase, y es física.** El taladro del eje centra la
+    leva pero la deja girar; el pasador la orienta, y solo hay una manera de
+    meter los dos. Va en el eje +X del marco de la leva, que es θ=0 del árbol
+    maestro, **igual en las tres levas**: por eso las tres quedan caladas
+    entre sí sin que nadie tenga que alinearlas.
+
+    La marca grabada no es una segunda referencia: apunta al pasador. Dos
+    referencias que puedan discrepar son peores que ninguna.
     """
     contorno = [(Metros(float(x)), Metros(float(y))) for x, y in perfil.perfil]
-    fase = perfil.perfil[0]
-    radio_marca = float(np.linalg.norm(fase)) * 0.55
-    direccion = fase / float(np.linalg.norm(fase))
+    radio_pasador = float(maquina.radio_del_pasador)
+
+    # El punto del contorno que cae sobre +X. La marca sale de ahí hacia
+    # dentro, hasta el pasador, para que se lean como una sola cosa.
+    # Sin desenrollar: `arctan2` ya devuelve el ángulo en (-π, π], así que el
+    # de módulo más pequeño es el que cae sobre +X. Desenrollarlo antes daría
+    # el punto equivocado en cuanto el perfil no empiece cerca de ese eje.
+    angulos = np.arctan2(perfil.perfil[:, 1], perfil.perfil[:, 0])
+    fase = perfil.perfil[int(np.argmin(np.abs(angulos)))]
+
     return Pieza(
         nombre=nombre,
         numero=numero,
@@ -393,18 +415,18 @@ def pieza_de_leva(
         cantidad=1,
         veta=Veta.INDIFERENTE,
         contorno=contorno,
-        taladros=[Taladro(centro=(Metros(0.0), Metros(0.0)), diametro=maquina.taladro_eje)],
+        taladros=[
+            Taladro(centro=(Metros(0.0), Metros(0.0)), diametro=maquina.taladro_eje),
+            Taladro(
+                centro=(Metros(radio_pasador), Metros(0.0)),
+                diametro=maquina.pasador_indice,
+            ),
+        ],
         referencias=[
             Polilinea(
                 puntos=[
-                    (
-                        Metros(float(direccion[0] * radio_marca * 0.4)),
-                        Metros(float(direccion[1] * radio_marca * 0.4)),
-                    ),
-                    (
-                        Metros(float(direccion[0] * radio_marca)),
-                        Metros(float(direccion[1] * radio_marca)),
-                    ),
+                    (Metros(radio_pasador + float(maquina.pasador_indice)), Metros(0.0)),
+                    (Metros(float(fase[0]) * 0.92), Metros(float(fase[1]) * 0.92)),
                 ]
             )
         ],

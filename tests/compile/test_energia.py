@@ -92,11 +92,12 @@ def test_el_par_disponible_cubre_al_pedido_con_margen():
 # ---------------------------------------------------------------------------
 
 
-def test_a_treinta_vueltas_por_minuto_hace_falta_un_volante_enorme():
-    """El hallazgo de la etapa: lo que aprieta no es el par, es la suavidad."""
+def test_a_treinta_vueltas_por_minuto_hace_falta_volante():
+    """El hallazgo de la etapa: lo que aprieta no es el par, es la suavidad.
+    El cartucho por sí solo no llega ni de lejos."""
     energia, veredicto = analisis()
     assert "volante_necesario" in [i.codigo for i in veredicto.avisos]
-    assert float(energia.volante_que_falta) > 10.0 * float(energia.inercia_del_cartucho)
+    assert float(energia.inercia_necesaria) > 5.0 * float(energia.inercia_del_cartucho)
 
 
 def test_girar_al_doble_pide_casi_la_cuarta_parte_de_volante():
@@ -130,9 +131,10 @@ def test_un_reductor_de_tres_a_uno_deja_el_volante_en_algo_comprable():
 
 
 def test_sin_reductor_y_despacio_el_volante_es_inaceptable():
+    """Más de un kilo de disco en una pieza de sobremesa no es una opción."""
     energia, _ = analisis(Accionamiento(vueltas_por_minuto=30.0))
     masa = 2.0 * float(energia.volante_en_la_manivela) / 0.05**2
-    assert masa > 2.0
+    assert masa > 1.0
 
 
 def test_el_cartucho_cuenta_como_parte_del_volante():
@@ -190,3 +192,46 @@ def test_analizar_dos_veces_da_lo_mismo():
     otro, _ = analisis()
     assert uno.par_medio == otro.par_medio
     assert float(uno.inercia_necesaria) == float(otro.inercia_necesaria)
+
+
+# ---------------------------------------------------------------------------
+# Lo que ya gira cuenta
+# ---------------------------------------------------------------------------
+
+
+def test_la_rueda_grande_ayuda_pero_no_es_el_volante():
+    """El engranaje grande va en el eje LENTO, así que su inercia cuenta tal
+    cual. Aporta, pero para llegar solo haría falta un disco enorme."""
+    from core.solido import inercia_de_disco
+
+    rueda = inercia_de_disco(0.030, 0.006, 8500.0)
+    sin_rueda, _ = analisis(Accionamiento(transmision=Transmision(relacion=3.0)))
+    con_rueda, _ = analisis(
+        Accionamiento(transmision=Transmision(relacion=3.0), inercia_en_el_arbol=rueda)
+    )
+    assert float(con_rueda.inercia_disponible) > float(sin_rueda.inercia_disponible)
+    assert float(con_rueda.volante_que_falta) > 0.0
+
+
+def test_la_misma_masa_en_la_manivela_rinde_la_relacion_al_cuadrado():
+    from core.solido import inercia_de_disco
+
+    disco = inercia_de_disco(0.030, 0.006, 8500.0)
+    en_el_arbol, _ = analisis(
+        Accionamiento(transmision=Transmision(relacion=3.0), inercia_en_el_arbol=disco)
+    )
+    en_la_manivela, _ = analisis(
+        Accionamiento(transmision=Transmision(relacion=3.0), inercia_en_la_manivela=disco)
+    )
+    aporta_arbol = float(en_el_arbol.inercia_disponible) - float(en_el_arbol.inercia_del_cartucho)
+    aporta_manivela = float(en_la_manivela.inercia_disponible) - float(
+        en_la_manivela.inercia_del_cartucho
+    )
+    assert aporta_manivela == pytest.approx(9.0 * aporta_arbol)
+
+
+def test_con_bastante_inercia_ya_no_se_pide_volante():
+    from core.units import KgM2
+
+    _, veredicto = analisis(Accionamiento(inercia_en_el_arbol=KgM2(1.0e-2)))
+    assert "volante_necesario" not in [i.codigo for i in veredicto.avisos]

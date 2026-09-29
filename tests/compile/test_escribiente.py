@@ -75,7 +75,8 @@ def test_la_maquina_por_defecto_compila_una_frase():
 def test_cada_leva_es_una_pieza_con_su_taladro_y_su_fase():
     for pieza in compilar(hola()).piezas:
         assert pieza.marca_fase is not None
-        assert len(pieza.taladros) == 1
+        # Dos: el del eje, que centra, y el del pasador, que orienta.
+        assert len(pieza.taladros) == 2
         assert a_mm(pieza.espesor) == pytest.approx(5.0)
         assert pieza.conjunto == "cartucho hola"
 
@@ -313,8 +314,10 @@ def test_del_socavado_se_ocupa_la_envolvente_y_el_contacto_solo_lo_nota():
     pasa en unos pocos grados, y cazarlo por contacto exigiría muestrear todo
     el ciclo. La envolvente lo calcula exacto y gratis, así que es ella quien
     rechaza. El contacto solo enseña que el número sube."""
+    # Relación 3 y rodillo de Ø12: la combinación que la máquina de serie ya
+    # no usa, precisamente porque socavaba.
     sana = compilar(hola())
-    socavada = compilar(hola(), Escribiente(radio_rodillo=mm(6.0)))
+    socavada = compilar(hola(), Escribiente(relacion=3.0, radio_rodillo=mm(6.0)))
 
     assert "perfil_autointersecado" in [i.codigo for i in socavada.veredicto.errores]
     assert not socavada.veredicto.apto
@@ -346,3 +349,46 @@ def test_la_simulacion_del_trazo_no_ve_el_socavado():
     socavada = compilar(hola(), Escribiente(radio_rodillo=mm(6.0)))
     assert socavada.simulacion is not None
     assert socavada.simulacion.error_maximo < ERROR_DE_TRAZO_MAXIMO
+
+
+# ---------------------------------------------------------------------------
+# Contrato de fase: el cartucho solo se puede montar de una manera
+# ---------------------------------------------------------------------------
+
+
+def test_las_tres_levas_llevan_el_pasador_en_el_mismo_sitio():
+    """Es lo que las cala entre sí. Si cada una lo tuviera en su ángulo, no
+    podrían compartir pasador y habría que alinearlas a ojo."""
+    piezas = compilar(hola()).piezas
+    pasadores = {
+        (round(a_mm(p.taladros[1].centro[0]), 9), round(a_mm(p.taladros[1].centro[1]), 9))
+        for p in piezas
+    }
+    assert len(pasadores) == 1
+    (x, y) = next(iter(pasadores))
+    assert (x, y) == pytest.approx((a_mm(Escribiente().radio_del_pasador), 0.0), abs=1e-9)
+
+
+def test_el_pasador_cae_en_material_y_no_en_el_taladro_del_eje():
+    maquina = Escribiente()
+    pieza = compilar(hola(), maquina).piezas[0]
+    radio = a_mm(maquina.radio_del_pasador)
+    assert radio - a_mm(maquina.pasador_indice) / 2 > a_mm(maquina.taladro_eje) / 2
+    minimo = min((a_mm(x) ** 2 + a_mm(y) ** 2) ** 0.5 for x, y in pieza.contorno)
+    assert radio + a_mm(maquina.pasador_indice) / 2 < minimo
+
+
+def test_la_marca_grabada_apunta_al_pasador_y_no_a_otro_sitio():
+    """Dos referencias de fase que puedan discrepar son peores que ninguna."""
+    pieza = compilar(hola()).piezas[0]
+    assert pieza.marca_fase is not None
+    assert a_mm(pieza.marca_fase[1]) == pytest.approx(0.0, abs=0.5)
+    assert a_mm(pieza.marca_fase[0]) > 0.0
+
+
+def test_dos_frases_distintas_comparten_el_mismo_pasador():
+    """El cartucho es intercambiable: la plataforma no cambia entre pedidos."""
+    otra = Escritura(nombre="ana", trazos=[trazo((0.0, 0.0), (10.0, 14.0), (20.0, 0.0))])
+    uno = compilar(hola()).piezas[0].taladros[1]
+    otro = compilar(otra).piezas[0].taladros[1]
+    assert uno == otro
