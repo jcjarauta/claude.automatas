@@ -17,6 +17,7 @@ se trocea en páginas del formato elegido.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Literal
@@ -35,6 +36,21 @@ plantilla 1:1 sin forma de comprobar la escala es peligrosa."""
 MARGEN = 10.0
 SOLAPE = 12.0
 """Milímetros que comparten dos teselas contiguas, para poder pegarlas."""
+
+SEPARACION = 8.0
+"""Milímetros entre dos piezas agrupadas en la misma hoja. No es estético:
+una sierra de cinta necesita entrada y salida, y dos contornos pegados
+obligan a cortar dos veces por el mismo sitio."""
+
+ALTO_ROTULO = 9.0
+"""Milímetros reservados bajo cada pieza agrupada para su rótulo de dos
+líneas. En una hoja con cinco piezas, la cabecera ya no dice de cuál habla.
+Si el rótulo se parte en más líneas, cada una añade `ALTO_LINEA_ROTULO`."""
+
+ANCHO_MEDIO_CARACTER = 0.55
+"""Ancho de un carácter como fracción de su altura, por lo alto. Sirve para
+reservar sitio sin que esta capa tenga que saber de fuentes ni de PDF:
+pasarse es inofensivo, quedarse corto saca el rótulo de la hoja."""
 
 TipoTrazo = Literal["corte", "taladro", "referencia", "oculta", "marca", "cajetin"]
 
@@ -98,6 +114,11 @@ class Lamina:
     textos: tuple[Texto, ...] = ()
     indice: tuple[int, int] = (1, 1)
     """Número de tesela y total, para que se puedan ordenar al pegarlas."""
+    escala: float = 1.0
+    """1.0 es tamaño real. Una plantilla de corte **siempre** vale 1: se pega
+    sobre el tablero y se corta por encima. Las vistas del dossier van a otra
+    escala y por eso no pueden compartir documento con estas: quien tenga
+    delante un papel con dos escalas acabará cortando por la equivocada."""
 
 
 @dataclass
@@ -374,10 +395,265 @@ def formato_minimo(pieza: Pieza) -> Formato | None:
     return None
 
 
+# ---------------------------------------------------------------------------
+# Varias piezas en una hoja
+# ---------------------------------------------------------------------------
+
+
+def _ancho_estimado(texto: str, tamano: float) -> float:
+    """Ancho aproximado de un rótulo, por lo alto.
+
+    Deliberadamente generoso: esta capa no conoce la fuente —de eso sabe
+    `emit/template.py`— y equivocarse por exceso solo deja hueco de más.
+    """
+    return len(texto) * ANCHO_MEDIO_CARACTER * tamano
+
+
+def _recortar_texto(texto: str, ancho_max: float, tamano: float) -> str:
+    """Corta una palabra que no cabe ni sola. Último recurso."""
+    if _ancho_estimado(texto, tamano) <= ancho_max:
+        return texto
+    cabe = max(1, int(ancho_max / (ANCHO_MEDIO_CARACTER * tamano)) - 1)
+    return texto[:cabe] + "…"
+
+
+def _envolver(texto: str, ancho_max: float, tamano: float) -> list[str]:
+    """Parte un rótulo en varias líneas para que quepa a lo ancho.
+
+    Se envuelve en vez de recortar porque los metadatos de la pieza no son
+    decorativos: quien recibe la hoja necesita el material y el espesor, y un
+    rótulo cortado por el borde le obliga a preguntar a alguien que está en
+    otro taller y en otro momento.
+    """
+    # Se parte por los separadores de campo cuando los hay: cortar
+    # "POM 5 mm · 5.0 mm" entre "5" y "mm" deja una línea que no dice nada.
+    separador = " · " if " · " in texto else " "
+    lineas: list[str] = []
+    actual = ""
+    for palabra in texto.split(separador):
+        tentativa = f"{actual}{separador}{palabra}" if actual else palabra
+        if actual and _ancho_estimado(tentativa, tamano) > ancho_max:
+            lineas.append(actual)
+            actual = palabra
+        else:
+            actual = tentativa
+    lineas.append(actual)
+    return [_recortar_texto(linea, ancho_max, tamano) for linea in lineas]
+
+
+ANCHO_ROTULO_MINIMO = 45.0
+"""Milímetros que se reservan a lo ancho para el rótulo de una pieza chica.
+Por debajo de esto el rótulo se parte en tantas líneas que ocupa más alto que
+la propia pieza."""
+
+ANCHO_ROTULO_MAXIMO = 80.0
+"""Y por encima, una pieza estrecha acapararía media hoja."""
+
+ALTO_LINEA_ROTULO = 4.2
+
+
+def _lineas_de_rotulo(pieza: Pieza, ancho_max: float) -> list[tuple[str, float, bool]]:
+    """Las líneas del rótulo: texto, cuerpo y negrita.
+
+    El conjunto va arriba, en la cabecera, porque es el mismo para toda la
+    hoja. Los otros seis viajan con su pieza: en una hoja con cinco contornos,
+    saber que uno es de 5 mm y otro de 9 es lo que evita cortarlos del tablero
+    equivocado.
+    """
+    titulo = f"{pieza.numero} · {pieza.nombre}"
+    detalle = (
+        f"{pieza.material} · {a_mm(pieza.espesor):.1f} mm · ×{pieza.cantidad} · "
+        f"veta {pieza.veta.value}"
+    )
+    return [(linea, 3.2, True) for linea in _envolver(titulo, ancho_max, 3.2)] + [
+        (linea, 2.8, False) for linea in _envolver(detalle, ancho_max, 2.8)
+    ]
+
+
+def _ancho_de_rotulo(pieza: Pieza) -> float:
+    return min(max(a_mm(pieza.ancho), ANCHO_ROTULO_MINIMO), ANCHO_ROTULO_MAXIMO)
+
+
+def _rotulo_de_pieza(pieza: Pieza, x: float, y: float) -> list[Texto]:
+    ancho_max = _ancho_de_rotulo(pieza)
+    return [
+        Texto(x, y - i * ALTO_LINEA_ROTULO, linea, tamano, negrita)
+        for i, (linea, tamano, negrita) in enumerate(_lineas_de_rotulo(pieza, ancho_max))
+    ]
+
+
+def _hueco(pieza: Pieza) -> tuple[float, float]:
+    """Lo que ocupa una pieza agrupada: su caja, su rótulo y la separación."""
+    ancho_rotulo = _ancho_de_rotulo(pieza)
+    lineas = len(_lineas_de_rotulo(pieza, ancho_rotulo))
+    alto_rotulo = ALTO_ROTULO + (lineas - 1) * ALTO_LINEA_ROTULO
+    return max(a_mm(pieza.ancho), ancho_rotulo), a_mm(pieza.alto) + alto_rotulo
+
+
+def cabecera_juego(
+    conjunto: str,
+    ancho_pagina: float,
+    alto_pagina: float,
+    indice: tuple[int, int],
+    piezas: Sequence[Pieza],
+) -> _Acumulador:
+    """Cabecera de una hoja con varias piezas.
+
+    Los metadatos de cada una van junto a ella, no aquí: una cabecera que
+    hablara de cinco piezas a la vez no diría de cuál.
+    """
+    a = _Acumulador()
+    y0 = alto_pagina - ALTO_CABECERA
+    a.trazos.append(Trazo("cajetin", ((MARGEN, y0), (ancho_pagina - MARGEN, y0))))
+
+    calibracion = cuadro_de_calibracion(MARGEN, y0 + 8.0)
+    a.trazos += calibracion.trazos
+    a.textos += calibracion.textos
+
+    x = MARGEN + LADO_CALIBRACION + 10.0
+    y = alto_pagina - MARGEN - 6.0
+    a.textos.append(Texto(x, y, conjunto, 5.0, True))
+    y -= 7.5
+    a.textos.append(Texto(x, y, "IMPRIMIR AL 100 %,", 4.0, True))
+    y -= 5.5
+    a.textos.append(Texto(x, y, "SIN AJUSTAR A LA PÁGINA", 4.0, True))
+    y -= 8.0
+    a.textos.append(Texto(x, y, f"hoja {indice[0]} de {indice[1]}", 4.0, True))
+    y -= 6.0
+    a.textos.append(
+        Texto(x, y, f"{len(piezas)} pieza{'s' if len(piezas) != 1 else ''} en esta hoja", 3.2)
+    )
+    # La lista de números es la hoja de recuento: al terminar de cortar se
+    # comprueba contra ella que no falta ninguna sobre la mesa.
+    ancho_columna = ancho_pagina - MARGEN - x
+    for linea in _envolver(", ".join(p.numero for p in piezas), ancho_columna, 3.2)[:4]:
+        y -= 4.6
+        a.textos.append(Texto(x, y, linea, 3.2))
+    return a
+
+
+def _repartir(
+    piezas: Sequence[Pieza], util_ancho: float, util_alto: float
+) -> list[list[tuple[Pieza, float, float]]]:
+    """Reparte las piezas en hojas, por estantes.
+
+    Estante a estante, de más alta a más baja: es el reparto que usa
+    cualquiera al colocar piezas sobre un tablero, y deja poco hueco cuando
+    las alturas se parecen. **No resuelve el empaquetado óptimo**, que es un
+    problema en sí y no toca todavía: aquí solo se trata de no gastar una hoja
+    por cada arandela.
+
+    Devuelve, por hoja, la lista de (pieza, x de la izquierda, y del techo).
+    """
+    ordenadas = sorted(piezas, key=lambda p: _hueco(p)[1], reverse=True)
+    hojas: list[list[tuple[Pieza, float, float]]] = []
+    actual: list[tuple[Pieza, float, float]] = []
+    x = 0.0
+    techo = util_alto
+    alto_estante = 0.0
+
+    for pieza in ordenadas:
+        ancho, alto = _hueco(pieza)
+        if x > 0.0 and x + SEPARACION + ancho > util_ancho:
+            # No cabe en este estante: se abre el siguiente, más abajo.
+            techo -= alto_estante + SEPARACION
+            x, alto_estante = 0.0, 0.0
+        if techo - alto < 0.0:
+            # Tampoco cabe el estante en esta hoja.
+            if actual:
+                hojas.append(actual)
+            actual, x, techo, alto_estante = [], 0.0, util_alto, 0.0
+        avance = x if x == 0.0 else x + SEPARACION
+        actual.append((pieza, avance, techo))
+        x = avance + ancho
+        alto_estante = max(alto_estante, alto)
+
+    if actual:
+        hojas.append(actual)
+    return hojas
+
+
+def maquetar_juego(
+    piezas: Sequence[Pieza],
+    formato: Formato = Formato.A3,
+) -> list[Lamina]:
+    """De un conjunto de piezas a las hojas que hay que imprimir.
+
+    Las que caben comparten hoja; las que no, se trocean aparte con
+    `maquetar()`, cada una con su cabecera completa. Una hoja por pieza
+    desperdicia papel y obliga a barajar treinta folios en el taller.
+    """
+    if not piezas:
+        raise ValueError("no hay piezas que maquetar")
+
+    ancho_pagina, alto_pagina = formato.medidas
+    util_ancho = ancho_pagina - 2 * MARGEN
+    util_alto = alto_pagina - ALTO_CABECERA - 2 * MARGEN
+    techo_pagina = alto_pagina - ALTO_CABECERA - MARGEN
+
+    caben = [p for p in piezas if cabe_en_una_hoja(p, formato)]
+    grandes = [p for p in piezas if not cabe_en_una_hoja(p, formato)]
+
+    conjuntos = sorted({p.conjunto for p in piezas})
+    nombre = conjuntos[0] if len(conjuntos) == 1 else f"{len(conjuntos)} conjuntos"
+
+    repartidas = _repartir(caben, util_ancho, util_alto)
+    total = len(repartidas)
+
+    laminas: list[Lamina] = []
+    for numero, hoja in enumerate(repartidas, start=1):
+        acumulado = _Acumulador()
+        for pieza, x, techo in hoja:
+            x0, _, _, y1 = pieza.limites
+            dx = MARGEN + x - a_mm(x0)
+            dy = techo_pagina - (util_alto - techo) - a_mm(y1)
+            colocada = _primitivas_de_la_pieza(pieza, dx, dy)
+            acumulado.trazos += colocada.trazos
+            acumulado.circulos += colocada.circulos
+            acumulado.textos += colocada.textos
+            acumulado.textos += _rotulo_de_pieza(
+                pieza, MARGEN + x, dy + a_mm(pieza.limites[1]) - 4.5
+            )
+
+        indice = (numero, total)
+        encabezado = cabecera_juego(
+            nombre, ancho_pagina, alto_pagina, indice, [pieza for pieza, _, _ in hoja]
+        )
+        recortado = _recortar(acumulado, ancho_pagina, alto_pagina)
+        laminas.append(
+            Lamina(
+                ancho=ancho_pagina,
+                alto=alto_pagina,
+                trazos=tuple(recortado.trazos + encabezado.trazos),
+                circulos=tuple(recortado.circulos + encabezado.circulos),
+                textos=tuple(recortado.textos + encabezado.textos),
+                indice=indice,
+            )
+        )
+
+    for pieza in grandes:
+        laminas += maquetar(pieza, formato)
+    return laminas
+
+
+def formato_minimo_juego(piezas: Sequence[Pieza]) -> Formato | None:
+    """El formato más pequeño donde **todas** las piezas caben sin trocear.
+
+    No busca el que gasta menos hojas: busca el que evita pegar papeles, que
+    es lo que de verdad estropea una plantilla.
+    """
+    for formato in (Formato.A4, Formato.A3, Formato.A2, Formato.A1, Formato.A0):
+        if all(cabe_en_una_hoja(pieza, formato) for pieza in piezas):
+            return formato
+    return None
+
+
 __all__ = [
     "ALTO_CABECERA",
+    "ALTO_ROTULO",
     "LADO_CALIBRACION",
     "MARGEN",
+    "SEPARACION",
     "SOLAPE",
     "Circulo",
     "Formato",
@@ -388,5 +664,7 @@ __all__ = [
     "cabe_en_una_hoja",
     "cuadro_de_calibracion",
     "formato_minimo",
+    "formato_minimo_juego",
     "maquetar",
+    "maquetar_juego",
 ]

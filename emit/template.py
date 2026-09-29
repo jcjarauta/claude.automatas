@@ -87,12 +87,25 @@ def escribir_pdf(laminas: list[Lamina], destino: Path | str) -> Path:
     """Vuelca las láminas a un PDF, una página por lámina."""
     if not laminas:
         raise ValueError("no hay nada que escribir: la lista de láminas está vacía")
+    escalas = {lamina.escala for lamina in laminas}
+    if len(escalas) > 1:
+        # Un papel con dos escalas es la forma más rápida de que alguien
+        # corte por la vista en vez de por la plantilla.
+        raise ValueError(
+            f"un documento no mezcla escalas: llegan {sorted(escalas)}. Las plantillas "
+            "de corte van a 1:1 en su archivo y la documentación en el suyo."
+        )
     ruta = Path(destino)
     ruta.parent.mkdir(parents=True, exist_ok=True)
 
+    escala = laminas[0].escala
     lienzo = Canvas(str(ruta), invariant=1, pageCompression=0)
-    lienzo.setTitle(f"Plantilla 1:1 · {len(laminas)} hoja(s)")
-    lienzo.setSubject("Imprimir al 100 %, sin ajustar a la página")
+    if escala == 1.0:
+        lienzo.setTitle(f"Plantilla 1:1 · {len(laminas)} hoja(s)")
+        lienzo.setSubject("Imprimir al 100 %, sin ajustar a la página")
+    else:
+        lienzo.setTitle(f"Documentación 1:{1 / escala:.0f} · {len(laminas)} hoja(s)")
+        lienzo.setSubject("Documentación: no es una plantilla, no se corta por aquí")
 
     for lamina in laminas:
         lienzo.setPageSize((_pt(lamina.ancho), _pt(lamina.alto)))

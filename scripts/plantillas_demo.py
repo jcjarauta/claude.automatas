@@ -10,6 +10,12 @@ Produce los tres archivos que hay que llevar a la copistería de una vez:
 - `plantilla_bastidor_troceado_A4.pdf` — una pieza que no cabe en A4, para
   comprobar el solape y las marcas de registro al pegar las hojas.
 
+Y una cuarta, opcional, que no forma parte de la puerta de E3:
+
+- `plantillas_juego_A4.pdf` — cinco piezas chicas en una hoja. Sirve para ver
+  impreso si la separación entre contornos basta para meter la sierra y si los
+  rótulos se leen.
+
 Con un perfil ya medido se vuelven a generar corregidas:
 
     uv run python scripts/plantillas_demo.py out bench/impresoras/copi.json
@@ -24,9 +30,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from core.units import a_mm
 from emit.calibracion import aplicar, cargar, evaluar, hoja_patron, medidas_del_patron
-from emit.layout import Formato, formato_minimo, maquetar
+from emit.layout import Formato, formato_minimo, maquetar, maquetar_juego
 from emit.template import escribir_pdf
-from tests.emit.piezas_de_prueba import bastidor_grande, leva
+from tests.emit.piezas_de_prueba import bastidor_grande, juego_pequeno, leva
 
 
 def main() -> int:
@@ -64,6 +70,12 @@ def main() -> int:
             f"→ {hojas} hoja(s) {formato.value}  "
             f"(cabría entera en {formato_minimo(pieza)})"
         )
+
+    piezas = juego_pequeno()
+    hojas = emitir(maquetar_juego(piezas, formato), "plantillas_juego_A4.pdf")
+    print(
+        f"{'plantillas_juego_A4.pdf':<40} {len(piezas)} piezas  → {hojas} hoja(s) {formato.value}"
+    )
     return 0
 
 

@@ -65,3 +65,46 @@ def bastidor_grande() -> Pieza:
         ],
         taladros=[Taladro(centro=(Metros(0.040), Metros(0.040)), diametro=mm(6.0))],
     )
+
+
+def rectangular(
+    nombre: str,
+    numero: str,
+    ancho_mm: float,
+    alto_mm: float,
+    *,
+    conjunto: str = "escribiente",
+    material: str = "contrachapado de abedul 9 mm",
+    espesor_mm: float = 9.0,
+    cantidad: int = 1,
+    veta: Veta = Veta.LARGO,
+) -> Pieza:
+    """Una pieza rectangular cualquiera, para probar la agrupación."""
+    a, h = ancho_mm / 1000.0, alto_mm / 1000.0
+    return Pieza(
+        nombre=nombre,
+        numero=numero,
+        conjunto=conjunto,
+        material=material,
+        espesor=mm(espesor_mm),
+        cantidad=cantidad,
+        veta=veta,
+        contorno=[
+            (Metros(0.0), Metros(0.0)),
+            (Metros(a), Metros(0.0)),
+            (Metros(a), Metros(h)),
+            (Metros(0.0), Metros(h)),
+        ],
+        taladros=[Taladro(centro=(Metros(a / 2), Metros(h / 2)), diametro=mm(6.0))],
+    )
+
+
+def juego_pequeno() -> list[Pieza]:
+    """Cinco piezas chicas del mismo conjunto: el caso que obliga a agrupar."""
+    return [
+        rectangular("soporte izquierdo", "S-001", 60.0, 40.0),
+        rectangular("soporte derecho", "S-002", 60.0, 40.0),
+        rectangular("brida", "B-010", 45.0, 25.0, espesor_mm=5.0, cantidad=2),
+        rectangular("tope", "T-004", 30.0, 30.0, espesor_mm=5.0, cantidad=4),
+        rectangular("pletina", "P-007", 80.0, 20.0, material="POM 5 mm", espesor_mm=5.0),
+    ]

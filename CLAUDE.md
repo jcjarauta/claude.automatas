@@ -85,6 +85,7 @@ emit/
   pieza.py            #   Pieza y sus siete metadatos, compartida por los tres
   layout.py           #   Maquetación 1:1 en mm: cabecera, colocación, troceado
   calibracion.py      #   Perfil de impresora: factores x/y, hoja patrón
+  paquete.py          #   Qué archivos salen y qué lleva cada uno
   template.py         #   PDF 1:1 para copistería          <- ver abajo
   dxf.py              #   Corte láser / CNC
   dossier.py          #   Dossier de montaje
@@ -162,7 +163,9 @@ y para manos distintas. No van en el mismo PDF:
 
 El compilador entrega dos archivos separados, `plantillas.pdf` y `dossier.pdf`.
 Mezclar una vista a escala libre con un plano 1:1 en el mismo documento es la
-forma más rápida de que alguien corte por la vista.
+forma más rápida de que alguien corte por la vista. **No es una convención de
+nombres**: cada `Lamina` declara su `escala` y `escribir_pdf` se niega a
+escribir un documento con dos.
 
 ### `emit/dxf.py` — corte digital
 Láser o CNC. Compensación de kerf **aquí**, nunca en `core/`. El kerf es un dato
@@ -189,9 +192,12 @@ máquina digital. Requisitos no negociables:
   lo que quepa, A3 o A2 para levas grandes, A1/A0 en hoja única de plóter para
   el bastidor. `formato_minimo()` propone; la interfaz deja cambiarlo, y el
   cambio no toca la geometría, solo la maquetación.
-- **Varias piezas por hoja.** Las piezas pequeñas de un mismo conjunto se
-  agrupan cuando caben, con holgura para la hoja de la sierra. Una hoja por
-  pieza desperdicia papel y obliga a barajar treinta folios en el taller.
+- **Varias piezas por hoja.** `maquetar_juego()` agrupa las que caben, con
+  holgura para la hoja de la sierra; lo que no cabe se trocea aparte con su
+  cabecera entera. El conjunto va en la cabecera —con la lista de números,
+  que es la hoja de recuento— y los otros seis metadatos junto a su pieza. El
+  reparto es por estantes: **no** resuelve el empaquetado óptimo, y no lo hará
+  hasta E5.
 
 ### `emit/calibracion.py` — perfil de impresora
 Una impresora no imprime a escala. El error típico está entre el 0,2 y el 1 %, y
@@ -296,6 +302,12 @@ falla si el esquema versionado se queda atrás.
 - **Medir con lo que no resuelve.** El instrumento tiene que ser más fino que el
   error que se busca. Con cinta métrica el patrón va a 250 mm; con pie de rey
   bastan 150. Nunca se calibra midiendo el cuadro de 100.
+- **Recortar un rótulo obligatorio.** Si el texto no cabe, se envuelve o se
+  reserva más sitio; nunca se corta. Un espesor que no aparece obliga a
+  preguntar a alguien que está en otro taller y en otro momento.
+- **Poner una marca justo donde hay un número.** La banda del medio de la hoja
+  patrón cae al 55 % y no al 50 % porque la mitad de 200 son 100, que es una
+  cota rotulada, y la marca le pasaba por encima.
 - **Splines en software de láser.** Exporta polilínea densa o arcos.
 - **Cuota de la API de Onshape.** Es anual, no por minuto. Una llamada por pedido.
 - **Unidades.** El bug más caro y el más fácil de cometer. Usa `core/units.py`.
