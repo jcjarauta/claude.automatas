@@ -41,10 +41,27 @@ Tres defectos del README, todos corregidos:
 Añadido además un apartado «Si uv no aparece» con el arreglo de PATH para Git
 Bash, PowerShell, macOS y Linux, y la alternativa `pipx install uv`.
 
-### Intento 2
-Quién lo comprobó: PENDIENTE
-Resultado: PENDIENTE
-Evidencia: PENDIENTE
+### Intento 2 — 2026-09-29 — SUPERADO
+Quién lo comprobó: Juan Carlos, en Windows con PowerShell, sobre un clon limpio
+en una carpeta nueva (`claude.automatas.prueba`).
+Resultado: VERDE, sin preguntar nada y muy por debajo de los cinco minutos.
+
+```
+Using CPython 3.12.10 interpreter
+Creating virtual environment at: .venv
+Resolved 28 packages in 1ms
+Prepared 25 packages in 18.07s
+Installed 28 packages in 598ms
+
+=== formato y lint: ruff check .      -> All checks passed!
+=== tipos: mypy core compile          -> Success: no issues found in 5 source files
+=== tests: pytest                     -> 16 passed in 0.81s
+
+VERDE — lint, tipos y tests en orden
+```
+
+Evidencia: salida completa del terminal, arriba.
+Tiempo: instalación de dependencias en unos 19 segundos; el resto, inmediato.
 
 CI: verde sobre el push a `main` y sobre el PR #1 de prueba
 (`docs: plantilla de cierre de etapa`). Check-run «lint, tipos y tests»
@@ -71,4 +88,14 @@ Repositorio: https://github.com/jcjarauta/claude.automatas
 
 ## Puerta
 Automática: CERRADA — comando de verificación en verde en local y en CI.
-Humana (prueba de los cinco minutos): ABIERTA.
+Humana (prueba de los cinco minutos): CERRADA — superada en el intento 2.
+
+**ETAPA E0 CERRADA.** Firma: Juan Carlos, 2026-09-29.
+
+## Lo que enseñó esta etapa
+
+La comprobación automática estaba en verde y el CI también, y aun así el
+proyecto no era usable por alguien que llegara de cero. Ninguna comprobación
+automática iba a detectarlo, porque el entorno de CI ya trae `uv` instalado.
+Es el argumento de la regla de las dos comprobaciones del ROADMAP, encontrado
+en la primera etapa y con coste casi nulo.
