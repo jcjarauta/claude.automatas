@@ -11,6 +11,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from compile.conjunto import Montaje
+from compile.energia import Accionamiento, Energia
 from compile.escribiente import Compilacion, Escribiente
 from core.units import Radianes, a_grados, a_mm
 from core.verdict import Incidencia, Veredicto
@@ -34,6 +35,9 @@ def informe(
     maquina: Escribiente,
     montaje: Montaje | None = None,
     veredicto_montaje: Veredicto | None = None,
+    energia: Energia | None = None,
+    veredicto_energia: Veredicto | None = None,
+    accionamiento: Accionamiento | None = None,
 ) -> str:
     """El informe completo, en markdown."""
     v = compilacion.veredicto
@@ -132,7 +136,43 @@ def informe(
             "",
         ]
 
+    if energia is not None and accionamiento is not None:
+        volante = float(energia.volante_en_la_manivela)
+        disco = 2.0 * volante / 0.05**2
+        lineas += [
+            "## Girarlo a mano",
+            "",
+            f"A {accionamiento.vueltas_por_minuto:.0f} vueltas por minuto, con una "
+            f"relación de manivela de {accionamiento.transmision.relacion:g}:1.",
+            "",
+            f"- Par medio en el árbol: {energia.par_medio * 1000:.0f} mN·m",
+            f"- Par máximo: {energia.par_maximo * 1000:.0f} mN·m",
+            f"- Trabajo por vuelta: {float(energia.trabajo_por_vuelta) * 1000:.0f} mJ",
+            f"- Energía de fluctuación: {float(energia.fluctuacion.energia) * 1000:.1f} mJ",
+            "",
+            "**El par no es el problema.** Una manivela da del orden de un newton·metro"
+            " y aquí se piden centésimas.",
+            "",
+            "Lo que aprieta es la **suavidad**: lo que sobra en unos grados y falta en"
+            " otros hay que guardarlo con inercia.",
+            "",
+            f"- Inercia necesaria en el árbol: "
+            f"{float(energia.inercia_necesaria) * 1e4:.1f} × 10⁻⁴ kg·m²",
+            f"- La aporta el cartucho: "
+            f"{float(energia.inercia_del_cartucho) * 1e4:.1f} × 10⁻⁴ kg·m²",
+            f"- **Volante que falta, puesto en el eje de la manivela: "
+            f"{volante * 1e4:.1f} × 10⁻⁴ kg·m²** — un disco de acero de 50 mm de "
+            f"radio y {disco * 1000:.0f} g",
+            "",
+            "Puesto en el árbol haría falta la relación al cuadrado veces más. Ahí está"
+            " el motivo de llevar reductor aunque el par sobre.",
+            "",
+        ]
+
     lineas += _incidencias("Errores", v.errores)
+    if veredicto_energia is not None:
+        lineas += _incidencias("Errores del accionamiento", veredicto_energia.errores)
+        lineas += _incidencias("Avisos del accionamiento", veredicto_energia.avisos)
     if veredicto_montaje is not None:
         lineas += _incidencias("Errores del conjunto", veredicto_montaje.errores)
         lineas += _incidencias("Avisos del conjunto", veredicto_montaje.avisos)
@@ -149,10 +189,24 @@ def escribir_informe(
     destino: Path | str,
     montaje: Montaje | None = None,
     veredicto_montaje: Veredicto | None = None,
+    energia: Energia | None = None,
+    veredicto_energia: Veredicto | None = None,
+    accionamiento: Accionamiento | None = None,
 ) -> Path:
     ruta = Path(destino)
     ruta.parent.mkdir(parents=True, exist_ok=True)
-    ruta.write_text(informe(compilacion, maquina, montaje, veredicto_montaje), encoding="utf-8")
+    ruta.write_text(
+        informe(
+            compilacion,
+            maquina,
+            montaje,
+            veredicto_montaje,
+            energia,
+            veredicto_energia,
+            accionamiento,
+        ),
+        encoding="utf-8",
+    )
     return ruta
 
 

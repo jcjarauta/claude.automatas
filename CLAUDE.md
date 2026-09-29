@@ -79,13 +79,15 @@ core/                 # PURO. Geometría, cinemática, energía.
   actors/             #   C1 · catálogo de cinemáticas inversas
   energy/
     budget.py         #   C6 · par y energía
-    flywheel.py       #   C7 · inercia
+    flywheel.py       #   C7 · inercia y volante
+    humano.py         #   C9 · lo que da una mano en la manivela
     accumulator.py    #   C10 · carga y descarga
   tolerance.py        #   C4 · cadena de tolerancias
   solido.py           #   Masa y momento polar de un prisma, desde su polígono
 compile/              # Orquesta: intención -> piezas + informe. I/O permitido.
   escribiente.py      #   La máquina concreta: compilar y simular
   conjunto.py         #   El cartucho montado: interferencias, pila, masa
+  energia.py          #   ¿Puede girarlo una persona, y sale limpio?
   informe.py          #   El informe del pedido, en markdown
   cli.py              #   Un pedido, un comando
 emit/
@@ -398,3 +400,29 @@ que se decidieron midiendo y no eligiendo:
 El **calaje** de cada brazo —a qué ángulo se monta sobre el eje de su
 seguidor— es resultado de la compilación, no un parámetro. Va en el informe y
 tiene que llegar al dossier: montarlo mal escribe basura.
+
+### El reductor no es para el par
+
+Los números de C6, C7 y C9 sobre el cartucho de «hola»:
+
+| | |
+| --- | --- |
+| Par medio en el árbol | 22 mN·m |
+| Par máximo | 48 mN·m |
+| Lo que da una mano en una manivela | ~1,8 a 4 N·m |
+| Trabajo por vuelta | 141 mJ |
+
+Sobra un factor cuarenta. **El par nunca ha sido el problema**, y por eso la
+relación mínima de manivela que exige el par es 1:1.
+
+Lo que aprieta es la **suavidad**. La energía de fluctuación son 6,5 mJ, y
+para que la velocidad no varíe más de un 15 % a 30 vueltas por minuto hacen
+falta 44 × 10⁻⁴ kg·m²: un disco de acero de 3,3 kg. Inaceptable en una pieza
+de sobremesa.
+
+La inercia necesaria va con 1/ω², así que el volante se pone **en el eje
+rápido**. Con reductor de 3:1 y 60 vueltas por minuto de manivela, el mismo
+trabajo lo hace un disco de **75 g**.
+
+**Ese es el motivo de llevar reductor: no el par, el volante.** Y de paso
+sube la velocidad del árbol, que vuelve a bajar la inercia necesaria.

@@ -19,8 +19,10 @@ import sys
 from pathlib import Path
 
 from compile.conjunto import montar
+from compile.energia import Accionamiento, analizar
 from compile.escribiente import Escribiente, compilar
 from compile.informe import escribir_informe, resumen
+from core.energy.humano import Transmision
 from core.escritura import Capacidad, Escritura, Trazo
 from core.units import mm
 from emit.dxf import Kerf, escribir_dxfs
@@ -55,6 +57,13 @@ def main(argv: list[str] | None = None) -> int:
     partes.add_argument("entrada", type=Path, help="JSON con la escritura, en mm")
     partes.add_argument("--out", type=Path, default=Path("build"), help="carpeta de salida")
     partes.add_argument("--muestras", type=int, default=720, help="muestras por vuelta")
+    partes.add_argument("--rpm", type=float, default=30.0, help="a cuánto se piensa girar")
+    partes.add_argument(
+        "--relacion-manivela",
+        type=float,
+        default=1.0,
+        help="vueltas de manivela por vuelta del árbol",
+    )
     partes.add_argument("--sin-dxf", action="store_true", help="solo papel")
     partes.add_argument(
         "--dxf-para-cad",
@@ -67,14 +76,30 @@ def main(argv: list[str] | None = None) -> int:
     maquina = Escribiente()
     compilacion = compilar(escritura, maquina, Capacidad(muestras=opciones.muestras))
 
+    accionamiento = Accionamiento(
+        transmision=Transmision(relacion=opciones.relacion_manivela),
+        vueltas_por_minuto=opciones.rpm,
+    )
     montaje = None
     veredicto_montaje = None
+    energia = None
+    veredicto_energia = None
     if compilacion.perfiles:
         montaje, veredicto_montaje = montar(compilacion, maquina)
+        energia, veredicto_energia = analizar(compilacion, montaje.inercia, accionamiento)
 
     destino: Path = opciones.out
     destino.mkdir(parents=True, exist_ok=True)
-    escribir_informe(compilacion, maquina, destino / "informe.md", montaje, veredicto_montaje)
+    escribir_informe(
+        compilacion,
+        maquina,
+        destino / "informe.md",
+        montaje,
+        veredicto_montaje,
+        energia,
+        veredicto_energia,
+        accionamiento,
+    )
     escribir_programa(
         json.loads(compilacion.programa.model_dump_json()),
         destino,
@@ -91,7 +116,11 @@ def main(argv: list[str] | None = None) -> int:
         for incidencia in veredicto_montaje.errores:
             print(f"  [conjunto] {incidencia.mensaje}")
     print(f"escrito en {destino}/")
-    apto = compilacion.veredicto.apto and (veredicto_montaje is None or veredicto_montaje.apto)
+    apto = (
+        compilacion.veredicto.apto
+        and (veredicto_montaje is None or veredicto_montaje.apto)
+        and (veredicto_energia is None or veredicto_energia.apto)
+    )
     return 0 if apto else 1
 
 
