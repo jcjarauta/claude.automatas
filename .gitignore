@@ -20,6 +20,9 @@ htmlcov/
 *.dxf
 *.pdf
 !docs/**/*.pdf
+# Los archivos de referencia SÍ se versionan: sin ellos el test de golden
+# no tiene contra qué comparar y falla en cualquier clon nuevo.
+!tests/golden/**
 
 # Entorno
 .env

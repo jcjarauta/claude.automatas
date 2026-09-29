@@ -47,6 +47,11 @@ uv run ruff check --fix .    # lint
 uv run ruff format .         # formato
 uv run mypy core compile     # tipos (estricto en core/)
 
+uv run python scripts/export_schema.py        # esquema JSON tras tocar un modelo
+uv run python scripts/dibujar_perfiles.py     # lámina de perfiles para revisar
+uv run python scripts/plantillas_demo.py      # plantillas 1:1 de muestra
+uv run python scripts/regenerar_golden.py     # SOLO si el cambio es intencionado
+
 uv run python -m compile.cli demo/hola.json --out build/   # compilar un pedido
 uv run uvicorn api.main:app --reload                       # API en local
 npm --prefix web run dev                                   # frontend en local
@@ -77,8 +82,10 @@ core/                 # PURO. Geometría, cinemática, energía.
   tolerance.py        #   C4 · cadena de tolerancias
 compile/              # Orquesta: intención -> piezas + informe. I/O permitido.
 emit/
-  dxf.py              #   Corte láser / CNC
+  pieza.py            #   Pieza y sus siete metadatos, compartida por los tres
+  layout.py           #   Maquetación 1:1 en mm: cabecera, colocación, troceado
   template.py         #   PDF 1:1 para copistería          <- ver abajo
+  dxf.py              #   Corte láser / CNC
   dossier.py          #   Dossier de montaje
   step.py             #   3D
   onshape.py          #   Gemelo paramétrico (1 llamada por pedido)
@@ -236,6 +243,12 @@ falla si el esquema versionado se queda atrás.
 - **Splines en software de láser.** Exporta polilínea densa o arcos.
 - **Cuota de la API de Onshape.** Es anual, no por minuto. Una llamada por pedido.
 - **Unidades.** El bug más caro y el más fácil de cometer. Usa `core/units.py`.
+  Cada magnitud lleva el rango más estrecho que sea plausible: `Longitud` llega
+  a diez metros y por eso un espesor usa `Espesor`, que se queda en cien
+  milímetros. Un rango ancho no caza el error de magnitud.
+- **Sustituir texto en un fichero que `ruff format` ha tocado.** Si la
+  sustitución no coincide, falla en silencio y parece aplicada. Lee el fichero
+  antes de editarlo.
 - **Ramas de la cinemática inversa.** Un varillaje tiene dos soluciones por punto.
   Elige una y mantenla en todo el ciclo, o la leva saldrá con un salto.
 - **Offset con autointersección.** Si el radio de curvatura es menor que el del

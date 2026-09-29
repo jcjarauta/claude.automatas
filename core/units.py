@@ -86,6 +86,12 @@ Longitud = Annotated[Metros, Field(gt=0.0, le=10.0)]
 LongitudConCero = Annotated[Metros, Field(ge=0.0, le=10.0)]
 """Como `Longitud`, pero admite cero: desplazamientos, holguras, offsets."""
 
+Espesor = Annotated[Metros, Field(gt=0.0, le=0.1)]
+"""Espesor de una plancha: de una décima de milímetro a cien milímetros.
+Más estrecho que `Longitud` a propósito. El rango genérico llega a diez
+metros, así que dejaría pasar un tablero de cinco metros de grueso, que es
+justo lo que escribe quien piensa en milímetros."""
+
 AnguloCiclo = Annotated[Radianes, Field(ge=0.0, lt=TAU)]
 """Posición dentro de una vuelta. Cerrado en 0, abierto en 2π: el punto final
 no se almacena nunca, porque sería el mismo que el inicial."""
