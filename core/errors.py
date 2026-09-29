@@ -25,4 +25,18 @@ class ContratoIncumplido(ErrorDeDominio):
     """Un módulo no encaja en la bahía o el eje que dice cumplir."""
 
 
-__all__ = ["ActuadorDesconocido", "ContratoIncumplido", "ErrorDeDominio"]
+class FueraDeAlcance(ErrorDeDominio):
+    """Se pide al actuador un punto al que no llega.
+
+    Es geometría imposible, no un límite de diseño: por eso es excepción y no
+    incidencia. Quien compila debe preguntar antes con `alcanzable()` y
+    devolver un veredicto en condiciones.
+    """
+
+
+__all__ = [
+    "ActuadorDesconocido",
+    "ContratoIncumplido",
+    "ErrorDeDominio",
+    "FueraDeAlcance",
+]
