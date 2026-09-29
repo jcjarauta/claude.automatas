@@ -70,6 +70,7 @@ core/                 # PURO. Geometría, cinemática, energía.
   verdict.py          #   Veredicto e Incidencia
   errors.py           #   Excepciones de dominio
   units.py            #   Constructores con unidad. Nada de floats desnudos.
+  escritura.py        #   Front-end: frase -> tres pistas θ (arco, reparto, capacidad)
   cam/
     synth.py          #   C2 · curva de paso y perfil
     offset.py         #   C2 · offset por radio de rodillo
@@ -269,6 +270,9 @@ falla si el esquema versionado se queda atrás.
 - **Vocabulario del dominio en español** (`leva`, `seguidor`, `pista`, `actuador`,
   `envolvente`, `cartucho`); todo lo demás, en inglés. Consistencia por encima de
   la preferencia personal.
+- Hay **dos `Trazo`** y no son lo mismo: `core.escritura.Trazo` es un trazo de
+  escritura, con el lápiz apoyado; `emit.layout.Trazo` es una primitiva de
+  dibujo. Nunca se cruzan en el mismo módulo, y las dos son la palabra correcta.
 - Nombres de los núcleos como en el baseline: `C1`…`C10` aparecen en docstrings
   para que se pueda rastrear qué implementa qué.
 - Tipos en todas las firmas públicas. `mypy` estricto en `core/`.

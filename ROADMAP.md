@@ -250,6 +250,15 @@ completo, con un solo comando.
 tres DXF, la plantilla en PDF, el informe de veredicto y la simulación del trazo.
 Incluye el reparto de grados por curvatura y el cálculo de capacidad.
 
+Partida en cuatro rebanadas, porque es la etapa más larga:
+
+| | Qué | Estado |
+| --- | --- | --- |
+| E5.1 | `core/escritura.py`: normalizar, reparametrizar por arco, repartir θ, capacidad | hecha |
+| E5.2 | De las tres pistas a las tres levas: C1 → C2 → C3 → `Pieza` | pendiente |
+| E5.3 | Simulación inversa: recorrer los perfiles y reconstruir el trazo | pendiente |
+| E5.4 | `emit/dxf.py` con kerf, `compile/cli.py` e informe | pendiente |
+
 **Verificación automática**
 - Golden files: los DXF de los casos de referencia no cambian byte a byte.
 - Cien frases generadas al azar: ninguna produce salida inválida en silencio;

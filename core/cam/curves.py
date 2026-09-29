@@ -107,3 +107,14 @@ def orientacion(curva: Arreglo) -> float:
     y = curva[:, 1]
     area = float(np.sum(x * np.roll(y, -1) - np.roll(x, -1) * y)) / 2.0
     return 1.0 if area >= 0.0 else -1.0
+
+
+def cicloidal(s: Arreglo) -> Arreglo:
+    """Ley de desplazamiento cicloidal, de 0 a 1 mientras `s` va de 0 a 1.
+
+    Velocidad **y aceleración** nulas en los dos extremos. Es la ley que se
+    usa para subir y bajar el lápiz: una rampa lineal tendría aceleración
+    infinita al arrancar, y eso en una leva es un golpe que se oye y que
+    marca el perfil.
+    """
+    return np.asarray(s, dtype=np.float64) - np.sin(TAU * np.asarray(s)) / TAU
