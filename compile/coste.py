@@ -31,6 +31,7 @@ import json
 import math
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Protocol
 
 import numpy as np
 from pydantic import BaseModel, ConfigDict, Field
@@ -94,12 +95,61 @@ class Fresado(BaseModel):
         return por_minuto / SEGUNDOS_POR_MINUTO
 
 
+class Corte(Protocol):
+    """Lo que hay que pagar por cortar un bloque de levas.
+
+    Hay dos formas de saberlo y las dos hacen falta, porque sirven para
+    cosas distintas. `PrecioCerrado` es lo que se paga: un número acordado
+    con el taller, que es dato. `Tarifa` es lo que *debería* costar según la
+    geometría, y es lo que permite mirar un presupuesto y saber si es caro.
+    """
+
+    def coste(self, segundos: float) -> float: ...
+
+
+class PrecioCerrado(BaseModel):
+    """Lo que factura el taller por un bloque de levas, cerrado de antemano.
+
+    Es el modelo que se usa mientras el mecanizado esté externalizado: un
+    precio por cartucho, pactado, que no depende del tiempo de máquina ni de
+    la frase del cliente. Tiene dos virtudes prácticas.
+
+    **Se puede presupuestar sin compilar.** El comercial dice un precio antes
+    de que el cliente escriba nada, porque el bloque siempre cuesta lo mismo.
+
+    **Quita de en medio la discusión del amarre.** Con tarifa por hora, que
+    las tres levas salgan de un amarre o de tres cambia el precio a la
+    mitad, y eso es una conversación en cada pedido. Con precio cerrado, esa
+    conversación se tiene una vez.
+
+    Lo que se pierde es la señal: si el taller sube su precio, ya no se ve
+    por qué. Por eso el informe sigue imprimiendo el tiempo de máquina y lo
+    que costaría por tarifa.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    euros_por_bloque: float = Field(gt=0.0)
+    proveedor: str = ""
+    cerrado: bool = False
+    """False mientras sea una previsión nuestra y no un precio pactado."""
+
+    def coste(self, segundos: float) -> float:
+        # El argumento sobra a propósito: es la firma de `Corte`, y que aquí
+        # no se use es justo lo que significa tener el precio cerrado.
+        del segundos
+        return self.euros_por_bloque
+
+
 class Tarifa(BaseModel):
-    """Lo que cobra quien corta.
+    """Lo que cobra quien corta, por hora.
 
     La preparación se paga **una vez por lote**, no por pieza: es lo que
     decide si las tres levas de un pedido salen de un amarre o de tres, y en
     una pieza cuyo tiempo de corte son minutos, es la partida mayor.
+
+    Con el mecanizado externalizado a precio cerrado, esto ya no es lo que
+    se paga: es la vara de medir con la que se juzga un presupuesto.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -218,6 +268,9 @@ class Precios(BaseModel):
     fecha: str = Field(min_length=1)
     cartucho: list[Linea]
     plataforma: list[Linea]
+    corte_por_bloque: PrecioCerrado | None = None
+    """Lo que cuesta cortar un cartucho fuera. Mientras esté externalizado,
+    es esto y no la tarifa lo que se paga."""
 
 
 def cargar_precios(ruta: Path | str = Path("bench/precios.json")) -> Precios:
@@ -247,6 +300,12 @@ class Valoracion:
     segundos_de_maquina: float
     levas_por_plancha: int
     sin_verificar: tuple[str, ...]
+    mecanizado_por_tarifa: float
+    """Lo que costaría el corte a tarifa por hora, con la geometría real.
+    Es la vara de medir del precio cerrado, no lo que se paga."""
+    precio_cerrado: bool
+    """False mientras el número sea una previsión nuestra y no un precio
+    pactado con un taller."""
 
     @property
     def cartucho(self) -> float:
@@ -275,7 +334,7 @@ def valorar(
     maquina: Escribiente,
     precios: Precios,
     fresado: Fresado | None = None,
-    tarifa: Tarifa | None = None,
+    corte: Corte | None = None,
 ) -> Valoracion:
     """Pone precio a un pedido ya compilado.
 
@@ -285,11 +344,14 @@ def valorar(
     triplicaría la partida mayor del cartucho.
     """
     fresado = fresado or Fresado()
-    tarifa = tarifa or Tarifa()
+    corte = corte or precios.corte_por_bloque or Tarifa()
     espesor = maquina.espesor_leva
 
+    # El tiempo se calcula siempre, aunque el precio sea cerrado: es lo que
+    # permite mirar una factura y saber por qué es lo que es.
     segundos = tiempo_de_fresado(compilacion.piezas, espesor, fresado)
-    mecanizado = tarifa.coste(segundos)
+    mecanizado = corte.coste(segundos)
+    por_tarifa = Tarifa().coste(segundos)
 
     # Cuántas levas salen de una plancha: reparto por estantes con el lado
     # de la caja envolvente más el diámetro de la fresa, que es el sitio que
@@ -324,13 +386,17 @@ def valorar(
         segundos_de_maquina=segundos,
         levas_por_plancha=levas_por_plancha,
         sin_verificar=sin_verificar,
+        mecanizado_por_tarifa=por_tarifa,
+        precio_cerrado=isinstance(corte, PrecioCerrado) and corte.cerrado,
     )
 
 
 __all__ = [
     "IVA",
+    "Corte",
     "Fresado",
     "Linea",
+    "PrecioCerrado",
     "Precios",
     "Recorrido",
     "Tarifa",

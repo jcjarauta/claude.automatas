@@ -176,22 +176,24 @@ def informe(
         lineas += [
             "## Lo que cuesta",
             "",
-            "Precios de catálogo con IVA, de `bench/precios.json`. El corte **no** sale"
-            " de una tabla: ninguna plataforma ni ningún taller publica el precio de"
-            " esta pieza. Se calcula con la geometría real y una tarifa declarada.",
+            "Precios de catálogo con IVA, de `bench/precios.json`. El corte de las"
+            " levas está **externalizado a precio cerrado por bloque**: no depende de"
+            " la frase, así que se puede presupuestar antes de compilar.",
             "",
             f"- Material de las tres levas: {valoracion.material_del_cartucho:.2f} €"
             f" — salen {valoracion.levas_por_plancha // 3} cartuchos de una plancha"
             f" de 1 × 1 m",
-            f"- Tiempo de máquina de las tres: **{minutos:.1f} min** en un solo amarre",
-            f"- Corte: {valoracion.mecanizado:.2f} €",
+            f"- Corte del bloque: {valoracion.mecanizado:.2f} €"
+            + ("" if valoracion.precio_cerrado else " *(previsión, sin presupuesto)*"),
             f"- **Cartucho, que se rehace en cada pedido: {valoracion.cartucho:.2f} €**",
             f"- Plataforma, que va a stock: {valoracion.plataforma:.2f} €",
             f"- **Total de material y compras: {valoracion.total:.2f} €**",
             "",
-            "El corte es casi todo **preparación**: el tiempo de máquina son minutos y"
-            " se paga el amarre. Cortar las tres levas por separado triplica la partida"
-            " mayor del cartucho.",
+            f"Para juzgar ese precio: las tres levas son **{minutos:.1f} min de máquina**"
+            f" y a 55 €/h con un amarre y un cuarto de hora de preparación saldrían a"
+            f" {valoracion.mecanizado_por_tarifa:.2f} €. El corte es casi todo"
+            f" preparación, así que lo que hay que cerrar con el taller no es la tarifa:"
+            f" es que **las tres levas salgan de un solo amarre**.",
             "",
         ]
         if valoracion.sin_verificar:

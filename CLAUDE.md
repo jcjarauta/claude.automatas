@@ -54,7 +54,7 @@ uv run python scripts/plantillas_demo.py      # plantillas 1:1 de muestra
 uv run python scripts/regenerar_golden.py     # SOLO si el cambio es intencionado
 
 uv run python -m compile.cli demo/hola.json --out build/   # compilar un pedido
-uv run python -m compile.cli demo/hola.json --euros-hora 95  # con otra tarifa de corte
+uv run python -m compile.cli demo/hola.json --corte 28      # con un presupuesto real del taller
 uv run uvicorn api.main:app --reload                       # API en local
 npm --prefix web run dev                                   # frontend en local
 ```
@@ -374,6 +374,13 @@ falla si el esquema versionado se queda atrás.
   2·π·r_fresa exactamente. Y lo que manda no es el tiempo de corte, que son
   minutos, sino la **preparación**: las tres levas en un amarre cuestan la
   mitad que en tres.
+- **Confundir una previsión con un precio.** El corte de las levas está
+  externalizado a **precio cerrado por bloque**, y el número que hay puesto
+  es nuestro, no de un taller: `PrecioCerrado.cerrado` es `False` y tanto el
+  informe como el CLI lo rotulan «previsión». Cuando llegue el presupuesto,
+  se cambia el importe, se pone el proveedor y se pasa a `true`. El cálculo
+  por tarifa sigue ahí, y no es lo que se paga: es la vara para saber si un
+  presupuesto es caro.
 - **Unidades.** El bug más caro y el más fácil de cometer. Usa `core/units.py`.
   Cada magnitud lleva el rango más estrecho que sea plausible: `Longitud` llega
   a diez metros y por eso un espesor usa `Espesor`, que se queda en cien

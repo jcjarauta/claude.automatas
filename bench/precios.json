@@ -3,7 +3,6 @@
   "moneda": "EUR",
   "iva": 0.21,
   "nota": "Precios de catálogo público leídos en la fecha indicada, con su URL. Todo se normaliza a IVA INCLUIDO: Arrels Fundació no repercute IVA en la mayor parte de su actividad, así que el IVA soportado es coste y no un anticipo. 'verificado': false significa que el precio no se pudo leer en la página del proveedor y está pendiente de pedir.",
-
   "mecanizado": {
     "nota": "Ningún taller de Barcelona ni ninguna plataforma online publica el precio de esta pieza: todas exigen subir el archivo. Lo único publicado son tarifas horarias. Por eso el coste del corte se CALCULA a partir de la geometría real y de una tarifa declarada, en vez de copiarse de una tabla.",
     "tarifas_por_hora": [
@@ -36,7 +35,10 @@
         "concepto": "mercado europeo, fresado 3 ejes, rango de guía de compra",
         "proveedor": "MakerVerse",
         "euros_por_hora": 95.0,
-        "rango": [70.0, 120.0],
+        "rango": [
+          70.0,
+          120.0
+        ],
         "iva_incluido": false,
         "verificado": true,
         "url": "https://www.makerverse.com/resources/cnc-manufacturing-costs-calculation/"
@@ -57,7 +59,10 @@
         "precio": 1199.0,
         "divisa": "USD",
         "iva_incluido": false,
-        "area_util_mm": [400, 300],
+        "area_util_mm": [
+          400,
+          300
+        ],
         "verificado": true,
         "nota": "Declara ±0,05 mm circular. 10.000 rpm son pocas para fresa de Ø3.",
         "url": "https://www.sainsmart.com/products/proverxl-4030-v2"
@@ -66,7 +71,10 @@
         "concepto": "Makera Carvera Air, bastidor de fundición, cerrada, 200 W 13.000 rpm",
         "precio": 2249.0,
         "iva_incluido": true,
-        "area_util_mm": [300, 200],
+        "area_util_mm": [
+          300,
+          200
+        ],
         "verificado": true,
         "nota": "Run-out <0,01 mm. POM no aparece en su lista de plásticos: preguntar.",
         "url": "https://eu.makera.com/products/carvera-air"
@@ -76,7 +84,10 @@
         "precio": 2800.0,
         "divisa": "USD",
         "iva_incluido": false,
-        "area_util_mm": [203, 203],
+        "area_util_mm": [
+          203,
+          203
+        ],
         "verificado": true,
         "nota": "Las rpm son las adecuadas para fresa de Ø3 en POM. Precio en euros por confirmar con el distribuidor europeo.",
         "url": "https://shop.carbide3d.com/products/nomad-3"
@@ -85,7 +96,10 @@
         "concepto": "Sorotec Hobby-Line 4530, kit con husillo SFM 800 W",
         "precio": 2299.0,
         "iva_incluido": true,
-        "area_util_mm": [300, 450],
+        "area_util_mm": [
+          300,
+          450
+        ],
         "verificado": true,
         "url": "https://www.sorotec.de/shop/Instant-Milling-Kit-Hobby-Line-4530-EN.html?language=en"
       },
@@ -93,13 +107,16 @@
         "concepto": "Makera Carvera, cambio automático de 6 herramientas, 15.000 rpm",
         "precio": 5249.0,
         "iva_incluido": true,
-        "area_util_mm": [360, 240],
+        "area_util_mm": [
+          360,
+          240
+        ],
         "verificado": true,
         "url": "https://eu.makera.com/products/carvera"
       }
-    ]
+    ],
+    "nota_del_precio_cerrado": "Mientras el mecanizado esté externalizado, el corte de las tres levas se asume como COSTE FIJO POR BLOQUE. 35 EUR es una previsión nuestra, no un precio pactado: por eso 'cerrado' es false. Sale de acotar el cálculo por arriba. Con la geometría real y 15 min de preparación, el corte sale a 20,97 EUR a 55,85 EUR/h (tarifa universitaria) y a 35,67 EUR a 95 EUR/h (mercado europeo de 3 ejes). Un Fab Lab con minimo de 30 min factura 32,50. El caso malo son 48,90 EUR, y es cortar las tres levas en tres amarres distintos en vez de uno: ESO es lo que hay que cerrar con el taller, no el precio por hora. Cuando haya presupuesto firmado, poner el importe, el proveedor y cerrado=true."
   },
-
   "cartucho": [
     {
       "concepto": "POM-C negro, plancha 5 mm",
@@ -122,7 +139,6 @@
       "url": "https://es.rs-online.com/web/p/espaciadores/2240382"
     }
   ],
-
   "plataforma": [
     {
       "concepto": "Rodillo de seguidor y pivotes de rodamiento",
@@ -292,5 +308,10 @@
       "verificado": true,
       "url": "https://www.ferreteriacampollano.com/tornilleria-y-fijaciones/tornillos-allen/din-912.html"
     }
-  ]
+  ],
+  "corte_por_bloque": {
+    "euros_por_bloque": 35.0,
+    "proveedor": "",
+    "cerrado": false
+  }
 }

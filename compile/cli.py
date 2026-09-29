@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 
 from compile.conjunto import montar
-from compile.coste import Tarifa, cargar_precios, valorar
+from compile.coste import PrecioCerrado, cargar_precios, valorar
 from compile.energia import Accionamiento, analizar
 from compile.escribiente import Escribiente, compilar
 from compile.informe import escribir_informe, resumen
@@ -70,10 +70,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     partes.add_argument("--sin-dxf", action="store_true", help="solo papel")
     partes.add_argument(
-        "--euros-hora",
+        "--corte",
         type=float,
-        default=55.0,
-        help="tarifa del taller que corta las levas, para valorar el pedido",
+        default=None,
+        help="lo que cobra el taller por el bloque de tres levas, si no es el de bench/",
     )
     partes.add_argument(
         "--step",
@@ -104,12 +104,12 @@ def main(argv: list[str] | None = None) -> int:
         montaje, veredicto_montaje = montar(compilacion, maquina)
         energia, veredicto_energia = analizar(compilacion, montaje.inercia, accionamiento)
         if PRECIOS.exists():
-            valoracion = valorar(
-                compilacion,
-                maquina,
-                cargar_precios(PRECIOS),
-                tarifa=Tarifa(euros_por_hora=opciones.euros_hora),
+            corte = (
+                PrecioCerrado(euros_por_bloque=opciones.corte, cerrado=True)
+                if opciones.corte is not None
+                else None
             )
+            valoracion = valorar(compilacion, maquina, cargar_precios(PRECIOS), corte=corte)
 
     destino: Path = opciones.out
     destino.mkdir(parents=True, exist_ok=True)
@@ -142,10 +142,11 @@ def main(argv: list[str] | None = None) -> int:
 
     print(resumen(compilacion))
     if valoracion is not None:
+        aviso = "" if valoracion.precio_cerrado else " (previsión)"
         print(
-            f"cartucho {valoracion.cartucho:.2f} € "
-            f"({valoracion.segundos_de_maquina / 60:.1f} min de máquina) "
-            f"+ plataforma {valoracion.plataforma:.2f} €"
+            f"cartucho {valoracion.cartucho:.2f} €{aviso} "
+            f"+ plataforma {valoracion.plataforma:.2f} € "
+            f"= {valoracion.total:.2f} €"
         )
     if veredicto_montaje is not None and not veredicto_montaje.apto:
         for incidencia in veredicto_montaje.errores:

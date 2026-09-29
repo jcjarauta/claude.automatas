@@ -7,6 +7,11 @@ Esta ficha existe para normalizar la fabricación: fija qué se compra, a quién
 y qué se hace en el taller. No es un presupuesto cerrado — faltan por pedir
 media docena de precios— pero sí es el esqueleto contra el que se piden.
 
+**El mecanizado de la pieza personalizada se externaliza**, y se trata como
+coste fijo por bloque de levas. No se compra máquina mientras E4 no haya
+dicho si el modelo predice la realidad. La sección 3bis lo razona y deja
+escrito el criterio para reabrirlo.
+
 ---
 
 ## 1. Qué es el producto
@@ -100,8 +105,14 @@ alemanes y cotizan en neto.
 | --- | --- |
 | POM-C, tres levas | 2,70 |
 | Dos separadores de latón | 0,38 |
-| **Corte de las tres levas** | **20,65** |
-| **Cartucho** | **23,73** |
+| **Corte del bloque, externalizado a precio cerrado** | **35,00** |
+| **Cartucho** | **38,08** |
+
+Los 35 € son **una previsión nuestra, no un precio pactado**: el fichero de
+precios lo marca con `cerrado: false` y el informe de cada pedido lo dice.
+Cuando haya presupuesto firmado se sustituye el número y se pone el nombre
+del taller. De dónde sale esa cifra, y qué hay que negociar para que no
+suba, está en la sección siguiente.
 
 ### 3b. La plataforma, que va a stock
 
@@ -129,24 +140,25 @@ alemanes y cotizan en neto.
 
 | | € |
 | --- | --- |
-| Cartucho | 23,73 |
+| Cartucho | 38,08 |
 | Plataforma | 81,09 |
-| **Material y compras de un escribiente** | **104,82** |
+| **Material y compras de un escribiente** | **119,17** |
 
-Son **40 € más** de lo que decía la estimación anterior de 60-65 €, y la
+Son **55 € más** de lo que decía la estimación anterior de 60-65 €, y la
 diferencia no es que algo haya subido: es que antes faltaban el corte, los
 muelles, los casquillos, los postes, el portaminas y el material del
 volante, y que la mitad de los precios estaban en neto.
 
-Sobre un PVP de 150-400 €, esto es entre el **26 % y el 70 %**. En el
+Sobre un PVP de 150-400 €, esto es entre el **30 % y el 79 %**. En el
 extremo bajo de la horquilla el producto no deja margen para pagar horas de
 taller, que es de lo que se trata. **La conclusión de precio es que el
 escribiente no se puede vender a 150 €.** Su sitio está en 300-400.
 
 Dónde está el dinero, por orden:
 
-1. **El corte de las levas, 20,65 €** — un 20 % del total, y es la única
-   partida que se paga en cada pedido.
+1. **El corte del bloque, 35,00 €** — casi un 30 % del total, y es la única
+   partida que se paga en cada pedido. Es también la única que todavía no
+   tiene presupuesto.
 2. **La transmisión, 25,64 €** — dos engranajes. Pasar de módulo 1 a módulo
    0,7 ya ahorró 2,63 € y bajó la rueda de Ø62 a Ø43. Una transmisión por
    correa GT2 costaría unos 10 € y es la alternativa a valorar con la pieza
@@ -156,18 +168,33 @@ Dónde está el dinero, por orden:
 
 ---
 
-## 3bis. El corte de las levas, que es la partida rara
+## 3bis. El corte de las levas: por qué 35 € y qué negociar
+
+**Decisión tomada: el mecanizado de la pieza personalizada se externaliza**,
+y se asume como coste fijo por bloque de levas. No se compra máquina. El
+motivo es de orden, no de dinero: **E4 —el banco de ensayo— todavía no ha
+dicho si el modelo predice la realidad**, y no se inmoviliza capital en la
+fabricación de un producto cuyo número clave sigue siendo una promesa. Al
+final de esta sección está el criterio para reabrirlo.
+
+Externalizar a precio cerrado tiene además dos ventajas que no son menores:
+
+- **Se presupuesta sin compilar.** El bloque cuesta lo mismo sea cual sea la
+  frase, así que se puede dar precio al cliente antes de que escriba nada.
+  Con tarifa por hora habría que compilar para saber qué cobrar.
+- **La conversación del amarre se tiene una vez.** Ver abajo por qué eso
+  vale la mitad del precio.
+
+### De dónde salen los 35 €
 
 **Ningún proveedor publica lo que cuesta esta pieza.** Se han mirado once
 plataformas de mecanizado online y seis talleres de Barcelona: todas piden
 subir el archivo, y ninguna publica tarifa, mínimo ni setup. Lo único
 publicado son precios por hora.
 
-Así que el corte no se copia de ninguna tabla: **se calcula**. El compilador
-ya conoce la geometría exacta de cada leva, y con unos parámetros de corte
-declarados sale el tiempo de máquina.
-
-### Lo que hay que fresar
+Así que la cifra no se copia de ninguna tabla: se acota calculando. El
+compilador conoce la geometría exacta de cada leva, y con unos parámetros de
+corte declarados sale el tiempo de máquina.
 
 | | |
 | --- | --- |
@@ -177,63 +204,69 @@ declarados sale el tiempo de máquina.
 | Taladros | Ø10 interpolado en helicoidal, Ø3 pinchado |
 | **Tiempo de máquina, las tres levas** | **7,5 min** |
 
-El número está contrastado por dos caminos que no comparten código: por
-recorrido de herramienta salen 7,5 min, y por volumen arrancado dividido
-entre la tasa de arranque salen 4,1 min de desbaste, a los que el acabado
-añade lo que falta. Hay un test que lo comprueba.
+Contrastado por dos caminos que no comparten código: por recorrido de
+herramienta salen 7,5 min, y por volumen arrancado dividido entre la tasa de
+arranque salen 4,1 min de desbaste, a los que el acabado añade lo que falta.
+Hay un test que lo comprueba.
 
-### Lo que cuesta, según quién corte
+Con eso, el corte del bloque debería costar:
 
-| Quién | Tarifa | Corte de las tres | Cartucho |
-| --- | --- | --- | --- |
-| Taller universitario (UPM) | 38 €/h | 14,27 € | 17,35 € |
-| Taller universitario (Unizar) | 55,85 €/h | 20,97 € | 24,05 € |
-| Fab Lab con mínimo de 30 min | 65 €/h | 32,50 € | 35,58 € |
-| Mercado europeo, 3 ejes | 95 €/h | 35,67 € | 38,75 € |
-| **Las tres por separado, tres amarres** | 55,85 €/h | **48,90 €** | **51,98 €** |
-
-**La fila que importa es la última.** Siete minutos y medio de máquina a
-55,85 €/h son 7 €. Todo lo demás es **preparación**: los 15 minutos de
-amarrar, poner cero y cargar el programa. Cortar las tres levas de un pedido
-en un solo amarre frente a tres por separado es la diferencia entre 21 € y
-49 €, sin que cambie ni un milímetro de geometría.
-
-De ahí salen dos peticiones concretas al taller, y son las que hay que
-llevar por teléfono:
-
-1. **Que las tres levas del pedido vayan en un amarre.** Mismo material,
-   mismo espesor, mismo programa.
-2. **Cuál es el mínimo de facturación.** Con un trabajo de veinte minutos,
-   el mínimo puede ser el precio entero.
-
-### Y la pregunta que esto abre: máquina propia
-
-De una plancha de 1 × 1 m salen **81 levas, o sea 27 cartuchos**: entre un
-trimestre y un año de producción. Y el trabajo anual de máquina, a 20-100
-pedidos, son entre **2,5 y 12,5 horas**.
-
-| Máquina | Precio | Cartuchos para pagarla |
+| Escenario | Tarifa | Corte del bloque |
 | --- | --- | --- |
-| Genmitsu PROVerXL 4030 V2 | ~1.450 € | 71 |
-| Makera Carvera Air | 2.249 € | 109 |
-| Carbide 3D Nomad 3 | ~3.390 € | 165 |
-| Makera Carvera (cambiador de 6) | 5.249 € | 255 |
+| Taller universitario (UPM) | 38 €/h | 14,27 € |
+| Taller universitario (Unizar) | 55,85 €/h | 20,97 € |
+| Fab Lab con mínimo de 30 min | 65 €/h | 32,50 € |
+| Mercado europeo, 3 ejes | 95 €/h | 35,67 € |
+| **Las tres por separado, tres amarres** | 55,85 €/h | **48,90 €** |
 
-A 20 pedidos al año, una máquina de 2.250 € tarda cinco años. A 100, tarda
-uno. **Pero el cálculo de amortización no es el argumento bueno**, y conviene
-decirlo: en un taller ocupacional la hora de taller no es un coste que se
-evita, es el producto. Los argumentos buenos son otros dos:
+**35 € acota por arriba todo salvo el caso malo**, y el caso malo es
+evitable. Por eso es la previsión que se usa hasta tener presupuesto.
 
-- **El plazo.** El cartucho es la pieza personalizada. Encargarlo fuera mete
-  entre tres días y dos semanas entre el pedido y la entrega, en la única
-  pieza que no se puede tener a stock.
-- **La iteración.** E4 —el banco de ensayo, la puerta que dice si el modelo
-  predice la realidad— se hace cortando levas, midiéndolas y volviendo a
-  cortar. Con corte externo, cada vuelta de ese bucle son dos semanas.
+### Lo que hay que negociar, y no es el precio por hora
 
-Lo que hay que comprobar antes de comprar nada: que la máquina llega a
-±0,05 mm **en el canto**, no en el movimiento. Ninguna especificación de
-fabricante lo dice; hay que cortar una leva de prueba y medirla.
+Siete minutos y medio de máquina a 55,85 €/h son **7 €**. Todo lo demás es
+**preparación**: los quince minutos de amarrar, poner cero y cargar el
+programa. De ahí salen las tres únicas cosas que hay que llevar al taller:
+
+1. **Que las tres levas del pedido salgan de un solo amarre.** Mismo
+   material, mismo espesor, mismo programa. Es la diferencia entre 21 € y
+   49 €, sin que cambie un milímetro de geometría.
+2. **Cuál es el mínimo de facturación.** Con un trabajo de veinte minutos,
+   el mínimo *es* el precio. Es el número que más puede desviar la
+   previsión.
+3. **Un precio cerrado por bloque, no una tarifa.** Con 20 a 100 pedidos al
+   año hay volumen para pedirlo, y quita la negociación de cada pedido.
+
+Una nota de contexto para esa conversación: de una plancha de 1 × 1 m salen
+**81 levas, o sea 27 cartuchos**. Al taller le conviene saberlo, porque
+significa que el material lo pone una vez por trimestre y no por pedido.
+
+### Cuándo se reabre lo de la máquina propia
+
+Aparcado, no descartado. Los números para cuando toque: el trabajo anual de
+máquina son **2,5 a 12,5 horas** a 20-100 pedidos, y una fresadora de
+sobremesa capaz de esta pieza está entre 1.450 € (Genmitsu PROVerXL 4030) y
+5.250 € (Makera Carvera), con la Makera Carvera Air (2.249 €) y la Carbide
+Nomad 3 (~3.390 €) en medio. A 35 € de corte por bloque, una máquina de
+2.250 € se paga con **64 cartuchos**.
+
+Pero la amortización no es el argumento bueno, y conviene decirlo antes de
+que alguien lo use: en un taller ocupacional la hora de taller no es un
+coste que se evita, **es el producto**. Los argumentos buenos son otros dos,
+y los dos son de plazo:
+
+- **El cartucho es la única pieza que no se puede tener a stock.**
+  Encargarlo fuera mete entre tres días y dos semanas entre el pedido y la
+  entrega.
+- **E4 se hace cortando levas, midiéndolas y volviendo a cortar.** Con corte
+  externo, cada vuelta de ese bucle son dos semanas.
+
+**El criterio para reabrirlo**, entonces, no es un número de pedidos: es que
+E4 esté cerrado y que el plazo de entrega se haya convertido en el cuello de
+botella real. Si eso pasa, lo que hay que comprobar antes de comprar nada es
+que la máquina llega a ±0,05 mm **en el canto**, no en el movimiento:
+ninguna especificación de fabricante lo dice, y hay que cortar una leva de
+prueba y medirla.
 
 ## 4. Decisiones que esta ficha normaliza
 
@@ -391,12 +424,15 @@ rompe.
 Ninguno de estos es un dato que se pueda inventar. **Son llamadas de
 teléfono.** Están por orden de lo que mueven en el precio.
 
-1. **El corte, a Polygom** (696 052 254, info@polygom.es) y a dos más para
+1. **Cerrar el precio del bloque de levas.** Es la única partida que se paga
+   en cada pedido y la única sin presupuesto: los 35 € son previsión
+   nuestra. A Polygom (696 052 254, info@polygom.es) y a dos más para
    comparar: Baño-Lid (93 721 44 29), Talleres Torrecillas (93 424 50 48),
    Comecanic (93 118 44 86), CIM UPC (93 401 71 71). Enviar el DXF de una
-   leva y pedir cuatro cosas: precio de las tres en **un solo amarre**,
-   mínimo de facturación, si garantizan ±0,05 mm en el perfil y H7 en el
-   Ø10, y plazo. Es la partida que se paga en cada pedido.
+   leva y pedir cinco cosas: **precio cerrado por bloque de tres**, que
+   salgan de **un solo amarre**, mínimo de facturación, si garantizan
+   ±0,05 mm en el perfil y H7 en el Ø10, y plazo de entrega. El plazo
+   importa tanto como el precio: es lo que el cliente espera.
 2. **Tolerancia de espesor de la plancha de POM-C de 5 mm** — no está en
    ninguna ficha, y es lo que decide si la pila de tres levas se come el
    hueco. A Polygom, en la misma llamada.

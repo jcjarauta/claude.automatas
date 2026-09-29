@@ -19,6 +19,7 @@ import pytest
 from compile.coste import (
     IVA,
     Fresado,
+    PrecioCerrado,
     Tarifa,
     cargar_precios,
     con_iva,
@@ -195,17 +196,66 @@ def test_el_mecanizado_pesa_mas_que_el_material_de_las_levas():
     assert valoracion.mecanizado > 5.0 * valoracion.material_del_cartucho
 
 
-def test_una_frase_mas_larga_no_encarece_el_corte_de_forma_apreciable():
-    """El perímetro de la leva apenas cambia con la frase —lo que cambia es
-    la ondulación, no el tamaño—, así que el precio del cartucho es estable
-    y se puede dar antes de compilar."""
-    corta = valorar(compilar(hola()), Escribiente(), cargar_precios(PRECIOS))
+def test_una_frase_mas_larga_no_encarece_el_corte():
+    """Con precio cerrado es exacto, y por tarifa casi: el perímetro de la
+    leva apenas cambia con la frase —lo que cambia es la ondulación, no el
+    tamaño—. Por eso el cartucho se puede presupuestar antes de compilar."""
     larga_escritura = Escritura(
         nombre="hola hola",
         trazos=[*hola().trazos, Trazo(puntos=[(mm(x), mm(2.0)) for x in (40.0, 50.0, 60.0)])],
     )
+    corta = valorar(compilar(hola()), Escribiente(), cargar_precios(PRECIOS))
     larga = valorar(compilar(larga_escritura), Escribiente(), cargar_precios(PRECIOS))
-    assert larga.mecanizado == pytest.approx(corta.mecanizado, rel=0.15)
+    assert larga.mecanizado == pytest.approx(corta.mecanizado)
+    assert larga.mecanizado_por_tarifa == pytest.approx(corta.mecanizado_por_tarifa, rel=0.15)
+
+
+# ---------------------------------------------------------------------------
+# Precio cerrado: lo que se paga mientras el corte esté fuera
+# ---------------------------------------------------------------------------
+
+
+def test_el_precio_cerrado_no_depende_del_tiempo_de_maquina():
+    """Es toda la gracia de cerrarlo: el comercial da un precio antes de que
+    el cliente escriba nada."""
+    cerrado = PrecioCerrado(euros_por_bloque=35.0)
+    assert cerrado.coste(60.0) == cerrado.coste(6000.0) == 35.0
+
+
+def test_por_defecto_se_usa_el_precio_cerrado_del_fichero_y_no_la_tarifa():
+    precios = cargar_precios(PRECIOS)
+    assert precios.corte_por_bloque is not None
+    valoracion = valorar(compilar(hola()), Escribiente(), precios)
+    assert valoracion.mecanizado == pytest.approx(precios.corte_por_bloque.euros_por_bloque)
+
+
+def test_una_prevision_se_distingue_de_un_precio_pactado():
+    """Un número que nos hemos inventado nosotros y uno que ha firmado un
+    taller no valen lo mismo, y el informe tiene que decir cuál es cuál."""
+    precios = cargar_precios(PRECIOS)
+    prevision = valorar(compilar(hola()), Escribiente(), precios)
+    pactado = valorar(
+        compilar(hola()),
+        Escribiente(),
+        precios,
+        corte=PrecioCerrado(euros_por_bloque=28.0, proveedor="Polygom", cerrado=True),
+    )
+    assert not prevision.precio_cerrado
+    assert pactado.precio_cerrado
+
+
+def test_el_calculo_por_tarifa_sigue_estando_para_juzgar_el_presupuesto():
+    """Aunque el precio sea cerrado, el tiempo de máquina se calcula igual:
+    es lo que permite mirar una factura y saber por qué es lo que es."""
+    valoracion = valorar(
+        compilar(hola()),
+        Escribiente(),
+        cargar_precios(PRECIOS),
+        corte=PrecioCerrado(euros_por_bloque=120.0, cerrado=True),
+    )
+    assert valoracion.mecanizado == pytest.approx(120.0)
+    assert valoracion.segundos_de_maquina > 0.0
+    assert valoracion.mecanizado_por_tarifa < valoracion.mecanizado, "120 € sería un atraco"
 
 
 def test_la_maquina_propia_se_amortiza_y_el_informe_dice_en_cuanto():
