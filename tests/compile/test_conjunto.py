@@ -158,3 +158,16 @@ def test_el_veredicto_del_conjunto_lleva_sus_numeros():
     _, veredicto = montar(compilar(hola()), Escribiente())
     for clave in ("altura_pila", "masa_cartucho", "inercia_cartucho", "holgura_al_poste"):
         assert clave in veredicto.metricas
+
+
+def test_el_obstaculo_es_la_valona_del_casquillo_y_no_el_poste():
+    """Un poste necesita casquillo, y la valona del casquillo es bastante
+    mayor que el eje. Contarlo mal fue lo que casi deja el conjunto sin hueco:
+    con valona de Ø28 el aviso salta, con la de Ø12 sobra sitio."""
+    compilacion = compilar(hola())
+    maquina = Escribiente()
+    _, con_valona_grande = montar(compilacion, maquina, Cartucho(radio_poste=mm(14.0)))
+    _, con_valona_chica = montar(compilacion, maquina, Cartucho(radio_poste=mm(6.0)))
+    assert "poco_hueco_al_poste" in [i.codigo for i in con_valona_grande.avisos]
+    assert con_valona_chica.apto
+    assert not con_valona_chica.incidencias

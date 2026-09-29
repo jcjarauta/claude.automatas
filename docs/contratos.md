@@ -25,6 +25,7 @@ donde no toca escribe basura, y no se nota hasta que se gira la manivela.
 | Pasador de índice | Ø3 mm, a **18 mm** del centro, sobre +X |
 | Marca grabada | Una línea del pasador al borde, rotulada `FASE 0`. Apunta al pasador |
 | Alcance | **Las tres levas y los separadores llevan el pasador en el mismo sitio** |
+| Ajuste | **Deslizante en las tres levas** (POM, H8). Apretado solo en el plato de arrastre metálico |
 
 ### Por qué así
 
@@ -43,6 +44,14 @@ Un pasador y no una cara plana en el eje: en 5 mm de POM una cara plana sobre
 un agujero de Ø10 tiene poca superficie de apoyo y se redondea con el uso. El
 pasador toma el par —48 mN·m sobre 18 mm son 2,7 N, nada— y el agujero
 redondo se queda como lo que es, un cojinete.
+
+**El pasador no aprieta en el POM.** Un DIN 6325 es m6, un ajuste pensado para
+apretar en acero, y el POM fluye en frío: la interferencia se relaja en semanas
+y el calaje se pierde **después de la venta**, en silencio y sin que nada avise.
+El pasador va deslizante en las tres levas y apretado en un solo sitio, el plato
+de arrastre metálico que lo lleva. El argumento del contrato no cambia —sigue
+habiendo una sola forma de enhebrar las tres levas— y deja de depender de una
+interferencia sobre plástico.
 
 La marca grabada no añade una referencia: **señala la que hay**. Sale del
 pasador y llega al borde, para que la pieza y el dibujo digan lo mismo.
@@ -84,7 +93,12 @@ banco diga que el modelo predice:
 
 - Postes de seguidor: tres, a **71,1 mm** del árbol, repartidos a 120°.
   Sale de `hypot(radio_base, brazo_seguidor)` = `hypot(55, 45)`.
-- Hueco entre la leva mayor y el poste vecino: **9,0 mm** con la caja de
+- Poste de seguidor de **Ø8** con casquillo igus GFM-0810. **Lo que la leva ve
+  no es el poste: es la valona del casquillo**, que mide Ø12. Con los Ø16 que
+  se suponían antes y un casquillo de bronce con valona de Ø28, el hueco caía
+  a 3,0 mm y saltaba el aviso. El Ø16 nunca estuvo justificado: la fuerza
+  tangencial en el seguidor es de 0,7 N.
+- Hueco entre la leva mayor y ese obstáculo: **11,0 mm** con la caja de
   escritura por defecto. Encoge cuando la frase crece, y es el límite de
   conjunto que decide qué frases caben.
 - Caja de escritura: 80 × 30 mm, centrada a 100 mm sobre la línea de pivotes.
@@ -101,3 +115,5 @@ un solo compromiso, y todavía falta el dato que lo cierra.
 | --- | --- | --- | --- |
 | 2026-09-29 | Fase | Congelado. Pasador de índice Ø3 a 18 mm sobre +X, igual en las tres levas | El cartucho de una pieza deja el error de fase fuera de lo posible, en vez de fuera de lo probable |
 | 2026-09-29 | Eje | Congelado Ø10 h7, pila de 19 mm, giro horario | Medidas corrientes de catálogo; la pila sale de la geometría y está comprobada |
+| 2026-09-29 | Fase | **Añadido el ajuste** del pasador: deslizante en las tres levas, apretado solo en el plato metálico | El m6 del DIN 6325 aprieta en acero; en POM la interferencia se relaja por fluencia y el calaje se pierde tras la venta. La geometría congelada no se toca: Ø3 a 18 mm sobre +X |
+| 2026-09-29 | Bastidor | Poste de seguidor de Ø16 a **Ø8**, y el hueco se mide contra la valona del casquillo (Ø12) y no contra el poste | Un poste lleva casquillo y la valona es mucho mayor que el eje. Con la valona de bronce de Ø28 el conjunto se quedaba sin hueco |

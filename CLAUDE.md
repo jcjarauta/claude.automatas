@@ -394,6 +394,7 @@ falla si el esquema versionado se queda atrás.
 | --- | --- |
 | `docs/baseline.md` | Principios, ontología, núcleos, módulos, hitos, negocio |
 | `docs/contratos.md` | Contratos congelados: eje, bastidor, fase |
+| `docs/ficha-producto.md` | Despiece, proveedores, coste de material y decisiones de fabricación |
 | `docs/modulos/` | Una ficha por módulo del catálogo |
 | `bench/README.md` | Protocolo del banco de ensayo y datos medidos |
 
@@ -403,16 +404,23 @@ falla si el esquema versionado se queda atrás.
 pivotes anclados, palanca para el lápiz y tres levas apiladas. Tres números
 que se decidieron midiendo y no eligiendo:
 
-- **Hueco al poste: 9,0 mm** con la caja de escritura por defecto. Los tres
+- **Hueco al poste: 11,0 mm** con la caja de escritura por defecto. Los tres
   postes de seguidor están a 71 mm del árbol y atraviesan los tres planos, así
   que la leva de cada canal gira bajo los postes de los otros dos. **Ese hueco
   encoge cuando la frase crece**, y es el límite de conjunto que decide qué
   frases caben: no lo ve ninguna envolvente de C3, que juzga una leva sola.
+  Y lo que mide el hueco **no es el poste, es la valona de su casquillo**:
+  `Cartucho.radio_poste` es el radio del obstáculo. Con postes de Ø16 y
+  casquillo de bronce de valona Ø28 quedaban 3,0 mm y saltaba el aviso; con
+  Ø8 y un igus GFM-0810 de valona Ø12, quedan 11,0.
 - **Relación seguidor → brazo, 6:1.** Con relación 1 y un barrido de brazo de
   26°, mantener el ángulo de presión por debajo de 30° exige un radio base de
   110 mm: levas de 240 mm, tres apiladas. Con 6:1 el seguidor barre un sexto
   y la leva baja a 108 mm.
-- **Rodillo Ø6 mm: un MR63 (3×6×2,5).** Antes eran Ø4, un diámetro para el que
+- **Rodillo Ø6 mm: un MR63ZZ (3×6×2,5).** Las dos letras importan: el MR63
+  abierto mide 2,0 de ancho y dejaría 0,5 mm de juego axial, y un 2RS con Ø3
+  de agujero arrastra tanto como el rozamiento que lo hace rodar —el rodillo
+  deslizaría en vez de rodar—. Antes eran Ø4, un diámetro para el que
   no hay rodamiento decente. Subir a 6:1 fue lo que permitió usar uno normal:
   con 3:1 ni el MR63 pasaba la curvatura. **Y el error bajó en vez de subir**
   —de 0,058 a 0,040 mm en la punta—, porque un seguidor que barre menos

@@ -46,9 +46,18 @@ class Cartucho(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    radio_poste: Longitud = mm(8.0)
-    """Los postes de los seguidores. Atraviesan los tres planos, así que
-    estorban a las tres levas."""
+    radio_poste: Longitud = mm(6.0)
+    """El **obstáculo** que ve la leva al girar bajo el poste de otro
+    seguidor, no el radio del poste.
+
+    Es una distinción que costó una sorpresa: un poste necesita casquillo, y
+    los casquillos con valona tienen la valona bastante mayor que el eje. Con
+    postes de Ø16 y casquillo de bronce con valona de Ø28, el hueco caía de
+    9,0 mm a 3,0 y saltaba el aviso. Con postes de Ø8 y un casquillo igus
+    GFM-0810, cuya valona es Ø12, el hueco sube a 11,0 mm.
+
+    Y el Ø16 nunca estuvo justificado: con 0,7 N de fuerza tangencial, un
+    poste de Ø8 sobra por dos órdenes de magnitud."""
     radio_eje: Longitud = mm(5.0)
     holgura_minima: Longitud = mm(3.0)
     """Lo que tiene que sobrar entre dos piezas que no se tocan. Por debajo
