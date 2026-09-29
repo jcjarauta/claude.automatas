@@ -23,9 +23,13 @@ Quién lo comprobó: PENDIENTE
 Resultado: PENDIENTE
 Evidencia: PENDIENTE
 
+CI: verde sobre el push a `main` y sobre el PR #1 de prueba
+(`docs: plantilla de cierre de etapa`). Check-run «lint, tipos y tests»
+con conclusion=success en ambos eventos.
+Repositorio: https://github.com/jcjarauta/claude.automatas
+
 ## Desviaciones
-- La verificación de CI en verde sobre un PR de prueba queda pendiente de que el
-  repositorio exista en GitHub. El workflow está escrito y es estándar.
+- Ninguna en la parte automática.
 
 ## Decisiones tomadas
 - Disposición plana de paquetes (`core/`, `compile/`, `emit/`, `api/` en la raíz)
@@ -43,5 +47,5 @@ Evidencia: PENDIENTE
 - `web/` no existe todavía; llega en E7.
 
 ## Puerta
-Automática: CERRADA.
+Automática: CERRADA — comando de verificación en verde en local y en CI.
 Humana (prueba de los cinco minutos): ABIERTA.
