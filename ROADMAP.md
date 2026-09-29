@@ -255,9 +255,9 @@ Partida en cuatro rebanadas, porque es la etapa más larga:
 | | Qué | Estado |
 | --- | --- | --- |
 | E5.1 | `core/escritura.py`: normalizar, reparametrizar por arco, repartir θ, capacidad | hecha |
-| E5.2 | De las tres pistas a las tres levas: C1 → C2 → C3 → `Pieza` | pendiente |
-| E5.3 | Simulación inversa: recorrer los perfiles y reconstruir el trazo | pendiente |
-| E5.4 | `emit/dxf.py` con kerf, `compile/cli.py` e informe | pendiente |
+| E5.2 | De las tres pistas a las tres levas: C1 → C2 → C3 → `Pieza` | hecha |
+| E5.3 | Simulación inversa: recorrer los perfiles y reconstruir el trazo | hecha |
+| E5.4 | `emit/dxf.py` con kerf, `compile/cli.py` e informe | hecha |
 
 **Verificación automática**
 - Golden files: los DXF de los casos de referencia no cambian byte a byte.
@@ -273,6 +273,8 @@ el cartucho, se gira la manivela y se mira el papel. Después se compara con la
 escritura original: ¿la reconoce quien la escribió?
 
 **Puerta.** Firma humana con la hoja escrita pegada al informe de la etapa.
+La parte automática está **cerrada**; ver `docs/etapas/E5-cierre.md`. La humana
+depende de tener las levas cortadas, y eso depende de E3b y de la copistería.
 
 **No hacer.** Interfaz. Todavía se trabaja con archivos y CLI.
 

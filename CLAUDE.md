@@ -82,6 +82,9 @@ core/                 # PURO. Geometría, cinemática, energía.
     accumulator.py    #   C10 · carga y descarga
   tolerance.py        #   C4 · cadena de tolerancias
 compile/              # Orquesta: intención -> piezas + informe. I/O permitido.
+  escribiente.py      #   La máquina concreta: compilar y simular
+  informe.py          #   El informe del pedido, en markdown
+  cli.py              #   Un pedido, un comando
 emit/
   pieza.py            #   Pieza y sus siete metadatos, compartida por los tres
   layout.py           #   Maquetación 1:1 en mm: cabecera, colocación, troceado
@@ -313,6 +316,17 @@ falla si el esquema versionado se queda atrás.
   patrón cae al 55 % y no al 50 % porque la mitad de 200 son 100, que es una
   cota rotulada, y la marca le pasaba por encima.
 - **Splines en software de láser.** Exporta polilínea densa o arcos.
+- **DXF determinista.** Un DXF lleva fecha y dos identificadores aleatorios, y
+  además declara sus clases recorriendo un **conjunto**, que en Python no tiene
+  orden estable entre procesos. Salía idéntico dentro de una ejecución y
+  distinto en la siguiente: los tests pasaban y el golden fallaba. `emit/dxf.py`
+  fija las dos cosas.
+- **Ángulo absoluto del brazo frente a desviación del seguidor.** La leva se
+  sintetiza para lo que se **desvía** el seguidor de su punto de diseño, no para
+  el ángulo al que trabaja el brazo. El brazo derecho del escribiente ronda los
+  -177°: metido tal cual en la síntesis, la leva se diseña a un cuarto de vuelta
+  de donde va a trabajar y el ángulo de presión calculado no es el real. La
+  diferencia es el **calaje**, y va en el dossier.
 - **Cuota de la API de Onshape.** Es anual, no por minuto. Una llamada por pedido.
 - **Unidades.** El bug más caro y el más fácil de cometer. Usa `core/units.py`.
   Cada magnitud lleva el rango más estrecho que sea plausible: `Longitud` llega
@@ -349,3 +363,22 @@ falla si el esquema versionado se queda atrás.
 | `docs/contratos.md` | Contratos congelados: eje, bastidor, fase |
 | `docs/modulos/` | Una ficha por módulo del catálogo |
 | `bench/README.md` | Protocolo del banco de ensayo y datos medidos |
+
+## El escribiente concreto (E5)
+
+`compile/escribiente.py` fija la máquina: brazo de cinco barras con los dos
+pivotes anclados, palanca para el lápiz y tres levas apiladas. Tres números
+que se decidieron midiendo y no eligiendo:
+
+- **Relación seguidor → brazo, 3:1.** Con relación 1 y un barrido de brazo de
+  26°, mantener el ángulo de presión por debajo de 30° exige un radio base de
+  110 mm: levas de 240 mm, tres apiladas. Con 3:1 el seguidor barre un tercio
+  y la leva baja a 114 mm. Se paga amplificando por tres el error del perfil y
+  el juego: es la cadena de tolerancias de C4 y es lo que limita subir más.
+- **Radio base 55 mm, rodillo 2 mm.** Es la combinación más pequeña que pasa
+  la envolvente sin autointersecarse.
+- **Error de trazo simulado: 0,11 mm** con 720 muestras por vuelta.
+
+El **calaje** de cada brazo —a qué ángulo se monta sobre el eje de su
+seguidor— es resultado de la compilación, no un parámetro. Va en el informe y
+tiene que llegar al dossier: montarlo mal escribe basura.
