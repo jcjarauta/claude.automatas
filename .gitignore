@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Herramientas
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.hypothesis/
+.coverage
+htmlcov/
+
+# Salidas generadas
+/out/
+/build/
+*.dxf
+*.pdf
+!docs/**/*.pdf
+
+# Entorno
+.env
+.DS_Store
+.idea/
+.vscode/
+
+# Frontend (llega en E7)
+web/node_modules/
+web/dist/
