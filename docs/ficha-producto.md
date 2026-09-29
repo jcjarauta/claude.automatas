@@ -71,46 +71,169 @@ está congelado en `docs/contratos.md`.
 | Árbol de levas | 1 | **W10H6**, CF53 h6 rectificado, Ra 0,3 | [Motedis](https://www.motedis.es/es/Eje-de-precision-10-mm-H6-acero-templado-y-rectificado) | 0,47 /120 mm |
 | Pasador de índice | 3 | **DIN 6325 Ø3 × 16** m6 | [esutil.es](https://www.esutil.es/pasador-din-6325-cilindrico-templado-de-acero-b53d0/) | 0,14 |
 | Separador de pila | 6 | **RS 224-0382**, latón Ø3,2 × Ø6 × 2 | [RS España](https://es.rs-online.com/web/p/espaciadores/2240382) | 0,19 |
-| Casquillo de pivote | 3 | **igus GFM-0810** con valona | Rodavigo / igus | *no verificado* |
-| Poste de pivote | 3 | Varilla inox Ø8 | varios | ~1,00 |
-| Rueda Z60 m1 latón | 1 | **Mädler 26306000** | [Mädler](https://www.maedler.de/Article/26306000) | 22,89 (50 ud) |
-| Piñón Z20 m1 POM | 1 | **Mädler 29302000** | [Mädler](https://www.maedler.de/Article/29302000) | 5,38 (50 ud) |
-| Muelle del seguidor | 3 | Compresión, a medida | [springmakers.net](https://www.springmakers.net/es/589-muelles-de-torsion) (Barcelona) | *por pedir* |
+| Casquillo de pivote | 3 | **igus GFM-0810-06**, valona Ø15 × 1 | [RS España](https://es.rs-online.com/web/p/plain-bearings/2692707) | 0,61 *(neto)* |
+| Poste de pivote | 3 | Eje inox X46Cr13 Ø8 h6, 70 mm | [Dold Mechatronik](https://www.dold-mechatronik.de/) | ~1,00 *(sin IVA ni portes)* |
+| Rueda Z60 **m0,7** latón, Ø ext 43,4 | 1 | **Mädler 26206000** | [Mädler](https://www.maedler.de/article/26206000) | 12,30 (50 ud, neto) |
+| Piñón Z20 **m0,7** latón, Ø ext 15,4 | 1 | **Mädler 26202000** | [Mädler](https://www.maedler.de/article/26202000) | 8,89 (50 ud, neto) |
+| Muelle del seguidor | 3 | **RS PRO 751-540**, k = 0,44 N/mm, Fmáx 19,5 N | [RS España](https://es.rs-online.com/web/p/muelles-de-compresion/0751540) | 1,25 *(neto, pack de 5)* |
 | Anillo de apriete del lápiz | 1 | **Mädler 62311000GA** o hecho en latón | [Mädler](https://www.maedler.de/Article/62311000GA) | 5,63 (50 ud) |
 | Tornillería M3/M4 A2 | ~20 | DIN 912 inox A-2, cajas de 100 | [Ferretería Campollano](https://www.ferreteriacampollano.com/tornilleria-y-fijaciones/tornillos-allen/din-912.html) | ~0,04 |
 
 ---
 
-## 3. Coste de material
+## 3. Valoración
 
-| Capítulo | €/máquina (IVA incl.) |
+Todo lo que sigue sale de `bench/precios.json` —una línea por partida, con
+fecha, proveedor y enlace— y lo calcula `compile/coste.py`, que además lo
+imprime en el informe de cada pedido. **No es una tabla escrita a mano**: se
+recalcula al cambiar un precio o al cambiar la geometría.
+
+**Todos los importes llevan IVA.** Arrels no repercute IVA en la mayor parte
+de su actividad, así que el IVA soportado no se recupera: es coste. Sumar un
+catálogo que da precios netos con otro que los da con IVA miente un 21 % en
+la parte que no se ve, y la mitad de los proveedores de esta lista son
+alemanes y cotizan en neto.
+
+### 3a. El cartucho, que se rehace en cada pedido
+
+| | € |
 | --- | --- |
-| Levas, POM-C negro 5 mm | 2,70 |
-| Base de nogal americano | 10,39 |
-| Contrachapado de abedul | 4,43 |
-| Acabado Osmo 3062 | 0,30 |
-| Ferretería (rodamientos, eje, pasadores, tornillos) | 8 – 12 |
-| Transmisión (rueda de latón + piñón POM) | ~34 |
-| Muelles, casquillos, manivela, volante | *por cerrar* |
-| **Subtotal verificado** | **≈ 60 – 65 €** |
+| POM-C, tres levas | 2,70 |
+| Dos separadores de latón | 0,38 |
+| **Corte de las tres levas** | **20,65** |
+| **Cartucho** | **23,73** |
 
-**Lo que este número dice, y es lo importante: el material no es donde está el
-coste.** Sobre un PVP de 150–400 €, todo lo anterior es entre el 15 % y el
-40 %, y la mitad se la lleva **una sola pieza**, la rueda dentada de latón.
-El resto del precio son horas de taller — que es exactamente donde tiene que
-estar en un taller ocupacional, porque esas horas son el producto social.
+### 3b. La plataforma, que va a stock
 
-Dos consecuencias prácticas:
+| Partida | Cant. | €/ud | € |
+| --- | --- | --- | --- |
+| Rueda del reductor, Mädler m0,7 Z60 latón | 1 | 14,88 | 14,88 |
+| Piñón del reductor, Mädler m0,7 Z20 latón | 1 | 10,76 | 10,76 |
+| Base de nogal americano 25 mm | 1 | 10,39 | 10,39 |
+| Portaminas Staedtler 780 C | 1 | 8,98 | 8,98 |
+| Rodillos y pivotes, MR63ZZ | 7 | 1,19 | 8,33 |
+| Anillo de apriete del lápiz | 1 | 6,81 | 6,81 |
+| Muelles de compresión RS PRO 751-540 | 3 | 1,51 | 4,54 |
+| Contrachapado de abedul 9 mm | 1 | 4,43 | 4,43 |
+| Postes de pivote, inox Ø8 h6 | 3 | 1,21 | 3,63 |
+| Volante, material (rodaja de latón Ø50) | 1 | 2,75 | 2,75 |
+| Casquillos igus GFM-0810-06 | 3 | 0,74 | 2,21 |
+| Rodamientos del árbol, 6800-2Z | 2 | 0,69 | 1,38 |
+| Tornillería inox A2 | 20 | 0,04 | 0,80 |
+| Árbol de levas, Ø10 h6 rectificado | 1 | 0,47 | 0,47 |
+| Pasadores de índice DIN 6325 Ø3 | 3 | 0,14 | 0,42 |
+| Acabado Osmo 3062 | 1 | 0,30 | 0,30 |
+| **Plataforma** | | | **81,09** |
 
-- **No optimices el nesting de las levas.** Ahorrarías ocho céntimos. Una
-  plancha de POM de 1 × 1 m cuesta 70 € y da para **27 cartuchos**: entre un
-  trimestre y un año de producción.
-- **Sí mira la transmisión.** Es el 50 % del material. La rueda de latón Z60 a
-  22,89 € es lo más caro de la máquina después de la madera, y hay
-  alternativas (módulo 0,7, correa T2,5 a 10 €) que habría que valorar con la
-  pieza en la mano.
+### 3c. El total, y lo que dice
+
+| | € |
+| --- | --- |
+| Cartucho | 23,73 |
+| Plataforma | 81,09 |
+| **Material y compras de un escribiente** | **104,82** |
+
+Son **40 € más** de lo que decía la estimación anterior de 60-65 €, y la
+diferencia no es que algo haya subido: es que antes faltaban el corte, los
+muelles, los casquillos, los postes, el portaminas y el material del
+volante, y que la mitad de los precios estaban en neto.
+
+Sobre un PVP de 150-400 €, esto es entre el **26 % y el 70 %**. En el
+extremo bajo de la horquilla el producto no deja margen para pagar horas de
+taller, que es de lo que se trata. **La conclusión de precio es que el
+escribiente no se puede vender a 150 €.** Su sitio está en 300-400.
+
+Dónde está el dinero, por orden:
+
+1. **El corte de las levas, 20,65 €** — un 20 % del total, y es la única
+   partida que se paga en cada pedido.
+2. **La transmisión, 25,64 €** — dos engranajes. Pasar de módulo 1 a módulo
+   0,7 ya ahorró 2,63 € y bajó la rueda de Ø62 a Ø43. Una transmisión por
+   correa GT2 costaría unos 10 € y es la alternativa a valorar con la pieza
+   en la mano.
+3. **La madera y el portaminas, 19,67 €** — y esto es lo que se ve y se
+   toca. No se toca.
 
 ---
+
+## 3bis. El corte de las levas, que es la partida rara
+
+**Ningún proveedor publica lo que cuesta esta pieza.** Se han mirado once
+plataformas de mecanizado online y seis talleres de Barcelona: todas piden
+subir el archivo, y ninguna publica tarifa, mínimo ni setup. Lo único
+publicado son precios por hora.
+
+Así que el corte no se copia de ninguna tabla: **se calcula**. El compilador
+ya conoce la geometría exacta de cada leva, y con unos parámetros de corte
+declarados sale el tiempo de máquina.
+
+### Lo que hay que fresar
+
+| | |
+| --- | --- |
+| Contorno de una leva | 327 mm |
+| Recorrido de la fresa | 336 mm por pasada — va por fuera, y eso son 2·π·r_fresa de más |
+| Pasadas | 3 de desbaste (1,8 mm) + 1 de acabado |
+| Taladros | Ø10 interpolado en helicoidal, Ø3 pinchado |
+| **Tiempo de máquina, las tres levas** | **7,5 min** |
+
+El número está contrastado por dos caminos que no comparten código: por
+recorrido de herramienta salen 7,5 min, y por volumen arrancado dividido
+entre la tasa de arranque salen 4,1 min de desbaste, a los que el acabado
+añade lo que falta. Hay un test que lo comprueba.
+
+### Lo que cuesta, según quién corte
+
+| Quién | Tarifa | Corte de las tres | Cartucho |
+| --- | --- | --- | --- |
+| Taller universitario (UPM) | 38 €/h | 14,27 € | 17,35 € |
+| Taller universitario (Unizar) | 55,85 €/h | 20,97 € | 24,05 € |
+| Fab Lab con mínimo de 30 min | 65 €/h | 32,50 € | 35,58 € |
+| Mercado europeo, 3 ejes | 95 €/h | 35,67 € | 38,75 € |
+| **Las tres por separado, tres amarres** | 55,85 €/h | **48,90 €** | **51,98 €** |
+
+**La fila que importa es la última.** Siete minutos y medio de máquina a
+55,85 €/h son 7 €. Todo lo demás es **preparación**: los 15 minutos de
+amarrar, poner cero y cargar el programa. Cortar las tres levas de un pedido
+en un solo amarre frente a tres por separado es la diferencia entre 21 € y
+49 €, sin que cambie ni un milímetro de geometría.
+
+De ahí salen dos peticiones concretas al taller, y son las que hay que
+llevar por teléfono:
+
+1. **Que las tres levas del pedido vayan en un amarre.** Mismo material,
+   mismo espesor, mismo programa.
+2. **Cuál es el mínimo de facturación.** Con un trabajo de veinte minutos,
+   el mínimo puede ser el precio entero.
+
+### Y la pregunta que esto abre: máquina propia
+
+De una plancha de 1 × 1 m salen **81 levas, o sea 27 cartuchos**: entre un
+trimestre y un año de producción. Y el trabajo anual de máquina, a 20-100
+pedidos, son entre **2,5 y 12,5 horas**.
+
+| Máquina | Precio | Cartuchos para pagarla |
+| --- | --- | --- |
+| Genmitsu PROVerXL 4030 V2 | ~1.450 € | 71 |
+| Makera Carvera Air | 2.249 € | 109 |
+| Carbide 3D Nomad 3 | ~3.390 € | 165 |
+| Makera Carvera (cambiador de 6) | 5.249 € | 255 |
+
+A 20 pedidos al año, una máquina de 2.250 € tarda cinco años. A 100, tarda
+uno. **Pero el cálculo de amortización no es el argumento bueno**, y conviene
+decirlo: en un taller ocupacional la hora de taller no es un coste que se
+evita, es el producto. Los argumentos buenos son otros dos:
+
+- **El plazo.** El cartucho es la pieza personalizada. Encargarlo fuera mete
+  entre tres días y dos semanas entre el pedido y la entrega, en la única
+  pieza que no se puede tener a stock.
+- **La iteración.** E4 —el banco de ensayo, la puerta que dice si el modelo
+  predice la realidad— se hace cortando levas, midiéndolas y volviendo a
+  cortar. Con corte externo, cada vuelta de ese bucle son dos semanas.
+
+Lo que hay que comprobar antes de comprar nada: que la máquina llega a
+±0,05 mm **en el canto**, no en el movimiento. Ninguna especificación de
+fabricante lo dice; hay que cortar una leva de prueba y medirla.
 
 ## 4. Decisiones que esta ficha normaliza
 
@@ -154,16 +277,23 @@ necesita casquillo, y los casquillos con valona tienen la valona mucho mayor:
 | Obstáculo real | Ø | Hueco a la leva | |
 | --- | --- | --- | --- |
 | Poste Ø16 desnudo *(lo que suponíamos)* | 16 | 9,0 mm | |
-| + casquillo igus GFM-1618, valona Ø24 | 24 | 5,0 mm | |
 | + casquillo de bronce B-16-22-16, valona Ø28 | 28 | **3,0 mm** | **aviso** |
-| **Poste Ø8 + GFM-0810, valona Ø12** | **12** | **11,0 mm** | **limpio** |
-| Pivote sobre dos MR63 en un eje Ø3 | 6 | 14,0 mm | limpio |
+| Poste Ø8 + casquillo de bronce B-8-12-8, valona Ø16 | 16 | 9,0 mm | limpio |
+| **Poste Ø8 + igus GFM-0810-06, valona Ø15** | **15** | **9,5 mm** | **limpio** |
+| Pivote sobre dos MR63ZZ en un eje Ø3 | 6 | 14,0 mm | limpio |
 
-Con el casquillo de bronce el hueco se quedaba en 3 mm y saltaba el aviso: **el
-límite de conjunto habría pasado de "qué frases caben" a "no cabe ninguna"**.
-Y el Ø16 nunca estuvo justificado: con 0,7 N de fuerza tangencial, un Ø8 sobra
-por dos órdenes de magnitud. `Cartucho.radio_poste` pasa a ser el radio del
-**obstáculo**, no el del poste, y su valor por defecto es 6 mm.
+Con el casquillo de bronce sobre Ø16 el hueco se quedaba en 3 mm y saltaba el
+aviso: **el límite de conjunto habría pasado de "qué frases caben" a "no cabe
+ninguna"**. Y el Ø16 nunca estuvo justificado: con 0,7 N de fuerza tangencial,
+un Ø8 sobra por dos órdenes de magnitud. `Cartucho.radio_poste` pasa a ser el
+radio del **obstáculo**, no el del poste, y su valor por defecto es 7,5 mm.
+
+**Una corrección sobre lo que se escribió primero.** La primera versión de
+esta ficha daba la valona del GFM-0810 como Ø12 y el hueco como 11,0 mm. La
+ficha de igus dice **d3 = 15 mm**, y con eso el hueco son 9,5. Sigue siendo
+holgado —el mínimo son 3— pero con menos margen del que se anunció. El Ø12
+sí existe en igus, en el **GFM-081012-125**, que es otra referencia y mide
+12,5 mm de largo; está por confirmar con el plano del fabricante.
 
 ### El rodillo se escribe MR63**ZZ**, con las dos letras
 
@@ -258,26 +388,43 @@ rompe.
 
 ## 6. Lo que falta por cerrar
 
-Ninguno de estos es un dato que se pueda inventar. **Son llamadas de teléfono.**
+Ninguno de estos es un dato que se pueda inventar. **Son llamadas de
+teléfono.** Están por orden de lo que mueven en el precio.
 
-1. **Tolerancia de espesor de la plancha de POM-C de 5 mm** — no está en
-   ninguna ficha, y es lo que decide si la pila de tres levas se come el hueco.
-   Preguntar a Polygom.
-2. **Precio del fresado CNC de las levas** en Polygom, que es probablemente la
-   partida mayor del cartucho y no está en esta ficha.
-3. **Referencia concreta del muelle** con K = 0,8–1,5 N·mm/°: springmakers.
-4. **Precio del 6800-2Z** blindado a 50+ (solo está verificado el 2RS).
-5. **Precio de los casquillos igus GFM-0810** y del Ø16 si se mantuviera.
-6. **Precio de los engranajes de módulo 0,7** de Mädler (26202000, 26206000),
-   que dejarían la rueda en Ø43 en vez de Ø62.
-7. **Confirmar que "B H7" en la ficha de Mädler es el agujero** antes de
+1. **El corte, a Polygom** (696 052 254, info@polygom.es) y a dos más para
+   comparar: Baño-Lid (93 721 44 29), Talleres Torrecillas (93 424 50 48),
+   Comecanic (93 118 44 86), CIM UPC (93 401 71 71). Enviar el DXF de una
+   leva y pedir cuatro cosas: precio de las tres en **un solo amarre**,
+   mínimo de facturación, si garantizan ±0,05 mm en el perfil y H7 en el
+   Ø10, y plazo. Es la partida que se paga en cada pedido.
+2. **Tolerancia de espesor de la plancha de POM-C de 5 mm** — no está en
+   ninguna ficha, y es lo que decide si la pila de tres levas se come el
+   hueco. A Polygom, en la misma llamada.
+3. **Confirmar la valona del igus GFM-081012-125**: ¿Ø12 o Ø12,5? Si es Ø12,
+   el hueco al poste vuelve a 11,0 mm en vez de 9,5. A igus España.
+4. **Portes e IVA de Mädler a España.** Por debajo de 75 € cobran 15 € de
+   gestión, y los portes fuera de Alemania no están publicados. Sobre 25 €
+   de engranajes por máquina, eso decide si compensa pedir de 50 en 50.
+5. **Valorar la correa GT2 frente a los engranajes.** Un juego de poleas
+   20T/60T más correa ronda los 10 € contra los 25,64 € de los engranajes de
+   latón. Cambia el aspecto del producto, así que es una decisión de diseño
+   y no solo de precio: la rueda de latón es de las cosas que se ven.
+6. **IVA y portes a España del eje inox Ø8 h6 de Dold**, y precio de corte
+   en serie. Es el único precio de la lista sin verificar.
+7. **Medir con pie de rey el cuerpo del portaminas** antes de dimensionar el
+   anillo de apriete. El catálogo da 10 mm nominales de la caja, que no es
+   la cota de la pieza.
+8. **Precio del redondo de latón Ø50** a Servei Estació (933 932 410), que
+   está en Barcelona y se puede ir con el plano. El único precio leído es de
+   Randrade, 283,23 €/m.
+9. **Confirmar que "B H7" en la ficha de Mädler es el agujero** antes de
    diseñar el eje contra ese dato.
-8. **Precio del redondo de latón Ø50** para el volante. Servei Estació está en
-   Barcelona y se puede ir con el plano.
-9. **Si los precios de Mädler llevan IVA** y qué portes tienen a España.
-10. **Elesa+Ganter GN 269** en inox: pedir dimensiones y precio, por si la
-    manivela comercial acabara siendo viable.
 
-Y una comprobación que no es una llamada: **comprar un Lanky Doodler**. Son
-28 € y es la referencia de banco más barata que existe para E4 — un autómata de
-levas que escribe, funcionando, encima de la mesa.
+Y dos cosas que no son llamadas:
+
+- **Comprar un Lanky Doodler.** Son 28 € y es la referencia de banco más
+  barata que existe para E4 — un autómata de levas que escribe, funcionando,
+  encima de la mesa.
+- **Cortar una leva de prueba en la máquina que se esté valorando** y
+  medirla. Ninguna especificación de fabricante dice si llega a ±0,05 mm en
+  el canto; dicen la precisión del movimiento, que es otra cosa.

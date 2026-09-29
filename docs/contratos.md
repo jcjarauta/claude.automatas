@@ -94,11 +94,12 @@ banco diga que el modelo predice:
 - Postes de seguidor: tres, a **71,1 mm** del árbol, repartidos a 120°.
   Sale de `hypot(radio_base, brazo_seguidor)` = `hypot(55, 45)`.
 - Poste de seguidor de **Ø8** con casquillo igus GFM-0810. **Lo que la leva ve
-  no es el poste: es la valona del casquillo**, que mide Ø12. Con los Ø16 que
-  se suponían antes y un casquillo de bronce con valona de Ø28, el hueco caía
-  a 3,0 mm y saltaba el aviso. El Ø16 nunca estuvo justificado: la fuerza
-  tangencial en el seguidor es de 0,7 N.
-- Hueco entre la leva mayor y ese obstáculo: **11,0 mm** con la caja de
+  no es el poste: es la valona del casquillo**, que mide **Ø15** —confirmado
+  en la ficha del fabricante, d3 = 15 mm—. Con los Ø16 que se suponían antes
+  y un casquillo de bronce con valona de Ø28, el hueco caía a 3,0 mm y
+  saltaba el aviso. El Ø16 nunca estuvo justificado: la fuerza tangencial en
+  el seguidor es de 0,7 N.
+- Hueco entre la leva mayor y ese obstáculo: **9,5 mm** con la caja de
   escritura por defecto. Encoge cuando la frase crece, y es el límite de
   conjunto que decide qué frases caben.
 - Caja de escritura: 80 × 30 mm, centrada a 100 mm sobre la línea de pivotes.
@@ -116,4 +117,5 @@ un solo compromiso, y todavía falta el dato que lo cierra.
 | 2026-09-29 | Fase | Congelado. Pasador de índice Ø3 a 18 mm sobre +X, igual en las tres levas | El cartucho de una pieza deja el error de fase fuera de lo posible, en vez de fuera de lo probable |
 | 2026-09-29 | Eje | Congelado Ø10 h7, pila de 19 mm, giro horario | Medidas corrientes de catálogo; la pila sale de la geometría y está comprobada |
 | 2026-09-29 | Fase | **Añadido el ajuste** del pasador: deslizante en las tres levas, apretado solo en el plato metálico | El m6 del DIN 6325 aprieta en acero; en POM la interferencia se relaja por fluencia y el calaje se pierde tras la venta. La geometría congelada no se toca: Ø3 a 18 mm sobre +X |
-| 2026-09-29 | Bastidor | Poste de seguidor de Ø16 a **Ø8**, y el hueco se mide contra la valona del casquillo (Ø12) y no contra el poste | Un poste lleva casquillo y la valona es mucho mayor que el eje. Con la valona de bronce de Ø28 el conjunto se quedaba sin hueco |
+| 2026-09-29 | Bastidor | Poste de seguidor de Ø16 a **Ø8**, y el hueco se mide contra la valona del casquillo y no contra el poste | Un poste lleva casquillo y la valona es mucho mayor que el eje. Con la valona de bronce de Ø28 el conjunto se quedaba sin hueco |
+| 2026-09-29 | Bastidor | Corregida la valona del GFM-0810: **Ø15**, no Ø12. El hueco pasa de 11,0 a **9,5 mm** | El Ø12 se anotó de una investigación sin contrastar con el fabricante. La ficha de igus da d3 = 15 mm. Sigue holgado, pero con menos margen del que se dijo |

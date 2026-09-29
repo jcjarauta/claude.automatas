@@ -11,6 +11,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from compile.conjunto import Montaje
+from compile.coste import Valoracion
 from compile.energia import Accionamiento, Energia
 from compile.escribiente import Compilacion, Escribiente
 from core.units import Radianes, a_grados, a_mm
@@ -38,6 +39,7 @@ def informe(
     energia: Energia | None = None,
     veredicto_energia: Veredicto | None = None,
     accionamiento: Accionamiento | None = None,
+    valoracion: Valoracion | None = None,
 ) -> str:
     """El informe completo, en markdown."""
     v = compilacion.veredicto
@@ -169,6 +171,35 @@ def informe(
             "",
         ]
 
+    if valoracion is not None:
+        minutos = valoracion.segundos_de_maquina / 60.0
+        lineas += [
+            "## Lo que cuesta",
+            "",
+            "Precios de catálogo con IVA, de `bench/precios.json`. El corte **no** sale"
+            " de una tabla: ninguna plataforma ni ningún taller publica el precio de"
+            " esta pieza. Se calcula con la geometría real y una tarifa declarada.",
+            "",
+            f"- Material de las tres levas: {valoracion.material_del_cartucho:.2f} €"
+            f" — salen {valoracion.levas_por_plancha // 3} cartuchos de una plancha"
+            f" de 1 × 1 m",
+            f"- Tiempo de máquina de las tres: **{minutos:.1f} min** en un solo amarre",
+            f"- Corte: {valoracion.mecanizado:.2f} €",
+            f"- **Cartucho, que se rehace en cada pedido: {valoracion.cartucho:.2f} €**",
+            f"- Plataforma, que va a stock: {valoracion.plataforma:.2f} €",
+            f"- **Total de material y compras: {valoracion.total:.2f} €**",
+            "",
+            "El corte es casi todo **preparación**: el tiempo de máquina son minutos y"
+            " se paga el amarre. Cortar las tres levas por separado triplica la partida"
+            " mayor del cartucho.",
+            "",
+        ]
+        if valoracion.sin_verificar:
+            lineas += [
+                "Sin precio verificado: " + ", ".join(valoracion.sin_verificar).rstrip(".") + ".",
+                "",
+            ]
+
     lineas += _incidencias("Errores", v.errores)
     if veredicto_energia is not None:
         lineas += _incidencias("Errores del accionamiento", veredicto_energia.errores)
@@ -192,6 +223,7 @@ def escribir_informe(
     energia: Energia | None = None,
     veredicto_energia: Veredicto | None = None,
     accionamiento: Accionamiento | None = None,
+    valoracion: Valoracion | None = None,
 ) -> Path:
     ruta = Path(destino)
     ruta.parent.mkdir(parents=True, exist_ok=True)
@@ -204,6 +236,7 @@ def escribir_informe(
             energia,
             veredicto_energia,
             accionamiento,
+            valoracion,
         ),
         encoding="utf-8",
     )

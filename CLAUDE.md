@@ -54,6 +54,7 @@ uv run python scripts/plantillas_demo.py      # plantillas 1:1 de muestra
 uv run python scripts/regenerar_golden.py     # SOLO si el cambio es intencionado
 
 uv run python -m compile.cli demo/hola.json --out build/   # compilar un pedido
+uv run python -m compile.cli demo/hola.json --euros-hora 95  # con otra tarifa de corte
 uv run uvicorn api.main:app --reload                       # API en local
 npm --prefix web run dev                                   # frontend en local
 ```
@@ -89,6 +90,7 @@ compile/              # Orquesta: intención -> piezas + informe. I/O permitido.
   escribiente.py      #   La máquina concreta: compilar y simular
   conjunto.py         #   El cartucho montado: interferencias, pila, masa
   energia.py          #   ¿Puede girarlo una persona, y sale limpio?
+  coste.py            #   Qué cuesta: lo que se compra y lo que se corta
   informe.py          #   El informe del pedido, en markdown
   cli.py              #   Un pedido, un comando
 emit/
@@ -105,6 +107,7 @@ api/                  # FastAPI
 web/                  # React + Vite + TypeScript
 bench/                # Datos del banco de ensayo y calibraciones medidas
   impresoras/         #   Un perfil por impresora, con fecha, papel e instrumento
+  precios.json        #   Precios de catálogo, con fecha y enlace por línea
 docs/
 tests/
 ```
@@ -361,6 +364,16 @@ falla si el esquema versionado se queda atrás.
   de donde va a trabajar y el ángulo de presión calculado no es el real. La
   diferencia es el **calaje**, y va en el dossier.
 - **Cuota de la API de Onshape.** Es anual, no por minuto. Una llamada por pedido.
+- **Mezclar precios con y sin IVA.** Medio catálogo español cotiza con IVA y
+  los alemanes en neto. Sumados tal cual, el error es del 21 % en la parte
+  que no se ve. En `bench/precios.json` cada línea declara `iva_incluido` y
+  `compile/coste.py` lo normaliza. Se suma **con** IVA porque Arrels no lo
+  repercute: el IVA soportado es coste, no un anticipo que se recupera.
+- **Presupuestar el corte con el perímetro de la pieza.** La fresa va por
+  fuera, desplazada su radio: en una curva cerrada eso alarga el camino en
+  2·π·r_fresa exactamente. Y lo que manda no es el tiempo de corte, que son
+  minutos, sino la **preparación**: las tres levas en un amarre cuestan la
+  mitad que en tres.
 - **Unidades.** El bug más caro y el más fácil de cometer. Usa `core/units.py`.
   Cada magnitud lleva el rango más estrecho que sea plausible: `Longitud` llega
   a diez metros y por eso un espesor usa `Espesor`, que se queda en cien
@@ -404,7 +417,7 @@ falla si el esquema versionado se queda atrás.
 pivotes anclados, palanca para el lápiz y tres levas apiladas. Tres números
 que se decidieron midiendo y no eligiendo:
 
-- **Hueco al poste: 11,0 mm** con la caja de escritura por defecto. Los tres
+- **Hueco al poste: 9,5 mm** con la caja de escritura por defecto. Los tres
   postes de seguidor están a 71 mm del árbol y atraviesan los tres planos, así
   que la leva de cada canal gira bajo los postes de los otros dos. **Ese hueco
   encoge cuando la frase crece**, y es el límite de conjunto que decide qué
@@ -412,7 +425,7 @@ que se decidieron midiendo y no eligiendo:
   Y lo que mide el hueco **no es el poste, es la valona de su casquillo**:
   `Cartucho.radio_poste` es el radio del obstáculo. Con postes de Ø16 y
   casquillo de bronce de valona Ø28 quedaban 3,0 mm y saltaba el aviso; con
-  Ø8 y un igus GFM-0810 de valona Ø12, quedan 11,0.
+  Ø8 y un igus GFM-0810, cuya valona es **Ø15**, quedan 9,5.
 - **Relación seguidor → brazo, 6:1.** Con relación 1 y un barrido de brazo de
   26°, mantener el ángulo de presión por debajo de 30° exige un radio base de
   110 mm: levas de 240 mm, tres apiladas. Con 6:1 el seguidor barre un sexto
