@@ -1,0 +1,81 @@
+{
+  "$defs": {
+    "Incidencia": {
+      "additionalProperties": false,
+      "properties": {
+        "codigo": {
+          "minLength": 1,
+          "title": "Codigo",
+          "type": "string"
+        },
+        "gravedad": {
+          "enum": [
+            "error",
+            "aviso"
+          ],
+          "title": "Gravedad",
+          "type": "string"
+        },
+        "mensaje": {
+          "minLength": 1,
+          "title": "Mensaje",
+          "type": "string"
+        },
+        "sugerencia": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sugerencia"
+        },
+        "theta": {
+          "anyOf": [
+            {
+              "exclusiveMaximum": 6.283185307179586,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Theta"
+        }
+      },
+      "required": [
+        "gravedad",
+        "codigo",
+        "mensaje"
+      ],
+      "title": "Incidencia",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Resultado de pasar algo por su envolvente.",
+  "properties": {
+    "incidencias": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Incidencia"
+      },
+      "title": "Incidencias",
+      "type": "array"
+    },
+    "metricas": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "title": "Metricas",
+      "type": "object"
+    }
+  },
+  "title": "Veredicto",
+  "type": "object"
+}

@@ -1,0 +1,24 @@
+{
+  "identidad": {
+    "nombre": "leva_resistencia",
+    "familia": "memoria",
+    "version": "0.1.0",
+    "contrato": null
+  },
+  "interfaz": { "bahia": null, "eje": "eje_maestro", "anclaje": "chavetero",
+                "ancho": 0.16, "alto": 0.16, "fondo": 0.005 },
+  "fase": { "arco": null, "cero_relativo": 0.0 },
+  "canales": [
+    { "nombre": "resistencia", "rol": "produce", "tipo": "continuo", "unidad": "N",
+      "minimo": 0.0, "maximo": 400.0 }
+  ],
+  "cinematica": null,
+  "balance": { "signo": "consume", "par_pico": 12.0, "par_medio": 7.0,
+               "energia_ciclo": 44.0, "inercia": 0.002 },
+  "envolvente": { "recorrido_max": null, "velocidad_max": null,
+                  "fuerza_max": 400.0, "radio_rodillo": null },
+  "modo_fallo": "para_en_seco",
+  "ergonomia": null,
+  "fabricacion": { "material": "POM 6 mm", "proceso": "cnc",
+                   "n_piezas": 1, "coste_estimado": 11.0, "minutos_montaje": 5.0 }
+}

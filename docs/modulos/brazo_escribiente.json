@@ -1,0 +1,26 @@
+{
+  "identidad": {
+    "nombre": "brazo_escribiente",
+    "familia": "actuador",
+    "version": "0.1.0",
+    "contrato": null
+  },
+  "interfaz": { "bahia": null, "eje": null, "anclaje": "poste_pivote",
+                "ancho": 0.30, "alto": 0.05, "fondo": 0.12 },
+  "fase": { "arco": null, "cero_relativo": 0.0 },
+  "canales": [
+    { "nombre": "x", "rol": "consume", "tipo": "continuo", "unidad": "m",
+      "minimo": -0.06, "maximo": 0.06 },
+    { "nombre": "y", "rol": "consume", "tipo": "continuo", "unidad": "m",
+      "minimo": -0.03, "maximo": 0.03 }
+  ],
+  "cinematica": "brazo_dos_palancas_v1",
+  "balance": { "signo": "consume", "par_pico": 0.04, "par_medio": 0.015,
+               "energia_ciclo": 0.25, "inercia": 0.0 },
+  "envolvente": { "recorrido_max": 0.12, "velocidad_max": null,
+                  "fuerza_max": 2.0, "radio_rodillo": null },
+  "modo_fallo": "cede_blando",
+  "ergonomia": null,
+  "fabricacion": { "material": "contrachapado de abedul 4 mm", "proceso": "laser",
+                   "n_piezas": 6, "coste_estimado": 4.5, "minutos_montaje": 25.0 }
+}

@@ -1,0 +1,24 @@
+{
+  "identidad": {
+    "nombre": "seguidor_resistencia",
+    "familia": "transmision",
+    "version": "0.1.0",
+    "contrato": null
+  },
+  "interfaz": { "bahia": null, "eje": null, "anclaje": "poste_pivote",
+                "ancho": 0.18, "alto": 0.04, "fondo": 0.03 },
+  "fase": { "arco": null, "cero_relativo": 0.0 },
+  "canales": [
+    { "nombre": "resistencia", "rol": "consume", "tipo": "continuo", "unidad": "N",
+      "minimo": 0.0, "maximo": 400.0 }
+  ],
+  "cinematica": "seguidor_oscilante_v1",
+  "balance": { "signo": "consume", "par_pico": 0.8, "par_medio": 0.4,
+               "energia_ciclo": 2.5, "inercia": 0.0008 },
+  "envolvente": { "recorrido_max": 0.05, "velocidad_max": null,
+                  "fuerza_max": 400.0, "radio_rodillo": 0.004 },
+  "modo_fallo": "para_en_seco",
+  "ergonomia": null,
+  "fabricacion": { "material": "acero + rodamiento 624", "proceso": "comercial",
+                   "n_piezas": 4, "coste_estimado": 6.0, "minutos_montaje": 10.0 }
+}

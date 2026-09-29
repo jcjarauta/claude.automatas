@@ -1,0 +1,156 @@
+{
+  "$defs": {
+    "Evento": {
+      "additionalProperties": false,
+      "description": "Algo que ocurre en un punto del ciclo.\n\n`arco` es su duración angular. `None` significa instantáneo: una púa que\npulsa un diente, un pasador que suelta un trinquete.",
+      "properties": {
+        "arco": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "maximum": 6.283185307179586,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Arco"
+        },
+        "theta": {
+          "exclusiveMaximum": 6.283185307179586,
+          "minimum": 0.0,
+          "title": "Theta",
+          "type": "number"
+        }
+      },
+      "required": [
+        "theta"
+      ],
+      "title": "Evento",
+      "type": "object"
+    },
+    "PistaContinua": {
+      "additionalProperties": false,
+      "description": "Un canal cuyo valor es una función continua del ángulo.\n\nLas muestras se guardan como dos listas paralelas en vez de como pares:\nocupa la mitad en JSON, convierte a numpy sin copiar y el invariante de\nlongitud lo comprueba el validador.\n\nEl punto final **no** se almacena. θ vive en [0, 2π) y el cierre del ciclo\nes implícito: guardar la muestra de 2π permitiría que contradijera a la de\n0, y no hay forma de que un valor así sea correcto.",
+      "properties": {
+        "canal": {
+          "minLength": 1,
+          "title": "Canal",
+          "type": "string"
+        },
+        "thetas": {
+          "items": {
+            "exclusiveMaximum": 6.283185307179586,
+            "minimum": 0.0,
+            "type": "number"
+          },
+          "minItems": 2,
+          "title": "Thetas",
+          "type": "array"
+        },
+        "tipo": {
+          "const": "continua",
+          "default": "continua",
+          "title": "Tipo",
+          "type": "string"
+        },
+        "unidad": {
+          "enum": [
+            "m",
+            "rad",
+            "N",
+            "binario"
+          ],
+          "title": "Unidad",
+          "type": "string"
+        },
+        "valores": {
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "title": "Valores",
+          "type": "array"
+        }
+      },
+      "required": [
+        "canal",
+        "unidad",
+        "thetas",
+        "valores"
+      ],
+      "title": "PistaContinua",
+      "type": "object"
+    },
+    "PistaEvento": {
+      "additionalProperties": false,
+      "description": "Un canal binario: en cada θ, ocurre o no ocurre.\n\nDeclarado en E1, sin consumidores hasta E10.",
+      "properties": {
+        "canal": {
+          "minLength": 1,
+          "title": "Canal",
+          "type": "string"
+        },
+        "eventos": {
+          "items": {
+            "$ref": "#/$defs/Evento"
+          },
+          "minItems": 1,
+          "title": "Eventos",
+          "type": "array"
+        },
+        "tipo": {
+          "const": "evento",
+          "default": "evento",
+          "title": "Tipo",
+          "type": "string"
+        }
+      },
+      "required": [
+        "canal",
+        "eventos"
+      ],
+      "title": "PistaEvento",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Una vuelta completa del eje maestro, canal a canal.",
+  "properties": {
+    "nombre": {
+      "minLength": 1,
+      "title": "Nombre",
+      "type": "string"
+    },
+    "pistas": {
+      "items": {
+        "discriminator": {
+          "mapping": {
+            "continua": "#/$defs/PistaContinua",
+            "evento": "#/$defs/PistaEvento"
+          },
+          "propertyName": "tipo"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/$defs/PistaContinua"
+          },
+          {
+            "$ref": "#/$defs/PistaEvento"
+          }
+        ]
+      },
+      "minItems": 1,
+      "title": "Pistas",
+      "type": "array"
+    }
+  },
+  "required": [
+    "nombre",
+    "pistas"
+  ],
+  "title": "Programa",
+  "type": "object"
+}

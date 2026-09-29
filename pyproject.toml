@@ -59,6 +59,10 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["ANN"]
 "scripts/**" = ["ANN"]
+# N818 pide que las excepciones acaben en "Error". En castellano la palabra va
+# delante (ErrorDeDominio), que comunica lo mismo y se lee mejor. Decisión
+# consciente, no descuido.
+"core/errors.py" = ["N818"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["core", "compile", "emit", "api"]

@@ -1,0 +1,28 @@
+{
+  "identidad": {
+    "nombre": "estacion_pedal",
+    "familia": "fuente_humana",
+    "version": "0.1.0",
+    "contrato": null
+  },
+  "interfaz": { "bahia": "bahia_fuente", "eje": "eje_maestro", "anclaje": "bancada",
+                "ancho": 0.50, "alto": 1.10, "fondo": 0.80 },
+  "fase": { "arco": null, "cero_relativo": 0.0 },
+  "canales": [],
+  "cinematica": null,
+  "balance": { "signo": "aporta", "par_pico": -25.0, "par_medio": -12.0,
+               "energia_ciclo": -180.0, "inercia": 0.4 },
+  "envolvente": { "recorrido_max": null, "velocidad_max": 9.4,
+                  "fuerza_max": -300.0, "radio_rodillo": null },
+  "modo_fallo": "se_libera",
+  "ergonomia": {
+    "postura": "sentado, pedaleo alterno de piernas",
+    "recorrido": 0.34,
+    "curva_fuerza": [[0.0, 80.0], [0.25, 220.0], [0.5, 120.0],
+                     [0.75, 200.0], [1.0, 80.0]],
+    "ciclo_trabajo": "60-90 rpm, tandas de 2-5 min con relevo"
+  },
+  "fabricacion": { "material": "acero comercial + bicicleta reutilizada",
+                   "proceso": "comercial", "n_piezas": 14,
+                   "coste_estimado": 65.0, "minutos_montaje": 120.0 }
+}

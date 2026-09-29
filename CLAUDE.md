@@ -61,7 +61,9 @@ Antes de dar por terminado un cambio: `uv run ruff check . && uv run mypy core c
 ```
 core/                 # PURO. Geometría, cinemática, energía.
   program.py          #   Programa, Pista, Evento — el modelo θ-indexado
-  module.py           #   Ficha de módulo (Pydantic)
+  module.py           #   Ficha de módulo, ModuloMontado, Maquina
+  verdict.py          #   Veredicto e Incidencia
+  errors.py           #   Excepciones de dominio
   units.py            #   Constructores con unidad. Nada de floats desnudos.
   cam/
     synth.py          #   C2 · curva de paso y perfil
@@ -173,6 +175,30 @@ documentación: **una sola llamada de API por pedido**, porque la cuota es anual
 
 ---
 
+## El contrato de datos (E1)
+
+Cuatro decisiones que condicionan todo lo demás:
+
+- **θ vive en [0, 2π), sin repetir el extremo.** Guardar la muestra de 2π
+  permitiría que contradijera a la de 0. El cierre es implícito.
+- **Las pistas guardan muestras, no splines**, en dos listas paralelas
+  (`thetas`, `valores`). El spline es un cálculo, no un dato.
+- **Un canal es la señal, no el cable.** Cada canal tiene exactamente un
+  módulo que lo `produce` — la leva o el tambor que lo almacena — y los que
+  hay aguas abajo lo `consume`n. `Maquina` comprueba ese cableado.
+- **Ficha ≠ montaje.** `FichaModulo` es la entrada de catálogo; el desfase y
+  la bahía viven en `ModuloMontado`. Una estación de pedal no tiene fase; su
+  instalación sí.
+- **La cinemática se referencia por clave**, no se incrusta: una función no se
+  serializa. Vive en el actuador que consume el canal, nunca en la leva.
+- **El catálogo es dato**: un JSON por módulo en `docs/modulos/`, validado
+  contra el esquema de `docs/schema/`. Añadir un módulo no es programar.
+
+Tras tocar un modelo: `uv run python scripts/export_schema.py`. Hay un test que
+falla si el esquema versionado se queda atrás.
+
+---
+
 ## Convenciones
 
 - **Vocabulario del dominio en español** (`leva`, `seguidor`, `pista`, `actuador`,
@@ -184,6 +210,9 @@ documentación: **una sola llamada de API por pedido**, porque la cuota es anual
 - Los comentarios explican **por qué**, no qué. El qué se lee en el código.
 - Errores de dominio con excepciones propias en `core/errors.py`. Un fallo de
   envolvente **no** es una excepción: es un `Veredicto` con motivo y sugerencia.
+- Las excepciones se llaman `ErrorDeAlgo`, con la palabra delante, como en
+  castellano. `core/errors.py` lleva por eso una excepción declarada a la regla
+  N818 de ruff; está documentada en `pyproject.toml`.
 - Datos medidos (kerf, desgaste, fidelidad, potencia) van en `bench/`, versionados
   y con fecha. Nunca incrustados en el código.
 

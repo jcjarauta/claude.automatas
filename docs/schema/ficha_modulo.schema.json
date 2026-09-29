@@ -1,0 +1,525 @@
+{
+  "$defs": {
+    "Balance": {
+      "additionalProperties": false,
+      "description": "Lo que el módulo pide o aporta al eje maestro.\n\nEl signo es lo que hace que la suma funcione sin casos especiales: una\nestación de pedal aporta, una sierra consume, y el presupuesto de par (C6)\nlos suma igual.",
+      "properties": {
+        "energia_ciclo": {
+          "maximum": 1000000.0,
+          "minimum": -1000000.0,
+          "title": "Energia Ciclo",
+          "type": "number"
+        },
+        "inercia": {
+          "default": 0.0,
+          "maximum": 1000.0,
+          "minimum": 0.0,
+          "title": "Inercia",
+          "type": "number"
+        },
+        "par_medio": {
+          "maximum": 10000.0,
+          "minimum": -10000.0,
+          "title": "Par Medio",
+          "type": "number"
+        },
+        "par_pico": {
+          "maximum": 10000.0,
+          "minimum": -10000.0,
+          "title": "Par Pico",
+          "type": "number"
+        },
+        "signo": {
+          "enum": [
+            "aporta",
+            "consume"
+          ],
+          "title": "Signo",
+          "type": "string"
+        }
+      },
+      "required": [
+        "signo",
+        "par_pico",
+        "par_medio",
+        "energia_ciclo"
+      ],
+      "title": "Balance",
+      "type": "object"
+    },
+    "Canal": {
+      "additionalProperties": false,
+      "description": "Un canal visto desde un módulo.\n\n`rol` dice de qué lado está: la leva **produce** el canal, el seguidor lo\n**consume**. Es lo que permite encadenar módulos sin inventar un grafo\naparte.",
+      "properties": {
+        "maximo": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maximo"
+        },
+        "minimo": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Minimo"
+        },
+        "nombre": {
+          "minLength": 1,
+          "title": "Nombre",
+          "type": "string"
+        },
+        "rol": {
+          "enum": [
+            "produce",
+            "consume"
+          ],
+          "title": "Rol",
+          "type": "string"
+        },
+        "tipo": {
+          "enum": [
+            "continuo",
+            "evento"
+          ],
+          "title": "Tipo",
+          "type": "string"
+        },
+        "unidad": {
+          "enum": [
+            "m",
+            "rad",
+            "N",
+            "binario"
+          ],
+          "title": "Unidad",
+          "type": "string"
+        }
+      },
+      "required": [
+        "nombre",
+        "rol",
+        "tipo",
+        "unidad"
+      ],
+      "title": "Canal",
+      "type": "object"
+    },
+    "EnvolventePropia": {
+      "additionalProperties": false,
+      "description": "Los límites del módulo, distintos de los de la clase de máquina.",
+      "properties": {
+        "fuerza_max": {
+          "anyOf": [
+            {
+              "maximum": 100000.0,
+              "minimum": -100000.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fuerza Max"
+        },
+        "radio_rodillo": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "maximum": 10.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Radio Rodillo"
+        },
+        "recorrido_max": {
+          "anyOf": [
+            {
+              "maximum": 10.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Recorrido Max"
+        },
+        "velocidad_max": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Velocidad Max"
+        }
+      },
+      "title": "EnvolventePropia",
+      "type": "object"
+    },
+    "Ergonomia": {
+      "additionalProperties": false,
+      "description": "Solo para `FUENTE_HUMANA`.\n\n`curva_fuerza` es la fuerza que una persona puede dar en cada punto del\nrecorrido, normalizado de 0 a 1. No es un número: el cuerpo es mucho más\nfuerte en unos ángulos que en otros, y ajustar la resistencia a esa curva\nes un problema de diseño de levas (C9).",
+      "properties": {
+        "ciclo_trabajo": {
+          "minLength": 1,
+          "title": "Ciclo Trabajo",
+          "type": "string"
+        },
+        "curva_fuerza": {
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "maximum": 100000.0,
+                "minimum": -100000.0,
+                "type": "number"
+              }
+            ],
+            "type": "array"
+          },
+          "minItems": 2,
+          "title": "Curva Fuerza",
+          "type": "array"
+        },
+        "postura": {
+          "minLength": 1,
+          "title": "Postura",
+          "type": "string"
+        },
+        "recorrido": {
+          "exclusiveMinimum": 0.0,
+          "maximum": 10.0,
+          "title": "Recorrido",
+          "type": "number"
+        }
+      },
+      "required": [
+        "postura",
+        "recorrido",
+        "curva_fuerza",
+        "ciclo_trabajo"
+      ],
+      "title": "Ergonomia",
+      "type": "object"
+    },
+    "Fabricacion": {
+      "additionalProperties": false,
+      "properties": {
+        "coste_estimado": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Coste Estimado"
+        },
+        "material": {
+          "minLength": 1,
+          "title": "Material",
+          "type": "string"
+        },
+        "minutos_montaje": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Minutos Montaje"
+        },
+        "n_piezas": {
+          "minimum": 1,
+          "title": "N Piezas",
+          "type": "integer"
+        },
+        "proceso": {
+          "$ref": "#/$defs/Proceso"
+        }
+      },
+      "required": [
+        "material",
+        "proceso",
+        "n_piezas"
+      ],
+      "title": "Fabricacion",
+      "type": "object"
+    },
+    "Familia": {
+      "description": "Las cinco capas de la ontología, más la estructura.",
+      "enum": [
+        "fuente_humana",
+        "acumulador",
+        "memoria",
+        "transmision",
+        "actuador",
+        "estructura"
+      ],
+      "title": "Familia",
+      "type": "string"
+    },
+    "Fase": {
+      "additionalProperties": false,
+      "description": "Qué parte del ciclo ocupa el módulo.\n\n`arco = None` significa que trabaja durante toda la vuelta, que es el caso\nde cualquier módulo continuo. Un módulo de evento ocupa una porción, y dos\nque compitan por el mismo espacio físico no pueden solaparse.",
+      "properties": {
+        "arco": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "maximum": 6.283185307179586,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Arco"
+        },
+        "cero_relativo": {
+          "default": 0.0,
+          "maximum": 6.283185307179586,
+          "minimum": -6.283185307179586,
+          "title": "Cero Relativo",
+          "type": "number"
+        }
+      },
+      "title": "Fase",
+      "type": "object"
+    },
+    "Identidad": {
+      "additionalProperties": false,
+      "properties": {
+        "contrato": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Contrato"
+        },
+        "familia": {
+          "$ref": "#/$defs/Familia"
+        },
+        "nombre": {
+          "minLength": 1,
+          "title": "Nombre",
+          "type": "string"
+        },
+        "version": {
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "nombre",
+        "familia",
+        "version"
+      ],
+      "title": "Identidad",
+      "type": "object"
+    },
+    "InterfazMecanica": {
+      "additionalProperties": false,
+      "description": "Dónde y cómo se monta.",
+      "properties": {
+        "alto": {
+          "exclusiveMinimum": 0.0,
+          "maximum": 10.0,
+          "title": "Alto",
+          "type": "number"
+        },
+        "ancho": {
+          "exclusiveMinimum": 0.0,
+          "maximum": 10.0,
+          "title": "Ancho",
+          "type": "number"
+        },
+        "anclaje": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Anclaje"
+        },
+        "bahia": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bahia"
+        },
+        "eje": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Eje"
+        },
+        "fondo": {
+          "exclusiveMinimum": 0.0,
+          "maximum": 10.0,
+          "title": "Fondo",
+          "type": "number"
+        }
+      },
+      "required": [
+        "ancho",
+        "alto",
+        "fondo"
+      ],
+      "title": "InterfazMecanica",
+      "type": "object"
+    },
+    "ModoFallo": {
+      "description": "Qué hace el módulo cuando falta energía o algo lo bloquea.",
+      "enum": [
+        "para_en_seco",
+        "cede_blando",
+        "se_libera"
+      ],
+      "title": "ModoFallo",
+      "type": "string"
+    },
+    "Proceso": {
+      "enum": [
+        "laser",
+        "cnc",
+        "impresion_3d",
+        "plantilla",
+        "comercial"
+      ],
+      "title": "Proceso",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Un módulo del catálogo. Mismo formulario a cualquier escala.",
+  "properties": {
+    "balance": {
+      "$ref": "#/$defs/Balance"
+    },
+    "canales": {
+      "items": {
+        "$ref": "#/$defs/Canal"
+      },
+      "title": "Canales",
+      "type": "array"
+    },
+    "cinematica": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Cinematica"
+    },
+    "envolvente": {
+      "$ref": "#/$defs/EnvolventePropia",
+      "default": {
+        "fuerza_max": null,
+        "radio_rodillo": null,
+        "recorrido_max": null,
+        "velocidad_max": null
+      }
+    },
+    "ergonomia": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Ergonomia"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "fabricacion": {
+      "$ref": "#/$defs/Fabricacion"
+    },
+    "fase": {
+      "$ref": "#/$defs/Fase",
+      "default": {
+        "arco": null,
+        "cero_relativo": 0.0
+      }
+    },
+    "identidad": {
+      "$ref": "#/$defs/Identidad"
+    },
+    "interfaz": {
+      "$ref": "#/$defs/InterfazMecanica"
+    },
+    "modo_fallo": {
+      "$ref": "#/$defs/ModoFallo"
+    }
+  },
+  "required": [
+    "identidad",
+    "interfaz",
+    "balance",
+    "modo_fallo",
+    "fabricacion"
+  ],
+  "title": "FichaModulo",
+  "type": "object"
+}
