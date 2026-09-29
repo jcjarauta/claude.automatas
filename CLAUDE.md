@@ -84,6 +84,7 @@ compile/              # Orquesta: intención -> piezas + informe. I/O permitido.
 emit/
   pieza.py            #   Pieza y sus siete metadatos, compartida por los tres
   layout.py           #   Maquetación 1:1 en mm: cabecera, colocación, troceado
+  calibracion.py      #   Perfil de impresora: factores x/y, hoja patrón
   template.py         #   PDF 1:1 para copistería          <- ver abajo
   dxf.py              #   Corte láser / CNC
   dossier.py          #   Dossier de montaje
@@ -92,6 +93,7 @@ emit/
 api/                  # FastAPI
 web/                  # React + Vite + TypeScript
 bench/                # Datos del banco de ensayo y calibraciones medidas
+  impresoras/         #   Un perfil por impresora, con fecha, papel e instrumento
 docs/
 tests/
 ```
@@ -147,6 +149,21 @@ real tarde demasiado. Síncrono primero.
 Una máquina no se entrega como un DXF. Se entrega como un **paquete de fabricación**
 que permite construirla por la vía que el cliente pueda pagar.
 
+**Planos de pieza ≠ documentación.** Se imprimen distinto, en momentos distintos
+y para manos distintas. No van en el mismo PDF:
+
+| | Plantillas de corte | Dossier de montaje |
+| --- | --- | --- |
+| Para quién | El carpintero, sobre el tablero | Quien monta, sobre la mesa |
+| Escala | 1:1 exacta, siempre | Libre, con la escala rotulada |
+| Formato | El que pida la pieza, de A4 a A0 | A4, encuadernable |
+| Vida | Se pega, se corta y se tira | Se guarda con la máquina |
+| Cuadro de calibración | Sí, en cada hoja | No |
+
+El compilador entrega dos archivos separados, `plantillas.pdf` y `dossier.pdf`.
+Mezclar una vista a escala libre con un plano 1:1 en el mismo documento es la
+forma más rápida de que alguien corte por la vista.
+
 ### `emit/dxf.py` — corte digital
 Láser o CNC. Compensación de kerf **aquí**, nunca en `core/`. El kerf es un dato
 calibrado por material y espesor: vive en `bench/kerf.json`. Exporta splines como
@@ -168,6 +185,41 @@ máquina digital. Requisitos no negociables:
   veta, y a qué conjunto pertenece.
 - **Teselado** con solape y marcas de registro si la pieza no cabe en la hoja, y
   modo de hoja única para plóter A0/A1.
+- **Formato por trabajo, no por pieza.** El formato lo elige el pedido: A4 para
+  lo que quepa, A3 o A2 para levas grandes, A1/A0 en hoja única de plóter para
+  el bastidor. `formato_minimo()` propone; la interfaz deja cambiarlo, y el
+  cambio no toca la geometría, solo la maquetación.
+- **Varias piezas por hoja.** Las piezas pequeñas de un mismo conjunto se
+  agrupan cuando caben, con holgura para la hoja de la sierra. Una hoja por
+  pieza desperdicia papel y obliga a barajar treinta folios en el taller.
+
+### `emit/calibracion.py` — perfil de impresora
+Una impresora no imprime a escala. El error típico está entre el 0,2 y el 1 %, y
+es **sistemático**: la misma máquina con el mismo papel se equivoca siempre
+igual. Lo sistemático se compensa; la deriva —humedad, fusor, arrastre— no. De
+ahí que el perfil se mida una vez y el cuadro se siga comprobando siempre.
+
+- **Dos factores, no uno.** `factor_x` y `factor_y` por separado: el arrastre
+  del papel deforma más en la dirección de avance que a lo ancho, y un factor
+  único reparte el error del eje malo sobre el bueno.
+- **El patrón es más largo que el cuadro.** Medir 100 mm con una regla da un
+  error de lectura de unos ±0,25 mm, es decir un 0,25 %, del mismo orden que el
+  error que se quiere medir: calibrar sobre 100 mm no mejora casi nada. La hoja
+  patrón lleva dos reglas, **150 mm** para pie de rey (0,05 mm → 0,03 %) y
+  **250 mm** para cinta métrica (1 mm → 0,4 %, pero es lo que hay en cualquier
+  taller). Se usa la que se tenga, y el perfil anota cuál.
+- **Compensar no es verificar.** El cuadro de 100 × 100 mm sigue en todas las
+  hojas aunque el perfil esté aplicado, y se escala con él. El factor corrige el
+  error conocido; el cuadro caza el que no lo es.
+- **Una impresora se puede rechazar.** La hoja patrón repite la medida en tres
+  bandas. Si el error no es uniforme dentro de la hoja no hay factor que lo
+  arregle: veredicto negativo con motivo, en vez de compensar una media que
+  miente.
+- **El perfil es dato, no código.** Un JSON por impresora en `bench/impresoras/`,
+  con fecha, formato, papel e instrumento de medida, igual que el kerf.
+  Configurable desde la interfaz: cada cliente calibra su copistería, no la
+  nuestra. Sin perfil el sistema sigue funcionando, con factores 1,0 y el aviso
+  de que no está calibrado.
 
 ### `emit/dossier.py` — dossier de montaje
 El PDF que acompaña a las piezas. Contiene: vistas ortográficas y una isométrica,
@@ -239,7 +291,11 @@ falla si el esquema versionado se queda atrás.
 
 ## Trampas conocidas
 
-- **Escalado de impresora.** Todo PDF 1:1 lleva cuadro de calibración. Sin excepción.
+- **Escalado de impresora.** Todo PDF 1:1 lleva cuadro de calibración. Sin
+  excepción, y también cuando hay perfil aplicado: compensar no es verificar.
+- **Medir con lo que no resuelve.** El instrumento tiene que ser más fino que el
+  error que se busca. Con cinta métrica el patrón va a 250 mm; con pie de rey
+  bastan 150. Nunca se calibra midiendo el cuadro de 100.
 - **Splines en software de láser.** Exporta polilínea densa o arcos.
 - **Cuota de la API de Onshape.** Es anual, no por minuto. Una llamada por pedido.
 - **Unidades.** El bug más caro y el más fácil de cometer. Usa `core/units.py`.

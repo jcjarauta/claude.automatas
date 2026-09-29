@@ -34,17 +34,34 @@ unas mil ochocientas veces menor que el kerf del láser. El riesgo real no está
 en el PDF sino en la impresora, y para eso está el cuadro.
 
 ## Verificación humana
-Criterio fijado antes: imprimir de verdad, en la copistería que se vaya a
-usar, y medir el cuadro con un calibre o una regla metálica. Después cortar
-una pieza siguiendo la plantilla y comprobar que encaja.
+**Reformulada el 2026-09-29, y pausada.** El criterio original —imprimir en la
+copistería que se vaya a usar y medir el cuadro— validaba *una impresora*. Eso
+no es transferible: la copistería de al lado tiene otra máquina y habría que
+repetir la puerta cada vez. El criterio pasa a validar *el procedimiento*:
+
+1. Imprimir la hoja patrón y medir sus reglas largas.
+2. Cargar los factores `x` e `y` como perfil de impresora.
+3. **Reimprimir** y comprobar que ahora el cuadro entra en tolerancia.
+4. Cortar una pieza siguiendo la plantilla y comprobar que encaja.
+
+El paso 3 es el que convierte la puerta en algo reutilizable: lo que se firma no
+es que esta impresora sea buena, sino que el sistema sabe corregir la que haya.
+
+Instrumentos disponibles (declarados por el usuario): **pie de rey y cinta
+métrica**. De ahí las dos reglas de la hoja patrón, 150 y 250 mm.
 
 Archivos a imprimir:
 - `plantilla_leva_A4.pdf` — una leva real en una hoja.
 - `plantilla_bastidor_troceado_A4.pdf` — nueve hojas, para el solape.
+- Hoja patrón de calibración — **pendiente de E3b**.
 
-Medida obtenida: PENDIENTE — se anota aquí, con número
+Medida sin corregir: PENDIENTE — se anota aquí, con número
+Medida tras cargar el perfil: PENDIENTE
 Quién lo comprobó: PENDIENTE
 Encaje de la pieza cortada: PENDIENTE
+
+**Estado: PAUSADA** por el usuario hasta tener las impresiones físicas. Se
+retoma junto con la puerta de E3b, que la absorbe.
 
 ## Decisiones tomadas
 1. **La maquetación está separada del PDF.** Una `Lamina` es una lista de
@@ -63,6 +80,20 @@ Encaje de la pieza cortada: PENDIENTE
 6. **El lienzo se abre en modo invariante.** Sin eso el PDF lleva fecha de
    creación e identificador aleatorio y no habría referencia que comparar.
 7. **`Espesor` entra en `core/units.py`** con rango propio de 0 a 100 mm.
+8. **La calibración de impresora se mete en la aplicación** (2026-09-29, a
+   propuesta del usuario). Dos factores `x` e `y` y no uno, porque el arrastre
+   del papel deforma más en la dirección de avance. El perfil es un JSON en
+   `bench/impresoras/` con fecha, papel e instrumento, como el kerf. Se
+   implementa en E3b.
+9. **El cuadro de 100 mm se queda aunque haya perfil.** Compensar no es
+   verificar: el factor corrige el error conocido, el cuadro caza el que no lo
+   es. El cuadro se escala con el perfil, o mediría 100 mm en una hoja que ya
+   no está a escala.
+10. **Planos de pieza y documentación son dos PDF distintos** (`plantillas.pdf`
+    y `dossier.pdf`). Escalas incompatibles en el mismo documento invitan a
+    cortar por la vista equivocada.
+11. **El formato lo elige el trabajo, de A4 a A0**, y las piezas pequeñas de un
+    conjunto se agrupan en una hoja.
 
 ## Hallazgos
 **El rango genérico no cazaba el error de magnitud.** `Longitud` admite hasta
@@ -85,12 +116,15 @@ siempre vacío. Reescrito para distinguir las marcas de registro de las
 esquinas de la marca de fase, que usan el mismo tipo de trazo.
 
 ## Deuda aceptada
-- No hay anidado de varias piezas en una hoja: una pieza por documento. El
-  aprovechamiento de plancha es de E5 en adelante.
+- ~~No hay anidado de varias piezas en una hoja: una pieza por documento.~~
+  **Promovida a E3b** el 2026-09-29: el usuario la pide como requisito. Se
+  agrupa lo que cabe; el empaquetado óptimo sigue siendo de E5 en adelante.
 - El troceado reparte en rejilla, sin optimizar el número de hojas.
 - `pymupdf` y `cairosvg` se usaron solo para mirar los resultados durante el
   desarrollo. No son dependencias del proyecto.
 
 ## Puerta
 Automática: CERRADA.
-Humana (imprimir y medir): PENDIENTE de firma, con la medida escrita.
+Humana (imprimir y medir): **PAUSADA**, reformulada como validación del
+procedimiento. Se firma en E3b, con las dos medidas escritas y en dos
+impresoras distintas.

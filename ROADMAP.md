@@ -145,16 +145,68 @@ de hoja única para plóter.
 - Las teselas solapan lo declarado y las marcas de registro coinciden.
 - Comparación contra PDF de referencia guardado (golden).
 
-**Verificación humana.** **Imprimir de verdad**, en la copistería que se vaya a
-usar, y medir el cuadro con un calibre o una regla metálica. Después cortar una
-pieza siguiendo la plantilla y comprobar que encaja donde debe.
+**Verificación humana.** **Imprimir de verdad** y medir. Reformulada en
+septiembre de 2026: no se valida *una impresora*, se valida *el procedimiento*.
+Lo primero no es transferible —la copistería de al lado tiene otra máquina— y lo
+segundo sí. El criterio pasa a ser: medir la hoja patrón, cargar los factores,
+**volver a imprimir** y comprobar que la segunda impresión entra en tolerancia.
+Después cortar una pieza siguiendo la plantilla y comprobar que encaja donde debe.
 
-**Puerta.** Firma humana con la medida escrita: *"cuadro impreso = 100,0 mm ± 0,3"*.
+**Puerta.** Firma humana con las dos medidas escritas: *"sin corregir = X mm;
+corregido = 100,0 mm ± 0,3"*. **Pausada** a petición del usuario hasta tener las
+impresiones físicas; la parte automática está cerrada y E3b puede avanzar
+mientras tanto.
 
 **No hacer.** El dossier completo. Aquí solo la plantilla de corte.
 
 **Duración.** 3–5 días. **Riesgo.** El escalado de impresora. Por eso se verifica
 con una regla y no con un test.
+
+---
+
+## E3b · Calibración de impresión y juego de plantillas
+
+**Objetivo.** Que la escala deje de depender de una copistería concreta, y que el
+paquete de papel sea utilizable en un taller de verdad.
+
+**Entregable.** `emit/calibracion.py` y la ampliación de `emit/layout.py`.
+
+- `PerfilImpresora`: nombre, fecha, formato, papel, `factor_x`, `factor_y`,
+  instrumento de medida y notas. JSON en `bench/impresoras/`, editable desde la
+  interfaz.
+- Hoja patrón con dos reglas —150 mm para pie de rey, 250 mm para cinta— y la
+  medida repetida en tres bandas para detectar error no uniforme.
+- Aplicación de los factores a la `Lamina`, **incluido el cuadro de calibración**.
+- Elección de formato por trabajo, de A4 a A0, y agrupación de varias piezas
+  pequeñas en una hoja.
+- Separación de salidas: `plantillas.pdf` (1:1, con cuadro) y `dossier.pdf`
+  (escala libre, rotulada). El dossier se llena en E6; aquí solo se separa.
+
+**Verificación automática**
+- Aplicar factor 1,0 deja el PDF byte a byte idéntico al golden actual.
+- Con un factor conocido, la distancia medida sobre el flujo del PDF cambia en
+  esa proporción exacta, **y el cuadro también**: si el cuadro no se escalara,
+  mediría 100 mm en una hoja que ya no está a escala.
+- Un perfil con error no uniforme entre bandas produce veredicto negativo con
+  motivo, no un factor promediado.
+- Ninguna pieza agrupada se solapa con otra ni pierde su rótulo.
+- Sin perfil cargado, el sistema emite igual y la hoja dice que no está calibrada.
+
+**Verificación humana.** La misma de E3, ahora en dos vueltas: imprimir la hoja
+patrón, medir, cargar, reimprimir, medir. Y la prueba que de verdad importa:
+**repetirlo en una segunda copistería** y comprobar que el procedimiento vale
+igual con otra máquina.
+
+**Puerta.** Firma humana con dos perfiles medidos, de dos impresoras distintas.
+Cierra a la vez la puerta pausada de E3.
+
+**No hacer.** Perfiles de color, ICC ni nada de gestión de color. Aquí solo
+importa la geometría. Tampoco anidado óptimo de piezas: agrupar lo que cabe,
+sin resolver el problema de empaquetado.
+
+**Duración.** 3–4 días de código; la espera es la copistería. **Riesgo.** Bajo en
+software. El riesgo real es descubrir que una impresora deforma de forma no
+uniforme y no sirve, que es justo lo que se quiere descubrir antes y no después.
 
 ---
 
@@ -402,7 +454,8 @@ Abierta / Cerrada — firma: <nombre>
 | E0 | Andamiaje | Automática | 0,2 |
 | E1 | Contrato de datos | Humana | 0,5 |
 | E2 | Núcleo geométrico | Automática + visual | 1,5 |
-| E3 | Plantilla en papel | Humana, con medida | 1 |
+| E3 | Plantilla en papel | Humana, con medida (pausada) | 1 |
+| E3b | Calibración e impresión | Humana, dos impresoras | 0,5 |
 | E4 | Banco y calibración | **Humana, crítica** | 2 |
 | E5 | Compilador completo | **Humana, con la hoja escrita** | 2,5 |
 | E6 | Dossier | Humana, prueba del desconocido | 2 |
@@ -411,7 +464,7 @@ Abierta / Cerrada — firma: <nombre>
 | E9 | Piloto | Humana, diez clientes | 5 |
 | E10 | Segunda memoria y marco | **Humana, valida la tesis** | 4 |
 
-Unas 24 semanas hasta E10, con solape entre etapas. Lo vendible existe al final
+Unas 25 semanas hasta E10, con solape entre etapas. Lo vendible existe al final
 de E9; lo que demuestra que esto es una metodología, al final de E10.
 
 **Las tres puertas que no se negocian:** E4 (el modelo predice la realidad),
