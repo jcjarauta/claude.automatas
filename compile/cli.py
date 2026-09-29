@@ -27,6 +27,8 @@ from core.escritura import Capacidad, Escritura, Trazo
 from core.units import mm
 from emit.dxf import Kerf, escribir_dxfs
 from emit.paquete import escribir_paquete
+from emit.step import disponible as hay_kernel
+from emit.step import escribir_step
 
 KERF = Path("bench/kerf.json")
 
@@ -65,6 +67,11 @@ def main(argv: list[str] | None = None) -> int:
         help="vueltas de manivela por vuelta del árbol",
     )
     partes.add_argument("--sin-dxf", action="store_true", help="solo papel")
+    partes.add_argument(
+        "--step",
+        action="store_true",
+        help="además, el cartucho en 3-D para arrastrar a un CAD (necesita --group cad)",
+    )
     partes.add_argument(
         "--dxf-para-cad",
         action="store_true",
@@ -110,6 +117,11 @@ def main(argv: list[str] | None = None) -> int:
         if not opciones.sin_dxf:
             kerf = Kerf.desde(KERF) if KERF.exists() else Kerf()
             escribir_dxfs(compilacion.piezas, destino, kerf, rotulo=not opciones.dxf_para_cad)
+        if opciones.step:
+            if hay_kernel():
+                escribir_step(compilacion.piezas, destino / "cartucho.step")
+            else:
+                print("sin STEP: falta el kernel. Instálalo con  uv sync --group cad")
 
     print(resumen(compilacion))
     if veredicto_montaje is not None and not veredicto_montaje.apto:

@@ -41,6 +41,7 @@ documentación para fabricarla.
 
 ```bash
 uv sync                      # instalar dependencias
+uv sync --group cad          # + el kernel OCCT, solo si vas a exportar STEP
 uv run pytest                # tests
 uv run pytest -m core        # solo el núcleo (rápido)
 uv run ruff check --fix .    # lint
@@ -243,9 +244,32 @@ paso con vistas explosionadas, la marca de fase cero y cómo verificarla, y la h
 de comprobación final. Se apoya en `project_to_viewport()` y `ExportSVG` de
 build123d para las vistas, y en `TechnicalDrawing` para el cajetín.
 
-### `emit/step.py` y `emit/onshape.py`
-STEP para quien quiera el 3D. Onshape solo como gemelo paramétrico para planos y
-documentación: **una sola llamada de API por pedido**, porque la cuota es anual.
+### `emit/step.py` — el sólido 3-D
+No calcula nada: la masa y la inercia salen exactas del polígono en
+`core/solido.py` y las interferencias que importan son planas. Lo que da, y no
+se consigue de otra manera, es un **STEP B-rep**: caras, aristas y vértices de
+verdad, que es lo que un CAD necesita para acotar y emparejar. Una malla —lo
+que exporta un OpenSCAD— entra como un amasijo de triángulos inservible.
+
+`build123d` es **dependencia opcional** (`uv sync --group cad`): son unos 800 MB
+de kernel OCCT y nada de lo que calcula el proyecto depende de él. Sin la
+dependencia, todo lo demás funciona y el CLI avisa.
+
+Hay un test que contrasta la masa del kernel contra la del polígono. Coinciden
+al 0,02 %, por dos caminos que no comparten una línea de código.
+
+### `emit/onshape.py` — el gemelo paramétrico
+**El reparto con Onshape, que es lo que hace que su cuota anual deje de
+importar:**
+
+| | Quién lo hace | Cómo llega a Onshape |
+| --- | --- | --- |
+| **El cartucho** — cambia en cada pedido, no se edita nunca | Lo genera el compilador | DXF para bocetos, STEP para el sólido. Se arrastra el archivo |
+| **La plataforma** — no cambia entre pedidos, tiene que seguir siendo paramétrica | FeatureScript escrito a mano, una vez | Se escribe dentro de Onshape |
+
+Así el camino **por pedido**, que es el que se repite cientos de veces, no
+toca la API nunca. Los números que comparten los dos lados —eje, bastidor,
+fase— viven en `docs/contratos.md`, que para eso está.
 
 ---
 
