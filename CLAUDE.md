@@ -82,8 +82,10 @@ core/                 # PURO. Geometría, cinemática, energía.
     flywheel.py       #   C7 · inercia
     accumulator.py    #   C10 · carga y descarga
   tolerance.py        #   C4 · cadena de tolerancias
+  solido.py           #   Masa y momento polar de un prisma, desde su polígono
 compile/              # Orquesta: intención -> piezas + informe. I/O permitido.
   escribiente.py      #   La máquina concreta: compilar y simular
+  conjunto.py         #   El cartucho montado: interferencias, pila, masa
   informe.py          #   El informe del pedido, en markdown
   cli.py              #   Un pedido, un comando
 emit/
@@ -375,6 +377,11 @@ falla si el esquema versionado se queda atrás.
 pivotes anclados, palanca para el lápiz y tres levas apiladas. Tres números
 que se decidieron midiendo y no eligiendo:
 
+- **Hueco al poste: 5,9 mm** con la caja de escritura por defecto. Los tres
+  postes de seguidor están a 71 mm del árbol y atraviesan los tres planos, así
+  que la leva de cada canal gira bajo los postes de los otros dos. **Ese hueco
+  encoge cuando la frase crece**, y es el límite de conjunto que decide qué
+  frases caben: no lo ve ninguna envolvente de C3, que juzga una leva sola.
 - **Relación seguidor → brazo, 3:1.** Con relación 1 y un barrido de brazo de
   26°, mantener el ángulo de presión por debajo de 30° exige un radio base de
   110 mm: levas de 240 mm, tres apiladas. Con 3:1 el seguidor barre un tercio
@@ -382,7 +389,11 @@ que se decidieron midiendo y no eligiendo:
   el juego: es la cadena de tolerancias de C4 y es lo que limita subir más.
 - **Radio base 55 mm, rodillo 2 mm.** Es la combinación más pequeña que pasa
   la envolvente sin autointersecarse.
-- **Error de trazo simulado: 0,11 mm** con 720 muestras por vuelta.
+- **Error de trazo simulado: 0,11 mm** con 720 muestras por vuelta, más
+  0,058 mm que cuesta exportar el perfil como polígono en vez de como curva.
+- **El cartucho pesa 185 g** y su momento de inercia respecto del árbol es de
+  2,6 × 10⁻⁴ kg·m². Salen exactos del polígono, sin modelo 3-D: todas las
+  piezas son prismas de plancha (`core/solido.py`).
 
 El **calaje** de cada brazo —a qué ángulo se monta sobre el eje de su
 seguidor— es resultado de la compilación, no un parámetro. Va en el informe y

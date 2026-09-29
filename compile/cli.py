@@ -18,6 +18,7 @@ import json
 import sys
 from pathlib import Path
 
+from compile.conjunto import montar
 from compile.escribiente import Escribiente, compilar
 from compile.informe import escribir_informe, resumen
 from core.escritura import Capacidad, Escritura, Trazo
@@ -66,9 +67,14 @@ def main(argv: list[str] | None = None) -> int:
     maquina = Escribiente()
     compilacion = compilar(escritura, maquina, Capacidad(muestras=opciones.muestras))
 
+    montaje = None
+    veredicto_montaje = None
+    if compilacion.perfiles:
+        montaje, veredicto_montaje = montar(compilacion, maquina)
+
     destino: Path = opciones.out
     destino.mkdir(parents=True, exist_ok=True)
-    escribir_informe(compilacion, maquina, destino / "informe.md")
+    escribir_informe(compilacion, maquina, destino / "informe.md", montaje, veredicto_montaje)
     escribir_programa(
         json.loads(compilacion.programa.model_dump_json()),
         destino,
@@ -81,8 +87,12 @@ def main(argv: list[str] | None = None) -> int:
             escribir_dxfs(compilacion.piezas, destino, kerf, rotulo=not opciones.dxf_para_cad)
 
     print(resumen(compilacion))
+    if veredicto_montaje is not None and not veredicto_montaje.apto:
+        for incidencia in veredicto_montaje.errores:
+            print(f"  [conjunto] {incidencia.mensaje}")
     print(f"escrito en {destino}/")
-    return 0 if compilacion.veredicto.apto else 1
+    apto = compilacion.veredicto.apto and (veredicto_montaje is None or veredicto_montaje.apto)
+    return 0 if apto else 1
 
 
 if __name__ == "__main__":

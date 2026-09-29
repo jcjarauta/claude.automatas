@@ -10,9 +10,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from compile.conjunto import Montaje
 from compile.escribiente import Compilacion, Escribiente
 from core.units import Radianes, a_grados, a_mm
-from core.verdict import Incidencia
+from core.verdict import Incidencia, Veredicto
 
 
 def _incidencias(titulo: str, incidencias: tuple[Incidencia, ...]) -> list[str]:
@@ -28,7 +29,12 @@ def _incidencias(titulo: str, incidencias: tuple[Incidencia, ...]) -> list[str]:
     return lineas
 
 
-def informe(compilacion: Compilacion, maquina: Escribiente) -> str:
+def informe(
+    compilacion: Compilacion,
+    maquina: Escribiente,
+    montaje: Montaje | None = None,
+    veredicto_montaje: Veredicto | None = None,
+) -> str:
     """El informe completo, en markdown."""
     v = compilacion.veredicto
     escritura = compilacion.escritura
@@ -103,7 +109,33 @@ def informe(compilacion: Compilacion, maquina: Escribiente) -> str:
             "",
         ]
 
+    if montaje is not None:
+        lineas += [
+            "## El cartucho montado",
+            "",
+            "Las levas por separado ya tienen quien las juzgue. Esto mira el",
+            "conjunto: tres levas en el mismo árbol y tres postes de seguidor que",
+            "atraviesan los tres planos.",
+            "",
+            f"- Altura de la pila: {float(montaje.altura_pila) * 1000:.0f} mm",
+            f"- Masa de las tres levas: {float(montaje.masa) * 1000:.0f} g",
+            f"- Momento de inercia respecto del árbol: "
+            f"{float(montaje.inercia) * 1e7:.0f} × 10⁻⁷ kg·m²",
+            f"- Energía a una vuelta por segundo: "
+            f"{0.5 * float(montaje.inercia) * (2.0 * 3.141592653589793) ** 2 * 1000:.1f} mJ",
+            f"- Radio máximo: {float(montaje.radio_maximo) * 1000:.1f} mm",
+            f"- Hueco hasta el poste más cercano: "
+            f"**{float(montaje.holgura_al_poste) * 1000:.1f} mm**",
+            "",
+            "Ese hueco encoge cuando la frase crece: una leva mayor es un barrido",
+            "mayor del seguidor. Es el límite que decide qué frases caben.",
+            "",
+        ]
+
     lineas += _incidencias("Errores", v.errores)
+    if veredicto_montaje is not None:
+        lineas += _incidencias("Errores del conjunto", veredicto_montaje.errores)
+        lineas += _incidencias("Avisos del conjunto", veredicto_montaje.avisos)
     lineas += _incidencias("Avisos", v.avisos)
     if v.apto and not v.incidencias:
         lineas += ["Sin incidencias.", ""]
@@ -111,10 +143,16 @@ def informe(compilacion: Compilacion, maquina: Escribiente) -> str:
     return "\n".join(lineas)
 
 
-def escribir_informe(compilacion: Compilacion, maquina: Escribiente, destino: Path | str) -> Path:
+def escribir_informe(
+    compilacion: Compilacion,
+    maquina: Escribiente,
+    destino: Path | str,
+    montaje: Montaje | None = None,
+    veredicto_montaje: Veredicto | None = None,
+) -> Path:
     ruta = Path(destino)
     ruta.parent.mkdir(parents=True, exist_ok=True)
-    ruta.write_text(informe(compilacion, maquina), encoding="utf-8")
+    ruta.write_text(informe(compilacion, maquina, montaje, veredicto_montaje), encoding="utf-8")
     return ruta
 
 
