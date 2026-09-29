@@ -111,6 +111,24 @@ export PATH="$HOME/.local/bin:$PATH"
 
 ---
 
+## Abrir el proyecto en VS Code
+
+1. **Archivo → Abrir carpeta** y elige la carpeta del repositorio (la que
+   contiene `pyproject.toml`), no la carpeta que la contiene.
+2. VS Code ofrecerá **instalar las extensiones recomendadas**: acepta. Son
+   Python, Pylance, Ruff y Mypy, y vienen declaradas en `.vscode/extensions.json`.
+3. Abre un terminal con **Ctrl+Ñ** y ejecuta `uv sync` si aún no lo has hecho.
+4. **Seleccionar el intérprete**: `Ctrl+Shift+P` → *Python: Select Interpreter*
+   → el que está dentro de `.venv` del propio proyecto. Suele detectarlo solo
+   en cuanto existe la carpeta `.venv`.
+5. La pestaña de **Testing** del lateral ya encuentra los tests: se pueden
+   lanzar y depurar desde ahí.
+
+Formato y lint al guardar quedan configurados en `.vscode/settings.json`, que
+está versionado para que sea igual en todas las máquinas.
+
+---
+
 ## Comandos del día a día
 
 | Qué quieres | Comando |

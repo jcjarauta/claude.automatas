@@ -25,7 +25,9 @@ htmlcov/
 .env
 .DS_Store
 .idea/
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 
 # Frontend (llega en E7)
 web/node_modules/
