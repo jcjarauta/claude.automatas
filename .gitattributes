@@ -1,0 +1,37 @@
+# Finales de línea deterministas, independientes de la configuración local de
+# cada máquina. Sin esto, `core.autocrlf` de Windows y el de Linux discrepan y
+# aparecen diffs de ficheros enteros que nadie ha tocado.
+
+* text=auto eol=lf
+
+# --------------------------------------------------------------------------
+# Salidas de referencia: byte a byte, sin conversión
+# --------------------------------------------------------------------------
+# Los tests golden comparan bytes. Una conversión de finales de línea los
+# rompería en Windows y pasarían en Linux, o al revés: el peor tipo de fallo.
+
+*.dxf        -text
+tests/golden/** -text
+
+# --------------------------------------------------------------------------
+# Binarios: git no los toca
+# --------------------------------------------------------------------------
+*.pdf        binary
+*.png        binary
+*.jpg        binary
+*.jpeg       binary
+*.zip        binary
+*.step       binary
+*.stp        binary
+*.stl        binary
+*.woff       binary
+*.woff2      binary
+*.ttf        binary
+*.otf        binary
+
+# --------------------------------------------------------------------------
+# Scripts de Windows: estos sí necesitan CRLF
+# --------------------------------------------------------------------------
+*.bat        text eol=crlf
+*.cmd        text eol=crlf
+*.ps1        text eol=crlf
