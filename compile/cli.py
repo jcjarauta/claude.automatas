@@ -55,6 +55,11 @@ def main(argv: list[str] | None = None) -> int:
     partes.add_argument("--out", type=Path, default=Path("build"), help="carpeta de salida")
     partes.add_argument("--muestras", type=int, default=720, help="muestras por vuelta")
     partes.add_argument("--sin-dxf", action="store_true", help="solo papel")
+    partes.add_argument(
+        "--dxf-para-cad",
+        action="store_true",
+        help="DXF sin el rótulo de texto, para importar a un CAD sin avisos",
+    )
     opciones = partes.parse_args(argv)
 
     escritura = leer_escritura(opciones.entrada)
@@ -73,7 +78,7 @@ def main(argv: list[str] | None = None) -> int:
         escribir_paquete(compilacion.piezas, destino)
         if not opciones.sin_dxf:
             kerf = Kerf.desde(KERF) if KERF.exists() else Kerf()
-            escribir_dxfs(compilacion.piezas, destino, kerf)
+            escribir_dxfs(compilacion.piezas, destino, kerf, rotulo=not opciones.dxf_para_cad)
 
     print(resumen(compilacion))
     print(f"escrito en {destino}/")

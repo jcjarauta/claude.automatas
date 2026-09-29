@@ -117,8 +117,22 @@ def _fijar_orden_de_clases(doc: Drawing) -> None:
         doc.classes.add_class(tipo)
 
 
-def escribir_dxf(pieza: Pieza, destino: Path | str, kerf: Kerf | None = None) -> Path:
-    """Un DXF por pieza. Devuelve dónde quedó."""
+def escribir_dxf(
+    pieza: Pieza,
+    destino: Path | str,
+    kerf: Kerf | None = None,
+    *,
+    rotulo: bool = True,
+) -> Path:
+    """Un DXF por pieza. Devuelve dónde quedó.
+
+    Con `rotulo=False` se omite el texto de metadatos. Es lo que hay que
+    hacer para llevar la pieza a un CAD: el `TEXT` de DXF no es una entidad
+    de boceto, y Onshape lo rechaza con un «no se ha podido importar la
+    entidad desconocida» —la geometría entra bien, pero el aviso confunde—.
+    Para el taller el rótulo se queda: quien recibe el archivo necesita saber
+    de qué material es y cuántas van.
+    """
     kerf = kerf or Kerf()
     doc = _documento()
     espacio = doc.modelspace()
@@ -157,14 +171,15 @@ def escribir_dxf(pieza: Pieza, destino: Path | str, kerf: Kerf | None = None) ->
             dxfattribs={"layer": "FASE"},
         )
 
-    nota = f"{pieza.numero} {pieza.nombre} | {pieza.material} | {a_mm(pieza.espesor):.1f} mm"
-    nota += f" | x{pieza.cantidad} | veta {pieza.veta.value}"
-    nota += " | kerf medido" if kerf.medido else " | KERF SIN MEDIR: linea nominal"
-    espacio.add_text(
-        nota,
-        height=3.0,
-        dxfattribs={"layer": "ROTULO"},
-    ).set_placement((a_mm(pieza.limites[0]), a_mm(pieza.limites[1]) - 8.0))
+    if rotulo:
+        nota = f"{pieza.numero} {pieza.nombre} | {pieza.material} | {a_mm(pieza.espesor):.1f} mm"
+        nota += f" | x{pieza.cantidad} | veta {pieza.veta.value}"
+        nota += " | kerf medido" if kerf.medido else " | KERF SIN MEDIR: linea nominal"
+        espacio.add_text(
+            nota,
+            height=3.0,
+            dxfattribs={"layer": "ROTULO"},
+        ).set_placement((a_mm(pieza.limites[0]), a_mm(pieza.limites[1]) - 8.0))
 
     ruta = Path(destino)
     ruta.parent.mkdir(parents=True, exist_ok=True)
@@ -173,12 +188,21 @@ def escribir_dxf(pieza: Pieza, destino: Path | str, kerf: Kerf | None = None) ->
     return ruta
 
 
-def escribir_dxfs(piezas: list[Pieza], carpeta: Path | str, kerf: Kerf | None = None) -> list[Path]:
+def escribir_dxfs(
+    piezas: list[Pieza],
+    carpeta: Path | str,
+    kerf: Kerf | None = None,
+    *,
+    rotulo: bool = True,
+) -> list[Path]:
     """Un archivo por pieza: en el láser cada una se corta por su cuenta."""
     if not piezas:
         raise ValueError("no hay piezas que exportar")
     destino = Path(carpeta)
-    return [escribir_dxf(pieza, destino / f"{pieza.numero}.dxf", kerf) for pieza in piezas]
+    return [
+        escribir_dxf(pieza, destino / f"{pieza.numero}.dxf", kerf, rotulo=rotulo)
+        for pieza in piezas
+    ]
 
 
 __all__ = ["CAPAS", "Kerf", "escribir_dxf", "escribir_dxfs"]

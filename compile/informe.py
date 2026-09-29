@@ -83,7 +83,23 @@ def informe(compilacion: Compilacion, maquina: Escribiente) -> str:
             f"- Error máximo del trazo: **{simulacion.error_maximo * 1000:.3f} mm**",
             f"- Error medio: {simulacion.error_medio * 1000:.3f} mm",
             "",
-            "No incluye el kerf ni el desgaste, que se miden en el banco (E4).",
+            "## Contacto",
+            "",
+            "Segunda opinión, por otro camino: se apoya el rodillo en el **perfil ya",
+            "cortado**, sin usar la curva de paso. Caza los errores sistemáticos —un",
+            "desplazamiento por radio de rodillo del revés, un signo cambiado— que a",
+            "la simulación se le escapan porque comparte fórmulas con la síntesis.",
+            "Del socavado se ocupa la envolvente, que lo calcula exacto.",
+            "",
+            f"- Desviación del seguidor: {v.metricas.get('error_contacto_rad', 0.0) * 1000:.3f}"
+            " mrad",
+            f"- Lo que eso vale en la punta, amplificado por el varillaje: "
+            f"**{v.metricas.get('error_contacto_en_la_punta', 0.0) * 1000:.3f} mm**",
+            "",
+            "Viene del muestreo: la pieza que se corta es el polígono, no la curva.",
+            "Subir las muestras por vuelta lo baja.",
+            "",
+            "Nada de esto incluye el kerf ni el desgaste, que se miden en el banco (E4).",
             "",
         ]
 

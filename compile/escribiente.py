@@ -26,8 +26,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from core.actors.cinco_barras import BrazoCincoBarras
 from core.actors.palanca import PalancaElevadora
+from core.cam.contacto import psi_por_contacto
 from core.cam.curves import desde_muestras
-from core.cam.envelope import LimitesLeva, evaluar
+from core.cam.envelope import LimitesLeva, evaluar, radio_de_curvatura
 from core.cam.synth import PerfilLeva, Seguidor, sintetizar
 from core.escritura import (
     CANAL_X,
@@ -54,6 +55,22 @@ SEGUIDORES = ("izquierdo", "derecho", "elevador")
 
 ERROR_DE_TRAZO_MAXIMO = 0.0005
 """Medio milímetro. Por encima de eso, la letra deja de parecerse."""
+
+MUESTRAS_DE_CONTACTO = 24
+"""Ángulos repartidos por el ciclo en los que se apoya el rodillo. Son pocos
+porque cada uno cuesta, y para lo que sirven bastan: un error de signo o un
+desplazamiento del revés se ve en cualquier ángulo, no hay que buscarlo."""
+
+MUESTRAS_EN_LA_CURVA_CERRADA = 12
+"""Y estos, apretados donde el radio de curvatura es mínimo. Ahí es donde un
+rodillo demasiado grande socava el perfil, y el socavado es local: con
+muestreo uniforme se pasa entre dos ángulos sin que nadie lo vea."""
+
+ERROR_DE_CONTACTO_AVISO = 1e-3
+ERROR_DE_CONTACTO_GRAVE = 1e-2
+"""Radianes de desviación entre el ψ sintetizado y el que sale de apoyar el
+rodillo en el perfil. Un décimo de grado ya no es discretización: o el
+desplazamiento por radio de rodillo está mal, o la pieza está socavada."""
 
 
 class Escribiente(BaseModel):
@@ -281,6 +298,76 @@ def simular(
 # ---------------------------------------------------------------------------
 
 
+def verificar_por_contacto(
+    perfiles: dict[str, PerfilLeva],
+    maquina: Escribiente,
+    muestras: int = MUESTRAS_DE_CONTACTO,
+) -> tuple[float, float, list[Incidencia]]:
+    """Comprueba el perfil **cortado** apoyando el rodillo, sin usar la curva
+    de paso ni las normales.
+
+    La simulación del trazo deshace la síntesis con sus mismas fórmulas, así
+    que un error **sistemático** —el desplazamiento por radio de rodillo del
+    revés, un signo cambiado— se le escaparía: la ida y la vuelta
+    coincidirían igual. Esto va por otro camino y por eso lo ve.
+
+    Lo que **no** es: un detector de socavado. El socavado es local, pasa en
+    un puñado de grados, y cazarlo por contacto exigiría muestrear todo el
+    ciclo, que cuesta diez veces más de lo que este paso puede gastar. Quien
+    rechaza un perfil socavado es la envolvente, que lo calcula exacto y
+    gratis. Aquí se muestrea también alrededor de la curvatura mínima, y el
+    número sube cuando hay socavado, pero el juez es C3.
+
+    Devuelve la desviación en radianes del seguidor, su equivalente
+    aproximado en la punta del lápiz, y las incidencias.
+    """
+    peor = 0.0
+    incidencias: list[Incidencia] = []
+    for nombre, perfil in perfiles.items():
+        uniformes = np.linspace(0, len(perfil) - 1, muestras, dtype=int)
+        critico = int(np.argmin(np.abs(radio_de_curvatura(perfil))))
+        apretados = (
+            critico
+            + np.arange(-MUESTRAS_EN_LA_CURVA_CERRADA // 2, MUESTRAS_EN_LA_CURVA_CERRADA // 2)
+        ) % len(perfil)
+        indices = np.unique(np.concatenate([uniformes, apretados]))
+        thetas = perfil.thetas[indices]
+        desviacion = np.abs(
+            psi_por_contacto(perfil.perfil, perfil.seguidor, thetas) - perfil.psi[indices]
+        )
+        maxima = float(np.max(desviacion))
+        peor = max(peor, maxima)
+        if maxima > ERROR_DE_CONTACTO_GRAVE:
+            incidencias.append(
+                Incidencia(
+                    gravedad="error",
+                    codigo="contacto_discrepante",
+                    mensaje=(
+                        f"leva {nombre}: apoyando el rodillo en el perfil cortado, el "
+                        f"seguidor queda a {np.degrees(maxima):.2f}° de donde lo puso la "
+                        "síntesis. La pieza que se cortaría no es la que se calculó"
+                    ),
+                    sugerencia="baja el radio del rodillo o sube el radio base",
+                )
+            )
+        elif maxima > ERROR_DE_CONTACTO_AVISO:
+            incidencias.append(
+                Incidencia(
+                    gravedad="aviso",
+                    codigo="contacto_justo",
+                    mensaje=(
+                        f"leva {nombre}: el rodillo apoya a {np.degrees(maxima):.3f}° de lo "
+                        "previsto, más de lo que explica el muestreo del perfil"
+                    ),
+                    sugerencia="sube las muestras por vuelta",
+                )
+            )
+    # El varillaje amplifica: lo que el seguidor pierde llega a la punta
+    # multiplicado por la relación y por el brazo proximal.
+    en_la_punta = peor * maquina.relacion * float(maquina.proximal)
+    return peor, en_la_punta, incidencias
+
+
 def pieza_de_leva(
     perfil: PerfilLeva,
     nombre: str,
@@ -414,6 +501,10 @@ def compilar(
             },
         )
 
+    contacto, contacto_en_la_punta, incidencias_contacto = verificar_por_contacto(perfiles, maquina)
+    for incidencia in incidencias_contacto:
+        veredicto = veredicto.con(incidencia)
+
     simulacion = simular(perfiles, calajes, maquina, encajada, muestras=capacidad.muestras * 2)
     if simulacion.error_maximo > ERROR_DE_TRAZO_MAXIMO:
         veredicto = veredicto.con(
@@ -433,6 +524,8 @@ def compilar(
             **veredicto.metricas,
             "error_trazo_maximo": simulacion.error_maximo,
             "error_trazo_medio": simulacion.error_medio,
+            "error_contacto_rad": contacto,
+            "error_contacto_en_la_punta": contacto_en_la_punta,
         },
     )
 
@@ -460,7 +553,10 @@ def compilar(
 
 
 __all__ = [
+    "ERROR_DE_CONTACTO_AVISO",
+    "ERROR_DE_CONTACTO_GRAVE",
     "ERROR_DE_TRAZO_MAXIMO",
+    "MUESTRAS_DE_CONTACTO",
     "SEGUIDORES",
     "Compilacion",
     "Escribiente",
@@ -469,4 +565,5 @@ __all__ = [
     "encajar_en_la_caja",
     "pieza_de_leva",
     "simular",
+    "verificar_por_contacto",
 ]

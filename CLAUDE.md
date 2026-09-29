@@ -75,6 +75,7 @@ core/                 # PURO. Geometría, cinemática, energía.
     synth.py          #   C2 · curva de paso y perfil
     offset.py         #   C2 · offset por radio de rodillo
     envelope.py       #   C3 · ángulo de presión, curvatura, veredicto
+    contacto.py       #   C3 · ψ recuperado apoyando el rodillo en el perfil cortado
   actors/             #   C1 · catálogo de cinemáticas inversas
   energy/
     budget.py         #   C6 · par y energía
@@ -316,6 +317,10 @@ falla si el esquema versionado se queda atrás.
   patrón cae al 55 % y no al 50 % porque la mitad de 200 son 100, que es una
   cota rotulada, y la marca le pasaba por encima.
 - **Splines en software de láser.** Exporta polilínea densa o arcos.
+- **`TEXT` de DXF en un CAD.** No es una entidad de boceto: Onshape importa la
+  geometría bien y suelta un «no se ha podido importar la entidad desconocida»
+  por el rótulo de metadatos. Para el taller el rótulo se queda; para importar
+  a un CAD, `--dxf-para-cad`.
 - **DXF determinista.** Un DXF lleva fecha y dos identificadores aleatorios, y
   además declara sus clases recorriendo un **conjunto**, que en Python no tiene
   orden estable entre procesos. Salía idéntico dentro de una ejecución y

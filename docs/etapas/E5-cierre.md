@@ -75,8 +75,24 @@ peor combinación posible. Anotado en las trampas.
 - El reparto de θ es proporcional a la longitud, **no por curvatura**. El
   ROADMAP lo pedía; con el error de trazo en 0,1 mm no hace falta todavía, y
   meterlo ahora sería optimizar sin un problema que resolver.
-- La simulación lee la curva de paso, no el perfil cortado: no ve el
-  socavado —eso es C3— ni el kerf —eso es E4—.
+- ~~La simulación lee la curva de paso, no el perfil cortado.~~ **Saldada el
+  2026-09-29** con `core/cam/contacto.py`: se apoya el rodillo en el polígono
+  que se va a cortar y se recupera ψ sin usar la curva de paso ni las
+  normales. Es una derivación independiente de la síntesis, así que caza un
+  error sistemático —un desplazamiento del revés— que a la simulación se le
+  escapa por compartir fórmulas.
+
+  Del **socavado** sigue ocupándose la envolvente, y hay que decirlo claro: es
+  un defecto local, de unos pocos grados, y cazarlo por contacto exigiría
+  muestrear todo el ciclo, que cuesta diez veces lo que este paso puede
+  gastar. El contacto muestrea también alrededor de la curvatura mínima y el
+  número sube cuando hay socavado, pero el juez es C3, que lo calcula exacto.
+
+  Y un número nuevo que antes no teníamos: **el perfil exportado es un
+  polígono, no una curva**, y esa discretización vale 0,21 mrad en el seguidor
+  y, amplificada por el varillaje, **0,058 mm en la punta**. Es la mitad del
+  error de trazo simulado. Subir las muestras por vuelta lo baja.
+- El kerf sigue sin verse en ninguna simulación: eso es E4.
 - El empalme entre un trazo y el vuelo siguiente tiene una esquina. El spline
   la suaviza, pero la aceleración ahí es la más alta del ciclo. Se mirará con
   datos del banco antes de tocar nada.

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import random
 import time
+from dataclasses import replace
 
 import numpy as np
 import pytest
@@ -277,3 +278,71 @@ def test_subir_el_levantamiento_sube_el_angulo_de_presion_del_elevador():
         ]
 
     assert presion(6.0) > presion(2.0)
+
+
+# ---------------------------------------------------------------------------
+# Segunda opinión: contacto contra el perfil cortado
+# ---------------------------------------------------------------------------
+
+
+def test_el_compilador_apoya_el_rodillo_y_lo_anota():
+    metricas = compilar(hola()).veredicto.metricas
+    assert metricas["error_contacto_rad"] > 0.0
+    assert metricas["error_contacto_en_la_punta"] > 0.0
+
+
+def test_el_error_de_contacto_de_la_maquina_por_defecto_es_de_muestreo():
+    """Viene de que la pieza que se corta es un polígono, no la curva. Si
+    subiera de aquí, sería otra cosa."""
+    from compile.escribiente import ERROR_DE_CONTACTO_AVISO
+
+    assert compilar(hola()).veredicto.metricas["error_contacto_rad"] < ERROR_DE_CONTACTO_AVISO
+
+
+def test_mas_muestras_por_vuelta_bajan_el_error_de_contacto():
+    def contacto(muestras: int) -> float:
+        return compilar(hola(), capacidad=Capacidad(muestras=muestras)).veredicto.metricas[
+            "error_contacto_rad"
+        ]
+
+    assert contacto(1440) < contacto(360)
+
+
+def test_del_socavado_se_ocupa_la_envolvente_y_el_contacto_solo_lo_nota():
+    """Reparto de papeles, y conviene tenerlo escrito. El socavado es local:
+    pasa en unos pocos grados, y cazarlo por contacto exigiría muestrear todo
+    el ciclo. La envolvente lo calcula exacto y gratis, así que es ella quien
+    rechaza. El contacto solo enseña que el número sube."""
+    sana = compilar(hola())
+    socavada = compilar(hola(), Escribiente(radio_rodillo=mm(6.0)))
+
+    assert "perfil_autointersecado" in [i.codigo for i in socavada.veredicto.errores]
+    assert not socavada.veredicto.apto
+    assert (
+        socavada.veredicto.metricas["error_contacto_rad"]
+        > 2.0 * sana.veredicto.metricas["error_contacto_rad"]
+    )
+
+
+def test_un_desplazamiento_del_reves_si_lo_caza_el_contacto():
+    """Esto es para lo que sirve: un error sistemático, el mismo en todo el
+    ciclo. La simulación del trazo no lo vería, porque usa las mismas
+    fórmulas que lo cometieron."""
+    from compile.escribiente import verificar_por_contacto
+
+    compilacion = compilar(hola())
+    maquina = Escribiente()
+    al_reves = {}
+    for nombre, perfil in compilacion.perfiles.items():
+        al_reves[nombre] = replace(
+            perfil, perfil=perfil.paso + perfil.seguidor.radio_rodillo * perfil.normales
+        )
+    _, _, incidencias = verificar_por_contacto(al_reves, maquina)
+    assert "contacto_discrepante" in [i.codigo for i in incidencias]
+
+
+def test_la_simulacion_del_trazo_no_ve_el_socavado():
+    """Por eso hacía falta el contacto. Documenta el hueco con un número."""
+    socavada = compilar(hola(), Escribiente(radio_rodillo=mm(6.0)))
+    assert socavada.simulacion is not None
+    assert socavada.simulacion.error_maximo < ERROR_DE_TRAZO_MAXIMO
