@@ -45,7 +45,7 @@ uv run pytest                # tests
 uv run pytest -m core        # solo el núcleo (rápido)
 uv run ruff check --fix .    # lint
 uv run ruff format .         # formato
-uv run mypy core compile     # tipos (estricto en core/)
+uv run mypy core compile emit  # tipos (estricto en core/)
 
 uv run python scripts/export_schema.py        # esquema JSON tras tocar un modelo
 uv run python scripts/dibujar_perfiles.py     # lámina de perfiles para revisar
@@ -57,7 +57,7 @@ uv run uvicorn api.main:app --reload                       # API en local
 npm --prefix web run dev                                   # frontend en local
 ```
 
-Antes de dar por terminado un cambio: `uv run ruff check . && uv run mypy core compile && uv run pytest`.
+Antes de dar por terminado un cambio: `uv run ruff check . && uv run mypy core compile emit && uv run pytest`.
 
 ---
 

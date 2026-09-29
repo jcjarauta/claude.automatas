@@ -32,9 +32,31 @@ cuadro de 100 × 100 mm sigue en todas las hojas aunque haya perfil cargado.
 | `fecha` | Cuándo se midió. Un perfil viejo se vuelve a medir |
 | `formato` | Formato de la hoja patrón usada |
 | `papel` | Gramaje y tipo. Papel distinto, arrastre distinto |
-| `factor_x`, `factor_y` | Dos, no uno: el avance deforma más que el ancho |
-| `medido_con` | `pie_de_rey` o `cinta_metrica`. Fija la incertidumbre |
+| `medido_con` | `pie_de_rey`, `cinta_metrica` o `regla`. Fija la incertidumbre |
+| `x`, `y` | Cada eje: `nominal` dibujado y hasta tres `medidas`, una por banda |
 | `notas` | Lo que no cabe en los demás campos |
 
-Sin perfil el sistema emite igual, con factores 1,0 y el aviso en la hoja de
-que no está calibrada.
+Se guarda la medida cruda y no solo el factor: `factor_x` y `factor_y` salen
+calculados en el JSON y se descartan al leerlo, igual que `apto` en un
+veredicto. Así no existe forma de guardar un perfil cuyo factor contradiga sus
+propias medidas, y cualquier número se puede recalcular el día que se discuta.
+
+Ejemplo:
+
+```json
+{
+  "fecha": "2026-09-29",
+  "formato": "A4",
+  "medido_con": "pie_de_rey",
+  "nombre": "copistería de la esquina",
+  "notas": "",
+  "papel": "offset 80 g",
+  "x": { "medidas": [149.65, 149.6, 149.7], "nominal": 150.0 },
+  "y": { "medidas": [199.1, 199.15, 199.1], "nominal": 200.0 }
+}
+```
+
+Sin perfil el sistema emite igual: la advertencia del cuadro de calibración ya
+dice que si no mide 100 mm, la impresión está escalada. Un perfil neutro deja
+el PDF byte a byte como estaba, y una hoja corregida lleva al pie qué
+corrección se le aplicó y con qué perfil.

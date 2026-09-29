@@ -12,7 +12,7 @@ import sys
 
 COMPROBACIONES = [
     ("formato y lint", ["ruff", "check", "."]),
-    ("tipos", ["mypy", "core", "compile"]),
+    ("tipos", ["mypy", "core", "compile", "emit"]),
     ("tests", ["pytest"]),
 ]
 
