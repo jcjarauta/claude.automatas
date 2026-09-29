@@ -12,40 +12,102 @@ fabricarla — corte digital, plantilla en papel a escala 1:1 y dossier de monta
 ## Puesta en marcha
 
 Requisitos: **git** y **[uv](https://docs.astral.sh/uv/)**. Nada más.
-`uv` descarga la versión de Python que hace falta por su cuenta.
+`uv` descarga por su cuenta la versión de Python que haga falta.
 
-Si no tienes uv:
+> **Haz los pasos de uno en uno y comprueba cada uno antes de seguir.**
+> Si pegas todo el bloque de golpe, un fallo a mitad se pierde entre la
+> salida de los comandos siguientes.
+
+### Paso 1 · Instalar uv
 
 ```bash
 # macOS y Linux
 curl -LsSf https://astral.sh/uv/install.sh | sh
+```
 
-# Windows (PowerShell)
+```powershell
+# Windows — en PowerShell, no en Git Bash
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-Después:
+Si ya tienes Python instalado, esta alternativa también sirve en cualquier
+sistema: `pipx install uv` (o `pip install --user uv`).
+
+### Paso 2 · Cerrar el terminal y abrir uno nuevo
+
+**Este paso no es opcional.** El instalador añade `uv` al PATH, y un terminal ya
+abierto no ve ese cambio. En Windows afecta especialmente a Git Bash.
+
+### Paso 3 · Comprobar que uv responde
 
 ```bash
-git clone <URL-DEL-REPO>
-cd escribano
+uv --version
+```
+
+Tiene que imprimir un número de versión. Si dice `uv: command not found`, **no
+sigas**: ve a [Si uv no aparece](#si-uv-no-aparece) más abajo.
+
+### Paso 4 · Clonar e instalar
+
+```bash
+git clone https://github.com/jcjarauta/claude.automatas
+cd claude.automatas
 uv sync
 ```
 
-Comprobar que todo está en orden:
-
-```bash
-uv run ruff check . && uv run mypy core compile && uv run pytest
-```
-
-O, lo mismo en un solo comando y con resumen al final:
+### Paso 5 · Comprobar que todo está en orden
 
 ```bash
 uv run python scripts/check.py
 ```
 
-Debe terminar en **VERDE**. Si no, algo del entorno está mal y no tiene sentido
-seguir.
+Debe terminar en **VERDE**. Es el equivalente a:
+
+```bash
+uv run ruff check . && uv run mypy core compile && uv run pytest
+```
+
+Si sale ROJO, algo del entorno está mal y no tiene sentido seguir.
+
+---
+
+### Si uv no aparece
+
+`uv: command not found` después de instalarlo casi siempre es el PATH, no la
+instalación.
+
+**Windows, Git Bash.** El instalador deja `uv.exe` en
+`C:\Users\<TU-USUARIO>\.local\bin`. Comprueba si está:
+
+```bash
+ls ~/.local/bin/uv.exe
+```
+
+Si está pero no responde, añádelo al PATH de esta sesión:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+uv --version
+```
+
+Para que persista, añade esa línea a `~/.bashrc`:
+
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+```
+
+**Windows, PowerShell o CMD.** Reinicia el terminal. Si sigue sin verse, añade
+`%USERPROFILE%\.local\bin` al PATH del usuario desde *Editar las variables de
+entorno del sistema*, y vuelve a abrir el terminal.
+
+**macOS y Linux.** El instalador deja `uv` en `~/.local/bin`. Mismo arreglo:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+**Salida de emergencia.** Si nada de esto funciona y tienes Python a mano,
+`pipx install uv` lo instala en un sitio que ya suele estar en el PATH.
 
 ---
 

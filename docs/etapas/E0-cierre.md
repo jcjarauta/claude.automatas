@@ -19,6 +19,29 @@ otra vez. El guardián muerde.
 ## Verificación humana
 Criterio fijado antes: clonar en otra máquina y dejarlo funcionando en menos de
 cinco minutos siguiendo solo el README, sin preguntar nada.
+
+### Intento 1 — 2026-09-29 — FALLIDO
+Quién lo comprobó: Juan Carlos, en Windows con Git Bash (MINGW64).
+Resultado: `uv sync` y `uv run` fallaron con `bash: uv: command not found`.
+El clon funcionó. El README no llevaba a un estado funcionando.
+Evidencia: captura del terminal.
+
+Tres defectos del README, todos corregidos:
+
+1. La instalación de `uv` estaba redactada como prosa condicional ("si no tienes
+   uv") en lugar de como paso obligatorio con comprobación posterior.
+2. No advertía de que, tras instalar `uv` en Windows, hay que **cerrar y volver
+   a abrir el terminal**: Git Bash no ve el PATH nuevo hasta reiniciarse. Es la
+   causa más probable de este fallo concreto.
+3. Los comandos iban en un bloque pegable de varias líneas. Al fallar el tercero,
+   los siguientes se ejecutaron igualmente y el error quedó enterrado. Ahora son
+   pasos numerados de uno en uno, con una comprobación explícita
+   (`uv --version`) antes de continuar.
+
+Añadido además un apartado «Si uv no aparece» con el arreglo de PATH para Git
+Bash, PowerShell, macOS y Linux, y la alternativa `pipx install uv`.
+
+### Intento 2
 Quién lo comprobó: PENDIENTE
 Resultado: PENDIENTE
 Evidencia: PENDIENTE
