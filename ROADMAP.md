@@ -273,8 +273,13 @@ el cartucho, se gira la manivela y se mira el papel. Después se compara con la
 escritura original: ¿la reconoce quien la escribió?
 
 **Puerta.** Firma humana con la hoja escrita pegada al informe de la etapa.
-La parte automática está **cerrada**; ver `docs/etapas/E5-cierre.md`. La humana
-depende de tener las levas cortadas, y eso depende de E3b y de la copistería.
+La parte automática está **cerrada con reserva**; la humana depende de tener las
+levas cortadas, y eso depende de E3b y de la copistería. Ver
+`docs/etapas/E5-cierre.md`, que incluye la **reauditoría del 2026-09-30**: los
+cinco criterios pasan, pero el golden guarda una leva sintética y no un pedido
+compilado, y el veredicto de curvatura no converge con el muestreo. Y el reparto
+de grados **por curvatura** que pide el entregable sigue sin implementarse: hoy
+es proporcional a la longitud.
 
 **No hacer.** Interfaz. Todavía se trabaja con archivos y CLI.
 
