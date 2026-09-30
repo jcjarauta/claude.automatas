@@ -87,6 +87,28 @@ def informe(
     else:
         lineas += ["No se sintetizó ninguna leva: mira las incidencias.", ""]
 
+    if "desviacion_de_lo_capturado" in v.metricas:
+        lineas += [
+            "## Fidelidad",
+            "",
+            "**¿Esto se parece a lo que escribió el cliente?** Es la pregunta más",
+            "directa que puede hacer, y hasta ahora no la contestaba ningún número:",
+            "el error de trazo de la simulación compara el recorrido contra el",
+            "programa, que está hecho con la misma interpolación, y la cadena de",
+            "tolerancias cuenta holguras de piezas y no la forma de la curva.",
+            "",
+            f"- La curva se aparta de los puntos capturados hasta "
+            f"**{v.metricas['desviacion_de_lo_capturado'] * 1000:.3f} mm**",
+            f"- De los cuales se han redondeado a sabiendas las esquinas a un radio de "
+            f"{v.metricas.get('radio_de_esquina', 0.0) * 1000:.2f} mm",
+            "",
+            "El redondeo es deliberado: una esquina es curvatura infinita y la leva la",
+            "hereda. Sale más barato de lo que parece, porque densificar el trazo",
+            "quita de paso el sobrepaso de la interpolación, que con una polilínea",
+            "escasa es el término mayor con diferencia.",
+            "",
+        ]
+
     if compilacion.simulacion is not None:
         simulacion = compilacion.simulacion
         lineas += [

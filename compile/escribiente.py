@@ -38,6 +38,7 @@ from core.escritura import (
     Escritura,
     Tramo,
     Trazo,
+    desviacion_de_lo_capturado,
     encajar,
     programa,
     remuestrear,
@@ -488,10 +489,9 @@ def compilar(
     # encajar escala la frase, así que al revés el redondeo valdría una cosa
     # distinta en cada pedido. Y antes de `programa`, porque lo que se
     # redondea es lo que se fabrica: `Compilacion.escritura` es la de verdad.
-    encajada = suavizar(
-        encajar_en_la_caja(escritura, maquina),
-        capacidad.radio_de_esquina,
-    )
+    capturada = encajar_en_la_caja(escritura, maquina)
+    encajada = suavizar(capturada, capacidad.radio_de_esquina)
+    desviacion = desviacion_de_lo_capturado(encajada, capturada)
     prog, veredicto = programa(encajada, capacidad)
     tramos, _ = repartir(encajada, capacidad)
 
@@ -594,6 +594,8 @@ def compilar(
             "error_trazo_medio": simulacion.error_medio,
             "error_contacto_rad": contacto,
             "error_contacto_en_la_punta": contacto_en_la_punta,
+            "desviacion_de_lo_capturado": desviacion,
+            "radio_de_esquina": float(capacidad.radio_de_esquina),
         },
     )
 

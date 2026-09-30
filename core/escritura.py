@@ -510,6 +510,71 @@ def suavizar(escritura: Escritura, radio: Longitud) -> Escritura:
     )
 
 
+MUESTRAS_DE_DESVIACION = 2000
+"""Con cuántos puntos se recorre el trazo para medir cuánto se aparta."""
+
+
+def desviacion_de_lo_capturado(
+    fabricada: Escritura,
+    capturada: Escritura,
+    muestras: int = MUESTRAS_DE_DESVIACION,
+) -> Metros:
+    """Cuánto se aparta la curva que va a recorrer la máquina de los puntos
+    que dibujó el cliente. En metros, el peor punto de la frase.
+
+    **Es el error de fidelidad, y faltaba.** Los otros dos números que da el
+    compilador no lo miden: el error de trazo simulado recorre los perfiles y
+    compara con el programa, que está hecho con la misma interpolación, así
+    que compara la interpolación consigo misma; y la cadena de tolerancias
+    (C4) cuenta holguras de piezas, no la forma de la curva. Entre los dos
+    dejaban fuera la pregunta más directa que puede hacer un cliente: **¿esto
+    se parece a lo que escribí?**
+
+    Lo que caza son las dos cosas que separan la curva de sus puntos:
+
+    - **El sobrepaso de la interpolación.** `interpolar` es una cúbica por los
+      puntos capturados, y con una polilínea escasa se pasa de largo. Con
+      «hola» eran 2,47 mm en el trazo de cinco puntos, veinte veces el error
+      de trazo que se venía citando.
+    - **El redondeo de las esquinas**, que es deliberado y se paga a
+      sabiendas: `Capacidad.radio_de_esquina`.
+
+    Se mide a los **segmentos** de la polilínea, no a sus vértices. Midiendo
+    a los vértices, una curva densa y perfecta daría un error grande solo por
+    tener puntos entre vértice y vértice.
+
+    Las dos escrituras tienen que estar en el mismo marco: se comparan después
+    de encajar, no contra el archivo que subió el cliente.
+    """
+    if len(fabricada.trazos) != len(capturada.trazos):
+        raise ValueError(
+            "las dos escrituras tienen que tener los mismos trazos para poder "
+            f"compararse: {len(fabricada.trazos)} contra {len(capturada.trazos)}"
+        )
+    fracciones = np.linspace(0.0, 1.0, muestras)
+    peor = 0.0
+    for curva, referencia in zip(fabricada.trazos, capturada.trazos, strict=True):
+        peor = max(peor, _lejos_de(interpolar(curva, fracciones), referencia.coordenadas))
+    return Metros(peor)
+
+
+def _lejos_de(puntos: Arreglo, polilinea: Arreglo) -> float:
+    """Lo que más se aparta un punto de la polilínea, midiendo a segmentos."""
+    if len(polilinea) < 2:
+        return float(np.linalg.norm(puntos - polilinea[0], axis=1).max())
+    a, b = polilinea[:-1], polilinea[1:]
+    ab = b - a
+    largo = np.einsum("ij,ij->i", ab, ab)
+    fraccion = np.clip(
+        np.einsum("pij,ij->pi", puntos[:, None, :] - a[None], ab)
+        / np.where(largo <= 0.0, 1.0, largo),
+        0.0,
+        1.0,
+    )
+    pie = a[None] + fraccion[..., None] * ab[None]
+    return float(np.min(np.linalg.norm(puntos[:, None, :] - pie, axis=2), axis=1).max())
+
+
 PASO_DE_TANGENTE = 1e-4
 """Fracción del trazo con la que se mide su pendiente en un extremo."""
 
@@ -669,6 +734,7 @@ __all__ = [
     "Escritura",
     "Tramo",
     "Trazo",
+    "desviacion_de_lo_capturado",
     "encajar",
     "interpolar",
     "programa",

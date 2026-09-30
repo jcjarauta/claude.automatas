@@ -21,6 +21,7 @@ from core.escritura import (
     Capacidad,
     Escritura,
     Trazo,
+    desviacion_de_lo_capturado,
     encajar,
     interpolar,
     programa,
@@ -722,6 +723,10 @@ def test_un_radio_de_cero_deja_el_trazo_como_estaba():
     assert float(Capacidad(radio_de_esquina=mm(0.0)).radio_de_esquina) == 0.0
 
 
+def una(trazo: Trazo) -> Escritura:
+    return Escritura(nombre="una", trazos=[trazo])
+
+
 def test_interpolar_una_polilinea_escasa_se_pasa_de_largo():
     """**El error de fidelidad que no estaba medido.** Una cúbica natural por
     cinco puntos desiguales sobrepasa la polilínea que el cliente dibujó, y
@@ -730,23 +735,52 @@ def test_interpolar_una_polilinea_escasa_se_pasa_de_largo():
 
     Con «hola» el trazo de cinco puntos se iba 2,47 mm. Redondear las
     esquinas lo arregla de paso, porque densifica el trazo donde gira."""
-    crudo = Trazo(
-        puntos=[(mm(0), mm(0)), (mm(30), mm(2)), (mm(34), mm(28)), (mm(38), mm(2)), (mm(70), mm(0))]
+    crudo = una(
+        Trazo(
+            puntos=[
+                (mm(0), mm(0)),
+                (mm(30), mm(2)),
+                (mm(34), mm(28)),
+                (mm(38), mm(2)),
+                (mm(70), mm(0)),
+            ]
+        )
     )
-    u = np.linspace(0.0, 1.0, 2000)
-    assert _lejos_de(interpolar(crudo, u), crudo.coordenadas) > mm(1.0)
-
-    suave = redondear_esquinas(crudo, mm(0.5))
-    assert _lejos_de(interpolar(suave, u), crudo.coordenadas) < mm(0.5)
+    assert desviacion_de_lo_capturado(crudo, crudo) > mm(1.0)
+    assert desviacion_de_lo_capturado(suavizar(crudo, mm(0.5)), crudo) < mm(0.5)
 
 
-def _lejos_de(puntos: np.ndarray, polilinea: np.ndarray) -> float:
-    """Lo que más se aparta un punto de la polilínea, midiendo a los
-    segmentos y no a los vértices: a los vértices siempre sale mucho."""
-    a, b = polilinea[:-1], polilinea[1:]
-    ab = b - a
-    largo = np.einsum("ij,ij->i", ab, ab)
-    largo = np.where(largo <= 0.0, 1.0, largo)
-    t = np.clip(np.einsum("pij,ij->pi", puntos[:, None, :] - a[None], ab) / largo, 0.0, 1.0)
-    pie = a[None] + t[..., None] * ab[None]
-    return float(np.min(np.linalg.norm(puntos[:, None, :] - pie, axis=2), axis=1).max())
+def test_una_recta_no_se_aparta_de_si_misma():
+    """El cero de la escala: sin esto, un número pequeño no significaría
+    nada porque no se sabría de dónde se cuenta."""
+    recta = una(Trazo(puntos=[(mm(0), mm(0)), (mm(10), mm(0)), (mm(20), mm(0))]))
+    assert desviacion_de_lo_capturado(recta, recta) < mm(0.001)
+
+
+def test_redondear_mas_aparta_mas():
+    """Lo que se le quita al cliente crece con el radio, y por eso el radio
+    es una cota declarada y esto es el precio que se paga por ella."""
+    crudo = una(Trazo(puntos=[(mm(0), mm(0)), (mm(20), mm(0)), (mm(20), mm(20))]))
+    poco = desviacion_de_lo_capturado(suavizar(crudo, mm(0.5)), crudo)
+    mucho = desviacion_de_lo_capturado(suavizar(crudo, mm(3.0)), crudo)
+    assert mucho > poco
+
+
+def test_se_mide_a_los_segmentos_y_no_a_los_vertices():
+    """Midiendo a los vértices, un trazo denso y perfecto daría un error
+    grande solo por tener puntos entre vértice y vértice."""
+    escasa = una(Trazo(puntos=[(mm(0), mm(0)), (mm(100), mm(0))]))
+    densa = una(Trazo(puntos=[(mm(x), mm(0)) for x in range(0, 101, 5)]))
+    assert desviacion_de_lo_capturado(densa, escasa) < mm(0.001)
+
+
+def test_comparar_escrituras_de_distinto_numero_de_trazos_es_un_error():
+    dos = Escritura(
+        nombre="dos",
+        trazos=[
+            Trazo(puntos=[(mm(0), mm(0)), (mm(1), mm(0))]),
+            Trazo(puntos=[(mm(2), mm(0)), (mm(3), mm(0))]),
+        ],
+    )
+    with pytest.raises(ValueError, match="mismos trazos"):
+        desviacion_de_lo_capturado(dos, una(dos.trazos[0]))

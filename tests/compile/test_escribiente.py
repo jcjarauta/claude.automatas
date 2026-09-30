@@ -500,3 +500,25 @@ def test_un_radio_de_cero_deja_pasar_la_escritura_tal_cual():
     entrada = hola()
     salida = compilar(entrada, capacidad=Capacidad(radio_de_esquina=mm(0.0))).escritura
     assert len(salida.trazos[2].coordenadas) == len(entrada.trazos[2].coordenadas)
+
+
+def test_el_pedido_dice_cuanto_se_aparta_de_lo_que_escribio_el_cliente():
+    """El número de fidelidad, que es el que contesta la pregunta del
+    cliente. Los otros dos no la contestan: el error de trazo compara el
+    recorrido con el programa —la misma interpolación consigo misma— y C4
+    cuenta holguras de piezas."""
+    v = compilar(hola()).veredicto
+    assert 0.0 < v.metricas["desviacion_de_lo_capturado"] < float(mm(0.5))
+    assert v.metricas["radio_de_esquina"] == pytest.approx(float(mm(0.5)))
+
+
+def test_sin_redondear_la_curva_se_aparta_mucho_mas_de_lo_capturado():
+    """La contraprueba, y el número que estuvo escondido todo este tiempo:
+    `interpolar` es una cúbica por los puntos del cliente y con una polilínea
+    escasa se pasa de largo. Redondear densifica donde gira y lo quita."""
+    crudo = compilar(hola(), capacidad=Capacidad(radio_de_esquina=mm(0.0)))
+    suave = compilar(hola())
+    assert (
+        crudo.veredicto.metricas["desviacion_de_lo_capturado"]
+        > 5.0 * (suave.veredicto.metricas["desviacion_de_lo_capturado"])
+    )
