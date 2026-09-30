@@ -455,9 +455,18 @@ falla si el esquema versionado se queda atrás.
   `pasador_diametro`, `poste_diametro`—. La herramienta de círculo de Onshape
   acota el **diámetro**, así que meter `#cota.radio_base` ahí da una leva de
   27,5 mm de radio en vez de 55: **la mitad, y sin un solo aviso**. Pasó en la
-  primera prueba. Al acotar un círculo, cambia la cota a radio, o escribe
-  `#cota.radio_base * 2`. El nombre de la cota dice cuál es; no hay forma de
-  saberlo por el número.
+  primera prueba.
+
+  Resuelto en el exportador: `con_gemelos` saca las dos formas de cada cota
+  circular —`radio_base` 55 y `radio_base_diametro` 110, `eje_diametro` 10 y
+  `eje_diametro_radio` 5—, así que se escribe la que pida el campo y no hay
+  nada que multiplicar ni que recordar. Son siete filas de más. Cambiar la
+  cota a radio con el botón derecho también valdría, pero eso es disciplina,
+  y la disciplina falla una vez de cada veinte. Es el patrón del pasador de
+  índice: no hacer el error improbable, hacerlo imposible.
+
+  El gemelo lleva «derivada de …» en la descripción, para que nadie lo
+  corrija a mano creyendo que es una cota del contrato.
 - **Un CSV escrito pegando comas se rompe con el primer campo que lleve una.**
   La tolerancia del pasador de índice es «m6 en el plato metálico, deslizante
   en el POM». Sin comillas parte la fila en dos columnas de más, y no se ve

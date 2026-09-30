@@ -89,8 +89,9 @@ def test_la_tabla_de_materiales_sale_de_core(paquete: Path):
     from core.solido import DENSIDADES
 
     materiales = (paquete / "materiales.csv").read_text(encoding="utf-8")
+    assert materiales.startswith("Category,Name,Density [kg/m^3]")
     for nombre, densidad in DENSIDADES.items():
-        assert f"{nombre},{densidad:.0f}," in materiales
+        assert f",{nombre},{densidad:.0f}" in materiales
 
 
 def test_las_cotas_comerciales_viajan_para_poder_dibujarlas(paquete: Path):
@@ -144,7 +145,7 @@ def test_los_archivos_legibles_si_llevan_cabecera(paquete: Path):
     """Los que no se importan se leen, y sin cabecera no se entienden."""
     for nombre in ("variables.csv", "piezas.csv", "materiales.csv"):
         primera = (paquete / nombre).read_text(encoding="utf-8").split("\n")[0]
-        assert primera.startswith(("nombre,", "categoria,")), f"{nombre} sin cabecera"
+        assert primera.startswith(("nombre,", "Category,")), f"{nombre} sin cabecera"
 
 
 def test_una_tolerancia_con_coma_no_parte_la_fila():
@@ -169,3 +170,45 @@ def test_una_unidad_desconocida_se_queja_en_vez_de_colarse():
 
     with pytest.raises(ValueError, match="newton"):
         por_unidad("nombre,valor,unidad\nempuje,12,newton\n")
+
+
+def test_cada_cota_circular_tiene_sus_dos_formas(paquete: Path):
+    """**Onshape acota el diámetro por defecto.** Meter `#cota.radio_base` en
+    una cota de diámetro da una leva de 27,5 mm en vez de 55: la mitad, y sin
+    un solo aviso. Con las dos formas no hay nada que recordar ni nada que
+    multiplicar — se escribe la que pida el campo.
+
+    Mismo patrón que el pasador de índice: no hacer el error improbable,
+    hacerlo imposible."""
+    filas = dict((f[0], float(f[1])) for f in _leer(paquete / "variables_cota.csv"))
+    assert filas["radio_base"] == pytest.approx(55.0)
+    assert filas["radio_base_diametro"] == pytest.approx(110.0)
+    assert filas["eje_diametro"] == pytest.approx(10.0)
+    assert filas["eje_diametro_radio"] == pytest.approx(5.0)
+    # Solo los gemelos: `eje_diametro` acaba en «_diametro» y es una cota
+    # del contrato, no una derivada. Lo que distingue a un gemelo es que su
+    # base existe.
+    gemelos = 0
+    for nombre, valor in filas.items():
+        for sufijo, factor in (("_diametro", 2.0), ("_radio", 0.5)):
+            base = nombre.removesuffix(sufijo)
+            if nombre.endswith(sufijo) and base in filas:
+                assert valor == pytest.approx(factor * filas[base]), nombre
+                gemelos += 1
+    assert gemelos == 7, f"esperaba 7 cotas circulares con gemelo, hay {gemelos}"
+
+
+def test_el_gemelo_dice_que_es_derivado(paquete: Path):
+    """Para que nadie lo corrija a mano creyendo que es una cota del
+    contrato: si el radio cambia, el diámetro sale solo."""
+    for fila in _leer(paquete / "variables_cota.csv"):
+        if fila[0] == "radio_base_diametro":
+            assert fila[-1].startswith("derivada de radio_base")
+            return
+    raise AssertionError("no está el gemelo de radio_base")
+
+
+def _leer(ruta: Path) -> list[list[str]]:
+    import csv as _csv
+
+    return list(_csv.reader(ruta.read_text(encoding="utf-8").splitlines()))

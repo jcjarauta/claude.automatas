@@ -86,7 +86,43 @@ def por_unidad(tabla: str) -> dict[str, str]:
                 f"archivo va. Añádela a UNIDAD_A_SUFIJO."
             )
         salida[sufijo].append(fila)
-    return {s: _volcar(v) for s, v in salida.items() if v}
+    return {s: _volcar(con_gemelos(v)) for s, v in salida.items() if v}
+
+
+def con_gemelos(filas: list[list[str]]) -> list[list[str]]:
+    """Añade la otra mitad de cada cota circular: el diámetro de un radio y
+    el radio de un diámetro.
+
+    **Onshape acota el diámetro por defecto**, y de las siete cotas
+    circulares del contrato cuatro son radio y tres diámetro. Meter
+    `#cota.radio_base` en una cota de diámetro da una leva de 27,5 mm en vez
+    de 55: la mitad, y sin un solo aviso. Pasó en la primera prueba.
+
+    Se podría resolver cambiando cada cota a radio con el botón derecho, o
+    escribiendo `* 2` donde toque. Las dos cosas son disciplina, y la
+    disciplina falla una vez de cada veinte. **Teniendo las dos formas no hay
+    nada que recordar**: se escribe la que pida el campo y el nombre dice
+    cuál es. Son siete filas de más.
+
+    Es el mismo patrón que el pasador de índice del cartucho: no hacer el
+    error improbable, hacerlo imposible.
+    """
+    salida: list[list[str]] = []
+    for fila in filas:
+        salida.append(fila)
+        nombre, valor = fila[0], fila[1]
+        if "radio" in nombre:
+            gemelo, factor = f"{nombre}_diametro", 2.0
+        elif "diametro" in nombre:
+            gemelo, factor = f"{nombre}_radio", 0.5
+        else:
+            continue
+        derivada = list(fila)
+        derivada[0] = gemelo
+        derivada[1] = f"{float(valor) * factor:.4f}"
+        derivada[-1] = f"derivada de {nombre} — {fila[-1]}"
+        salida.append(derivada)
+    return salida
 
 
 def _volcar(filas: list[list[str]]) -> str:
@@ -121,7 +157,11 @@ def materiales() -> str:
     # Sin línea de comentario: un CSV que se importa en el CAD no tiene
     # dónde poner un comentario, y un «#» al principio entra como una fila
     # más y ensucia el mapa. El aviso vive en el README.
-    lineas = ["categoria,nombre,densidad_kg_m3,de_donde_sale"]
+    # Las tres columnas que pide Onshape, con ese rótulo exacto: es el
+    # formato de su «Descargar ejemplo» y la importación no perdona otro.
+    salida = io.StringIO()
+    escritor = _csv.writer(salida, lineterminator="\n", quoting=_csv.QUOTE_MINIMAL)
+    escritor.writerow(("Category", "Name", "Density [kg/m^3]"))
     categoria = {
         "POM": "Plástico",
         "PMMA": "Plástico",
@@ -135,11 +175,8 @@ def materiales() -> str:
         "acero inoxidable": "Metal",
     }
     for nombre, densidad in sorted(DENSIDADES.items()):
-        lineas.append(
-            f"{categoria.get(nombre, 'Otro')},{nombre},{densidad:.0f},"
-            "nominal de catálogo; lo sustituye la medida del banco"
-        )
-    return "\n".join(lineas) + "\n"
+        escritor.writerow((categoria.get(nombre, "Otro"), nombre, f"{densidad:.0f}"))
+    return salida.getvalue()
 
 
 def cotas_comerciales() -> str:
