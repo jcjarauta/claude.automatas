@@ -497,11 +497,37 @@ falla si el esquema versionado se queda atrás.
   salto en 1,02x. Antes se dividía por dos indefinidamente. El front-end de
   escritura está, por tanto, arreglado.
 
-  **Pero el perfil de la leva sigue divergiendo** —13,5 mm a 720, 1,05 a
-  11.520, ~1,8x por duplicación—, así que lo que queda está **aguas abajo
-  del programa**: en `desde_muestras` o en `core/cam/synth.py`, que son
-  quienes convierten las muestras de ψ en una función continua y esa función
-  en un perfil. Ahí es donde hay que mirar, y no en la escritura.
+  **Pero el perfil de la leva sigue divergiendo**: 13,5 mm a 720 muestras y
+  1,05 a 11.520.
+
+  **Localizado, 2026-09-30: el vuelo forma una cúspide.** No está aguas
+  abajo —`desde_muestras` ya es un spline periódico C2 y `synth.py` está
+  limpio—: el camino converge *a una esquina*, y una esquina tiene segunda
+  derivada infinita por muy bien que converja su posición. Con «hola» a
+  2.880 muestras, en θ = 232,5° (arranque del tercer vuelo), la punta frena
+  y **invierte el sentido en x**:
+
+  ```
+  θ=232.375°  (0.527, 85.158)  paso 0.0057 mm
+  θ=232.500°  (0.525, 85.154)  paso 0.0041      <- se para
+  θ=232.625°  (0.525, 85.150)  paso 0.0041      <- y vuelve
+  θ=232.750°  (0.529, 85.145)  paso 0.0057
+  ```
+
+  Es el fallo clásico de una Hermite cúbica cuyas tangentes apuntan **en
+  contra de la cuerda** que une los dos extremos: la curva sale hacia atrás,
+  se detiene y da la vuelta. No es cuestión de magnitud —acotar la tangente
+  a 1,5 veces el salto no cambia nada, y tampoco acotarla por abajo—, es de
+  dirección: pasa cuando un trazo acaba alejándose de donde empieza el
+  siguiente.
+
+  Las salidas obvias no valen tal cual, y por eso esto sigue abierto:
+  recortar la componente de la tangente contra la cuerda quita la cúspide
+  pero devuelve una esquina, que es igual de infinita; y darle más θ al
+  vuelo (`Capacidad.peso_vuelo`) alivia sin garantizar nada. Lo que hace
+  falta es una curva de vuelo que **admita invertir el sentido sin
+  cúspide** —una quíntica con curvatura impuesta en los extremos, o un arco
+  de salida y otro de entrada unidos— y eso es diseño, no un parámetro.
 
   Nota de método: al pasar a C2 hubo que arreglar `_tangente`, que leía la
   última cuerda de la polilínea. Como la curva ya no sale con esa pendiente,
