@@ -1,0 +1,234 @@
+{
+  "version": "1.0.0",
+  "fecha": "2026-09-30",
+  "contratos": [
+    {
+      "nombre": "eje",
+      "estado": "congelado",
+      "congelado_el": "2026-09-29",
+      "porque": "Medidas corrientes de catálogo, y la pila sale de la geometría",
+      "valores": [
+        {
+          "nombre": "eje_diametro",
+          "valor": 0.01,
+          "unidad": "m",
+          "descripcion": "Diámetro del árbol de levas",
+          "tolerancia": "h7"
+        },
+        {
+          "nombre": "eje_sentido_horario",
+          "valor": 1.0,
+          "unidad": "adimensional",
+          "descripcion": "Giro horario visto desde arriba, theta creciente",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "pila_altura",
+          "valor": 0.019,
+          "unidad": "m",
+          "descripcion": "Tres levas y dos separadores",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "pila_altura_maxima",
+          "valor": 0.08,
+          "unidad": "m",
+          "descripcion": "Lo que puede medir sin dejar de ser transportable",
+          "tolerancia": ""
+        }
+      ]
+    },
+    {
+      "nombre": "fase",
+      "estado": "congelado",
+      "congelado_el": "2026-09-29",
+      "porque": "El cartucho es una sola pieza lógica y solo se puede montar de una manera",
+      "valores": [
+        {
+          "nombre": "pasador_diametro",
+          "valor": 0.003,
+          "unidad": "m",
+          "descripcion": "Pasador de índice: orienta la leva",
+          "tolerancia": "m6 en el plato metálico, deslizante en el POM"
+        },
+        {
+          "nombre": "pasador_radio",
+          "valor": 0.018,
+          "unidad": "m",
+          "descripcion": "A qué distancia del centro, sobre +X",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "pasador_longitud",
+          "valor": 0.024,
+          "unidad": "m",
+          "descripcion": "Atraviesa la pila de 19 mm y deja 5 para el plato de arrastre",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "pasador_angulo",
+          "valor": 0.0,
+          "unidad": "rad",
+          "descripcion": "Sobre el eje +X del marco de la leva, igual en las tres",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "taladro_eje",
+          "valor": 0.01,
+          "unidad": "m",
+          "descripcion": "Centra la leva; no la orienta",
+          "tolerancia": ""
+        }
+      ]
+    },
+    {
+      "nombre": "calaje",
+      "estado": "congelado",
+      "congelado_el": "2026-09-30",
+      "porque": "Constante de la máquina y no del pedido: es lo que hace del brazo una pieza de stock",
+      "valores": [
+        {
+          "nombre": "calaje_izquierdo",
+          "valor": -0.065429493354,
+          "unidad": "rad",
+          "descripcion": "Ángulo del brazo izquierdo con la punta en el centro de la caja",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "calaje_derecho",
+          "valor": -3.076163160236,
+          "unidad": "rad",
+          "descripcion": "Ángulo del brazo derecho con la punta en el centro de la caja",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "calaje_elevador",
+          "valor": 0.037508794629,
+          "unidad": "rad",
+          "descripcion": "Ángulo de la palanca a media altura de levantamiento",
+          "tolerancia": ""
+        }
+      ]
+    },
+    {
+      "nombre": "bastidor",
+      "estado": "pendiente",
+      "congelado_el": "",
+      "porque": "El radio base puede moverse cuando E4 mida el juego real; hasta entonces se dibuja pero no se promete",
+      "valores": [
+        {
+          "nombre": "poste_radio_al_arbol",
+          "valor": 0.071063352018,
+          "unidad": "m",
+          "descripcion": "hypot(radio_base, brazo_seguidor): dónde cae cada pivote de seguidor",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "poste_reparto",
+          "valor": 2.094395102393,
+          "unidad": "rad",
+          "descripcion": "Los tres postes repartidos a 120 grados",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "poste_diametro",
+          "valor": 0.015,
+          "unidad": "m",
+          "descripcion": "Diámetro del OBSTÁCULO que ve la leva: la valona del casquillo, no el poste",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "radio_base",
+          "valor": 0.055,
+          "unidad": "m",
+          "descripcion": "Radio base de la leva",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "brazo_seguidor",
+          "valor": 0.045,
+          "unidad": "m",
+          "descripcion": "Del pivote del seguidor al centro del rodillo",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "rodillo_radio",
+          "valor": 0.003,
+          "unidad": "m",
+          "descripcion": "Exterior del MR63ZZ entre dos",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "relacion_varillaje",
+          "valor": 6.0,
+          "unidad": "adimensional",
+          "descripcion": "Cuánto amplifica el varillaje entre seguidor y brazo",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "caja_ancho",
+          "valor": 0.08,
+          "unidad": "m",
+          "descripcion": "Caja de escritura",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "caja_alto",
+          "valor": 0.03,
+          "unidad": "m",
+          "descripcion": "Caja de escritura",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "caja_centro_y",
+          "valor": 0.1,
+          "unidad": "m",
+          "descripcion": "Altura del centro del papel sobre la línea de pivotes",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "brazo_separacion",
+          "valor": 0.12,
+          "unidad": "m",
+          "descripcion": "Entre los dos pivotes anclados del cinco barras",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "brazo_proximal",
+          "valor": 0.09,
+          "unidad": "m",
+          "descripcion": "Eslabón proximal del cinco barras",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "brazo_distal",
+          "valor": 0.11,
+          "unidad": "m",
+          "descripcion": "Eslabón distal del cinco barras",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "reductor_entre_ejes",
+          "valor": 0.028,
+          "unidad": "m",
+          "descripcion": "m*(Z1+Z2)/2 con modulo 0,7, Z20 y Z60",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "reductor_relacion",
+          "valor": 3.0,
+          "unidad": "adimensional",
+          "descripcion": "Vueltas de manivela por vuelta del árbol",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "holgura_minima",
+          "valor": 0.003,
+          "unidad": "m",
+          "descripcion": "Lo que tiene que sobrar entre dos piezas que no se tocan",
+          "tolerancia": ""
+        }
+      ]
+    }
+  ]
+}

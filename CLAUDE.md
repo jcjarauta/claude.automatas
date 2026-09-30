@@ -49,6 +49,7 @@ uv run ruff format .         # formato
 uv run mypy core compile emit  # tipos (estricto en core/)
 
 uv run python scripts/export_schema.py        # esquema JSON tras tocar un modelo
+uv run python scripts/exportar_variables.py   # variables para el Variable Studio de Onshape
 uv run python scripts/dibujar_perfiles.py     # lámina de perfiles para revisar
 uv run python scripts/plantillas_demo.py      # plantillas 1:1 de muestra
 uv run python scripts/regenerar_golden.py     # SOLO si el cambio es intencionado
@@ -93,6 +94,7 @@ compile/              # Orquesta: intención -> piezas + informe. I/O permitido.
   energia.py          #   ¿Puede girarlo una persona, y sale limpio?
   tolerancias.py      #   C4 aplicado: cuánto error llega de verdad a la punta
   coste.py            #   Qué cuesta: lo que se compra y lo que se corta
+  contratos.py        #   Los contratos congelados, como dato
   informe.py          #   El informe del pedido, en markdown
   cli.py              #   Un pedido, un comando
 emit/
@@ -274,7 +276,16 @@ importar:**
 
 Así el camino **por pedido**, que es el que se repite cientos de veces, no
 toca la API nunca. Los números que comparten los dos lados —eje, bastidor,
-fase— viven en `docs/contratos.md`, que para eso está.
+fase, calaje— viven en **`docs/contratos.json`**, y
+`scripts/exportar_variables.py` los convierte en la tabla que se pega **una
+vez** en el Variable Studio de Onshape. De ahí las referencian todas las
+Part Studios de la plataforma.
+
+**El flujo es de un solo sentido**: se toca el JSON, se regenera, se pega.
+Lo que se edite dentro de Onshape se pierde en la siguiente regeneración y,
+peor, deja de coincidir con lo que calcula el compilador sin que nadie se
+entere. El markdown sigue siendo donde se explica el porqué y donde vive el
+registro de cambios; lo que ya no está ahí es el número suelto.
 
 ---
 
@@ -421,7 +432,8 @@ falla si el esquema versionado se queda atrás.
 | Documento | Contenido |
 | --- | --- |
 | `docs/baseline.md` | Principios, ontología, núcleos, módulos, hitos, negocio |
-| `docs/contratos.md` | Contratos congelados: eje, bastidor, fase, calaje |
+| `docs/contratos.md` | Por qué cada cota es la que es, y el registro de cambios |
+| `docs/contratos.json` | Los números de esos contratos, que es de donde los lee todo |
 | `docs/ficha-producto.md` | Despiece, proveedores, coste de material y decisiones de fabricación |
 | `docs/metodologia.md` | Cómo se diseña, se prueba antes de gastar, y qué lleva el dossier |
 | `docs/modulos/` | Una ficha por módulo del catálogo |
