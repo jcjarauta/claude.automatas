@@ -115,6 +115,29 @@ class PiezaComercial(BaseModel):
         raise KeyError(f"{self.nombre} no declara la cota '{nombre}'. Tiene: {disponibles}")
 
     @property
+    def dientes(self) -> int | None:
+        """Z de un engranaje recto, despejado de `da = m·(Z+2)`. `None` si no
+        lo es.
+
+        **La ficha guarda lo que se mide y el CAD pide lo que se cuenta.** El
+        diámetro exterior se comprueba con un pie de rey sobre la pieza que
+        llega; el número de dientes es lo que rellena el FeatureScript de
+        engranaje de Onshape. Sin esta cuenta hay que hacerla de cabeza
+        mientras se rellena un formulario, y ya salió mal una vez: un piñón
+        con 25 dientes en vez de 20, que engrana a 2,4 en lugar de 3 y pide
+        un entre-ejes de 29,75 en vez de 28. Nada de eso avisa: el engranaje
+        sale bonito y no encaja.
+
+        Es un recuento, no una longitud, y por eso es `int`: un Z de 19,97
+        no existe. Si una ficha diera algo que no redondea a un entero
+        plausible, el error está en la cota, no aquí.
+        """
+        if self.familia is not FamiliaComercial.ENGRANAJE:
+            return None
+        modulo = float(self.cota("modulo").valor)
+        return round(float(self.cota("exterior").valor) / modulo - 2.0)
+
+    @property
     def criticas(self) -> tuple[Cota, ...]:
         """Las cotas de las que depende algo del diseño."""
         return tuple(c for c in self.cotas if c.critica)

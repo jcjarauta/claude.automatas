@@ -453,6 +453,19 @@ falla si el esquema versionado se queda atrás.
   de donde va a trabajar y el ángulo de presión calculado no es el real. La
   diferencia es el **calaje**, y va en el dossier.
 - **Cuota de la API de Onshape.** Es anual, no por minuto. Una llamada por pedido.
+- **El CAD pide lo que la ficha no guarda.** La ficha de un engranaje guarda
+  el **diámetro exterior**, que es lo que se comprueba con el pie de rey
+  sobre la pieza que llega. El FeatureScript de engranaje de Onshape pide el
+  **número de dientes**. Si la hoja de bocetos no lo trae, hay que despejar
+  `Z = da/m - 2` de cabeza rellenando un formulario, y así salió un piñón de
+  **25 dientes en vez de 20**: engrana a 2,4 en lugar de 3 y pide un
+  entre-ejes de 29,75 en vez de 28. No avisa nadie —el engranaje sale bonito—
+  y se descubre con las dos piezas en la mano.
+
+  `PiezaComercial.dientes` hace la cuenta una vez; el CSV, la hoja de bocetos
+  y el test del catálogo la leen de ahí. La regla general: **en la hoja va lo
+  que se teclea, no lo que se mide**, y cuando no coinciden, el derivado sale
+  también.
 - **Un CSV que se importa al Variable Studio no lleva cabecera.** El
   Variable Studio lee «todos los valores» sin saber que la primera fila es un
   rótulo, así que la cabecera entra en el mapa como una clave `nombre` cuyo

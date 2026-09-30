@@ -103,6 +103,25 @@ def test_las_cotas_comerciales_viajan_para_poder_dibujarlas(paquete: Path):
     assert piezas.count("\n") > 40
 
 
+def test_los_dientes_van_en_el_paquete_y_sin_unidad(paquete: Path):
+    """**El dato que el CAD pide y la ficha no guarda.**
+
+    La ficha guarda el diámetro exterior porque es lo que se mide con el pie
+    de rey sobre la pieza que llega; el FeatureScript de engranaje pide Z.
+    Sin esta fila hay que despejarlo de cabeza rellenando un formulario, y
+    así salió un piñón de 25 dientes en vez de 20: relación 2,4 en lugar de
+    3 y entre-ejes de 29,75 en vez de 28, sin un solo aviso.
+
+    Va al archivo sin unidad porque es un recuento. En el de milímetros
+    serían veinte milímetros de dientes.
+    """
+    numero = (paquete / "piezas_num.csv").read_text(encoding="utf-8")
+    cota = (paquete / "piezas_cota.csv").read_text(encoding="utf-8")
+    assert "pinon_reductor_dientes,20" in numero
+    assert "rueda_reductor_dientes,60" in numero
+    assert "dientes" not in cota
+
+
 def test_las_variables_van_partidas_por_unidad(paquete: Path):
     """**El CAD aplica un único factor de conversión a todo el archivo que
     importa.** Con las 29 cotas en un solo CSV, o los cinco ángulos entran

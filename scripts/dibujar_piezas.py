@@ -121,6 +121,28 @@ def _tiene(pieza: PiezaComercial, nombre: str) -> bool:
     return True
 
 
+def filas_de(pieza: PiezaComercial) -> list[tuple[str, str]]:
+    """Lo que se rellena en el CAD: nombre entero de la variable y su valor.
+
+    No son solo las cotas que dibuja el perfil. El número de dientes **no
+    está en la ficha** —la ficha guarda el diámetro exterior, que es lo que
+    se mide— y en cambio es exactamente lo que pide el FeatureScript de
+    engranaje. Faltaba en la primera hoja y salió un piñón de 25 dientes en
+    vez de 20: engrana a 2,4 en lugar de 3 y pide 29,75 mm de entre-ejes en
+    vez de 28. La hoja tiene que llevar lo que se teclea, no lo que se mide.
+    """
+    _, usadas = perfil_de(pieza)
+    # Las críticas que el perfil no dibuja van igual. El módulo de un
+    # engranaje es una de ellas: la envolvente es un disco liso, así que no
+    # aparece en el dibujo, y sin embargo es el primer campo del
+    # FeatureScript. Lo mismo la mina del portaminas.
+    nombres = usadas + [c.nombre for c in pieza.criticas if c.nombre not in usadas]
+    filas = [(f"{pieza.nombre}_{n}", f"{_mm(pieza, n, 0.0):g}") for n in nombres]
+    if pieza.dientes is not None:
+        filas.append((f"{pieza.nombre}_dientes", str(pieza.dientes)))
+    return filas
+
+
 def caja_del_perfil(pieza: PiezaComercial) -> tuple[float, float]:
     """Diámetro y altura que ocupa el perfil, en mm. Lo que compara el test."""
     puntos, _ = perfil_de(pieza)
@@ -131,12 +153,13 @@ def caja_del_perfil(pieza: PiezaComercial) -> tuple[float, float]:
 
 
 def panel(pieza: PiezaComercial, x: float, y: float, ancho: float, alto: float) -> list[str]:
-    puntos, usadas = perfil_de(pieza)
+    puntos, _ = perfil_de(pieza)
+    filas = filas_de(pieza)
     diametro, altura = caja_del_perfil(pieza)
 
     # El dibujo se centra en su hueco: si no, una pieza baja como el rodillo
     # queda pegada abajo y una alta como el portaminas se sale por arriba.
-    hueco_alto = alto - 30.0 - 9.0 * len(usadas) - 20.0
+    hueco_alto = alto - 30.0 - 9.0 * len(filas) - 20.0
     k = min(ancho * 0.36 / max(diametro / 2, 1e-6), hueco_alto / max(altura, 1e-6), 8.0)
     cx = x + ancho / 2
     base = y + 30.0 + (hueco_alto + altura * k) / 2.0
@@ -162,15 +185,9 @@ def panel(pieza: PiezaComercial, x: float, y: float, ancho: float, alto: float) 
     ]
 
     fila = y + 30.0 + hueco_alto + 14.0
-    for nombre in usadas:
-        d.append(
-            f'<text class="var" x="{x + 5:.1f}" y="{fila:.1f}">'
-            f"#pieza.{pieza.nombre}_{nombre}</text>"
-        )
-        d.append(
-            f'<text class="val" x="{x + ancho - 5:.1f}" y="{fila:.1f}">'
-            f"{_mm(pieza, nombre, 0.0):g}</text>"
-        )
+    for variable, valor in filas:
+        d.append(f'<text class="var" x="{x + 5:.1f}" y="{fila:.1f}">#pieza.{variable}</text>')
+        d.append(f'<text class="val" x="{x + ancho - 5:.1f}" y="{fila:.1f}">{valor}</text>')
         fila += 9.0
 
     aviso = SIN_MASA_FIABLE.get(pieza.nombre)

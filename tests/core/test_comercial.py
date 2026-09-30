@@ -84,6 +84,37 @@ def test_las_cotas_criticas_se_pueden_listar():
     assert [c.nombre for c in p.criticas] == ["agujero"]
 
 
+def test_los_dientes_de_un_engranaje_salen_de_sus_dos_cotas():
+    """`da = m·(Z+2)`. La ficha guarda el exterior porque es lo que se mide
+    con el pie de rey; el CAD pide Z, que es lo que no se puede medir sin
+    contar."""
+    p = pieza(
+        familia=FamiliaComercial.ENGRANAJE,
+        cotas=[
+            Cota(nombre="modulo", valor=mm(0.7), critica=True),
+            Cota(nombre="exterior", valor=mm(15.4), critica=True),
+        ],
+    )
+    assert p.dientes == 20
+
+
+def test_lo_que_no_es_un_engranaje_no_tiene_dientes():
+    """Devolver cero aquí sería un engranaje de cero dientes en un formulario
+    del CAD. No tener dientes y tener cero no es lo mismo."""
+    assert pieza().dientes is None
+
+
+def test_un_engranaje_al_que_le_falta_una_cota_no_se_inventa_los_dientes():
+    """Falla al pedir la cota, como cualquier otra. La alternativa es un
+    piñón plausible y equivocado."""
+    p = pieza(
+        familia=FamiliaComercial.ENGRANAJE,
+        cotas=[Cota(nombre="modulo", valor=mm(0.7), critica=True)],
+    )
+    with pytest.raises(KeyError, match="no declara la cota"):
+        _ = p.dientes
+
+
 def test_una_ficha_es_inmutable():
     with pytest.raises(ValidationError):
         pieza().nombre = "otra"  # type: ignore[misc]

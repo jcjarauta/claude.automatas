@@ -95,10 +95,15 @@ def test_los_engranajes_son_del_mismo_modulo():
 
 def test_los_dientes_salen_del_diametro_exterior_y_dan_la_relacion():
     """En un engranaje recto, el exterior vale m·(Z+2). Comprobarlo cruza dos
-    cotas del catálogo y confirma de paso que la reducción es 3:1."""
-    modulo = cota("rueda_reductor", "modulo")
-    dientes_rueda = round(cota("rueda_reductor", "exterior") / modulo - 2.0)
-    dientes_pinon = round(cota("pinon_reductor", "exterior") / modulo - 2.0)
+    cotas del catálogo y confirma de paso que la reducción es 3:1.
+
+    Va por `PiezaComercial.dientes` y no repitiendo la cuenta aquí, porque es
+    la misma que escribe la fila del CSV que se importa al CAD: si el test
+    tuviera su propia copia, podrían discrepar y el que se rellena a mano es
+    el del CAD.
+    """
+    dientes_rueda = pieza("rueda_reductor").dientes
+    dientes_pinon = pieza("pinon_reductor").dientes
     assert dientes_rueda == 60
     assert dientes_pinon == 20
     assert dientes_rueda / dientes_pinon == pytest.approx(3.0)

@@ -189,6 +189,13 @@ def cotas_comerciales() -> str:
 
     Lleva las críticas primero porque son las que otra pieza toca, y son las
     únicas que hay que acotar con cuidado.
+
+    Además de las cotas de la ficha salen las **derivadas que el CAD pide y
+    la ficha no guarda**: hoy solo el número de dientes de los engranajes.
+    La ficha guarda el diámetro exterior, que es lo que se mide con el pie
+    de rey sobre la pieza que llega; el FeatureScript pide Z. Si la cuenta
+    hay que hacerla de cabeza rellenando un formulario, se hace mal: ya
+    salió un piñón de 25 dientes en vez de 20.
     """
     salida = io.StringIO()
     escritor = _csv.writer(salida, lineterminator="\n", quoting=_csv.QUOTE_MINIMAL)
@@ -204,6 +211,21 @@ def cotas_comerciales() -> str:
                     "si" if cota.critica else "no",
                     cota.tolerancia,
                     pieza.designacion,
+                )
+            )
+        # Sin unidad a propósito: es un recuento y va a `piezas_num.csv`.
+        # Con el factor en milímetros saldrían veinte milímetros de dientes.
+        dientes = pieza.dientes
+        if dientes is not None:
+            escritor.writerow(
+                (
+                    f"{pieza.nombre}_dientes",
+                    str(dientes),
+                    "",
+                    pieza.nombre,
+                    "si",
+                    "",
+                    f"derivada de exterior/modulo - 2 — {pieza.designacion}",
                 )
             )
     return salida.getvalue()
