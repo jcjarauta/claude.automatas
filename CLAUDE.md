@@ -456,86 +456,63 @@ falla si el esquema versionado se queda atrás.
 - **Offset con autointersección.** Si el radio de curvatura es menor que el del
   rodillo, el offset se cruza consigo mismo. Detéctalo: es undercutting, y la
   pieza no se puede fabricar.
-- **El veredicto de curvatura depende del muestreo, y eso es un agujero de la
-  envolvente.** Con «hola» y la máquina por defecto, el radio de curvatura
-  mínimo **se divide por dos cada vez que se dobla `Capacidad.muestras`**:
-  13,4 mm a 360 muestras, 8,1 a 720, 4,7 a 1.440, 2,1 a 2.880 y 0,65 a
-  11.520. No converge, y eso no es un mínimo: **es una esquina**, de
-  curvatura infinita, que el muestreo estaba redondeando por accidente.
-  Viene del trazo de entrada, que es una polilínea y tiene una esquina en
-  cada vértice.
+- **Acortar una tangente para que la curva no se abombe rompe la continuidad
+  C1, y eso es peor que el abombamiento.** El vuelo tenía las tangentes
+  topadas a una vez y media el salto, para que la Hermite no formara un lazo.
+  El tope disparaba en un solo empalme de «hola» —el lazo de la «o», cuyo
+  salto al trazo anterior es corto— y dejaba la velocidad de aterrizaje un
+  **5,4 %** por debajo de la que traía el trazo. Un codo de esos se le hereda
+  a la leva como un escalón de curvatura: el radio mínimo que mide la
+  envolvente pasaba de 15,6 a **9,2 mm** en cuanto el muestreo lo resolvía.
 
-  La pieza que se fabrica a 720 muestras **sí es fabricable** —el polígono
-  redondea la esquina a 8,1 mm, muy por encima del rodillo de 3— pero lo es
-  por accidente y no por diseño, y `perfil_autointersecado` aparece o no
-  según un parámetro que no tiene nada que ver con la física. Mientras esto
-  no se arregle, **cualquier respuesta a «¿cabe esta frase?» es poco de
-  fiar**, porque es exactamente una pregunta de curvatura.
+  Y el lazo que el tope evitaba no era un problema: el lápiz va levantado
+  durante todo el vuelo. **Un lazo no es una cúspide**, la velocidad no se
+  anula. Lo defiende `test_el_vuelo_aterriza_a_la_misma_velocidad_a_la_que_
+  arranca_el_trazo`, que mide el desajuste en cada empalme y no en la pista
+  muestreada: a un lado y otro del empalme el paso es el mismo, así que una
+  diferencia finita no distingue un salto del 5 % del redondeo.
 
-  **Arreglado a medias, 2026-09-30.** Había tres fuentes de esquina y se han
-  localizado las tres:
+- **Una esquina de la polilínea es curvatura infinita, y sin redondearla
+  ningún veredicto de curvatura significa nada.** Con «hola», al doblar las
+  muestras el radio de curvatura mínimo del peor perfil iba 13,5 → 7,5 → 4,4
+  → 1,9 mm: **se dividía por dos cada vez**, que no es un mínimo sino una
+  esquina que el muestreo redondeaba por accidente. `Capacidad.
+  radio_de_esquina` la redondea a un radio declarado, 1 mm por defecto, y el
+  número se queda en 13,0 (relación 720/5760 de 1,04).
 
-  1. **El vuelo era una recta** del final de un trazo al principio del
-     siguiente, con una esquina en cada despegue y aterrizaje. **Resuelto**:
-     `core.escritura.vuelo` traza una Hermite cúbica tangente a los dos
-     trazos. No cuesta fidelidad —el lápiz va levantado y esa parte no se
-     ve— y sube el radio de curvatura de 8,1 a 10,9 mm al muestreo de
-     producción.
-  2. **Los vértices de la polilínea del trazo.** `redondear_esquinas` los
-     sustituye por arcos del radio que el rodillo pueda seguir. Esto **sí**
-     cuesta fidelidad, y por eso el radio es una cota declarada. Está
-     implementado y probado, **sin enchufar al compilador** todavía.
-  3. **`interpolar` recorría la polilínea con cuerdas rectas.** **Resuelto**:
-     ahora es una cúbica C2 (`scipy.interpolate.CubicSpline`, natural) que
-     pasa por los puntos capturados. Con menos de cuatro puntos se sigue
-     interpolando recto, porque una cúbica con tan pocos datos sobrepasa más
-     de lo que describe.
+  **El radio tiene que ser varios pasos de muestreo.** La leva se corta como
+  un polígono de `muestras` puntos; a 720 la punta avanza 0,26 mm por
+  muestra, así que un arco de 0,2 mm no recibe ni una muestra entera y el
+  redondeo existe en el modelo pero no en la pieza. Por eso 0,2 y 0,3 mm
+  apenas mejoran y 1,0 sí.
 
-  **Dónde está el problema ahora, y es otro sitio.** Con los tres arreglos,
-  **el camino (x, y) en función de θ ya converge**: su radio de curvatura
-  mínimo pasa de 0,0165 mm a 720 muestras a 0,0056 a 11.520, con el último
-  salto en 1,02x. Antes se dividía por dos indefinidamente. El front-end de
-  escritura está, por tanto, arreglado.
+- **`interpolar` se pasa de largo con una polilínea escasa, y no lo veía
+  nadie.** Es una cúbica natural por los puntos capturados: con cinco puntos
+  desiguales sobrepasa la polilínea **3,7 mm** en «hola», treinta veces el
+  error de trazo que se citaba. Era invisible porque la simulación compara el
+  recorrido de las levas contra el programa, que está hecho con esa misma
+  interpolación: se comparaba consigo misma. Lo mide ahora
+  `desviacion_de_lo_capturado`, y redondear las esquinas lo arregla de paso
+  porque densifica el trazo donde gira.
 
-  **Pero el perfil de la leva sigue divergiendo**: 13,5 mm a 720 muestras y
-  1,05 a 11.520.
+- **`radio_de_curvatura` amplifica por 1/h² cualquier salto de curvatura.**
+  Toma dos diferencias finitas de la curva de paso muestreada con paso
+  h = 2π/N, así que en un punto donde la curvatura da un escalón lee un pico
+  de tres muestras cada vez más profundo según sube N. Con la leva izquierda
+  a 20.000 muestras marcaba 9,2 mm donde la curvatura real vale 39,9 a un
+  lado y 56,9 al otro: **ese radio no existe en ningún punto de la pieza**.
+  Evaluando con paso físico fijo el número se queda quieto (17,502 mm a
+  cualquier N), y eso es lo que distingue un defecto de geometría de uno de
+  medida. Antes de rediseñar nada por un radio que se desploma, comprueba
+  cuál de los dos es.
 
-  **Localizado, 2026-09-30: el vuelo forma una cúspide.** No está aguas
-  abajo —`desde_muestras` ya es un spline periódico C2 y `synth.py` está
-  limpio—: el camino converge *a una esquina*, y una esquina tiene segunda
-  derivada infinita por muy bien que converja su posición. Con «hola» a
-  2.880 muestras, en θ = 232,5° (arranque del tercer vuelo), la punta frena
-  y **invierte el sentido en x**:
-
-  ```
-  θ=232.375°  (0.527, 85.158)  paso 0.0057 mm
-  θ=232.500°  (0.525, 85.154)  paso 0.0041      <- se para
-  θ=232.625°  (0.525, 85.150)  paso 0.0041      <- y vuelve
-  θ=232.750°  (0.529, 85.145)  paso 0.0057
-  ```
-
-  Es el fallo clásico de una Hermite cúbica cuyas tangentes apuntan **en
-  contra de la cuerda** que une los dos extremos: la curva sale hacia atrás,
-  se detiene y da la vuelta. No es cuestión de magnitud —acotar la tangente
-  a 1,5 veces el salto no cambia nada, y tampoco acotarla por abajo—, es de
-  dirección: pasa cuando un trazo acaba alejándose de donde empieza el
-  siguiente.
-
-  Las salidas obvias no valen tal cual, y por eso esto sigue abierto:
-  recortar la componente de la tangente contra la cuerda quita la cúspide
-  pero devuelve una esquina, que es igual de infinita; y darle más θ al
-  vuelo (`Capacidad.peso_vuelo`) alivia sin garantizar nada. Lo que hace
-  falta es una curva de vuelo que **admita invertir el sentido sin
-  cúspide** —una quíntica con curvatura impuesta en los extremos, o un arco
-  de salida y otro de entrada unidos— y eso es diseño, no un parámetro.
-
-  Nota de método: al pasar a C2 hubo que arreglar `_tangente`, que leía la
-  última cuerda de la polilínea. Como la curva ya no sale con esa pendiente,
-  el vuelo empalmaba torcido y devolvía la esquina que se acababa de quitar.
-  Ahora la mide sobre `interpolar`, así que coincide por construcción sea
-  cual sea la interpolación. Y el empalme iguala también la **velocidad**, no
-  solo la dirección: un vuelo que sale bien orientado pero al doble de prisa
-  tiene un codo igual.
+- **Diagnosticar por la nota de ayer en vez de por la medida de hoy.** Esta
+  investigación estuvo parada un día sobre un diagnóstico escrito con
+  seguridad y falso: que el vuelo formaba una **cúspide**. No la formaba
+  —|dP/dθ| vale 1,79 mm/rad en el punto malo y no se anula— y la cúspide
+  llevó a diseñar una quíntica con curvatura impuesta que, una vez medida, no
+  cambiaba **ni un dígito**. El fallo estaba en otro sitio y en otra capa: el
+  trazo, no el vuelo. Cuando una nota diga «localizado», vuelve a medirlo.
 - **Ningún golden cubre el perfil compilado.** El de `tests/emit/test_dxf.py`
   guarda una leva sintética, así que vigila el escritor de DXF y no la
   geometría que sale del compilador. Cambiar el front-end de escritura

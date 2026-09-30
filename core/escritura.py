@@ -51,11 +51,6 @@ CANAL_Z = "levantamiento"
 
 MUESTRAS_MINIMAS_POR_TRAMO = 8
 
-TANGENTE_MAXIMA_DEL_VUELO = 1.5
-"""Tope de la tangente del vuelo, en múltiplos del salto. Por encima de uno
-y medio la Hermite se abomba hasta formar un lazo, y un lazo es una cúspide:
-la misma esquina que se quería quitar, movida de sitio."""
-
 FRACCION_TANGENTE_DEL_VUELO = 1.0 / 3.0
 """Cuánto se estiran las tangentes del vuelo, como fracción del salto.
 
@@ -272,22 +267,40 @@ class Capacidad(_Base):
     """Cuánto ángulo recibe un vuelo respecto a un trazo de la misma
     longitud. Menos de uno porque un vuelo no se ve: puede ir más deprisa y
     devolverle grados a lo que sí queda en el papel."""
-    radio_de_esquina: LongitudConCero = mm(0.5)
-    """A qué radio se redondea el pico más agudo del trazo. **Es una cota
-    del pedido, no un ajuste**: el pico se le quita al cliente, así que el
-    número tiene que poder decirse en el informe.
+    radio_de_esquina: LongitudConCero = mm(1.0)
+    """A qué radio se redondea el pico más agudo del trazo. **Es una cota del
+    pedido, no un ajuste**: el pico se le quita al cliente, así que el número
+    tiene que poder decirse en el informe.
 
-    Medio milímetro no es una preferencia, es un codo medido. Con «hola» el
-    radio de curvatura mínimo del perfil va, al doblar las muestras de 720 a
-    5.760: sin redondear 13,5 → 1,9 mm (se divide por dos cada vez, que es la
-    firma de una esquina); a 0,2 mm llega a 6,8; a 0,3 mm a 9,6; **y a 0,5 mm
-    se queda en 12,96, que ya no es el trazo sino el elevador**, que siempre
-    convergió. Por encima de 0,5 no mejora nada y solo cuesta fidelidad.
+    Un milímetro no es una preferencia, es un codo medido. Con «hola», el
+    radio de curvatura mínimo de la peor de las tres levas al subir las
+    muestras por vuelta, y lo que se aparta la curva de lo que dibujó el
+    cliente:
+
+    | radio | 720 | 1440 | 2880 | 5760 | 720/5760 | se aparta |
+    | --- | --- | --- | --- | --- | --- | --- |
+    | sin redondear | 13,5 | 7,5 | 4,4 | 1,9 | **7,0** | 3,71 mm |
+    | 0,2 mm | 12,3 | 7,7 | 5,4 | 4,9 | 2,6 | 0,18 mm |
+    | 0,3 mm | 13,1 | 8,5 | 7,1 | 6,8 | 1,9 | 0,18 mm |
+    | 0,5 mm | 13,5 | 11,4 | 10,6 | 10,3 | 1,3 | 0,18 mm |
+    | **1,0 mm** | 13,5 | 13,1 | 13,0 | **13,0** | **1,04** | 0,29 mm |
+
+    Sin redondear se divide por dos cada vez, que es la firma de una esquina:
+    curvatura infinita que el muestreo redondeaba por accidente. A 1 mm el
+    suelo deja de ser el trazo y pasa a ser el elevador, que siempre
+    convergió, y el número se queda quieto. Por encima no mejora nada y solo
+    cuesta fidelidad.
+
+    **Por qué justo ahí, y no en 0,2.** La leva se corta como un polígono de
+    `muestras` puntos. A 720 muestras la punta avanza unos 0,26 mm por
+    muestra, así que un arco de 0,2 mm no llega a recibir una muestra entera:
+    el redondeo existe en el modelo y no en la pieza. El radio tiene que ser
+    varios pasos de muestreo o no se fabrica.
 
     Y redondear **no** cuesta fidelidad aquí, la compra: `interpolar` es una
     cúbica por los puntos capturados y con una polilínea escasa se pasa de
-    largo —2,47 mm en el trazo de cinco puntos de «hola»—. Redondear
-    densifica el trazo donde gira, y la desviación baja a 0,15 mm.
+    largo —3,7 mm con «hola», treinta veces el error de trazo—. Redondear
+    densifica el trazo donde gira, y la desviación baja a 0,29 mm.
 
     Cero desactiva el redondeo. Sirve para comparar y para reproducir un
     pedido antiguo; no para fabricar."""
@@ -632,15 +645,20 @@ def vuelo(
     if salto <= 0.0:
         return np.repeat(p0[None, :], len(fracciones), axis=0)
 
-    if velocidades is None:
-        escala = (salto * FRACCION_TANGENTE_DEL_VUELO,) * 2
-    else:
-        # Acotadas. Una Hermite con tangentes mucho más largas que la cuerda
-        # se abomba hasta formar un lazo, y un lazo es una cúspide: la misma
-        # esquina que se quería quitar, en otro sitio. Pasa cuando el trazo
-        # va rápido y el salto al siguiente es corto.
-        tope = salto * TANGENTE_MAXIMA_DEL_VUELO
-        escala = (min(velocidades[0], tope), min(velocidades[1], tope))
+    # **Las tangentes no se acotan.** Estuvieron topadas a una vez y media el
+    # salto, para que la Hermite no se abombara hasta formar un lazo. Era un
+    # mal cambio: acortar una tangente rompe la continuidad C1, que es
+    # exactamente lo que quitaba la esquina. En «hola» el tope disparaba en un
+    # solo empalme —el del lazo de la «o», cuyo salto al trazo anterior es
+    # corto— y dejaba la velocidad un 5,4 % por debajo de la que traía el
+    # trazo. Ese codo se le hereda a la leva como un escalón de curvatura, y
+    # el radio mínimo que mide la envolvente pasaba de 15,6 a 9,2 mm en
+    # cuanto el muestreo lo resolvía.
+    #
+    # Y el lazo que el tope evitaba **no es un problema**: el lápiz va
+    # levantado durante todo el vuelo, así que el lazo no se ve. Un lazo no es
+    # una cúspide; la velocidad no se anula en ningún punto.
+    escala = (salto * FRACCION_TANGENTE_DEL_VUELO,) * 2 if velocidades is None else velocidades
     m0 = _tangente(desde, al_final=True) * escala[0]
     m1 = _tangente(hasta, al_final=False) * escala[1]
 

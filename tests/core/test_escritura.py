@@ -29,6 +29,7 @@ from core.escritura import (
     remuestrear,
     repartir,
     suavizar,
+    vuelo,
 )
 from core.units import TAU, Metros, a_mm, grados, mm
 
@@ -713,7 +714,7 @@ def test_el_recorrido_no_retrocede():
 def test_la_capacidad_declara_el_radio_de_esquina():
     """Redondear cuesta fidelidad, así que el radio no puede ser un número
     escondido en una función: es una cota del pedido y se declara."""
-    assert float(Capacidad().radio_de_esquina) == pytest.approx(0.0005)
+    assert float(Capacidad().radio_de_esquina) == pytest.approx(0.001)
 
 
 def test_un_radio_de_cero_deja_el_trazo_como_estaba():
@@ -784,3 +785,81 @@ def test_comparar_escrituras_de_distinto_numero_de_trazos_es_un_error():
     )
     with pytest.raises(ValueError, match="mismos trazos"):
         desviacion_de_lo_capturado(dos, una(dos.trazos[0]))
+
+
+# ---------------------------------------------------------------------------
+# El empalme entre trazo y vuelo tiene que ser C1 en θ
+# ---------------------------------------------------------------------------
+
+
+def velocidades_del_empalme(escritura: Escritura, capacidad: Capacidad) -> list[float]:
+    """|dP/dθ| a un lado y otro de cada aterrizaje, en m/rad.
+
+    Se mide sobre las mismas funciones que usa `programa`, no sobre la pista
+    muestreada: a un lado del empalme el paso de muestreo es el mismo y una
+    diferencia finita no distinguiría un salto del 5 % del redondeo.
+    """
+    tramos, _ = repartir(escritura, capacidad)
+    arcos = {t.indice: float(t.arco) for t in tramos if t.clase == "trazo"}
+    h = 1e-6
+    desajustes = []
+    for tramo in tramos:
+        if tramo.clase != "vuelo":
+            continue
+        i = tramo.indice
+        j = (i + 1) % len(escritura.trazos)
+        desde, hasta = escritura.trazos[i], escritura.trazos[j]
+        arco = float(tramo.arco)
+        puntos = vuelo(
+            desde,
+            hasta,
+            np.array([1.0 - h, 1.0]),
+            (
+                float(desde.longitud) * arco / arcos[i],
+                float(hasta.longitud) * arco / arcos[j],
+            ),
+        )
+        al_aterrizar = float(np.linalg.norm(puntos[1] - puntos[0])) / (h * arco)
+        sigue = interpolar(hasta, np.array([0.0, h]))
+        al_arrancar = float(np.linalg.norm(sigue[1] - sigue[0])) / (h * arcos[j])
+        desajustes.append(abs(al_aterrizar / al_arrancar - 1.0))
+    return desajustes
+
+
+def test_el_vuelo_aterriza_a_la_misma_velocidad_a_la_que_arranca_el_trazo():
+    """**C1 en θ no es un adorno, es lo que quita la esquina.**
+
+    Un vuelo que llega en la dirección correcta pero a otra velocidad deja un
+    codo en el empalme. La leva lo hereda como un escalón de curvatura, y el
+    radio de curvatura mínimo que mide la envolvente se desploma en cuanto el
+    muestreo es fino: con «hola» y un desajuste del 5,4 % en un solo empalme,
+    la leva izquierda pasaba de 15,6 a 9,2 mm al llegar a 20.000 muestras.
+
+    El desajuste que queda es el 0,02 % entre la longitud de la polilínea y la
+    del spline que la interpola, y eso sí es despreciable.
+    """
+    escritura = suavizar(hola_larga(), mm(1.0))
+    peor = max(velocidades_del_empalme(escritura, Capacidad()))
+    assert peor < 0.001, f"el empalme se desajusta un {peor * 100:.2f}%"
+
+
+def hola_larga() -> Escritura:
+    """La misma «hola» del demo: el cuarto trazo es un lazo cerrado, y es el
+    que destapó el problema porque su salto al anterior es corto."""
+    return Escritura(
+        nombre="hola",
+        trazos=[
+            Trazo(puntos=[(mm(0.0), mm(0.0)), (mm(0.0), mm(30.0))]),
+            Trazo(puntos=[(mm(0.0), mm(15.0)), (mm(12.0), mm(15.0)), (mm(12.0), mm(0.0))]),
+            Trazo(
+                puntos=[
+                    (mm(21.0), mm(0.0)),
+                    (mm(21.0), mm(18.0)),
+                    (mm(30.0), mm(18.0)),
+                    (mm(30.0), mm(0.0)),
+                    (mm(21.0), mm(0.0)),
+                ]
+            ),
+            Trazo(puntos=[(mm(39.0), mm(0.0)), (mm(39.0), mm(30.0))]),
+        ],
+    )

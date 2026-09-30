@@ -469,7 +469,7 @@ def test_el_radio_de_curvatura_no_se_divide_por_dos_al_doblar_el_muestreo():
     """
     grueso = peor_radio(compilar(hola(), capacidad=Capacidad(muestras=720)))
     fino = peor_radio(compilar(hola(), capacidad=Capacidad(muestras=5760)))
-    assert grueso / fino < 1.6, (
+    assert grueso / fino < 1.15, (
         f"el radio mínimo pasa de {grueso * 1000:.2f} a {fino * 1000:.2f} mm al "
         "refinar ocho veces: eso no es un mínimo, es una esquina"
     )
@@ -509,7 +509,7 @@ def test_el_pedido_dice_cuanto_se_aparta_de_lo_que_escribio_el_cliente():
     cuenta holguras de piezas."""
     v = compilar(hola()).veredicto
     assert 0.0 < v.metricas["desviacion_de_lo_capturado"] < float(mm(0.5))
-    assert v.metricas["radio_de_esquina"] == pytest.approx(float(mm(0.5)))
+    assert v.metricas["radio_de_esquina"] == pytest.approx(float(mm(1.0)))
 
 
 def test_sin_redondear_la_curva_se_aparta_mucho_mas_de_lo_capturado():
