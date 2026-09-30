@@ -50,6 +50,41 @@ def leer(entrada: Path) -> Escritura:
     )
 
 
+UNIDAD_A_SUFIJO = {"mm": "cota", "deg": "angulo", "": "num"}
+"""Qué archivo se lleva cada unidad. Los nombres son los de la variable que
+se crea en el CAD: `#cota.radio_base`, `#angulo.calaje_izquierdo`."""
+
+
+def por_unidad(tabla: str) -> dict[str, str]:
+    """Parte la tabla de variables en un archivo por unidad.
+
+    **El CAD aplica un único factor de conversión a todo el archivo que
+    importa**, y estas 29 cotas mezclan 20 longitudes en mm, 5 ángulos en
+    grados y 3 números sin unidad —la relación del varillaje, la del
+    reductor y el sentido de giro—. Con un solo archivo, o los ángulos
+    entran como milímetros o las longitudes como grados.
+
+    Partirlo aquí y no allí no es comodidad: es que **el que sabe de qué
+    unidad es cada cota es el contrato**, y dejar que alguien lo decida
+    marcando casillas en una interfaz es pedir un error silencioso. Un
+    calaje interpretado como milímetros no da un aviso, da una máquina que
+    escribe torcido.
+    """
+    lineas = tabla.strip().split("\n")
+    cabecera, filas = lineas[0], lineas[1:]
+    salida: dict[str, list[str]] = {s: [cabecera] for s in UNIDAD_A_SUFIJO.values()}
+    for fila in filas:
+        unidad = fila.split(",")[2]
+        sufijo = UNIDAD_A_SUFIJO.get(unidad)
+        if sufijo is None:
+            raise ValueError(
+                f"la cota '{fila.split(',')[0]}' usa la unidad '{unidad}', que no "
+                f"sabe a qué archivo va. Añádela a UNIDAD_A_SUFIJO."
+            )
+        salida[sufijo].append(fila)
+    return {s: "\n".join(v) + "\n" for s, v in salida.items()}
+
+
 def materiales() -> str:
     """La tabla de densidades, para montar la biblioteca de materiales del CAD.
 
@@ -63,10 +98,10 @@ def materiales() -> str:
     Poisson y límites elásticos. Se exporta la suya, se pegan estas filas y
     se reimporta.
     """
-    lineas = [
-        "# Densidades del proyecto, desde core/solido.py — NO EDITAR A MANO",
-        "categoria,nombre,densidad_kg_m3,de_donde_sale",
-    ]
+    # Sin línea de comentario: un CSV que se importa en el CAD no tiene
+    # dónde poner un comentario, y un «#» al principio entra como una fila
+    # más y ensucia el mapa. El aviso vive en el README.
+    lineas = ["categoria,nombre,densidad_kg_m3,de_donde_sale"]
     categoria = {
         "POM": "Plástico",
         "PMMA": "Plástico",
@@ -98,10 +133,7 @@ def cotas_comerciales() -> str:
     Lleva las críticas primero porque son las que otra pieza toca, y son las
     únicas que hay que acotar con cuidado.
     """
-    lineas = [
-        "# Cotas de docs/piezas/ — NO EDITAR A MANO, se regenera",
-        "nombre,valor,unidad,pieza,critica,tolerancia,descripcion",
-    ]
+    lineas = ["nombre,valor,unidad,pieza,critica,tolerancia,descripcion"]
     for pieza in cargar_piezas():
         for cota in sorted(pieza.cotas, key=lambda c: (not c.critica, c.nombre)):
             lineas.append(
@@ -205,7 +237,10 @@ def main(argv: list[str] | None = None) -> int:
     # 1 · las cotas compartidas
     contratos = cargar_contratos()
     (destino / "variables.fs").write_text(featurescript(contratos), encoding="utf-8")
-    (destino / "variables.csv").write_text(csv(contratos), encoding="utf-8")
+    entero = csv(contratos)
+    (destino / "variables.csv").write_text(entero, encoding="utf-8")
+    for sufijo, contenido in por_unidad(entero).items():
+        (destino / f"variables_{sufijo}.csv").write_text(contenido, encoding="utf-8")
 
     # 2 · el catálogo comercial, si hay kernel
     catalogo = False

@@ -100,3 +100,40 @@ def test_las_cotas_comerciales_viajan_para_poder_dibujarlas(paquete: Path):
     assert "casquillo_pivote_valona,15.0000,mm" in piezas
     assert "rodillo_seguidor_exterior,6.0000,mm" in piezas
     assert piezas.count("\n") > 40
+
+
+def test_las_variables_van_partidas_por_unidad(paquete: Path):
+    """**El CAD aplica un único factor de conversión a todo el archivo que
+    importa.** Con las 29 cotas en un solo CSV, o los cinco ángulos entran
+    como milímetros o las veinte longitudes como grados. Y un calaje leído
+    como milímetros no da un aviso: da una máquina que escribe torcido.
+
+    Quien sabe de qué unidad es cada cota es el contrato, no quien marca
+    casillas en una interfaz."""
+    cota = (paquete / "variables_cota.csv").read_text(encoding="utf-8")
+    angulo = (paquete / "variables_angulo.csv").read_text(encoding="utf-8")
+    numero = (paquete / "variables_num.csv").read_text(encoding="utf-8")
+
+    assert "radio_base,55.0000,mm" in cota
+    assert "calaje_izquierdo" in angulo
+    assert "relacion_varillaje" in numero
+    # y ninguna se cuela en el archivo de otra unidad
+    assert "calaje_izquierdo" not in cota
+    assert "radio_base" not in angulo
+
+
+def test_un_csv_que_se_importa_no_lleva_comentarios(paquete: Path):
+    """Un «#» al principio no es un comentario para el CAD: es una fila más,
+    y ensucia el mapa con una clave que no existe."""
+    for nombre in ("variables.csv", "variables_cota.csv", "piezas.csv", "materiales.csv"):
+        primera = (paquete / nombre).read_text(encoding="utf-8").split("\n")[0]
+        assert not primera.startswith("#"), f"{nombre} empieza por comentario"
+
+
+def test_una_unidad_desconocida_se_queja_en_vez_de_colarse():
+    """Si mañana un contrato trae newtons, tiene que saltar al exportar y no
+    acabar en el archivo de los milímetros."""
+    from scripts.exportar_para_cad import por_unidad
+
+    with pytest.raises(ValueError, match="newton"):
+        por_unidad("nombre,valor,unidad\nempuje,12,newton\n")
