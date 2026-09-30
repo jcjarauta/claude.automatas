@@ -171,7 +171,7 @@ def test_descontar_el_taladro_coincide_con_restarlo_del_poligono():
 
 
 def test_la_inercia_de_un_disco_es_media_eme_erre_cuadrado():
-    radio, espesor, densidad = 0.025, 0.006, 8500.0
+    radio, espesor, densidad = 0.025, 0.006, densidad_de("latón")
     masa = np.pi * radio**2 * espesor * densidad
     from core.solido import inercia_de_disco, masa_de_disco
 
@@ -194,8 +194,10 @@ def test_el_radio_necesario_va_y_vuelve():
     from core.units import KgM2
 
     objetivo = KgM2(3.4e-5)
-    radio = radio_de_disco_para(objetivo, 0.006, 8500.0)
-    assert float(inercia_de_disco(radio, 0.006, 8500.0)) == pytest.approx(float(objetivo))
+    radio = radio_de_disco_para(objetivo, 0.006, densidad_de("latón"))
+    assert float(inercia_de_disco(radio, 0.006, densidad_de("latón"))) == pytest.approx(
+        float(objetivo)
+    )
 
 
 def test_doblar_el_radio_multiplica_la_inercia_por_dieciseis():
@@ -203,6 +205,51 @@ def test_doblar_el_radio_multiplica_la_inercia_por_dieciseis():
     eje rápido gane a uno grande en el lento."""
     from core.solido import inercia_de_disco
 
-    uno = float(inercia_de_disco(0.02, 0.006, 8500.0))
-    doble = float(inercia_de_disco(0.04, 0.006, 8500.0))
+    uno = float(inercia_de_disco(0.02, 0.006, densidad_de("latón")))
+    doble = float(inercia_de_disco(0.04, 0.006, densidad_de("latón")))
     assert doble == pytest.approx(16.0 * uno)
+
+
+# ---------------------------------------------------------------------------
+# La tabla de densidades tiene que cubrir lo que el producto usa
+# ---------------------------------------------------------------------------
+
+
+def test_el_laton_tiene_densidad():
+    """**Estaba en medio catálogo y no en la tabla.** Los separadores, los dos
+    engranajes, el volante, los brazos y la manivela son de latón, y las
+    fichas lo dicen, pero `densidad_de("latón")` petaba y los cálculos del
+    volante llevaban 8500 copiado a mano en cinco tests. Un número repetido
+    en cinco sitios es un número que va a divergir."""
+    assert densidad_de("latón") == pytest.approx(densidad_de("latón"))
+    assert densidad_de("latón Ms58 (2.0401)") == pytest.approx(densidad_de("latón"))
+
+
+def test_el_nogal_de_la_base_tiene_densidad():
+    """La base es nogal americano macizo de 25 mm y es la pieza más pesada
+    de la máquina: sin su densidad no se puede dar el peso del conjunto."""
+    assert densidad_de("nogal americano") == pytest.approx(650.0)
+
+
+def test_todos_los_materiales_de_las_fichas_tienen_densidad():
+    """**El test que cierra el agujero.** Si alguien mete una ficha con un
+    material nuevo, salta al meterla y no al calcular una masa."""
+    import json
+    from pathlib import Path
+
+    fichas = Path(__file__).resolve().parents[2] / "docs" / "piezas"
+    sin_densidad = []
+    for f in sorted(fichas.glob("*.json")):
+        ficha = json.loads(f.read_text(encoding="utf-8"))
+        material = ficha.get("material", "")
+        # Una pieza compuesta no tiene densidad: el portaminas es plástico
+        # con pinza y agarre metálicos. Su masa se **pesa**, no se calcula, y
+        # eso es un dato del banco. Calcularla con una densidad inventada
+        # daría un número con aspecto de medida.
+        if not material or ficha["familia"] == "instrumento":
+            continue
+        try:
+            densidad_de(material)
+        except KeyError:
+            sin_densidad.append(f"{f.stem}: {material}")
+    assert not sin_densidad, "materiales sin densidad: " + "; ".join(sin_densidad)

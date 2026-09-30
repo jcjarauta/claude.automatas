@@ -53,7 +53,8 @@ def test_el_calaje_viaja_con_el_paquete(paquete: Path):
 
 def test_la_hoja_de_ruta_dice_el_orden_y_de_quien_es_cada_pieza(paquete: Path):
     guia = (paquete / "README.md").read_text(encoding="utf-8")
-    assert "1. **Pega `variables.fs`" in guia
+    assert "1. **Monta la biblioteca de materiales**" in guia
+    assert "2. **Importa `variables.csv`" in guia
     assert "un solo sentido" in guia, "hay que decir que lo editado en el CAD se pierde"
     assert "La plataforma se dibuja dentro del CAD" in guia
 
@@ -79,3 +80,23 @@ def test_un_pedido_que_no_cabe_escribe_el_paquete_pero_avisa(tmp_path: Path):
     salida = tmp_path / "fuera"
     assert main([str(entrada), "--out", str(salida)]) == 1
     assert (salida / "README.md").exists()
+
+
+def test_la_tabla_de_materiales_sale_de_core(paquete: Path):
+    """La misma tabla con la que el compilador calcula la masa. Si el CAD
+    usara otras densidades, la masa del modelo y la del polígono discreparían
+    y no habría forma de saber cuál miente."""
+    from core.solido import DENSIDADES
+
+    materiales = (paquete / "materiales.csv").read_text(encoding="utf-8")
+    for nombre, densidad in DENSIDADES.items():
+        assert f"{nombre},{densidad:.0f}," in materiales
+
+
+def test_las_cotas_comerciales_viajan_para_poder_dibujarlas(paquete: Path):
+    """Sin esto, una pieza comercial solo puede entrar como STEP mudo: un
+    cambio de referencia no movería nada."""
+    piezas = (paquete / "piezas.csv").read_text(encoding="utf-8")
+    assert "casquillo_pivote_valona,15.0000,mm" in piezas
+    assert "rodillo_seguidor_exterior,6.0000,mm" in piezas
+    assert piezas.count("\n") > 40

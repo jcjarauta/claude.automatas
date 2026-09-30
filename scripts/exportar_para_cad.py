@@ -35,7 +35,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from compile.contratos import cargar as cargar_contratos
 from compile.escribiente import compilar
 from core.escritura import Escritura, Trazo
+from core.solido import DENSIDADES
 from core.units import mm
+from emit.catalogo import cargar as cargar_piezas
 from emit.dxf import escribir_dxf
 from scripts.exportar_variables import csv, featurescript
 
@@ -48,6 +50,68 @@ def leer(entrada: Path) -> Escritura:
     )
 
 
+def materiales() -> str:
+    """La tabla de densidades, para montar la biblioteca de materiales del CAD.
+
+    **Va aquí y no en el CAD porque es la misma tabla con la que el
+    compilador calcula la masa.** Si las dos no coinciden, la masa que dé el
+    CAD y la que dé `core/solido.py` discreparán sin que nadie sepa cuál
+    miente, y se pierde la comprobación por dos caminos, que es justo lo que
+    hace valiosa la biblioteca.
+
+    No es el formato de Onshape: su biblioteca lleva además módulo de Young,
+    Poisson y límites elásticos. Se exporta la suya, se pegan estas filas y
+    se reimporta.
+    """
+    lineas = [
+        "# Densidades del proyecto, desde core/solido.py — NO EDITAR A MANO",
+        "categoria,nombre,densidad_kg_m3,de_donde_sale",
+    ]
+    categoria = {
+        "POM": "Plástico",
+        "PMMA": "Plástico",
+        "iglidur": "Plástico",
+        "contrachapado de abedul": "Madera",
+        "nogal": "Madera",
+        "DM": "Madera",
+        "aluminio": "Metal",
+        "latón": "Metal",
+        "acero": "Metal",
+        "acero inoxidable": "Metal",
+    }
+    for nombre, densidad in sorted(DENSIDADES.items()):
+        lineas.append(
+            f"{categoria.get(nombre, 'Otro')},{nombre},{densidad:.0f},"
+            "nominal de catálogo; lo sustituye la medida del banco"
+        )
+    return "\n".join(lineas) + "\n"
+
+
+def cotas_comerciales() -> str:
+    """Las cotas de interfaz de las piezas que se compran, como variables.
+
+    Con esto una pieza comercial se puede dibujar **paramétrica** en el CAD
+    en vez de importarse como un sólido mudo, y sigue mandando la ficha: si
+    cambia el casquillo, cambia el JSON, se regenera y el modelo se mueve
+    solo. Un STEP importado no hace eso.
+
+    Lleva las críticas primero porque son las que otra pieza toca, y son las
+    únicas que hay que acotar con cuidado.
+    """
+    lineas = [
+        "# Cotas de docs/piezas/ — NO EDITAR A MANO, se regenera",
+        "nombre,valor,unidad,pieza,critica,tolerancia,descripcion",
+    ]
+    for pieza in cargar_piezas():
+        for cota in sorted(pieza.cotas, key=lambda c: (not c.critica, c.nombre)):
+            lineas.append(
+                f"{pieza.nombre}_{cota.nombre},{float(cota.valor) * 1000:.4f},mm,"
+                f"{pieza.nombre},{'si' if cota.critica else 'no'},"
+                f'"{cota.tolerancia}","{pieza.designacion}"'
+            )
+    return "\n".join(lineas) + "\n"
+
+
 def hoja_de_ruta(nombre: str, catalogo: bool, solido: bool) -> str:
     """El orden. Sin esto el paquete es un montón de archivos."""
     paso_catalogo = (
@@ -58,13 +122,13 @@ def hoja_de_ruta(nombre: str, catalogo: bool, solido: bool) -> str:
         " aportan nada. Para el render de venta se\n   importa encima el STEP"
         " del fabricante, si lo hay.\n"
         if catalogo
-        else "2. *(Sin catálogo: relanza con `--group cad` para generarlo.)*\n"
+        else "4. *(Sin catálogo: relanza con `--group cad` para generarlo.)*\n"
     )
     paso_solido = (
-        "4. **Arrastra `cartucho/cartucho.step`** si quieres la pila montada de"
+        "6. **Arrastra `cartucho/cartucho.step`** si quieres la pila montada de"
         " una pieza,\n   en vez de los tres bocetos.\n"
         if solido
-        else "4. *(Sin STEP del cartucho: relanza con `--group cad`.)*\n"
+        else "6. *(Sin STEP del cartucho: relanza con `--group cad`.)*\n"
     )
     return f"""# Paquete de CAD · cartucho «{nombre}»
 
@@ -73,10 +137,25 @@ el contrato o la ficha y se regenera.
 
 ## El orden
 
-1. **Pega `variables.fs` en el Variable Studio** del documento de la
-   plataforma. Es la tabla de cotas congeladas —eje, bastidor, fase, calaje—
-   que comparten el compilador y el CAD. De ahí las referencian todas las
-   Part Studios.
+1. **Monta la biblioteca de materiales** con `materiales.csv`. Es la misma
+   tabla de densidades con la que el compilador calcula la masa, así que si
+   las dos coinciden se puede contrastar lo que pesa el modelo contra lo que
+   dice `core/solido.py` —por dos caminos que no comparten una línea de
+   código— y si no coinciden, la comprobación se pierde en silencio.
+
+2. **Importa `variables.csv` en un Variable Studio.** Son las cotas
+   congeladas —eje, bastidor, fase, calaje— que comparten el compilador y el
+   CAD. De ahí las referencian todas las Part Studios.
+
+   **El flujo es de un solo sentido.** Se toca `docs/contratos.json`, se
+   regenera y se vuelve a importar. Lo que se edite dentro del CAD se pierde
+   en la siguiente regeneración y, peor, deja de coincidir con lo que calcula
+   el compilador sin que nadie se entere.
+
+3. **Importa `piezas.csv`** si vas a dibujar las piezas comerciales
+   paramétricas en vez de importar sus STEP. Son las cotas de interfaz de
+   `docs/piezas/`, y con ellas un cambio de referencia mueve el modelo solo.
+   Un STEP importado no hace eso.
 
    **El flujo es de un solo sentido.** Se toca `docs/contratos.json`, se
    regenera y se pega. Lo que se edite dentro del CAD se pierde en la
@@ -84,14 +163,14 @@ el contrato o la ficha y se regenera.
    compilador sin que nadie se entere.
 
 {paso_catalogo}
-3. **Importa los bocetos del cartucho**, `cartucho/*.dxf`. Van **sin el
+5. **Importa los bocetos del cartucho**, `cartucho/*.dxf`. Van **sin el
    rótulo de texto**: el `TEXT` de DXF no es una entidad de boceto y el CAD
    suelta un «no se ha podido importar la entidad desconocida». La geometría
    entra bien; el aviso confunde. Los DXF con rótulo, para el taller, salen
    del comando normal del compilador.
 
 {paso_solido}
-5. **La plataforma se dibuja dentro del CAD**, a mano y una sola vez. No sale
+7. **La plataforma se dibuja dentro del CAD**, a mano y una sola vez. No sale
    de aquí a propósito: no cambia entre pedidos y tiene que seguir siendo
    paramétrica.
 
@@ -162,7 +241,14 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as exc:  # el kernel de OCCT lanza de todo y no documenta qué
         fallo_del_solido = f"el kernel no pudo apilar el cartucho: {type(exc).__name__}"
 
-    # 5 · el calaje, que es lo que se monta mal
+    # 5 · la tabla de materiales, para la biblioteca del CAD
+    (destino / "materiales.csv").write_text(materiales(), encoding="utf-8")
+
+    # 6 · las cotas de las piezas comerciales, para poder dibujarlas
+    #     paramétricas en vez de importarlas como sólidos mudos
+    (destino / "piezas.csv").write_text(cotas_comerciales(), encoding="utf-8")
+
+    # 7 · el calaje, que es lo que se monta mal
     (destino / "calajes.md").write_text(
         "# Calaje de los brazos\n\n"
         "El ángulo al que va calado cada brazo sobre el eje de su seguidor.\n"

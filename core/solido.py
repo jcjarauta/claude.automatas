@@ -35,27 +35,66 @@ Arreglo = npt.NDArray[np.float64]
 DENSIDADES: Final[dict[str, float]] = {
     "POM": 1410.0,
     "PMMA": 1190.0,
+    "iglidur": 1450.0,
     "contrachapado de abedul": 680.0,
+    "nogal": 650.0,
     "DM": 750.0,
     "aluminio": 2700.0,
+    "latón": 8500.0,
     "acero": 7850.0,
+    "acero inoxidable": 7800.0,
 }
 """kg/m³ nominales de catálogo. En cuanto el banco pese una pieza de verdad,
-el número medido manda y este queda de valor por defecto."""
+el número medido manda y este queda de valor por defecto.
+
+**Esta tabla es la única fuente del dato.** El latón entró tarde y el coste
+se vio: 8500 estaba copiado a mano en cinco tests mientras `densidad_de`
+petaba con las tres fichas que dicen «latón». Un número repetido en cinco
+sitios es un número que va a divergir.
+
+El inoxidable va con un solo valor a propósito. Entre el X46Cr13 de los
+postes (martensítico, 7700) y el A2 de la tornillería (austenítico, 7900) hay
+un 2,5 %, que sobre un poste de 28 g son 0,7 g: por debajo de lo que pesa la
+báscula del taller y muy por debajo de lo que varía la madera con la humedad.
+Partirlo en dos entradas daría una precisión que el resto de la cadena no
+tiene."""
+
+ALIAS: Final[dict[str, str]] = {
+    "cf53": "acero",
+    "x46cr13": "acero inoxidable",
+    "1.4034": "acero inoxidable",
+    "inox": "acero inoxidable",
+    "ms58": "latón",
+    "cuzn": "latón",
+    "2.0401": "latón",
+    "abedul": "contrachapado de abedul",
+}
+"""Cómo lo escribe el proveedor, y de qué es en realidad.
+
+Una ficha guarda el material **como lo llama quien lo vende**, porque es lo
+que hay que poner en el pedido: «CF53 templado y rectificado, Ra 0,3», no
+«acero». Traducirlo al comprar sería perder la referencia; traducirlo aquí
+es gratis."""
 
 
 def densidad_de(material: str) -> float:
-    """Busca el material por su principio: «POM 5 mm» es POM.
+    """Busca el material por su principio, y si no, por alias.
 
-    El campo `material` de una pieza lleva el espesor pegado porque es lo que
-    se pide en la tienda, y aquí solo interesa de qué está hecha.
+    El campo `material` de una pieza lleva pegado el espesor o el tratamiento
+    porque es lo que se pide en la tienda; aquí solo interesa de qué está
+    hecha. Los nombres se prueban **del más largo al más corto**: si no,
+    «acero inoxidable» casaría con «acero» y perdería 50 kg/m³ por el camino.
     """
-    for nombre, valor in DENSIDADES.items():
-        if material.lower().startswith(nombre.lower()):
-            return valor
+    texto = material.lower()
+    for nombre in sorted(DENSIDADES, key=len, reverse=True):
+        if texto.startswith(nombre.lower()):
+            return DENSIDADES[nombre]
+    for pista in sorted(ALIAS, key=len, reverse=True):
+        if pista in texto:
+            return DENSIDADES[ALIAS[pista]]
     raise KeyError(
-        f"no hay densidad para '{material}'. Añádela a DENSIDADES o corrige el "
-        f"nombre; los conocidos son {sorted(DENSIDADES)}."
+        f"no hay densidad para '{material}'. Añádela a DENSIDADES, o el nombre "
+        f"del proveedor a ALIAS; los conocidos son {sorted(DENSIDADES)}."
     )
 
 
@@ -166,6 +205,7 @@ def masa_de_disco(radio: float, espesor: float, densidad: float) -> Kilogramos:
 
 
 __all__ = [
+    "ALIAS",
     "DENSIDADES",
     "area",
     "centroide",

@@ -202,9 +202,9 @@ def test_analizar_dos_veces_da_lo_mismo():
 def test_la_rueda_grande_ayuda_pero_no_es_el_volante():
     """El engranaje grande va en el eje LENTO, así que su inercia cuenta tal
     cual. Aporta, pero para llegar solo haría falta un disco enorme."""
-    from core.solido import inercia_de_disco
+    from core.solido import densidad_de, inercia_de_disco
 
-    rueda = inercia_de_disco(0.030, 0.006, 8500.0)
+    rueda = inercia_de_disco(0.030, 0.006, densidad_de("latón"))
     sin_rueda, _ = analisis(Accionamiento(transmision=Transmision(relacion=3.0)))
     con_rueda, _ = analisis(
         Accionamiento(transmision=Transmision(relacion=3.0), inercia_en_el_arbol=rueda)
@@ -214,9 +214,9 @@ def test_la_rueda_grande_ayuda_pero_no_es_el_volante():
 
 
 def test_la_misma_masa_en_la_manivela_rinde_la_relacion_al_cuadrado():
-    from core.solido import inercia_de_disco
+    from core.solido import densidad_de, inercia_de_disco
 
-    disco = inercia_de_disco(0.030, 0.006, 8500.0)
+    disco = inercia_de_disco(0.030, 0.006, densidad_de("latón"))
     en_el_arbol, _ = analisis(
         Accionamiento(transmision=Transmision(relacion=3.0), inercia_en_el_arbol=disco)
     )
