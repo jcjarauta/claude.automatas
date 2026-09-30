@@ -315,19 +315,73 @@ cota a un cliente.
 
 ## Las decisiones abiertas
 
-**1 · La relación del varillaje.** Se subió a 6:1 para que la leva fuera
-pequeña, y el docstring avisaba de que C4 diría hasta dónde se puede subir.
-Ahora lo dice. Con radio base 65:
+**1 · La relación del varillaje: CERRADA EN «NO, POR AHORA» (2026-09-30).**
 
-| Relación | Ø leva | Presión | Hueco | Peor caso | RSS | |
-| --- | --- | --- | --- | --- | --- | --- |
-| 3:1 | 131,3 | 13,9° | 5,90 | 1,46 | 0,84 | `curvatura_justa` |
-| **4:1** | **129,5** | **10,5°** | **6,81** | **1,91** | **1,10** | limpio |
-| 6:1 | 127,7 | 7,1° | 7,73 | 2,79 | 1,64 | limpio |
+Se subió a 6:1 para que la leva fuera pequeña, y el docstring avisaba de que
+C4 diría hasta dónde se puede subir. Al enchufarlo pareció que había que
+bajarla. **No hay que bajarla, y la razón es que existe una palanca mejor.**
 
-Bajar a 4:1 quita un tercio del error y sigue saliendo limpio, a cambio de
-una leva de Ø130 en vez de Ø108: el objeto crece un 20 % y salen 16 cartuchos
-por plancha en vez de 27. **Es decisión de producto y está sin tomar.**
+| | Tolerancia de corte | Peor caso | RSS |
+| --- | --- | --- | --- |
+| 6:1, hoy | ±0,05 mm | 2,79 mm | 1,64 |
+| **6:1, pidiendo ±0,03** | ±0,03 mm | **1,88 mm** | 1,01 |
+| 4:1 base 65 | ±0,05 mm | 1,91 mm | 1,10 |
+| 6:1, pidiendo ±0,02 | ±0,02 mm | **1,43 mm** | 0,71 |
+
+**Apretar la tolerancia de ±0,05 a ±0,03 da más precisión que rediseñar a
+4:1, y no cuesta un milímetro de geometría.** Y los ±0,05 no son un dato: son
+una suposición nuestra. Un CNC de tres ejes decente sostiene ±0,02 en POM.
+Está en la lista de llamadas y es la más rentable del proyecto.
+
+Hay una segunda palanca igual de gratis: **pedir tolerancia de cuerda de
+0,01 mm en el CAM del taller**. Es un ajuste de software, no una capacidad de
+máquina, y el DXF que le damos ya tiene una sagita de 0,0005 mm: si su CAM lo
+aproxima a 0,05, tira por la borda la precisión que le damos.
+
+### Y el presupuesto probablemente exagera
+
+El peor caso trata los ±0,05 como si fueran ruido punto a punto. **El error
+de un CNC es casi todo sistemático** —desviación de herramienta, offset de
+radio, temperatura— y un error radial constante no hace temblar el trazo: lo
+desplaza, lo escala o lo sesga entero. Sobre un papel que nadie registra a
+micras, eso es invisible.
+
+Lo que se ve es el temblor, y el componente aleatorio es el acabado
+superficial, unos 2 µm, que a 23× son **0,05 mm en la punta**. Así que el
+número que decide si se lee como su letra está probablemente un orden de
+magnitud por debajo de 2,79 mm. No lo sabemos, y por eso la respuesta no es
+rediseñar: es medirlo.
+
+### Lo que habría costado el cambio
+
+En dinero, nada: +1,77 € por cartucho, de 119,17 a 120,93 €.
+
+| | 6:1 hoy | 4:1 base 65 |
+| --- | --- | --- |
+| **Hueco al poste, «hola»** | 9,73 mm | **6,81** |
+| **Hueco con un barrido de toda la caja** | 8,85 mm | **5,50** |
+| Envolvente del cartucho | 250 mm | 288 mm |
+| Masa del cartucho | 178 g | 254 g |
+| Cartuchos por plancha | 27 | 16 |
+
+Lo caro es el hueco: se come el 40 % del margen sobre la cota que decide qué
+frases caben, y sobre un mínimo de 3 mm. Se pagaría capacidad de producto por
+precisión que una llamada da más barata. Y la esperanza de que la leva grande
+regalara volante no se cumple: la inercia del cartucho sube de 2,44 a 4,93 ×
+10⁻⁴ pero la necesaria sube de 5,53 a 8,29, porque hay más trabajo que
+amortiguar.
+
+### Cuándo se reabre
+
+**Si E4 mide que el juego domina.** La holgura de los pivotes aporta hoy
+0,41 mm sobre una estimación de catálogo que nadie ha medido. Si el juego
+real fuera tres o cuatro veces mayor pasaría a dominar el presupuesto, y el
+juego **no se arregla apretando al taller**: no es un problema de corte. Ahí
+la relación del varillaje sería lo único que lo divide.
+
+Orden correcto: llamar al taller, medir el juego con las excéntricas, y
+entonces decidir. Cambiar la geometría ahora sería optimizar contra un número
+que todavía no conocemos.
 
 **2 · La línea de tallas.** Una sola caja de escritura de 80 × 30 mm limita
 el producto a una palabra o una firma. Tres plataformas congeladas —S, M, L—

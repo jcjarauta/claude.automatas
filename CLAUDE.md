@@ -49,7 +49,8 @@ uv run ruff format .         # formato
 uv run mypy core compile emit  # tipos (estricto en core/)
 
 uv run python scripts/export_schema.py        # esquema JSON tras tocar un modelo
-uv run python scripts/exportar_variables.py   # variables para el Variable Studio de Onshape
+uv run python scripts/exportar_variables.py   # variables para el Variable Studio del CAD
+uv run --group cad python scripts/exportar_catalogo.py  # STEP de las piezas comerciales
 uv run python scripts/dibujar_perfiles.py     # lámina de perfiles para revisar
 uv run python scripts/plantillas_demo.py      # plantillas 1:1 de muestra
 uv run python scripts/regenerar_golden.py     # SOLO si el cambio es intencionado
@@ -104,6 +105,7 @@ emit/
   paquete.py          #   Qué archivos salen y qué lleva cada uno
   template.py         #   PDF 1:1 para copistería          <- ver abajo
   patron.py           #   Hoja de trazo patrón 1:1 para verificar sin medir
+  catalogo.py         #   Envolventes STEP de las piezas comerciales, desde su ficha
   dxf.py              #   Corte láser / CNC
   dossier.py          #   Dossier de montaje
   step.py             #   3D
@@ -264,6 +266,27 @@ levantamiento ocurre donde debe.
 `UMBRAL_DE_APOYO` no puede ser cero: la altura sale de recorrer la leva, así
 que oscila alrededor del cero unas milésimas, y con umbral cero el trazo se
 parte en costuras donde la máquina dibuja seguido.
+
+### `emit/catalogo.py` — las piezas comerciales, en STEP
+Para montar el conjunto en un CAD hacen falta los sólidos de las catorce
+referencias que se compran. Bajarlos del fabricante tiene tres pegas: pueden
+no coincidir con lo que calcula el compilador, la mitad no existen (el
+portaminas, los genéricos), y los de bibliotecas de terceros tienen licencia
+—los de GrabCAD son «for private use only»—.
+
+Aquí el sólido **se genera desde la ficha**, así que por construcción dice lo
+mismo que el compilador, existe siempre y es nuestro. Como sale en STEP, no
+ata la decisión de qué CAD usar.
+
+Son **envolventes**: exactas en las cotas que la ficha marca como críticas y
+toscas en el resto. Un engranaje sale como un disco sin dientes, porque para
+saber si cabe no aportan nada y la pieza se compra hecha. Para el render de
+venta se importa el STEP del fabricante encima.
+
+Hay un test que mide la caja envolvente de cada sólido y la compara con la
+cota crítica de su ficha, y otro que exige que **ninguna familia del enum se
+quede sin forma**: si alguien añade una familia y olvida el generador, salta
+al añadirla y no al primer pedido.
 
 ### `emit/dossier.py` — dossier de montaje
 El PDF que acompaña a las piezas. Contiene: vistas ortográficas y una isométrica,

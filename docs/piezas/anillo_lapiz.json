@@ -9,7 +9,7 @@
     "referencia": "62311000GA",
     "url": "https://www.maedler.de/Article/62311000GA",
     "fecha": "2026-09-29",
-    "verificado": true
+    "verificado": false
   },
   "cotas": [
     {
@@ -17,7 +17,20 @@
       "valor": 0.01,
       "tolerancia": "",
       "critica": true
+    },
+    {
+      "nombre": "exterior",
+      "valor": 0.02,
+      "tolerancia": "SIN CONFIRMAR",
+      "critica": false
+    },
+    {
+      "nombre": "ancho",
+      "valor": 0.008,
+      "tolerancia": "SIN CONFIRMAR",
+      "critica": false
     }
   ],
-  "nota": "Aprieta el portaminas sobre la palanca. El agujero tiene que casar con el cuerpo del portaminas, que HAY QUE MEDIR: el catálogo da 10 mm nominales de la caja, que no es la cota de la pieza."
+  "nota": "Aprieta el portaminas sobre la palanca. El agujero tiene que casar con el cuerpo del portaminas, que HAY QUE MEDIR: el catálogo da 10 mm nominales de la caja, que no es la cota de la pieza.\n\nEXTERIOR Y ANCHO SIN CONFIRMAR: los puso el generador de envolventes al pedirlos, porque sin ellos no se puede levantar el sólido. Están para poder montar, no para acotar.",
+  "pedir": "exterior y ancho del anillo, y el diámetro real del cuerpo del portaminas"
 }

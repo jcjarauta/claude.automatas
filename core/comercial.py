@@ -101,6 +101,10 @@ class PiezaComercial(BaseModel):
     no otra, qué pasa si se sustituye."""
     sustitutos: list[str] = Field(default_factory=list)
     """Otras referencias que valdrían, por si una se descataloga."""
+    pedir: str = ""
+    """Qué hay que preguntar al proveedor cuando la ficha está incompleta.
+    Va aquí y no en un cuaderno aparte para que la duda viaje pegada a la
+    cota que la tiene."""
 
     def cota(self, nombre: str) -> Cota:
         """La cota por su nombre. Falla si no está, en vez de devolver cero."""

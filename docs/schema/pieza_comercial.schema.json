@@ -133,6 +133,11 @@
       "title": "Nota",
       "type": "string"
     },
+    "pedir": {
+      "default": "",
+      "title": "Pedir",
+      "type": "string"
+    },
     "sustitutos": {
       "items": {
         "type": "string"

@@ -25,6 +25,15 @@ class ContratoIncumplido(ErrorDeDominio):
     """Un módulo no encaja en la bahía o el eje que dice cumplir."""
 
 
+class FichaIncompleta(ErrorDeDominio):
+    """Una ficha de pieza comercial no trae una cota que hace falta.
+
+    No es un límite de diseño sino un hueco en el catálogo: alguien apuntó
+    la referencia y se dejó una medida. Por eso es excepción y dice cuál
+    falta, en vez de rellenarla con un cero que acabaría en un plano.
+    """
+
+
 class FueraDeAlcance(ErrorDeDominio):
     """Se pide al actuador un punto al que no llega.
 
@@ -38,5 +47,6 @@ __all__ = [
     "ActuadorDesconocido",
     "ContratoIncumplido",
     "ErrorDeDominio",
+    "FichaIncompleta",
     "FueraDeAlcance",
 ]
