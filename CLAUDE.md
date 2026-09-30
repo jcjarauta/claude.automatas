@@ -290,6 +290,25 @@ cota crítica de su ficha, y otro que exige que **ninguna familia del enum se
 quede sin forma**: si alguien añade una familia y olvida el generador, salta
 al añadirla y no al primer pedido.
 
+**Cinco de las catorce están contrastadas contra Onshape** (2026-09-30):
+poste, árbol, pasador, separador y casquillo, dibujadas allí desde las mismas
+cotas y pesadas con las mismas densidades. Coinciden: el poste da 3518,584 mm³
+y 27,445 g por los **tres** caminos —el polígono de `core/solido.py`, el OCCT
+de build123d y el de Onshape—, que no comparten una línea de código.
+`MASAS_VERIFICADAS` las congela; si un número cambia, el modelo dibujado ha
+dejado de coincidir con el compilador y hay que redibujarlo, no ajustar el
+test.
+
+**Solo esas cinco**, porque son aquellas cuya envolvente **es** el sólido
+real. Las otras nueve no: el muelle sale como el cilindro que ocupa y pesaría
+32 g en vez de cuatro, el rodamiento como un anillo macizo sin bolas ni
+pistas, el engranaje como un disco sin dientes. Para saber si caben eso basta;
+para pesarlos su masa buena es la del proveedor, y debería ir en la ficha.
+
+Pendiente de medir con el pie de rey: **si la valona del casquillo entra
+dentro de sus 6 mm o se suma**. El modelo la mete dentro —altura total 6— y
+la ficha no lo aclara. La masa apenas cambia; la altura de la pila sí.
+
 ### `emit/dossier.py` — dossier de montaje
 El PDF que acompaña a las piezas. Contiene: vistas ortográficas y una isométrica,
 lista de materiales, lista de tornillería y comercial, secuencia de montaje paso a

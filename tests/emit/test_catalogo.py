@@ -14,6 +14,7 @@ import pytest
 
 from core.comercial import Cota, FamiliaComercial, Fuente, PiezaComercial
 from core.errors import FichaIncompleta
+from core.solido import densidad_de
 from core.units import mm
 from emit.catalogo import caja_envolvente, cargar, escribir_catalogo, solido_de
 
@@ -194,3 +195,70 @@ def test_el_step_se_puede_volver_a_leer(tmp_path: Path):
     vuelto = import_step(str(ruta))
     ancho = vuelto.bounding_box().size.X
     assert ancho == pytest.approx(0.015, abs=1e-6)
+
+
+# ---------------------------------------------------------------------------
+# Las masas contrastadas contra Onshape
+# ---------------------------------------------------------------------------
+
+MASAS_VERIFICADAS = {
+    "poste_pivote": 27.445,
+    "arbol_de_levas": 73.985,
+    "pasador_indice": 1.332,
+    "separador_pila": 0.344,
+    "casquillo_pivote": 0.388,
+}
+"""Gramos. **Medidos en Onshape el 2026-09-30 y coincidentes con estos.**
+
+Son las cinco piezas comerciales cuya **envolvente es el sólido real**, que es
+la condición para que su masa signifique algo. Las otras nueve no la cumplen y
+por eso no están aquí: el muelle sale como el cilindro que ocupa y pesaría
+32 g en vez de cuatro, un rodamiento sale como un anillo macizo sin bolas ni
+pistas, y un engranaje como un disco sin dientes. Para saber si caben eso
+basta y sobra; para pesarlos no sirve, y su masa buena es la del proveedor.
+
+El contraste vale porque son **tres caminos que no comparten una línea de
+código**: el polígono de `core/solido.py`, el kernel OCCT de build123d y el de
+Onshape, cada uno con su propia integración volumétrica. Con el poste
+coincidieron hasta la quinta cifra —3518,584 mm³ los tres—.
+
+Si un número de aquí cambia, es que ha cambiado una ficha o una densidad, y el
+modelo que hay dibujado en el CAD ha dejado de coincidir con el compilador.
+Hay que redibujarlo, no ajustar el test.
+"""
+
+
+def test_las_cinco_masas_contrastadas_siguen_siendo_las_mismas():
+    """Lo que congela la comprobación con el CAD.
+
+    Sin esto, cambiar una densidad o una cota movería la masa del modelo de
+    Onshape sin que nadie se enterara, y la comprobación por tres caminos se
+    perdería en silencio: los dos que están en el repositorio seguirían
+    coincidiendo entre sí.
+    """
+    for nombre, esperada in MASAS_VERIFICADAS.items():
+        pieza = next(p for p in cargar() if p.nombre == nombre)
+        masa = solido_de(pieza).volume * densidad_de(pieza.material) * 1000.0
+        assert masa == pytest.approx(esperada, abs=0.001), (
+            f"{nombre}: {masa:.3f} g ahora, {esperada:.3f} g cuando se contrastó "
+            "con Onshape. Si el cambio es querido, redibuja la pieza en el CAD, "
+            "comprueba la masa y actualiza este número."
+        )
+
+
+def test_solo_se_verifican_las_piezas_cuya_envolvente_es_el_solido():
+    """Que nadie añada aquí un rodamiento por parecer fácil.
+
+    La envolvente de un rodamiento es un anillo macizo: cabe donde cabe el
+    rodamiento, que es para lo que está, pero pesa lo que no pesa. Meter su
+    masa en la lista daría por verificado un número que es falso."""
+    sin_envolvente_fiel = {
+        "muelle_seguidor",
+        "rodamiento_arbol",
+        "rodillo_seguidor",
+        "pinon_reductor",
+        "rueda_reductor",
+        "portaminas",
+        "plancha_pom",
+    }
+    assert not (set(MASAS_VERIFICADAS) & sin_envolvente_fiel)
