@@ -702,3 +702,51 @@ def test_el_recorrido_no_retrocede():
     denso = remuestrear(t, 1500)
     avance = np.linalg.norm(np.diff(denso, axis=0), axis=1)
     assert float(np.min(avance)) > 0.0
+
+
+# ---------------------------------------------------------------------------
+# El radio de esquina, que ahora es una cota del pedido
+# ---------------------------------------------------------------------------
+
+
+def test_la_capacidad_declara_el_radio_de_esquina():
+    """Redondear cuesta fidelidad, así que el radio no puede ser un número
+    escondido en una función: es una cota del pedido y se declara."""
+    assert float(Capacidad().radio_de_esquina) == pytest.approx(0.0005)
+
+
+def test_un_radio_de_cero_deja_el_trazo_como_estaba():
+    """Sirve para comparar y para reproducir un pedido antiguo."""
+    t = Trazo(puntos=[(mm(0), mm(0)), (mm(10), mm(0)), (mm(10), mm(10))])
+    assert redondear_esquinas(t, mm(0.0)).coordenadas.tolist() == t.coordenadas.tolist()
+    assert float(Capacidad(radio_de_esquina=mm(0.0)).radio_de_esquina) == 0.0
+
+
+def test_interpolar_una_polilinea_escasa_se_pasa_de_largo():
+    """**El error de fidelidad que no estaba medido.** Una cúbica natural por
+    cinco puntos desiguales sobrepasa la polilínea que el cliente dibujó, y
+    no lo veía nadie: la simulación compara el recorrido contra el programa,
+    que está hecho con esta misma interpolación. Se compara consigo misma.
+
+    Con «hola» el trazo de cinco puntos se iba 2,47 mm. Redondear las
+    esquinas lo arregla de paso, porque densifica el trazo donde gira."""
+    crudo = Trazo(
+        puntos=[(mm(0), mm(0)), (mm(30), mm(2)), (mm(34), mm(28)), (mm(38), mm(2)), (mm(70), mm(0))]
+    )
+    u = np.linspace(0.0, 1.0, 2000)
+    assert _lejos_de(interpolar(crudo, u), crudo.coordenadas) > mm(1.0)
+
+    suave = redondear_esquinas(crudo, mm(0.5))
+    assert _lejos_de(interpolar(suave, u), crudo.coordenadas) < mm(0.5)
+
+
+def _lejos_de(puntos: np.ndarray, polilinea: np.ndarray) -> float:
+    """Lo que más se aparta un punto de la polilínea, midiendo a los
+    segmentos y no a los vértices: a los vértices siempre sale mucho."""
+    a, b = polilinea[:-1], polilinea[1:]
+    ab = b - a
+    largo = np.einsum("ij,ij->i", ab, ab)
+    largo = np.where(largo <= 0.0, 1.0, largo)
+    t = np.clip(np.einsum("pij,ij->pi", puntos[:, None, :] - a[None], ab) / largo, 0.0, 1.0)
+    pie = a[None] + t[..., None] * ab[None]
+    return float(np.min(np.linalg.norm(puntos[:, None, :] - pie, axis=2), axis=1).max())

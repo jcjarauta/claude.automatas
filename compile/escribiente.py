@@ -42,6 +42,7 @@ from core.escritura import (
     programa,
     remuestrear,
     repartir,
+    suavizar,
 )
 from core.program import Programa
 from core.units import Longitud, Metros, Radianes, a_mm, mm
@@ -483,7 +484,14 @@ def compilar(
     capacidad = capacidad or Capacidad()
     limites = limites or LimitesLeva()
 
-    encajada = encajar_en_la_caja(escritura, maquina)
+    # Redondear **después** de encajar: el radio es una longitud absoluta y
+    # encajar escala la frase, así que al revés el redondeo valdría una cosa
+    # distinta en cada pedido. Y antes de `programa`, porque lo que se
+    # redondea es lo que se fabrica: `Compilacion.escritura` es la de verdad.
+    encajada = suavizar(
+        encajar_en_la_caja(escritura, maquina),
+        capacidad.radio_de_esquina,
+    )
     prog, veredicto = programa(encajada, capacidad)
     tramos, _ = repartir(encajada, capacidad)
 

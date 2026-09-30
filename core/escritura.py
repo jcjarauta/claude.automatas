@@ -39,7 +39,7 @@ from scipy.interpolate import CubicSpline
 
 from core.cam.curves import cicloidal, rejilla
 from core.program import PistaContinua, Programa
-from core.units import TAU, AnguloCiclo, Arco, Longitud, Metros, grados, mm
+from core.units import TAU, AnguloCiclo, Arco, Longitud, LongitudConCero, Metros, grados, mm
 from core.verdict import Incidencia, Veredicto
 
 Arreglo = npt.NDArray[np.float64]
@@ -272,6 +272,25 @@ class Capacidad(_Base):
     """Cuánto ángulo recibe un vuelo respecto a un trazo de la misma
     longitud. Menos de uno porque un vuelo no se ve: puede ir más deprisa y
     devolverle grados a lo que sí queda en el papel."""
+    radio_de_esquina: LongitudConCero = mm(0.5)
+    """A qué radio se redondea el pico más agudo del trazo. **Es una cota
+    del pedido, no un ajuste**: el pico se le quita al cliente, así que el
+    número tiene que poder decirse en el informe.
+
+    Medio milímetro no es una preferencia, es un codo medido. Con «hola» el
+    radio de curvatura mínimo del perfil va, al doblar las muestras de 720 a
+    5.760: sin redondear 13,5 → 1,9 mm (se divide por dos cada vez, que es la
+    firma de una esquina); a 0,2 mm llega a 6,8; a 0,3 mm a 9,6; **y a 0,5 mm
+    se queda en 12,96, que ya no es el trazo sino el elevador**, que siempre
+    convergió. Por encima de 0,5 no mejora nada y solo cuesta fidelidad.
+
+    Y redondear **no** cuesta fidelidad aquí, la compra: `interpolar` es una
+    cúbica por los puntos capturados y con una polilínea escasa se pasa de
+    largo —2,47 mm en el trazo de cinco puntos de «hola»—. Redondear
+    densifica el trazo donde gira, y la desviación baja a 0,15 mm.
+
+    Cero desactiva el redondeo. Sirve para comparar y para reproducir un
+    pedido antiguo; no para fabricar."""
 
 
 class Tramo(_Base):

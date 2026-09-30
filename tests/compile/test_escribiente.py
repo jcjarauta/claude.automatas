@@ -22,6 +22,7 @@ from compile.escribiente import (
     encajar_en_la_caja,
     simular,
 )
+from core.cam.envelope import radio_de_curvatura
 from core.escritura import Capacidad, Escritura, Trazo, remuestrear
 from core.units import a_grados, a_mm, grados, mm
 
@@ -360,10 +361,13 @@ def test_del_socavado_se_ocupa_la_envolvente_y_el_contacto_solo_lo_nota():
     pasa en unos pocos grados, y cazarlo por contacto exigiría muestrear todo
     el ciclo. La envolvente lo calcula exacto y gratis, así que es ella quien
     rechaza. El contacto solo enseña que el número sube."""
-    # Relación 3 y rodillo de Ø12: la combinación que la máquina de serie ya
-    # no usa, precisamente porque socavaba.
+    # Relación 3 y rodillo de Ø16. Hacía falta subirlo: con Ø12 el caso
+    # **dejó de socavar** al empezar a redondear las esquinas del trazo, que
+    # es justo la medida de lo que valía el redondeo. Ahora el socavado que
+    # se prueba es el de verdad —un rodillo que no cabe en el valle— y no el
+    # que fabricaba una esquina de la polilínea.
     sana = compilar(hola())
-    socavada = compilar(hola(), Escribiente(relacion=3.0, radio_rodillo=mm(6.0)))
+    socavada = compilar(hola(), Escribiente(relacion=3.0, radio_rodillo=mm(8.0)))
 
     assert "perfil_autointersecado" in [i.codigo for i in socavada.veredicto.errores]
     assert not socavada.veredicto.apto
@@ -438,3 +442,61 @@ def test_dos_frases_distintas_comparten_el_mismo_pasador():
     uno = compilar(hola()).piezas[0].taladros[1]
     otro = compilar(otra).piezas[0].taladros[1]
     assert uno == otro
+
+
+# ---------------------------------------------------------------------------
+# El veredicto de curvatura no puede depender del muestreo
+# ---------------------------------------------------------------------------
+
+
+def peor_radio(compilacion) -> float:
+    """El radio de curvatura mínimo de la peor de las tres levas."""
+    return min(
+        float(r[np.isfinite(r) & (r > 0.0)].min())
+        for r in (radio_de_curvatura(p) for p in compilacion.perfiles.values())
+    )
+
+
+def test_el_radio_de_curvatura_no_se_divide_por_dos_al_doblar_el_muestreo():
+    """**El test que faltaba, y el que habría cazado el agujero.**
+
+    Un mínimo de verdad converge al refinar; una esquina no. Sin redondear,
+    el radio mínimo del perfil de «hola» iba 13,5 → 7,5 → 4,4 → 1,9 mm al
+    doblar las muestras de 720 a 5.760: se dividía por dos cada vez, que es
+    la firma de una curvatura infinita que el muestreo estaba redondeando por
+    accidente. Un veredicto de fabricabilidad que depende de un parámetro de
+    cálculo no es un veredicto.
+    """
+    grueso = peor_radio(compilar(hola(), capacidad=Capacidad(muestras=720)))
+    fino = peor_radio(compilar(hola(), capacidad=Capacidad(muestras=5760)))
+    assert grueso / fino < 1.6, (
+        f"el radio mínimo pasa de {grueso * 1000:.2f} a {fino * 1000:.2f} mm al "
+        "refinar ocho veces: eso no es un mínimo, es una esquina"
+    )
+
+
+def test_sin_redondear_la_esquina_el_radio_si_se_desploma():
+    """La contraprueba: que el test de arriba mide lo que dice medir y no
+    pasa por casualidad. Con radio cero vuelve el desplome."""
+
+    def crudo(muestras: int) -> Capacidad:
+        return Capacidad(muestras=muestras, radio_de_esquina=mm(0.0))
+
+    grueso = peor_radio(compilar(hola(), capacidad=crudo(720)))
+    fino = peor_radio(compilar(hola(), capacidad=crudo(5760)))
+    assert grueso / fino > 4.0
+
+
+def test_el_pedido_se_compila_con_las_esquinas_ya_redondeadas():
+    """`Compilacion.escritura` es lo que se fabrica, así que tiene que ser la
+    redondeada y no la que entró: si no, el informe describiría una cosa y la
+    leva sería otra."""
+    entrada = hola()
+    salida = compilar(entrada).escritura
+    assert len(salida.trazos[2].coordenadas) > len(entrada.trazos[2].coordenadas)
+
+
+def test_un_radio_de_cero_deja_pasar_la_escritura_tal_cual():
+    entrada = hola()
+    salida = compilar(entrada, capacidad=Capacidad(radio_de_esquina=mm(0.0))).escritura
+    assert len(salida.trazos[2].coordenadas) == len(entrada.trazos[2].coordenadas)
