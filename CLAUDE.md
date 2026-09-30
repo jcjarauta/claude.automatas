@@ -448,6 +448,16 @@ falla si el esquema versionado se queda atrás.
   número el mapa queda adimensional y la cota la interpreta Onshape en la
   unidad por defecto del documento: funciona hasta que alguien cambia esa
   preferencia y el bastidor pasa a medir 55 pulgadas sin un solo aviso.
+- **La mitad de las cotas circulares son radios y la otra mitad diámetros, y
+  el CAD acota en diámetro por defecto.** De las siete cotas circulares del
+  contrato, cuatro son radio —`radio_base`, `pasador_radio`,
+  `poste_radio_al_arbol`, `rodillo_radio`— y tres diámetro —`eje_diametro`,
+  `pasador_diametro`, `poste_diametro`—. La herramienta de círculo de Onshape
+  acota el **diámetro**, así que meter `#cota.radio_base` ahí da una leva de
+  27,5 mm de radio en vez de 55: **la mitad, y sin un solo aviso**. Pasó en la
+  primera prueba. Al acotar un círculo, cambia la cota a radio, o escribe
+  `#cota.radio_base * 2`. El nombre de la cota dice cuál es; no hay forma de
+  saberlo por el número.
 - **Un CSV escrito pegando comas se rompe con el primer campo que lleve una.**
   La tolerancia del pasador de índice es «m6 en el plato metálico, deslizante
   en el POM». Sin comillas parte la fila en dos columnas de más, y no se ve
