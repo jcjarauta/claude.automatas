@@ -15,14 +15,19 @@ import numpy as np
 import pytest
 
 from core.escritura import (
+    CANAL_X,
+    CANAL_Y,
+    CANAL_Z,
     Capacidad,
     Escritura,
     Trazo,
     encajar,
     interpolar,
     programa,
+    redondear_esquinas,
     remuestrear,
     repartir,
+    suavizar,
 )
 from core.units import TAU, Metros, a_mm, grados, mm
 
@@ -368,3 +373,238 @@ def test_los_angulos_minimos_son_angulos():
     """Rangos, no floats desnudos: un arco de 400° no existe."""
     with pytest.raises(ValueError, match="less than or equal"):
         Capacidad(arco_minimo_trazo=grados(400.0))
+
+
+# ---------------------------------------------------------------------------
+# El vuelo: la parte invisible, que era la que rompía la leva
+# ---------------------------------------------------------------------------
+
+
+def test_el_vuelo_sale_y_entra_tangente_al_trazo():
+    """**El arreglo del socavado.**
+
+    El vuelo era una recta del final de un trazo al principio del siguiente,
+    así que en cada despegue y en cada aterrizaje había una esquina: la
+    trayectoria cambiaba de dirección de golpe. Una esquina es curvatura
+    infinita, y la leva la hereda.
+
+    Como el lápiz va levantado, la forma del vuelo es libre: hacerlo salir y
+    entrar tangente no cuesta un micrómetro de fidelidad.
+    """
+    escritura = Escritura(
+        nombre="dos trazos en ángulo",
+        trazos=[
+            Trazo(puntos=[(mm(0.0), mm(0.0)), (mm(10.0), mm(0.0))]),
+            Trazo(puntos=[(mm(20.0), mm(10.0)), (mm(20.0), mm(20.0))]),
+        ],
+    )
+    prog, _ = programa(escritura, Capacidad(muestras=2880))
+    x = np.array(prog.pista(CANAL_X).valores)
+    y = np.array(prog.pista(CANAL_Y).valores)
+    z = np.array(prog.pista(CANAL_Z).valores)
+
+    xy = np.column_stack([x, y])
+    velocidad = np.diff(np.vstack([xy, xy[:1]]), axis=0)
+    giro = np.abs(np.diff(np.arctan2(velocidad[:, 1], velocidad[:, 0])))
+    giro = np.minimum(giro, 2.0 * np.pi - giro)
+
+    # En las transiciones lápiz arriba/abajo no puede haber un quiebro.
+    apoyado = z <= 1e-9
+    transiciones = np.flatnonzero(np.diff(apoyado.astype(np.int8)))
+    for i in transiciones:
+        vecindad = giro[max(i - 2, 0) : min(i + 2, len(giro))]
+        assert np.max(vecindad) < np.radians(20.0), (
+            f"quiebro de {np.degrees(np.max(vecindad)):.0f}° al despegar o aterrizar"
+        )
+
+
+def test_el_vuelo_empieza_y_acaba_donde_debe():
+    """Suavizarlo no puede moverlo: tiene que dejar el lápiz exactamente al
+    principio del trazo siguiente."""
+    escritura = Escritura(
+        nombre="dos",
+        trazos=[
+            Trazo(puntos=[(mm(0.0), mm(0.0)), (mm(10.0), mm(5.0))]),
+            Trazo(puntos=[(mm(30.0), mm(20.0)), (mm(40.0), mm(25.0))]),
+        ],
+    )
+    prog, _ = programa(escritura, Capacidad(muestras=2880))
+    xy = np.column_stack([prog.pista(CANAL_X).valores, prog.pista(CANAL_Y).valores])
+    z = np.array(prog.pista(CANAL_Z).valores)
+    apoyado = z <= 1e-9
+
+    # El primer punto apoyado después de un vuelo es el inicio de un trazo.
+    aterrizajes = np.flatnonzero(np.diff(apoyado.astype(np.int8)) > 0) + 1
+    inicios = [t.inicio for t in escritura.trazos]
+    for i in aterrizajes:
+        distancias = [float(np.linalg.norm(xy[i] - p)) for p in inicios]
+        assert min(distancias) < 1e-4, "el vuelo no aterriza donde empieza el trazo"
+
+
+def test_el_vuelo_no_se_sale_de_la_caja_de_los_trazos():
+    """Una curva se abomba. Si se abombara demasiado, el lápiz levantado se
+    saldría del alcance del brazo y la compilación fallaría por sorpresa."""
+    escritura = Escritura(
+        nombre="ida y vuelta",
+        trazos=[
+            Trazo(puntos=[(mm(0.0), mm(0.0)), (mm(40.0), mm(0.0))]),
+            Trazo(puntos=[(mm(40.0), mm(20.0)), (mm(0.0), mm(20.0))]),
+        ],
+    )
+    prog, _ = programa(escritura, Capacidad(muestras=1440))
+    xy = np.column_stack([prog.pista(CANAL_X).valores, prog.pista(CANAL_Y).valores])
+    puntos = np.vstack([t.coordenadas for t in escritura.trazos])
+    holgura = 0.25 * float(np.ptp(puntos, axis=0).max())
+    assert xy.min(axis=0).min() > puntos.min() - holgura
+    assert xy.max(axis=0).max() < puntos.max() + holgura
+
+
+def test_lo_que_se_escribe_no_cambia_al_suavizar_el_vuelo():
+    """El vuelo es invisible; el trazo es el producto. Tocar uno no puede
+    mover el otro ni un micrómetro."""
+    escritura = Escritura(
+        nombre="uno",
+        trazos=[
+            Trazo(puntos=[(mm(0.0), mm(0.0)), (mm(10.0), mm(3.0)), (mm(20.0), mm(0.0))]),
+            Trazo(puntos=[(mm(30.0), mm(10.0)), (mm(40.0), mm(12.0))]),
+        ],
+    )
+    prog, _ = programa(escritura, Capacidad(muestras=2880))
+    xy = np.column_stack([prog.pista(CANAL_X).valores, prog.pista(CANAL_Y).valores])
+    z = np.array(prog.pista(CANAL_Z).valores)
+    escritos = xy[z <= 1e-9]
+
+    def a_la_polilinea(punto: np.ndarray, poli: np.ndarray) -> float:
+        """Distancia al SEGMENTO más cercano, no al vértice más cercano."""
+        a, b = poli[:-1], poli[1:]
+        ab = b - a
+        largo = np.einsum("ij,ij->i", ab, ab)
+        s = np.clip(np.einsum("ij,ij->i", punto - a, ab) / np.where(largo > 0, largo, 1), 0.0, 1.0)
+        return float(np.min(np.linalg.norm(punto - (a + s[:, None] * ab), axis=1)))
+
+    # Cada punto escrito tiene que caer sobre alguno de los trazos.
+    for punto in escritos[::7]:
+        cerca = min(a_la_polilinea(punto, t.coordenadas) for t in escritura.trazos)
+        # 10 µm de margen: la muestra del aterrizaje cae justo en la frontera
+        # del vuelo. Es cuatro órdenes menos que el error de la máquina.
+        assert cerca < 1e-5, f"un punto apoyado se ha ido a {cerca * 1000:.3f} mm del trazo"
+
+
+# ---------------------------------------------------------------------------
+# El redondeo de esquinas: lo que un rodillo puede seguir
+# ---------------------------------------------------------------------------
+
+
+def esquina(giro_grados: float, brazo_mm: float = 20.0) -> Trazo:
+    """Un trazo en V que **gira** los grados que se pidan.
+
+    El parámetro es el giro, no la dirección del segundo brazo: 0° es seguir
+    recto y 180° es doblarse sobre sí mismo. Es la magnitud de la que depende
+    todo lo demás.
+    """
+    a = np.radians(giro_grados)
+    return Trazo(
+        puntos=[
+            (mm(-brazo_mm), mm(0.0)),
+            (mm(0.0), mm(0.0)),
+            (mm(brazo_mm * np.cos(a)), mm(brazo_mm * np.sin(a))),
+        ]
+    )
+
+
+def radio_minimo(puntos: np.ndarray) -> float:
+    """Radio de curvatura mínimo de una polilínea, medido **en sus propios
+    vértices**, en metros.
+
+    Medirlo remuestreando más fino que las cuerdas no mide la curva: mide
+    las esquinas entre cuerdas, y da un número que se va a cero según lo
+    fino que se remuestree. Es el mismo error que escondía el socavado.
+    """
+    a, b, c = puntos[:-2], puntos[1:-1], puntos[2:]
+    ab, bc, ac = b - a, c - b, c - a
+    area2 = np.abs(ab[:, 0] * bc[:, 1] - ab[:, 1] * bc[:, 0])
+    lados = np.linalg.norm(ab, axis=1) * np.linalg.norm(bc, axis=1) * np.linalg.norm(ac, axis=1)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        radios = np.where(area2 > 1e-18, lados / (2.0 * area2), np.inf)
+    return float(np.min(radios))
+
+
+def test_una_esquina_se_redondea_al_radio_que_se_pide():
+    """Un rodillo de Ø6 no puede seguir un pico. Si la trayectoria lo tiene,
+    la leva lo hereda y el offset se autointerseca: socavado."""
+    redondeado = redondear_esquinas(esquina(90.0), mm(2.0))
+    assert radio_minimo(redondeado.coordenadas) > 0.0018
+
+
+def test_un_trazo_ya_suave_no_se_toca():
+    """El redondeo cuesta fidelidad: sólo se paga donde hace falta."""
+    suave = Trazo(
+        puntos=[(mm(float(x)), mm(float(2.0 * np.sin(x / 10.0)))) for x in range(0, 60, 2)]
+    )
+    igual = redondear_esquinas(suave, mm(0.5))
+    assert len(igual.puntos) == len(suave.puntos)
+    assert np.allclose(igual.coordenadas, suave.coordenadas)
+
+
+def test_el_redondeo_no_aleja_el_trazo_mas_de_lo_que_promete():
+    """Lo que se le quita al cliente tiene que ser una cota declarada, no una
+    sorpresa. Una esquina redondeada a R se separa del pico menos de R."""
+    radio = mm(2.0)
+    original = esquina(90.0)
+    redondeado = redondear_esquinas(original, radio)
+    pico = original.coordenadas[1]
+    lejos = float(np.max(np.linalg.norm(redondeado.coordenadas - pico, axis=1)))
+    cerca = float(np.min(np.linalg.norm(redondeado.coordenadas - pico, axis=1)))
+    assert cerca < float(radio), "el redondeo se ha ido demasiado lejos del pico"
+    assert lejos > 0.0
+
+
+def test_una_esquina_mas_cerrada_se_redondea_mas():
+    """Cuanto más cierra el trazo, más material se come el arco al mismo
+    radio: el apex se separa del pico R/cos(giro/2) - R. Es física, no una
+    opción, y es lo que hay que poder contarle al cliente."""
+
+    def desvio(giro: float) -> float:
+        t = esquina(giro)
+        return float(
+            np.min(
+                np.linalg.norm(
+                    redondear_esquinas(t, mm(2.0)).coordenadas - t.coordenadas[1], axis=1
+                )
+            )
+        )
+
+    assert desvio(150.0) > desvio(90.0) > desvio(30.0)
+
+
+def test_un_radio_que_no_cabe_en_el_segmento_se_recorta():
+    """Con segmentos cortos no hay sitio para el arco pedido. Antes que
+    pasarse de largo y cruzar el trazo, se redondea menos."""
+    corto = Trazo(puntos=[(mm(0.0), mm(0.0)), (mm(2.0), mm(0.0)), (mm(2.0), mm(2.0))])
+    redondeado = redondear_esquinas(corto, mm(10.0))
+    dentro = redondeado.coordenadas
+    assert dentro[:, 0].min() >= -1e-9
+    assert dentro[:, 1].min() >= -1e-9
+    assert float(redondeado.longitud) < float(corto.longitud) * 1.5
+
+
+def test_el_redondeo_conserva_los_extremos():
+    """El trazo tiene que seguir empezando y acabando donde empezaba: si no,
+    el vuelo que lo enlaza deja de cuadrar."""
+    original = esquina(60.0)
+    redondeado = redondear_esquinas(original, mm(3.0))
+    assert np.allclose(redondeado.inicio, original.inicio)
+    assert np.allclose(redondeado.fin, original.fin)
+
+
+def test_un_trazo_de_dos_puntos_no_tiene_esquinas_que_redondear():
+    recto = Trazo(puntos=[(mm(0.0), mm(0.0)), (mm(10.0), mm(0.0))])
+    assert np.allclose(redondear_esquinas(recto, mm(2.0)).coordenadas, recto.coordenadas)
+
+
+def test_redondear_una_escritura_entera_las_redondea_todas():
+    escritura = Escritura(nombre="dos picos", trazos=[esquina(90.0), esquina(45.0)])
+    suavizada = suavizar(escritura, mm(2.0))
+    assert len(suavizada.trazos) == len(escritura.trazos)
+    for t in suavizada.trazos:
+        assert radio_minimo(t.coordenadas) > 0.0015

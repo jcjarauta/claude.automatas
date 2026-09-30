@@ -472,10 +472,34 @@ falla si el esquema versionado se queda atrás.
   no se arregle, **cualquier respuesta a «¿cabe esta frase?» es poco de
   fiar**, porque es exactamente una pregunta de curvatura.
 
-  Lo que falta es limitar la curvatura **a propósito**, antes de sintetizar,
-  al radio que el rodillo puede seguir. Entonces el veredicto deja de
-  depender del muestreo y el redondeo de las esquinas pasa a ser una cota
-  declarada en vez de un efecto secundario.
+  **Arreglado a medias, 2026-09-30.** Había tres fuentes de esquina y se han
+  localizado las tres:
+
+  1. **El vuelo era una recta** del final de un trazo al principio del
+     siguiente, con una esquina en cada despegue y aterrizaje. **Resuelto**:
+     `core.escritura.vuelo` traza una Hermite cúbica tangente a los dos
+     trazos. No cuesta fidelidad —el lápiz va levantado y esa parte no se
+     ve— y sube el radio de curvatura de 8,1 a 10,9 mm al muestreo de
+     producción.
+  2. **Los vértices de la polilínea del trazo.** `redondear_esquinas` los
+     sustituye por arcos del radio que el rodillo pueda seguir. Esto **sí**
+     cuesta fidelidad, y por eso el radio es una cota declarada. Está
+     implementado y probado, **sin enchufar al compilador** todavía.
+  3. **`interpolar` recorre la polilínea con cuerdas rectas**, así que cada
+     cuerda —incluidas las del arco que acaba de poner el redondeo— vuelve a
+     meter su propia esquina. **Es la que queda**, y es la que impide que
+     converja: con redondeo a 2 mm el radio sigue dividiéndose por 1,8 cada
+     vez que se dobla el muestreo.
+
+  El siguiente paso es que la interpolación del trazo sea **C2 en vez de
+  lineal**. Con eso, redondear acota la curvatura de la intención y la
+  interpolación la reproduce sin volver a trocearla; hasta entonces el
+  veredicto de curvatura sigue dependiendo del muestreo.
+- **Ningún golden cubre el perfil compilado.** El de `tests/emit/test_dxf.py`
+  guarda una leva sintética, así que vigila el escritor de DXF y no la
+  geometría que sale del compilador. Cambiar el front-end de escritura
+  —como hizo el arreglo del vuelo— mueve los tres perfiles sin que salte
+  ninguna comparación byte a byte.
 - **Fase.** Un cartucho montado desfasado escribe basura. La marca física y la
   verificación van en el dossier, no solo en el código.
 

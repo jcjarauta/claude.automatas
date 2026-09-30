@@ -49,6 +49,12 @@ CANAL_Y = "punta.y"
 CANAL_Z = "levantamiento"
 
 MUESTRAS_MINIMAS_POR_TRAMO = 8
+
+FRACCION_TANGENTE_DEL_VUELO = 1.0 / 3.0
+"""Cuánto se estiran las tangentes del vuelo, como fracción del salto.
+
+Un tercio es el valor corriente de una Hermite cúbica. Más curva más y
+aleja más el lápiz del papel; menos deja la esquina a medio quitar."""
 """Por debajo de esto, un tramo queda descrito por tan pocas muestras que el
 spline de la leva se inventa la forma entre ellas."""
 
@@ -337,6 +343,158 @@ def repartir(escritura: Escritura, capacidad: Capacidad) -> tuple[list[Tramo], V
 # ---------------------------------------------------------------------------
 
 
+PUNTOS_POR_ARCO = 12
+"""Con cuántos segmentos se aproxima cada esquina redondeada. Doce deja la
+flecha del polígono en menos de un 1 % del radio, muy por debajo de lo que
+el muestreo de la leva resuelve."""
+
+ANGULO_DE_ESQUINA = grados(3.0)
+"""Por debajo de este giro, un vértice no es una esquina: es el muestreo de
+una curva suave, y tocarlo sería estropear el trazo del cliente."""
+
+
+def redondear_esquinas(trazo: Trazo, radio: Longitud) -> Trazo:
+    """Sustituye cada pico del trazo por un arco del radio que se pida.
+
+    **Por qué hace falta.** Un trazo capturado es una polilínea, y una
+    polilínea tiene una esquina en cada vértice. Una esquina es curvatura
+    infinita; la leva la hereda, y el offset por el radio del rodillo se
+    autointerseca: socavado, y la pieza no se puede fabricar.
+
+    Sin esto el problema no desaparecía, se escondía: el muestreo redondeaba
+    la esquina por accidente y el radio de curvatura mínimo **se dividía por
+    dos cada vez que se doblaba `Capacidad.muestras`**, de 13,4 mm a 360
+    muestras a 0,65 a 11.520. Un veredicto de fabricabilidad que depende de
+    un parámetro de cálculo no es un veredicto.
+
+    **Esto sí cuesta fidelidad**, al revés que suavizar el vuelo: el pico se
+    lo quitamos al cliente. Por eso el radio es una cota declarada y no un
+    efecto secundario, y por eso se puede decir en el informe cuánto se ha
+    redondeado la esquina más aguda de su firma.
+
+    Un vértice que gira menos de `ANGULO_DE_ESQUINA` no se toca: es el
+    muestreo de una curva suave, no un pico. Y si el arco no cabe en los
+    segmentos que lo rodean, se reduce el radio en esa esquina antes que
+    pasarse de largo y cruzar el trazo.
+    """
+    puntos = trazo.coordenadas
+    if len(puntos) < 3:
+        return trazo
+
+    r = float(radio)
+    salida: list[Arreglo] = [puntos[0]]
+    for i in range(1, len(puntos) - 1):
+        previo, vertice, siguiente = puntos[i - 1], puntos[i], puntos[i + 1]
+        entra, sale = vertice - previo, siguiente - vertice
+        n_entra, n_sale = float(np.linalg.norm(entra)), float(np.linalg.norm(sale))
+        if n_entra <= 0.0 or n_sale <= 0.0:
+            continue
+        u, v = entra / n_entra, sale / n_sale
+
+        giro = float(np.arccos(np.clip(float(np.dot(u, v)), -1.0, 1.0)))
+        if giro < float(ANGULO_DE_ESQUINA):
+            salida.append(vertice)
+            continue
+        if giro > np.pi - 1e-9:  # media vuelta: no hay arco que valga
+            salida.append(vertice)
+            continue
+
+        # Retranqueo del arco sobre cada segmento, y lo que de verdad cabe.
+        retranqueo = r / np.tan((np.pi - giro) / 2.0)
+        cabe = min(retranqueo, n_entra / 2.0, n_sale / 2.0)
+        radio_real = cabe * np.tan((np.pi - giro) / 2.0)
+        if radio_real <= 0.0:
+            salida.append(vertice)
+            continue
+
+        p_entrada, p_salida = vertice - u * cabe, vertice + v * cabe
+        centro_dir = v - u
+        norma = float(np.linalg.norm(centro_dir))
+        if norma <= 0.0:
+            salida.append(vertice)
+            continue
+        # La distancia del vértice al centro es R/cos(giro/2), no R/sin: el
+        # centro está sobre la bisectriz interior. Las dos coinciden a 90°,
+        # que es justo el caso con el que se probó primero.
+        centro = vertice + (centro_dir / norma) * (radio_real / np.cos(giro / 2.0))
+
+        a0 = np.arctan2(*(p_entrada - centro)[::-1])
+        a1 = np.arctan2(*(p_salida - centro)[::-1])
+        barrido = (a1 - a0 + np.pi) % (2.0 * np.pi) - np.pi
+        angulos = a0 + barrido * np.linspace(0.0, 1.0, PUNTOS_POR_ARCO)
+        salida.extend(centro + radio_real * np.column_stack([np.cos(angulos), np.sin(angulos)]))
+
+    salida.append(puntos[-1])
+    limpio = [salida[0]]
+    for p in salida[1:]:
+        if float(np.linalg.norm(p - limpio[-1])) > 1e-12:
+            limpio.append(p)
+    return Trazo(puntos=[(Metros(float(x)), Metros(float(y))) for x, y in limpio])
+
+
+def suavizar(escritura: Escritura, radio: Longitud) -> Escritura:
+    """Redondea las esquinas de todos los trazos al radio que el rodillo
+    puede seguir. Es la etapa que convierte cualquier fuente de entrada
+    —lienzo, foto vectorizada, fuente de línea única— en algo fabricable."""
+    return Escritura(
+        nombre=escritura.nombre,
+        trazos=[redondear_esquinas(t, radio) for t in escritura.trazos],
+    )
+
+
+def _tangente(trazo: Trazo, *, al_final: bool) -> Arreglo:
+    """Hacia dónde va el lápiz al acabar un trazo, o de dónde viene al
+    empezarlo. Unitaria; cero si el trazo degenera, y entonces el vuelo sale
+    recto, que es lo que hacía siempre."""
+    puntos = trazo.coordenadas
+    borde = puntos[-1] - puntos[-2] if al_final else puntos[1] - puntos[0]
+    norma = float(np.linalg.norm(borde))
+    return borde / norma if norma > 0.0 else np.zeros(2)
+
+
+def vuelo(desde: Trazo, hasta: Trazo, fracciones: Arreglo) -> Arreglo:
+    """Por dónde pasa la punta entre dos trazos, con el lápiz levantado.
+
+    **Era una recta**, y ahí estaba el fallo más escondido del proyecto: una
+    recta del final de un trazo al principio del siguiente mete una esquina
+    en cada despegue y en cada aterrizaje. Una esquina es curvatura infinita,
+    la leva la hereda, y el offset por el radio del rodillo se autointerseca:
+    socavado. No se veía porque el muestreo la redondeaba, y el veredicto
+    salía limpio o no según `Capacidad.muestras`, que no tiene nada que ver
+    con la física.
+
+    Ahora es una **Hermite cúbica tangente a los dos trazos**: sale en la
+    dirección en que iba el lápiz y entra en la dirección en que va a seguir.
+    La esquina desaparece y la curvatura se queda finita.
+
+    **Y no cuesta nada.** El lápiz va levantado durante todo el vuelo, así
+    que su forma no se ve en el papel: es la única parte de la trayectoria
+    que se puede cambiar sin tocar lo que el cliente escribió.
+
+    Las tangentes se escalan con la distancia entre los dos extremos. Más
+    escala curva más y aleja más el lápiz del papel; menos deja la esquina
+    a medio quitar. Un tercio es el valor corriente de una Hermite y deja el
+    abombamiento por debajo de la cuarta parte del salto.
+    """
+    p0, p1 = desde.fin, hasta.inicio
+    salto = float(np.linalg.norm(p1 - p0))
+    if salto <= 0.0:
+        return np.repeat(p0[None, :], len(fracciones), axis=0)
+
+    escala = salto * FRACCION_TANGENTE_DEL_VUELO
+    m0 = _tangente(desde, al_final=True) * escala
+    m1 = _tangente(hasta, al_final=False) * escala
+
+    s = np.asarray(fracciones, dtype=np.float64)[:, None]
+    s2, s3 = s * s, s * s * s
+    return (
+        (2.0 * s3 - 3.0 * s2 + 1.0) * p0
+        + (s3 - 2.0 * s2 + s) * m0
+        + (-2.0 * s3 + 3.0 * s2) * p1
+        + (s3 - s2) * m1
+    )
+
+
 def _altura_del_vuelo(fracciones: Arreglo, arco: float, capacidad: Capacidad) -> Arreglo:
     """Sube, se mantiene arriba y baja, con ley cicloidal en las rampas.
 
@@ -374,9 +532,9 @@ def programa(escritura: Escritura, capacidad: Capacidad) -> tuple[Programa, Vere
         if tramo.clase == "trazo":
             puntos = interpolar(escritura.trazos[tramo.indice], fracciones)
         else:
-            desde = escritura.trazos[tramo.indice].fin
-            hasta = escritura.trazos[(tramo.indice + 1) % len(escritura.trazos)].inicio
-            puntos = desde + np.outer(fracciones, hasta - desde)
+            desde = escritura.trazos[tramo.indice]
+            hasta = escritura.trazos[(tramo.indice + 1) % len(escritura.trazos)]
+            puntos = vuelo(desde, hasta, fracciones)
             z[aqui] = _altura_del_vuelo(fracciones, float(tramo.arco), capacidad)
         x[aqui] = puntos[:, 0]
         y[aqui] = puntos[:, 1]
@@ -407,6 +565,9 @@ __all__ = [
     "encajar",
     "interpolar",
     "programa",
+    "redondear_esquinas",
     "remuestrear",
     "repartir",
+    "suavizar",
+    "vuelo",
 ]
