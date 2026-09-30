@@ -485,16 +485,31 @@ falla si el esquema versionado se queda atrás.
      sustituye por arcos del radio que el rodillo pueda seguir. Esto **sí**
      cuesta fidelidad, y por eso el radio es una cota declarada. Está
      implementado y probado, **sin enchufar al compilador** todavía.
-  3. **`interpolar` recorre la polilínea con cuerdas rectas**, así que cada
-     cuerda —incluidas las del arco que acaba de poner el redondeo— vuelve a
-     meter su propia esquina. **Es la que queda**, y es la que impide que
-     converja: con redondeo a 2 mm el radio sigue dividiéndose por 1,8 cada
-     vez que se dobla el muestreo.
+  3. **`interpolar` recorría la polilínea con cuerdas rectas.** **Resuelto**:
+     ahora es una cúbica C2 (`scipy.interpolate.CubicSpline`, natural) que
+     pasa por los puntos capturados. Con menos de cuatro puntos se sigue
+     interpolando recto, porque una cúbica con tan pocos datos sobrepasa más
+     de lo que describe.
 
-  El siguiente paso es que la interpolación del trazo sea **C2 en vez de
-  lineal**. Con eso, redondear acota la curvatura de la intención y la
-  interpolación la reproduce sin volver a trocearla; hasta entonces el
-  veredicto de curvatura sigue dependiendo del muestreo.
+  **Dónde está el problema ahora, y es otro sitio.** Con los tres arreglos,
+  **el camino (x, y) en función de θ ya converge**: su radio de curvatura
+  mínimo pasa de 0,0165 mm a 720 muestras a 0,0056 a 11.520, con el último
+  salto en 1,02x. Antes se dividía por dos indefinidamente. El front-end de
+  escritura está, por tanto, arreglado.
+
+  **Pero el perfil de la leva sigue divergiendo** —13,5 mm a 720, 1,05 a
+  11.520, ~1,8x por duplicación—, así que lo que queda está **aguas abajo
+  del programa**: en `desde_muestras` o en `core/cam/synth.py`, que son
+  quienes convierten las muestras de ψ en una función continua y esa función
+  en un perfil. Ahí es donde hay que mirar, y no en la escritura.
+
+  Nota de método: al pasar a C2 hubo que arreglar `_tangente`, que leía la
+  última cuerda de la polilínea. Como la curva ya no sale con esa pendiente,
+  el vuelo empalmaba torcido y devolvía la esquina que se acababa de quitar.
+  Ahora la mide sobre `interpolar`, así que coincide por construcción sea
+  cual sea la interpolación. Y el empalme iguala también la **velocidad**, no
+  solo la dirección: un vuelo que sale bien orientado pero al doble de prisa
+  tiene un codo igual.
 - **Ningún golden cubre el perfil compilado.** El de `tests/emit/test_dxf.py`
   guarda una leva sintética, así que vigila el escritor de DXF y no la
   geometría que sale del compilador. Cambiar el front-end de escritura

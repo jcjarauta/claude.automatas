@@ -608,3 +608,97 @@ def test_redondear_una_escritura_entera_las_redondea_todas():
     assert len(suavizada.trazos) == len(escritura.trazos)
     for t in suavizada.trazos:
         assert radio_minimo(t.coordenadas) > 0.0015
+
+
+# ---------------------------------------------------------------------------
+# La interpolación C2: lo que hace que la curvatura converja
+# ---------------------------------------------------------------------------
+
+
+def curvatura_maxima(puntos: np.ndarray) -> float:
+    """1/R máximo, medido en los vértices de la polilínea, en 1/m."""
+    a, b, c = puntos[:-2], puntos[1:-1], puntos[2:]
+    ab, bc, ac = b - a, c - b, c - a
+    area2 = np.abs(ab[:, 0] * bc[:, 1] - ab[:, 1] * bc[:, 0])
+    lados = np.linalg.norm(ab, axis=1) * np.linalg.norm(bc, axis=1) * np.linalg.norm(ac, axis=1)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return float(np.max(np.where(lados > 1e-18, 2.0 * area2 / lados, 0.0)))
+
+
+def test_la_curvatura_converge_al_remuestrear_mas_fino():
+    """**El test que cierra el agujero de la envolvente.**
+
+    Con interpolación lineal, remuestrear el trazo más fino no revela la
+    curva: revela las esquinas entre cuerdas, y la curvatura medida crece sin
+    límite. El radio de curvatura se dividía por dos cada vez que se doblaba
+    el muestreo, así que el veredicto de fabricabilidad dependía de un
+    parámetro de cálculo. Con una interpolación C2 la curvatura tiende a un
+    valor: el de la curva, que es el que se puede juzgar.
+    """
+    trazo = redondear_esquinas(esquina(90.0), mm(3.0))
+    curvaturas = [curvatura_maxima(remuestrear(trazo, n)) for n in (500, 1000, 2000, 4000)]
+    # Cada duplicación puede mover el valor, pero cada vez menos.
+    saltos = [abs(b - a) for a, b in pairwise(curvaturas)]
+    assert saltos[-1] < saltos[0] / 2.0, f"no converge: {curvaturas}"
+    assert curvaturas[-1] < 2.0 * curvaturas[0], f"se dispara: {curvaturas}"
+
+
+def test_una_recta_sigue_siendo_recta():
+    """Una C2 mal puesta ondula entre puntos alineados. Si lo hiciera, la
+    leva tendría rizos donde el trazo es liso."""
+    recta = Trazo(puntos=[(mm(float(x)), mm(0.0)) for x in (0, 5, 10, 20, 35, 50)])
+    puntos = remuestrear(recta, 500)
+    assert float(np.max(np.abs(puntos[:, 1]))) < 1e-9
+
+
+def test_un_trazo_de_dos_puntos_es_exactamente_un_segmento():
+    dos = Trazo(puntos=[(mm(0.0), mm(0.0)), (mm(30.0), mm(40.0))])
+    puntos = remuestrear(dos, 101)
+    esperado = np.linspace(0.0, 1.0, 101)[:, None] * np.array([0.030, 0.040])
+    assert np.allclose(puntos, esperado)
+
+
+def test_los_extremos_son_exactos():
+    """El vuelo enlaza con el final de un trazo y el principio del siguiente:
+    si la interpolación los moviera, aparecería un salto."""
+    t = Trazo(puntos=[(mm(0.0), mm(0.0)), (mm(10.0), mm(7.0)), (mm(25.0), mm(3.0))])
+    puntos = interpolar(t, np.array([0.0, 1.0]))
+    assert np.allclose(puntos[0], t.inicio)
+    assert np.allclose(puntos[1], t.fin)
+
+
+def test_la_curva_pasa_por_los_puntos_capturados():
+    """Interpolación, no aproximación: lo que el cliente escribió está en la
+    curva, no cerca de ella."""
+    t = Trazo(
+        puntos=[(mm(0.0), mm(0.0)), (mm(10.0), mm(8.0)), (mm(22.0), mm(2.0)), (mm(30.0), mm(9.0))]
+    )
+    denso = remuestrear(t, 4000)
+    for punto in t.coordenadas:
+        assert float(np.min(np.linalg.norm(denso - punto, axis=1))) < 2e-5
+
+
+def test_la_curva_no_se_aleja_mucho_de_la_polilinea():
+    """Una cúbica sobrepasa en los giros. Con las esquinas ya redondeadas el
+    sobrepaso tiene que quedarse pequeño frente al propio trazo."""
+    t = redondear_esquinas(esquina(90.0), mm(3.0))
+    denso = remuestrear(t, 2000)
+    poli = t.coordenadas
+    a, b = poli[:-1], poli[1:]
+    ab = b - a
+    largo = np.einsum("ij,ij->i", ab, ab)
+    for punto in denso[::13]:
+        s = np.clip(np.einsum("ij,ij->i", punto - a, ab) / np.where(largo > 0, largo, 1), 0.0, 1.0)
+        d = float(np.min(np.linalg.norm(punto - (a + s[:, None] * ab), axis=1)))
+        assert d < 1e-3, f"la curva se va {d * 1000:.2f} mm de la polilínea"
+
+
+def test_el_recorrido_no_retrocede():
+    """Si la curva diera marcha atrás, el lápiz repasaría el trazo y el
+    reparto de θ por longitud de arco dejaría de tener sentido."""
+    t = Trazo(
+        puntos=[(mm(0.0), mm(0.0)), (mm(8.0), mm(6.0)), (mm(18.0), mm(1.0)), (mm(28.0), mm(7.0))]
+    )
+    denso = remuestrear(t, 1500)
+    avance = np.linalg.norm(np.diff(denso, axis=0), axis=1)
+    assert float(np.min(avance)) > 0.0

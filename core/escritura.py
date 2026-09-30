@@ -35,6 +35,7 @@ from typing import Literal
 import numpy as np
 import numpy.typing as npt
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+from scipy.interpolate import CubicSpline
 
 from core.cam.curves import cicloidal, rejilla
 from core.program import PistaContinua, Programa
@@ -49,6 +50,11 @@ CANAL_Y = "punta.y"
 CANAL_Z = "levantamiento"
 
 MUESTRAS_MINIMAS_POR_TRAMO = 8
+
+TANGENTE_MAXIMA_DEL_VUELO = 1.5
+"""Tope de la tangente del vuelo, en múltiplos del salto. Por encima de uno
+y medio la Hermite se abomba hasta formar un lazo, y un lazo es una cúspide:
+la misma esquina que se quería quitar, movida de sitio."""
 
 FRACCION_TANGENTE_DEL_VUELO = 1.0 / 3.0
 """Cuánto se estiran las tangentes del vuelo, como fracción del salto.
@@ -142,20 +148,63 @@ def _acumulada(coordenadas: Arreglo) -> Arreglo:
     return np.concatenate([[0.0], np.cumsum(pasos)])
 
 
+PUNTOS_PARA_SPLINE = 4
+"""Por debajo de esto no hay curva que ajustar y se interpola recto. Con
+tres puntos una cúbica natural ya funciona, pero con tan pocos datos el
+sobrepaso es mayor que la curva que describe."""
+
+
 def interpolar(trazo: Trazo, fracciones: Arreglo) -> Arreglo:
     """Puntos del trazo a las fracciones dadas de su longitud de arco.
 
     `fracciones` va de 0 a 1. Devuelve un array (n, 2) en metros.
+
+    **Interpola con una cúbica C2, no con cuerdas rectas.** Es lo que cierra
+    el agujero que tenía la envolvente: con interpolación lineal, un trazo es
+    una polilínea y tiene una esquina —curvatura infinita— en cada vértice.
+    Remuestrear más fino no revelaba la curva, revelaba las esquinas, y el
+    radio de curvatura mínimo **se dividía por dos cada vez que se doblaba
+    `Capacidad.muestras`**. El veredicto de fabricabilidad dependía así de un
+    parámetro de cálculo que no tiene nada que ver con la física.
+
+    Con una C2 la curvatura tiende a la de la curva y el veredicto converge.
+
+    La curva **pasa por los puntos capturados**: es interpolación y no
+    aproximación, porque lo que el cliente escribió no se negocia. Lo que sí
+    se negocia es lo que pasa entre punto y punto, y ahí una cúbica natural
+    es la elección estándar.
+
+    **Una cúbica sobrepasa en los giros cerrados**, así que el orden importa:
+    primero `redondear_esquinas`, que acota la curvatura de la intención, y
+    después esto, que la reproduce sin volver a trocearla. Al revés, el
+    spline ondularía alrededor de un pico que no puede seguir.
+
+    El parámetro es la longitud de cuerda acumulada. La longitud real de la
+    curva es algo mayor, así que el reparto por arco queda ligeramente
+    desigual dentro del trazo; con puntos de captura razonablemente juntos la
+    diferencia es de milésimas y no llega al papel.
     """
     coordenadas = trazo.coordenadas
     acumulada = _acumulada(coordenadas)
     objetivo = np.asarray(fracciones, dtype=np.float64) * acumulada[-1]
-    return np.column_stack(
-        [
-            np.interp(objetivo, acumulada, coordenadas[:, 0]),
-            np.interp(objetivo, acumulada, coordenadas[:, 1]),
-        ]
-    )
+
+    if len(coordenadas) < PUNTOS_PARA_SPLINE:
+        return np.column_stack(
+            [
+                np.interp(objetivo, acumulada, coordenadas[:, 0]),
+                np.interp(objetivo, acumulada, coordenadas[:, 1]),
+            ]
+        )
+
+    curva = CubicSpline(acumulada, coordenadas, axis=0, bc_type="natural")
+    puntos = np.asarray(curva(np.clip(objetivo, 0.0, acumulada[-1])), dtype=np.float64)
+    # Los extremos, exactos: el vuelo enlaza con ellos y un salto de coma
+    # flotante ahí se vería como un escalón en la leva.
+    en_cero = np.isclose(objetivo, 0.0)
+    en_uno = np.isclose(objetivo, acumulada[-1])
+    puntos[en_cero] = coordenadas[0]
+    puntos[en_uno] = coordenadas[-1]
+    return puntos
 
 
 def remuestrear(trazo: Trazo, n: int) -> Arreglo:
@@ -442,17 +491,35 @@ def suavizar(escritura: Escritura, radio: Longitud) -> Escritura:
     )
 
 
+PASO_DE_TANGENTE = 1e-4
+"""Fracción del trazo con la que se mide su pendiente en un extremo."""
+
+
 def _tangente(trazo: Trazo, *, al_final: bool) -> Arreglo:
     """Hacia dónde va el lápiz al acabar un trazo, o de dónde viene al
     empezarlo. Unitaria; cero si el trazo degenera, y entonces el vuelo sale
-    recto, que es lo que hacía siempre."""
-    puntos = trazo.coordenadas
-    borde = puntos[-1] - puntos[-2] if al_final else puntos[1] - puntos[0]
+    recto, que es lo que hacía siempre.
+
+    **Se mide sobre `interpolar`, no sobre la polilínea.** Es la misma curva
+    que va a recorrer la máquina, y tienen que coincidir: cuando esto leía la
+    última cuerda de la polilínea y la interpolación pasó a ser una cúbica,
+    el vuelo salía con una pendiente distinta de la que traía el trazo y la
+    esquina que se acababa de quitar volvía por la puerta de atrás.
+    """
+    h = PASO_DE_TANGENTE
+    fracciones = np.array([1.0 - h, 1.0]) if al_final else np.array([0.0, h])
+    extremos = interpolar(trazo, fracciones)
+    borde = extremos[1] - extremos[0]
     norma = float(np.linalg.norm(borde))
     return borde / norma if norma > 0.0 else np.zeros(2)
 
 
-def vuelo(desde: Trazo, hasta: Trazo, fracciones: Arreglo) -> Arreglo:
+def vuelo(
+    desde: Trazo,
+    hasta: Trazo,
+    fracciones: Arreglo,
+    velocidades: tuple[float, float] | None = None,
+) -> Arreglo:
     """Por dónde pasa la punta entre dos trazos, con el lápiz levantado.
 
     **Era una recta**, y ahí estaba el fallo más escondido del proyecto: una
@@ -463,27 +530,35 @@ def vuelo(desde: Trazo, hasta: Trazo, fracciones: Arreglo) -> Arreglo:
     salía limpio o no según `Capacidad.muestras`, que no tiene nada que ver
     con la física.
 
-    Ahora es una **Hermite cúbica tangente a los dos trazos**: sale en la
-    dirección en que iba el lápiz y entra en la dirección en que va a seguir.
-    La esquina desaparece y la curvatura se queda finita.
+    Ahora es una **Hermite cúbica tangente a los dos trazos**, y no cuesta
+    nada: el lápiz va levantado durante todo el vuelo, así que su forma es la
+    única parte de la trayectoria que se puede cambiar sin tocar lo que el
+    cliente escribió.
 
-    **Y no cuesta nada.** El lápiz va levantado durante todo el vuelo, así
-    que su forma no se ve en el papel: es la única parte de la trayectoria
-    que se puede cambiar sin tocar lo que el cliente escribió.
-
-    Las tangentes se escalan con la distancia entre los dos extremos. Más
-    escala curva más y aleja más el lápiz del papel; menos deja la esquina
-    a medio quitar. Un tercio es el valor corriente de una Hermite y deja el
-    abombamiento por debajo de la cuarta parte del salto.
+    **Tangente no basta: hay que igualar también la velocidad.** Si el vuelo
+    sale en la buena dirección pero al doble de prisa, la trayectoria en θ
+    tiene un codo igual. `velocidades` son las derivadas dP/dθ de los dos
+    trazos en sus extremos, y con ellas las tangentes de la Hermite se
+    escalan para que el empalme sea C1 **en θ**, que es la variable en la que
+    trabaja la leva. Sin ellas se cae al tercio del salto, que es el valor
+    corriente de una Hermite y deja la esquina a medio quitar.
     """
     p0, p1 = desde.fin, hasta.inicio
     salto = float(np.linalg.norm(p1 - p0))
     if salto <= 0.0:
         return np.repeat(p0[None, :], len(fracciones), axis=0)
 
-    escala = salto * FRACCION_TANGENTE_DEL_VUELO
-    m0 = _tangente(desde, al_final=True) * escala
-    m1 = _tangente(hasta, al_final=False) * escala
+    if velocidades is None:
+        escala = (salto * FRACCION_TANGENTE_DEL_VUELO,) * 2
+    else:
+        # Acotadas. Una Hermite con tangentes mucho más largas que la cuerda
+        # se abomba hasta formar un lazo, y un lazo es una cúspide: la misma
+        # esquina que se quería quitar, en otro sitio. Pasa cuando el trazo
+        # va rápido y el salto al siguiente es corto.
+        tope = salto * TANGENTE_MAXIMA_DEL_VUELO
+        escala = (min(velocidades[0], tope), min(velocidades[1], tope))
+    m0 = _tangente(desde, al_final=True) * escala[0]
+    m1 = _tangente(hasta, al_final=False) * escala[1]
 
     s = np.asarray(fracciones, dtype=np.float64)[:, None]
     s2, s3 = s * s, s * s * s
@@ -524,6 +599,9 @@ def programa(escritura: Escritura, capacidad: Capacidad) -> tuple[Programa, Vere
     y = np.zeros_like(thetas)
     z = np.zeros_like(thetas)
 
+    # Cuánto θ recibió cada trazo, para poder medir su velocidad de empalme.
+    arcos = {t.indice: float(t.arco) for t in tramos if t.clase == "trazo"}
+
     for i, tramo in enumerate(tramos):
         aqui = cual == i
         if not np.any(aqui):
@@ -534,7 +612,17 @@ def programa(escritura: Escritura, capacidad: Capacidad) -> tuple[Programa, Vere
         else:
             desde = escritura.trazos[tramo.indice]
             hasta = escritura.trazos[(tramo.indice + 1) % len(escritura.trazos)]
-            puntos = vuelo(desde, hasta, fracciones)
+            # Velocidad del vuelo en sus extremos, medida en la misma unidad
+            # que la del trazo con el que empalma: metros por unidad de la
+            # fracción del vuelo. Con esto el empalme es C1 en θ, no solo
+            # tangente, y deja de haber codo al despegar y al aterrizar.
+            salida = float(desde.longitud) * float(tramo.arco) / arcos[tramo.indice]
+            entrada = (
+                float(hasta.longitud)
+                * float(tramo.arco)
+                / arcos[(tramo.indice + 1) % len(escritura.trazos)]
+            )
+            puntos = vuelo(desde, hasta, fracciones, (salida, entrada))
             z[aqui] = _altura_del_vuelo(fracciones, float(tramo.arco), capacidad)
         x[aqui] = puntos[:, 0]
         y[aqui] = puntos[:, 1]
