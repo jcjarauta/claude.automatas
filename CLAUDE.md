@@ -415,6 +415,7 @@ falla si el esquema versionado se queda atrás.
 | `docs/baseline.md` | Principios, ontología, núcleos, módulos, hitos, negocio |
 | `docs/contratos.md` | Contratos congelados: eje, bastidor, fase |
 | `docs/ficha-producto.md` | Despiece, proveedores, coste de material y decisiones de fabricación |
+| `docs/metodologia.md` | Cómo se diseña, se prueba antes de gastar, y qué lleva el dossier |
 | `docs/modulos/` | Una ficha por módulo del catálogo |
 | `bench/README.md` | Protocolo del banco de ensayo y datos medidos |
 
