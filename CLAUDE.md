@@ -456,6 +456,26 @@ falla si el esquema versionado se queda atrás.
 - **Offset con autointersección.** Si el radio de curvatura es menor que el del
   rodillo, el offset se cruza consigo mismo. Detéctalo: es undercutting, y la
   pieza no se puede fabricar.
+- **El veredicto de curvatura depende del muestreo, y eso es un agujero de la
+  envolvente.** Con «hola» y la máquina por defecto, el radio de curvatura
+  mínimo **se divide por dos cada vez que se dobla `Capacidad.muestras`**:
+  13,4 mm a 360 muestras, 8,1 a 720, 4,7 a 1.440, 2,1 a 2.880 y 0,65 a
+  11.520. No converge, y eso no es un mínimo: **es una esquina**, de
+  curvatura infinita, que el muestreo estaba redondeando por accidente.
+  Viene del trazo de entrada, que es una polilínea y tiene una esquina en
+  cada vértice.
+
+  La pieza que se fabrica a 720 muestras **sí es fabricable** —el polígono
+  redondea la esquina a 8,1 mm, muy por encima del rodillo de 3— pero lo es
+  por accidente y no por diseño, y `perfil_autointersecado` aparece o no
+  según un parámetro que no tiene nada que ver con la física. Mientras esto
+  no se arregle, **cualquier respuesta a «¿cabe esta frase?» es poco de
+  fiar**, porque es exactamente una pregunta de curvatura.
+
+  Lo que falta es limitar la curvatura **a propósito**, antes de sintetizar,
+  al radio que el rodillo puede seguir. Entonces el veredicto deja de
+  depender del muestreo y el redondeo de las esquinas pasa a ser una cota
+  declarada en vez de un efecto secundario.
 - **Fase.** Un cartucho montado desfasado escribe basura. La marca física y la
   verificación van en el dossier, no solo en el código.
 
