@@ -53,6 +53,7 @@ uv run python scripts/exportar_variables.py   # variables para el Variable Studi
 uv run --group cad python scripts/exportar_catalogo.py  # STEP de las piezas comerciales
 uv run --group cad python scripts/exportar_para_cad.py demo/hola.json --out build/cad/  # el paquete entero para el CAD
 uv run python scripts/dibujar_perfiles.py     # lámina de perfiles para revisar
+uv run python scripts/dibujar_maquina.py      # el dibujo conceptual, generado desde el modelo
 uv run python scripts/plantillas_demo.py      # plantillas 1:1 de muestra
 uv run python scripts/regenerar_golden.py     # SOLO si el cambio es intencionado
 
