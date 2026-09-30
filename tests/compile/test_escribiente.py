@@ -103,8 +103,54 @@ def test_la_leva_se_sintetiza_para_la_desviacion_y_no_para_el_angulo_absoluto():
     compilacion = compilar(hola())
     assert abs(a_grados(compilacion.calajes["derecho"])) > 90.0
     assert abs(a_grados(compilacion.calajes["izquierdo"])) < 45.0
+    # El seguidor oscila alrededor de cero: el calaje se lo ha llevado casi
+    # todo. Casi, y no del todo, porque la referencia es el centro de la caja
+    # y no la media de esta frase — ver el test siguiente.
     for perfil in compilacion.perfiles.values():
-        assert float(np.mean(perfil.psi)) == pytest.approx(0.0, abs=1e-9)
+        assert abs(float(np.mean(perfil.psi))) < grados(1.0)
+
+
+def test_el_calaje_es_una_constante_de_la_maquina_y_no_del_pedido():
+    """**El test que devuelve el brazo al stock.**
+
+    Si el calaje dependiera de la frase, el brazo habría que calarlo en cada
+    pedido y no se podría premontar la plataforma. Cuando se calculaba como
+    la media de los ángulos del ciclo, se movía 3,3° entre frases: sobre 90
+    mm de brazo proximal, 5 mm de trazo desplazado.
+    """
+    maquina = Escribiente()
+    frases = [
+        hola(),
+        Escritura(nombre="i", trazos=[trazo((10.0, 5.0), (10.0, 20.0))]),
+        Escritura(nombre="barrido", trazos=[trazo((2.0, 2.0), (78.0, 28.0))]),
+        Escritura(nombre="alta", trazos=[trazo((35.0, 1.0), (45.0, 29.0))]),
+    ]
+    calajes = [compilar(f, maquina).calajes for f in frases]
+    for nombre in SEGUIDORES:
+        valores = [c[nombre] for c in calajes]
+        assert max(valores) == pytest.approx(min(valores), abs=1e-12), (
+            f"el calaje de {nombre} se mueve con la frase"
+        )
+
+
+def test_el_calaje_es_el_angulo_del_brazo_en_el_centro_de_la_caja():
+    """La referencia no es arbitraria: es el punto medio del papel, que es
+    donde el brazo pasa más tiempo y donde el barrido queda repartido."""
+    maquina = Escribiente()
+    centro = np.array([[0.0, float(maquina.caja_centro_y)]])
+    psi = maquina.brazo.inversa(centro)
+    calajes = maquina.calajes(Capacidad().altura_levantamiento)
+    assert calajes["izquierdo"] == pytest.approx(float(psi[0, 0]))
+    assert calajes["derecho"] == pytest.approx(float(psi[0, 1]))
+
+
+def test_fijar_el_calaje_apenas_cuesta_radio_de_leva():
+    """El precio de que el brazo sea pieza de stock. Con la media de la frase
+    la leva era mínima; con una referencia fija crece, pero poco: es lo que
+    hay que comprobar que sigue siendo verdad si cambia la geometría."""
+    compilacion = compilar(hola())
+    radio = max(p.radio_maximo for p in compilacion.perfiles.values())
+    assert radio < 0.0555, f"la leva se ha ido a {radio * 1000:.1f} mm de radio"
 
 
 def test_la_relacion_reduce_el_barrido_del_seguidor():

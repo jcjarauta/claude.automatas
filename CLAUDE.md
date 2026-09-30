@@ -413,7 +413,7 @@ falla si el esquema versionado se queda atrás.
 | Documento | Contenido |
 | --- | --- |
 | `docs/baseline.md` | Principios, ontología, núcleos, módulos, hitos, negocio |
-| `docs/contratos.md` | Contratos congelados: eje, bastidor, fase |
+| `docs/contratos.md` | Contratos congelados: eje, bastidor, fase, calaje |
 | `docs/ficha-producto.md` | Despiece, proveedores, coste de material y decisiones de fabricación |
 | `docs/metodologia.md` | Cómo se diseña, se prueba antes de gastar, y qué lleva el dossier |
 | `docs/modulos/` | Una ficha por módulo del catálogo |
@@ -425,7 +425,7 @@ falla si el esquema versionado se queda atrás.
 pivotes anclados, palanca para el lápiz y tres levas apiladas. Tres números
 que se decidieron midiendo y no eligiendo:
 
-- **Hueco al poste: 9,5 mm** con la caja de escritura por defecto. Los tres
+- **Hueco al poste: 9,7 mm** con «hola». Los tres
   postes de seguidor están a 71 mm del árbol y atraviesan los tres planos, así
   que la leva de cada canal gira bajo los postes de los otros dos. **Ese hueco
   encoge cuando la frase crece**, y es el límite de conjunto que decide qué
@@ -433,7 +433,8 @@ que se decidieron midiendo y no eligiendo:
   Y lo que mide el hueco **no es el poste, es la valona de su casquillo**:
   `Cartucho.radio_poste` es el radio del obstáculo. Con postes de Ø16 y
   casquillo de bronce de valona Ø28 quedaban 3,0 mm y saltaba el aviso; con
-  Ø8 y un igus GFM-0810, cuya valona es **Ø15**, quedan 9,5.
+  Ø8 y un igus GFM-0810, cuya valona es **Ø15**, quedan 9,7. Con un barrido
+  de toda la caja bajan a 8,9.
 - **Relación seguidor → brazo, 6:1.** Con relación 1 y un barrido de brazo de
   26°, mantener el ángulo de presión por debajo de 30° exige un radio base de
   110 mm: levas de 240 mm, tres apiladas. Con 6:1 el seguidor barre un sexto
@@ -457,8 +458,15 @@ que se decidieron midiendo y no eligiendo:
   piezas son prismas de plancha (`core/solido.py`).
 
 El **calaje** de cada brazo —a qué ángulo se monta sobre el eje de su
-seguidor— es resultado de la compilación, no un parámetro. Va en el informe y
-tiene que llegar al dossier: montarlo mal escribe basura.
+seguidor— es una **constante de la máquina**: el ángulo del brazo con la
+punta en el centro de la caja. Va en el informe y tiene que llegar al
+dossier, porque montarlo mal escribe basura, pero **no cambia entre pedidos**
+y por eso el brazo es pieza de stock. Congelado en `docs/contratos.md`.
+
+Se calculaba como la media de los ángulos del ciclo, que da la leva más
+pequeña posible. Pero la media depende de por dónde escriba el cliente —3,3°
+de recorrido entre frases, 5 mm de trazo desplazado— y eso obligaba a calar
+el brazo en cada pedido.
 
 ### El cartucho es una sola pieza lógica
 

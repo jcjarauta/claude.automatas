@@ -167,15 +167,32 @@ def test_el_obstaculo_es_la_valona_del_casquillo_y_no_el_poste():
     GFM-0810 sobre poste de Ø8 —Ø15, que es la de catálogo— sobra sitio."""
     compilacion = compilar(hola())
     maquina = Escribiente()
-    _, bronce_sobre_dieciseis = montar(compilacion, maquina, Cartucho(radio_poste=mm(14.0)))
-    _, igus_sobre_ocho = montar(compilacion, maquina, Cartucho(radio_poste=mm(7.5)))
-    assert "poco_hueco_al_poste" in [i.codigo for i in bronce_sobre_dieciseis.avisos]
-    assert igus_sobre_ocho.apto
-    assert not igus_sobre_ocho.incidencias
+
+    def hueco(radio_mm: float) -> float:
+        montaje, _ = montar(compilacion, maquina, Cartucho(radio_poste=mm(radio_mm)))
+        return float(montaje.holgura_al_poste)
+
+    # Una valona mayor come hueco milímetro a milímetro.
+    assert hueco(16.0) < hueco(14.0) < hueco(7.5) < hueco(4.0)
+
+    # Con el casquillo del contrato el conjunto sale limpio.
+    _, con_igus = montar(compilacion, maquina, Cartucho(radio_poste=mm(7.5)))
+    assert con_igus.apto
+    assert not con_igus.incidencias
+
+    # Y con una valona bastante mayor, salta el aviso.
+    _, con_valona_grande = montar(compilacion, maquina, Cartucho(radio_poste=mm(16.0)))
+    assert "poco_hueco_al_poste" in [i.codigo for i in con_valona_grande.avisos]
+
+    # El caso que destapó todo esto —poste Ø16 con casquillo de bronce de
+    # valona Ø28— quedó al filo: 3,3 mm sobre un mínimo de 3,0. Pasa por
+    # poco, y por poco no es un sitio donde dejar un diseño.
+    assert 0.003 < hueco(14.0) < 0.0035
 
 
 def test_el_hueco_al_poste_es_el_que_dice_el_contrato_de_bastidor():
-    """9,5 mm con la valona real del GFM-0810. Estuvo escrito 11,0 durante un
-    commit, por leer Ø12 donde el fabricante dice Ø15."""
+    """9,7 mm con «hola», la valona real del GFM-0810 (Ø15) y el calaje fijo.
+    Ha cambiado dos veces y por eso está clavado en un test: primero por leer
+    Ø12 donde el fabricante dice Ø15, y luego al fijar el calaje."""
     montaje, _ = montar(compilar(hola()), Escribiente())
-    assert float(montaje.holgura_al_poste) == pytest.approx(0.0095, abs=1e-4)
+    assert float(montaje.holgura_al_poste) == pytest.approx(0.0097, abs=1e-4)

@@ -86,6 +86,50 @@ juego en el banco (E4), y ninguna de las dos cosas está hecha.
 
 ---
 
+## Contrato de calaje · CONGELADO 2026-09-30
+
+**El ángulo al que se cala cada brazo sobre el eje de su seguidor es una
+constante de la máquina, no un resultado del pedido.**
+
+| | |
+| --- | --- |
+| Referencia de los dos brazos | El **centro de la caja de escritura**: (0, `caja_centro_y`) |
+| Referencia de la palanca | **Media altura** de levantamiento |
+| Brazo izquierdo | **-3,749°** con la geometría por defecto |
+| Brazo derecho | **-176,251°** |
+| Palanca del elevador | **+2,149°** |
+
+### Por qué
+
+El calaje se calculaba como la media de los ángulos del brazo a lo largo del
+ciclo. Eso minimiza el barrido de la leva —sale lo más pequeña posible— pero
+**la media depende de por dónde escriba el cliente**: entre cuatro frases de
+prueba se movía de -2,10° a -5,41°, un rango de 3,3°. Sobre 90 mm de brazo
+proximal, 5 mm de trazo desplazado.
+
+La consecuencia es la que importa: con el calaje dependiendo de la frase, **el
+brazo no es pieza de stock**. Habría que calarlo en cada pedido y no se podría
+premontar la plataforma, que es justo lo que el modelo plataforma-más-cartucho
+necesita.
+
+Con la referencia fija la leva crece o encoge unas décimas según la frase —con
+«hola» el radio máximo baja de 54,08 a 53,83 mm; con un barrido de toda la
+caja sube de 54,45 a 54,66— y el brazo vuelve a calarse una sola vez, en el
+diseño.
+
+La referencia no es arbitraria: el centro del papel es donde la punta pasa más
+tiempo, así que el barrido del seguidor queda repartido a los dos lados en vez
+de irse a un extremo.
+
+### Qué lo comprueba
+
+`tests/compile/test_escribiente.py`:
+`test_el_calaje_es_una_constante_de_la_maquina_y_no_del_pedido`,
+`test_el_calaje_es_el_angulo_del_brazo_en_el_centro_de_la_caja`,
+`test_fijar_el_calaje_apenas_cuesta_radio_de_leva`.
+
+---
+
 ## Contrato de bastidor · PENDIENTE
 
 Hay números que la geometría ya fija y que **no** se congelan hasta que el
@@ -99,9 +143,9 @@ banco diga que el modelo predice:
   y un casquillo de bronce con valona de Ø28, el hueco caía a 3,0 mm y
   saltaba el aviso. El Ø16 nunca estuvo justificado: la fuerza tangencial en
   el seguidor es de 0,7 N.
-- Hueco entre la leva mayor y ese obstáculo: **9,5 mm** con la caja de
-  escritura por defecto. Encoge cuando la frase crece, y es el límite de
-  conjunto que decide qué frases caben.
+- Hueco entre la leva mayor y ese obstáculo: **9,7 mm** con «hola». Encoge
+  cuando la frase crece —8,9 mm con un barrido de toda la caja— y es el
+  límite de conjunto que decide qué frases caben.
 - Caja de escritura: 80 × 30 mm, centrada a 100 mm sobre la línea de pivotes.
 
 No se congelan porque el radio base puede moverse cuando E4 mida el juego
@@ -119,3 +163,5 @@ un solo compromiso, y todavía falta el dato que lo cierra.
 | 2026-09-29 | Fase | **Añadido el ajuste** del pasador: deslizante en las tres levas, apretado solo en el plato metálico | El m6 del DIN 6325 aprieta en acero; en POM la interferencia se relaja por fluencia y el calaje se pierde tras la venta. La geometría congelada no se toca: Ø3 a 18 mm sobre +X |
 | 2026-09-29 | Bastidor | Poste de seguidor de Ø16 a **Ø8**, y el hueco se mide contra la valona del casquillo y no contra el poste | Un poste lleva casquillo y la valona es mucho mayor que el eje. Con la valona de bronce de Ø28 el conjunto se quedaba sin hueco |
 | 2026-09-29 | Bastidor | Corregida la valona del GFM-0810: **Ø15**, no Ø12. El hueco pasa de 11,0 a **9,5 mm** | El Ø12 se anotó de una investigación sin contrastar con el fabricante. La ficha de igus da d3 = 15 mm. Sigue holgado, pero con menos margen del que se dijo |
+| 2026-09-30 | **Calaje** | Congelado. El calaje pasa de ser la media de los ángulos de la frase a ser el ángulo del brazo en el centro de la caja | Con la media, el calaje se movía 3,3° entre frases y el brazo dejaba de ser pieza de stock. Cuesta décimas de milímetro de leva |
+| 2026-09-30 | Bastidor | Hueco al poste de 9,5 a **9,7 mm** con «hola» | Consecuencia de fijar el calaje. No es una decisión, es el número que sale |

@@ -138,6 +138,39 @@ class Escribiente(BaseModel):
     def palanca(self) -> PalancaElevadora:
         return PalancaElevadora(brazo=float(self.brazo_palanca))
 
+    def calajes(self, altura_levantamiento: Longitud) -> dict[str, float]:
+        """A qué ángulo se cala cada brazo sobre el eje de su seguidor.
+
+        **Es una constante de la máquina, no un resultado del pedido**, y eso
+        es lo que permite que el brazo sea pieza de stock: se cala una vez,
+        en el diseño, y se monta igual en todas las unidades.
+
+        La referencia es el **centro de la caja de escritura** para los dos
+        brazos, y **media altura de levantamiento** para la palanca. No es
+        arbitraria: es donde la punta pasa más tiempo, así que el barrido del
+        seguidor queda repartido a los dos lados.
+
+        Antes se calculaba como la media de los ángulos a lo largo del ciclo,
+        que minimiza el barrido de la leva. Minimizaba bien —la leva salía lo
+        más pequeña posible— pero la media depende de por dónde escriba el
+        cliente: se movía 3,3° entre frases, y sobre 90 mm de brazo proximal
+        eso son 5 mm de trazo desplazado si el brazo se monta al calaje de
+        otra. Con la referencia fija la leva crece unas décimas de milímetro
+        y el brazo vuelve a ser pieza de catálogo. Es un cambio barato a
+        favor de lo que el producto necesita.
+
+        Contrato de calaje, `docs/contratos.md`.
+        """
+        centro = np.array([[0.0, float(self.caja_centro_y)]], dtype=np.float64)
+        psi = self.brazo.inversa(centro)
+        media = np.array([[float(altura_levantamiento) / 2.0]], dtype=np.float64)
+        elevador = self.palanca.inversa(media)
+        return {
+            "izquierdo": float(psi[0, 0]),
+            "derecho": float(psi[0, 1]),
+            "elevador": float(elevador[0, 0]),
+        }
+
     def seguidor(self, indice: int) -> Seguidor:
         """El seguidor de cada leva.
 
@@ -500,7 +533,12 @@ def compilar(
     # Cada leva se sintetiza para la **desviación** del seguidor respecto de
     # su punto de diseño, no para el ángulo absoluto del brazo. El resto es
     # el calaje: a qué ángulo se monta el brazo sobre el eje del seguidor.
-    calajes = {nombre: float(np.mean(valores)) for nombre, valores in crudos.items()}
+    #
+    # El calaje lo pone la máquina, no la frase. Si saliera de esta
+    # compilación —por ejemplo como la media de los ángulos del ciclo— el
+    # brazo habría que calarlo en cada pedido y dejaría de ser pieza de
+    # stock. Ver `Escribiente.calajes`.
+    calajes = maquina.calajes(capacidad.altura_levantamiento)
     crudos = {
         nombre: (valores - calajes[nombre]) / maquina.relacion for nombre, valores in crudos.items()
     }
