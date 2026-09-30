@@ -60,9 +60,7 @@ def test_el_rodamiento_del_arbol_encaja_en_el_arbol():
 
 
 def test_el_pasador_de_indice_es_el_pasador_que_se_compra():
-    assert float(Escribiente().pasador_indice) == pytest.approx(
-        cota("pasador_indice", "diametro")
-    )
+    assert float(Escribiente().pasador_indice) == pytest.approx(cota("pasador_indice", "diametro"))
 
 
 def test_el_espesor_de_la_leva_es_el_de_la_plancha_que_se_compra():

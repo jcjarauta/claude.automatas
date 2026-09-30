@@ -29,6 +29,7 @@ from core.escritura import Capacidad, Escritura, Trazo
 from core.units import mm
 from emit.dxf import Kerf, escribir_dxfs
 from emit.paquete import escribir_paquete
+from emit.patron import escribir_patron, patron_de
 from emit.step import disponible as hay_kernel
 from emit.step import escribir_step
 
@@ -132,6 +133,22 @@ def main(argv: list[str] | None = None) -> int:
         json.loads(compilacion.programa.model_dump_json()),
         destino,
     )
+
+    if compilacion.simulacion is not None:
+        ancho = float(maquina.caja_ancho) * 1000.0
+        alto = float(maquina.caja_alto) * 1000.0
+        centro_y = float(maquina.caja_centro_y) * 1000.0
+        escribir_patron(
+            patron_de(
+                nombre=compilacion.escritura.nombre,
+                puntos=compilacion.simulacion.puntos,
+                altura=compilacion.simulacion.altura,
+                caja=(-ancho / 2.0, centro_y - alto / 2.0, ancho, alto),
+                error_del_modelo=compilacion.simulacion.error_maximo * 1000.0,
+            ),
+            destino / "patron.pdf",
+            peor_caso=None if presupuesto is None else presupuesto.peor_caso * 1000.0,
+        )
 
     if compilacion.piezas:
         escribir_paquete(compilacion.piezas, destino)

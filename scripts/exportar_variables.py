@@ -63,8 +63,7 @@ def featurescript(contratos: Contratos) -> str:
             expresion, comentario = _valor_para_onshape(valor)
             tolerancia = f"  [{valor.tolerancia}]" if valor.tolerancia else ""
             lineas.append(
-                f"export const {valor.nombre} = {expresion};"
-                f"  // {comentario}{tolerancia}"
+                f"export const {valor.nombre} = {expresion};  // {comentario}{tolerancia}"
             )
         lineas.append("")
     return "\n".join(lineas)
@@ -84,7 +83,7 @@ def csv(contratos: Contratos) -> str:
             descripcion = valor.descripcion.replace('"', "'")
             filas.append(
                 f"{valor.nombre},{cifra},{unidad},{contrato.nombre},"
-                f"{contrato.estado.value},{valor.tolerancia},\"{descripcion}\""
+                f'{contrato.estado.value},{valor.tolerancia},"{descripcion}"'
             )
     return "\n".join(filas) + "\n"
 

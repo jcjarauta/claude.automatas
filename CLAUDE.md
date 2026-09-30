@@ -103,6 +103,7 @@ emit/
   calibracion.py      #   Perfil de impresora: factores x/y, hoja patrón
   paquete.py          #   Qué archivos salen y qué lleva cada uno
   template.py         #   PDF 1:1 para copistería          <- ver abajo
+  patron.py           #   Hoja de trazo patrón 1:1 para verificar sin medir
   dxf.py              #   Corte láser / CNC
   dossier.py          #   Dossier de montaje
   step.py             #   3D
@@ -243,6 +244,26 @@ ahí que el perfil se mida una vez y el cuadro se siga comprobando siempre.
   Configurable desde la interfaz: cada cliente calibra su copistería, no la
   nuestra. Sin perfil el sistema sigue funcionando, con factores 1,0 y el aviso
   de que no está calibrado.
+
+### `emit/patron.py` — la hoja de trazo patrón
+El compilador ya simula el trazo para comprobarse a sí mismo; esto lo saca
+por la impresora a 1:1. Se pone bajo la máquina alineando las cuatro
+escuadras, se gira la manivela y se mira si el lápiz cae sobre la línea.
+**Cualifica cualquiera, sin instrumentos y sin saber leer un plano**, que en
+un taller ocupacional es la diferencia entre una verificación que se hace y
+una que no.
+
+Caza lo que se ve a simple vista y es casi todo lo que falla al montar: un
+cartucho calado donde no toca, un brazo con el calaje equivocado, una leva
+cambiada de sitio, el lápiz que no levanta. No caza décimas.
+
+Se imprime también el **vuelo**, punteado: por dónde pasa la punta con el
+lápiz levantado. No queda en el papel del cliente, pero dice si el
+levantamiento ocurre donde debe.
+
+`UMBRAL_DE_APOYO` no puede ser cero: la altura sale de recorrer la leva, así
+que oscila alrededor del cero unas milésimas, y con umbral cero el trazo se
+parte en costuras donde la máquina dibuja seguido.
 
 ### `emit/dossier.py` — dossier de montaje
 El PDF que acompaña a las piezas. Contiene: vistas ortográficas y una isométrica,
