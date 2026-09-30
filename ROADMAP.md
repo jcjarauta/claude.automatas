@@ -273,13 +273,15 @@ el cartucho, se gira la manivela y se mira el papel. Después se compara con la
 escritura original: ¿la reconoce quien la escribió?
 
 **Puerta.** Firma humana con la hoja escrita pegada al informe de la etapa.
-La parte automática está **cerrada con reserva**; la humana depende de tener las
-levas cortadas, y eso depende de E3b y de la copistería. Ver
-`docs/etapas/E5-cierre.md`, que incluye la **reauditoría del 2026-09-30**: los
-cinco criterios pasan, pero el golden guarda una leva sintética y no un pedido
-compilado, y el veredicto de curvatura no converge con el muestreo. Y el reparto
-de grados **por curvatura** que pide el entregable sigue sin implementarse: hoy
-es proporcional a la longitud.
+La parte automática está **cerrada**; la humana depende de tener las levas
+cortadas, y eso depende de E3b y de la copistería.
+
+El reparto de grados **por curvatura** que pide el entregable no se hizo, y no
+se va a hacer: medido sobre los cuatro casos de referencia empeora el error de
+trazo en dos de ellos y el peso es inestable con un trazo recto. Optimiza la
+magnitud equivocada —lo que domina es la discretización del perfil, no el error
+de cuerda del camino— y afinaría 0,035 mm sobre un presupuesto de tolerancias
+de 1,65 mm. Los números y la alternativa, en `docs/etapas/E5-cierre.md`.
 
 **No hacer.** Interfaz. Todavía se trabaja con archivos y CLI.
 

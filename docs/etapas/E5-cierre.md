@@ -190,3 +190,91 @@ anota que el punto 1 es condición para creerse el cálculo de capacidad, que es
 lo que E5 le entrega a E6 y a la interfaz.
 
 Humana: **abierta**. Sin prototipo no hay nada que firmar.
+
+---
+
+# Cierre de los cuatro puntos · 2026-09-30
+
+La reauditoría de esta mañana dejó cinco cosas. Las cuatro de código están
+hechas; la quinta es la puerta humana y no depende de código.
+
+## Lo que se ha arreglado, y no era lo que decía la nota
+
+| | antes | ahora |
+| --- | --- | --- |
+| Radio mínimo del peor perfil, 720 → 5.760 muestras | 13,5 → **1,9 mm** (÷2 cada vez) | 13,5 → **13,0** (×1,04) |
+| Lo que se aparta la curva de lo que dibujó el cliente | **3,7 mm**, sin medir | **0,29 mm**, en el informe |
+| Continuidad en el aterrizaje del vuelo | rota un 5,4 % en un empalme | 0,02 % |
+| Casos de referencia con golden | 1, y de una leva sintética | 4, del perfil compilado |
+
+Tres causas, y **ninguna era la cúspide del vuelo** que la nota daba por
+localizada:
+
+1. **Las esquinas de la polilínea.** `suavizar` llevaba desde el arreglo del
+   vuelo escrito y probado, sin enchufar. Es el término gordo: la leva
+   `derecho` pasa de 4,4 a 22,4 mm.
+2. **El tope de la tangente del vuelo** rompía la continuidad C1 para evitar
+   un lazo que, con el lápiz levantado, no se ve. Compraba un lazo invisible
+   al precio de una esquina real.
+3. **`interpolar` se pasaba de largo** 3,7 mm con una polilínea escasa, y era
+   invisible porque la simulación compara el recorrido contra el programa,
+   hecho con esa misma interpolación: se comparaba consigo misma.
+
+La cúspide no existía —`|dP/dθ|` vale 1,79 mm/rad en el punto malo y no se
+anula— y la quíntica con curvatura impuesta que se dedujo de ella, una vez
+implementada y medida, **no cambia ni un dígito**. No entra.
+
+Y una lección de método que vale más que el arreglo: **`radio_de_curvatura`
+amplifica por 1/h² cualquier salto de curvatura.** A 20.000 muestras marcaba
+9,2 mm donde la curvatura real vale 39,9 a un lado y 56,9 al otro: un radio
+que no existe en ningún punto de la pieza. Evaluando con paso físico fijo el
+número no se mueve. Antes de rediseñar por un número que se desploma hay que
+saber si el que falla es la geometría o el metro.
+
+## El reparto de θ por curvatura: medido y descartado
+
+Era lo único del entregable escrito de E5 que no existía. **No se va a
+hacer**, y esta vez no por falta de tiempo sino porque la medida dice que no
+sirve.
+
+La cuenta dice que el reparto que iguala el error de cuerda va con **L·√κ**.
+Medido sobre los cuatro casos de referencia, a 720 muestras:
+
+| caso | por longitud | L·√κ | mezcla suave, la mejor |
+| --- | --- | --- | --- |
+| `hola` | 0,144 mm | 0,913 mm, **y deja de ser apto** | 0,134 mm |
+| `firma` | 0,068 | 0,068 | 0,047 |
+| `puntos` | 0,125 | 0,133 | 0,096 |
+| `apretada` | 0,242 | 0,368 | 0,241 |
+
+Tres razones para no hacerlo:
+
+1. **Optimiza la magnitud equivocada.** El error de cuerda del camino no es
+   lo que domina el error de trazo: lo que domina es la discretización del
+   **perfil** de la leva, que depende de cómo de rápido se mueve el seguidor
+   y no de cómo de curvado va el camino. Por eso `hola` empeora seis veces.
+2. **El peso es inestable con un trazo recto.** Con κ = 0 el cociente κ/κ_ref
+   lo decide el ruido de coma flotante de la segunda derivada, y el reparto
+   se vuelve aleatorio. Se ve en `puntos`, cuyos ocho trazos son rectos y aun
+   así cambian de resultado con el parámetro.
+3. **No hay nada que ganar.** El error de trazo son 0,14 mm frente a un
+   presupuesto de tolerancias de **1,65 mm cuadrático y 2,84 en el peor
+   caso**. Afinar un 25 % de 0,14 mm son 0,035 mm sobre un presupuesto de
+   1,65: no se mide ni en el banco.
+
+Si algún día hace falta, la vía buena no es la curvatura del camino sino la
+**velocidad angular del seguidor**, que es lo que fija la discretización del
+perfil. Eso exige compilar dos veces y no se plantea hasta que E4 diga que el
+error de trazo importa frente a las holguras, que hoy lo tapan por diez.
+
+## Qué queda de E5
+
+Solo la **puerta humana**: cortar las levas, montar y escribir una palabra
+legible. No depende de código. Depende de E3b, de la copistería y de comprar
+las piezas (~120 € el conjunto, más el portaminas y el MDF del cartucho de
+calibración).
+
+La parte automática deja de estar «cerrada con reserva» y queda **cerrada**:
+los cinco criterios pasan y ya ninguno vale menos de lo que su enunciado
+promete. El golden mira el perfil compilado de cuatro casos, uno de ellos una
+frase que no cabe, y el veredicto de curvatura converge.
