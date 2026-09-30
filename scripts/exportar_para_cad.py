@@ -59,6 +59,33 @@ UNIDAD_A_SUFIJO = {"mm": "cota", "deg": "angulo", "": "num"}
 se crea en el CAD: `#cota.radio_base`, `#angulo.calaje_izquierdo`."""
 
 
+MAPAS = {
+    "variables_cota": ("cota", "1 mm"),
+    "variables_angulo": ("angulo", "1 deg"),
+    "variables_num": ("num", "1"),
+    "piezas_cota": ("pieza", "1 mm"),
+    "piezas_num": ("pieza_num", "1"),
+}
+"""Qué archivo va a qué variable del CAD y con qué factor de conversión.
+
+**Es el contrato entre el paquete y lo que alguien teclea en un campo de
+cota.** Un archivo importado en Onshape crea *un* mapa con *un* factor para
+todas sus filas, así que los dientes no pueden compartir mapa con los
+milímetros: entrarían como 20 mm y el campo «número de dientes» no admite
+una longitud. De ahí que `piezas_num.csv` sea un mapa aparte, `#pieza_num`,
+y no una fila más de `#pieza`.
+
+La tabla vive aquí y no en la cabeza de nadie porque la leen dos sitios: la
+hoja de ruta del paquete y la hoja de bocetos de `scripts/dibujar_piezas.py`,
+que imprime el nombre entero de cada variable. Si los dos no dijeran lo
+mismo, el que se copia al CAD sería el equivocado."""
+
+
+def mapa_de(archivo: str) -> str:
+    """El nombre de la variable del CAD que sale de ese archivo, sin `#`."""
+    return MAPAS[archivo][0]
+
+
 def por_unidad(tabla: str) -> dict[str, str]:
     """Parte la tabla de variables en un archivo por unidad.
 
@@ -234,7 +261,7 @@ def cotas_comerciales() -> str:
 def hoja_de_ruta(nombre: str, catalogo: bool, solido: bool) -> str:
     """El orden. Sin esto el paquete es un montón de archivos."""
     paso_catalogo = (
-        "2. **Importa el catálogo comercial**, `catalogo/*.step`. Son"
+        "4. **Importa el catálogo comercial**, `catalogo/*.step`. Son"
         " envolventes\n   generadas desde `docs/piezas/`: exactas en las cotas"
         " que otra pieza toca\n   y toscas en el resto. Un engranaje sale como"
         " un disco sin dientes, porque\n   para saber si cabe los dientes no"
@@ -249,6 +276,16 @@ def hoja_de_ruta(nombre: str, catalogo: bool, solido: bool) -> str:
         if solido
         else "6. *(Sin STEP del cartucho: relanza con `--group cad`.)*\n"
     )
+    tabla_mapas = "\n".join(
+        [
+            "   | Archivo | Variable | Factor de conversión |",
+            "   | --- | --- | --- |",
+        ]
+        + [
+            f"   | `{archivo}.csv` | `#{variable}` | `{factor}` |"
+            for archivo, (variable, factor) in MAPAS.items()
+        ]
+    )
     return f"""# Paquete de CAD · cartucho «{nombre}»
 
 Generado con `scripts/exportar_para_cad.py`. **No se edita a mano**: se toca
@@ -262,24 +299,38 @@ el contrato o la ficha y se regenera.
    dice `core/solido.py` —por dos caminos que no comparten una línea de
    código— y si no coinciden, la comprobación se pierde en silencio.
 
-2. **Importa `variables.csv` en un Variable Studio.** Son las cotas
-   congeladas —eje, bastidor, fase, calaje— que comparten el compilador y el
-   CAD. De ahí las referencian todas las Part Studios.
+2. **Importa los cinco CSV en un Variable Studio**, uno por uno. Cada
+   importación crea **una** variable de tipo mapa, y el factor de conversión
+   se aplica a **todas** las filas del archivo: por eso van separados y por
+   eso el factor no es opcional.
 
-   **El flujo es de un solo sentido.** Se toca `docs/contratos.json`, se
-   regenera y se vuelve a importar. Lo que se edite dentro del CAD se pierde
-   en la siguiente regeneración y, peor, deja de coincidir con lo que calcula
-   el compilador sin que nadie se entere.
+{tabla_mapas}
 
-3. **Importa `piezas.csv`** si vas a dibujar las piezas comerciales
-   paramétricas en vez de importar sus STEP. Son las cotas de interfaz de
-   `docs/piezas/`, y con ellas un cambio de referencia mueve el modelo solo.
-   Un STEP importado no hace eso.
+   **Importa estos y no `variables.csv` ni `piezas.csv`.** Esos dos llevan
+   cabecera y son para leer. El Variable Studio no sabe que la primera fila
+   es un rótulo: la mete en el mapa como una clave cuyo valor es el texto
+   «valor», y al multiplicarla por el factor **falla la variable entera**,
+   con un error que no menciona la cabecera por ningún lado.
 
-   **El flujo es de un solo sentido.** Se toca `docs/contratos.json`, se
-   regenera y se pega. Lo que se edite dentro del CAD se pierde en la
-   siguiente regeneración y, peor, deja de coincidir con lo que calcula el
-   compilador sin que nadie se entere.
+   **El factor lleva unidad**: se escribe `1 mm`, no `1`. Con un número
+   pelado el mapa queda adimensional y la cota la interpreta el CAD en la
+   unidad por defecto del documento; funciona hasta que alguien cambia esa
+   preferencia y el bastidor pasa a medir 55 pulgadas sin un solo aviso. Los
+   mapas de recuentos —`num` y `pieza_num`— sí van sin unidad, porque una
+   relación de 6:1 y veinte dientes no son longitudes.
+
+   Las tres primeras son las cotas congeladas que comparten el compilador y
+   el CAD; las dos últimas, las cotas de interfaz de `docs/piezas/`, para
+   dibujar las piezas comerciales paramétricas en vez de importar su STEP:
+   así un cambio de referencia mueve el modelo solo, cosa que un STEP
+   importado no hace.
+
+3. **El flujo es de un solo sentido.** Se toca `docs/contratos.json` o la
+   ficha, se regenera y se vuelve a importar. Lo que se edite dentro del CAD
+   se pierde en la siguiente regeneración y, peor, deja de coincidir con lo
+   que calcula el compilador sin que nadie se entere. Un valor tecleado a
+   mano sobre un campo que debería referenciar una variable es el mismo
+   fallo con otra cara.
 
 {paso_catalogo}
 5. **Importa los bocetos del cartucho**, `cartucho/*.dxf`. Van **sin el

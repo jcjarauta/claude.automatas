@@ -67,7 +67,7 @@ def test_la_hoja_lleva_toda_cota_critica_aunque_el_perfil_no_la_dibuje():
     for pieza in cargar():
         variables = {v for v, _ in filas_de(pieza)}
         for c in pieza.criticas:
-            assert f"{pieza.nombre}_{c.nombre}" in variables, f"{pieza.nombre}.{c.nombre}"
+            assert f"#pieza.{pieza.nombre}_{c.nombre}" in variables, f"{pieza.nombre}.{c.nombre}"
 
 
 def test_la_hoja_lleva_los_dientes_de_cada_engranaje():
@@ -82,9 +82,23 @@ def test_la_hoja_lleva_los_dientes_de_cada_engranaje():
     engranajes = [p for p in cargar() if p.dientes is not None]
     assert [p.nombre for p in engranajes] == ["pinon_reductor", "rueda_reductor"]
     for pieza in engranajes:
-        assert f"#pieza.{pieza.nombre}_dientes" in texto
+        assert f"#pieza_num.{pieza.nombre}_dientes" in texto
     assert ">20<" in texto
     assert ">60<" in texto
+
+
+def test_el_prefijo_de_cada_fila_es_el_mapa_donde_de_verdad_esta():
+    """**Onshape aplica un factor de conversión por archivo importado**, así
+    que las longitudes y los recuentos son mapas distintos: `#pieza` con
+    `1 mm` y `#pieza_num` sin unidad. Una hoja que pusiera `#pieza` en los
+    dos manda a teclear una variable que no existe.
+
+    Lo lee de `MAPAS`, que es lo mismo que rotula la hoja de ruta del
+    paquete: si alguien renombra un mapa allí, esta hoja le sigue."""
+    texto = hoja(cargar())
+    assert "#pieza.pinon_reductor_exterior" in texto
+    assert "#pieza_num.pinon_reductor_dientes" in texto
+    assert "#pieza.pinon_reductor_dientes" not in texto
 
 
 def test_se_avisa_donde_la_masa_no_significa_nada():

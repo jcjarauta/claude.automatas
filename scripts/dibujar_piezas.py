@@ -28,6 +28,7 @@ from core.comercial import FamiliaComercial, PiezaComercial
 from core.errors import FichaIncompleta
 from core.solido import densidad_de
 from emit.catalogo import LARGO_POR_DEFECTO, cargar
+from scripts.exportar_para_cad import mapa_de
 
 MM = 1000.0
 POR_DEFECTO = LARGO_POR_DEFECTO * MM
@@ -124,6 +125,14 @@ def _tiene(pieza: PiezaComercial, nombre: str) -> bool:
 def filas_de(pieza: PiezaComercial) -> list[tuple[str, str]]:
     """Lo que se rellena en el CAD: nombre entero de la variable y su valor.
 
+    **Con su prefijo, que no es siempre el mismo.** Un archivo importado en
+    Onshape crea un mapa con un único factor de conversión para todas sus
+    filas, así que las longitudes van a `#pieza` con factor `1 mm` y los
+    recuentos a `#pieza_num` sin unidad. Escribir `#pieza.…_dientes` da una
+    variable que no existe; escribirla en el mapa de milímetros daría veinte
+    milímetros de dientes. El reparto lo declara `MAPAS`, y esta hoja lo lee
+    de ahí para no poder contradecirlo.
+
     No son solo las cotas que dibuja el perfil. El número de dientes **no
     está en la ficha** —la ficha guarda el diámetro exterior, que es lo que
     se mide— y en cambio es exactamente lo que pide el FeatureScript de
@@ -137,9 +146,11 @@ def filas_de(pieza: PiezaComercial) -> list[tuple[str, str]]:
     # aparece en el dibujo, y sin embargo es el primer campo del
     # FeatureScript. Lo mismo la mina del portaminas.
     nombres = usadas + [c.nombre for c in pieza.criticas if c.nombre not in usadas]
-    filas = [(f"{pieza.nombre}_{n}", f"{_mm(pieza, n, 0.0):g}") for n in nombres]
+    longitudes = mapa_de("piezas_cota")
+    filas = [(f"#{longitudes}.{pieza.nombre}_{n}", f"{_mm(pieza, n, 0.0):g}") for n in nombres]
     if pieza.dientes is not None:
-        filas.append((f"{pieza.nombre}_dientes", str(pieza.dientes)))
+        recuentos = mapa_de("piezas_num")
+        filas.append((f"#{recuentos}.{pieza.nombre}_dientes", str(pieza.dientes)))
     return filas
 
 
@@ -186,7 +197,7 @@ def panel(pieza: PiezaComercial, x: float, y: float, ancho: float, alto: float) 
 
     fila = y + 30.0 + hueco_alto + 14.0
     for variable, valor in filas:
-        d.append(f'<text class="var" x="{x + 5:.1f}" y="{fila:.1f}">#pieza.{variable}</text>')
+        d.append(f'<text class="var" x="{x + 5:.1f}" y="{fila:.1f}">{variable}</text>')
         d.append(f'<text class="val" x="{x + ancho - 5:.1f}" y="{fila:.1f}">{valor}</text>')
         fila += 9.0
 

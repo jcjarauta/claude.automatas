@@ -466,6 +466,19 @@ falla si el esquema versionado se queda atrás.
   y el test del catálogo la leen de ahí. La regla general: **en la hoja va lo
   que se teclea, no lo que se mide**, y cuando no coinciden, el derivado sale
   también.
+- **Un factor de conversión por archivo, así que un mapa por unidad.** Una
+  importación de Onshape crea **una** variable de tipo mapa y aplica su
+  factor a **todas** las filas. Por eso el paquete saca cinco CSV y no uno:
+  `#cota` y `#pieza` en `1 mm`, `#angulo` en `1 deg`, `#num` y `#pieza_num`
+  sin unidad. Los dientes de un engranaje no caben en `#pieza`: entrarían
+  como veinte milímetros y el campo «número de dientes» no admite una
+  longitud.
+
+  El reparto lo declara `MAPAS` en `scripts/exportar_para_cad.py`, y lo leen
+  los dos sitios que lo rotulan —la hoja de ruta del paquete y la hoja de
+  bocetos—, para que no puedan contradecirse. Si la hoja dijera un prefijo
+  que no existe, el que la copia se entera cuando el campo se pone en rojo,
+  y eso con suerte.
 - **Un CSV que se importa al Variable Studio no lleva cabecera.** El
   Variable Studio lee «todos los valores» sin saber que la primera fila es un
   rótulo, así que la cabecera entra en el mapa como una clave `nombre` cuyo

@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.exportar_para_cad import main
+from scripts.exportar_para_cad import MAPAS, main
 
 
 @pytest.fixture
@@ -54,7 +54,9 @@ def test_el_calaje_viaja_con_el_paquete(paquete: Path):
 def test_la_hoja_de_ruta_dice_el_orden_y_de_quien_es_cada_pieza(paquete: Path):
     guia = (paquete / "README.md").read_text(encoding="utf-8")
     assert "1. **Monta la biblioteca de materiales**" in guia
-    assert "2. **Importa `variables.csv`" in guia
+    # Antes decía «Importa `variables.csv`», que es el que lleva cabecera y
+    # rompe la variable entera al importarlo. El test la pinchaba tal cual.
+    assert "2. **Importa los cinco CSV en un Variable Studio**" in guia
     assert "un solo sentido" in guia, "hay que decir que lo editado en el CAD se pierde"
     assert "La plataforma se dibuja dentro del CAD" in guia
 
@@ -140,6 +142,36 @@ def test_las_variables_van_partidas_por_unidad(paquete: Path):
     # y ninguna se cuela en el archivo de otra unidad
     assert "calaje_izquierdo" not in cota
     assert "radio_base" not in angulo
+
+
+def test_la_hoja_de_ruta_dice_que_archivo_va_a_que_variable_y_con_que_factor(
+    paquete: Path,
+):
+    """**Es el contrato entre el paquete y lo que alguien teclea.**
+
+    Una importación de Onshape crea un mapa con un único factor para todas
+    sus filas, así que el reparto no es un detalle de presentación: decide
+    si `#pieza_num.pinon_reductor_dientes` existe o si los dientes entran
+    como veinte milímetros. La tabla se genera desde `MAPAS`, y la hoja de
+    bocetos imprime los prefijos desde el mismo sitio.
+    """
+    texto = (paquete / "README.md").read_text(encoding="utf-8")
+    for archivo, (variable, factor) in MAPAS.items():
+        assert (archivo + ".csv") in texto
+        assert f"`#{variable}`" in texto
+        assert (paquete / f"{archivo}.csv").exists(), archivo
+        assert f"`{factor}`" in texto
+
+
+def test_la_hoja_de_ruta_avisa_de_no_importar_los_que_llevan_cabecera(paquete: Path):
+    """`variables.csv` y `piezas.csv` son para leer. Importados, la cabecera
+    entra en el mapa como una clave cuyo valor es el texto «valor», y al
+    multiplicarla por el factor falla la variable entera con un error que no
+    la menciona. La hoja de ruta mandaba importarlos: así se rompió."""
+    texto = (paquete / "README.md").read_text(encoding="utf-8")
+    assert "no `variables.csv` ni `piezas.csv`" in texto
+    for legible in ("variables.csv", "piezas.csv"):
+        assert f"**Importa `{legible}`" not in texto
 
 
 def test_un_csv_que_se_importa_no_lleva_cabecera_ni_comentarios(paquete: Path):
