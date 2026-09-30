@@ -1,0 +1,449 @@
+# Expediente del escribiente
+
+Qué es el producto, cómo se fabrica y qué falta para terminarlo.
+
+Este documento es **la puerta de entrada**. Está escrito para que alguien que
+no conozca el proyecto pueda entenderlo entero y seguir trabajando, y para
+que quien sí lo conoce sepa en qué punto está sin leer treinta commits.
+
+Fecha de este estado: **2026-09-30**.
+
+| Si buscas | Ve a |
+| --- | --- |
+| Los principios y la visión de la herramienta entera | `docs/baseline.md` |
+| Las cotas que no se tocan, y por qué | `docs/contratos.md` y `docs/contratos.json` |
+| Qué se compra, a quién y cuánto cuesta | `docs/ficha-producto.md` |
+| Cómo se diseña, se prueba y se documenta | `docs/metodologia.md` |
+| Una pieza comercial concreta | `docs/piezas/<nombre>.json` |
+| Cómo está montado el código | `CLAUDE.md` |
+| Qué se cerró en cada etapa | `docs/etapas/` |
+
+---
+
+# Parte 1 · El producto
+
+## En una frase
+
+Un autómata de sobremesa que **escribe la letra de una persona concreta**: se
+gira una manivela y un lápiz reproduce sobre el papel la frase que esa
+persona escribió a mano.
+
+## Cómo funciona, de la mano al papel
+
+La cadena entera, que conviene tener en la cabeza porque todo el proyecto
+cuelga de ella:
+
+```
+  el cliente escribe en una pantalla
+            |
+            v  se captura SOLO la geometría: nunca tiempo, presión ni velocidad
+  una lista de trazos
+            |
+            v  se reparametriza por longitud de arco y se reparte en grados de θ
+  tres pistas indexadas por θ, el ángulo del árbol maestro
+            |            (punta.x, punta.y, levantamiento)
+            v  cinemática inversa del varillaje
+  tres ángulos de seguidor para cada θ
+            |
+            v  síntesis de leva: curva de paso, offset por el rodillo
+  TRES PERFILES DE LEVA
+            |
+            v  se fresan en POM y se enhebran en el árbol con su pasador
+  EL CARTUCHO
+            |
+            v  la máquina, girando
+  el lápiz sobre el papel
+```
+
+**Todo es función de θ, nunca del tiempo.** Se gire deprisa o despacio, sale
+la misma letra: lo único que cambia es lo bien que se lee mientras se
+escribe. Es el principio que hace que la máquina sea un reproductor y no una
+grabación.
+
+## Plataforma y cartucho
+
+La decisión que sostiene el negocio:
+
+| | **La plataforma** | **El cartucho** |
+| --- | --- | --- |
+| Qué es | La máquina: bastidor, brazos, manivela, volante | Tres levas y dos separadores |
+| Cambia entre pedidos | No | **Sí, es la frase del cliente** |
+| Se fabrica | A stock | Por pedido |
+| Se cambia | — | En un minuto, a mano |
+| Cuesta | 81,09 € de material y compras | 38,08 € |
+
+La plataforma es **fija** y el cartucho varía dentro de una envolvente. Es
+tentador pensar lo contrario —que la máquina se adapta al tamaño de la leva—
+pero sería el final del producto: si la plataforma cambiara con cada cliente
+no se podría tener en stock y esto dejaría de ser un producto para ser un
+encargo.
+
+Lo que decide si una frase cabe es el **hueco entre la leva mayor y el poste
+del seguidor de al lado**. Con la caja de escritura por defecto son 9,7 mm
+con «hola» y 8,9 con un barrido de toda la caja; por debajo de 3 el
+compilador avisa y por debajo de 0 lo rechaza. Ese número no lo ve ninguna
+envolvente que juzgue una leva sola: es un límite de conjunto.
+
+## Por qué no es un kit de hobby
+
+Existe [Lanky Doodler](https://www.contraptioncart.com/shop/lankydoodler/),
+el mismo mecanismo con app de generación de levas, a 28 €, en kit o montado,
+con planos para marquetería. **No competimos en precio y no deberíamos
+intentarlo.**
+
+Lo que vendemos es otra cosa: un objeto de nogal y latón, con **la letra de
+alguien**, fabricado por personas en proceso de inserción en el taller
+ocupacional de Arrels Fundació. Si el producto acaba pareciendo un kit de
+hobby caro, hemos perdido.
+
+---
+
+# Parte 2 · Cómo está hecho
+
+## Los números que lo definen
+
+Con el pedido de ejemplo «hola» y la geometría de hoy:
+
+| | |
+| --- | --- |
+| Diámetro de leva | 107,7 mm |
+| Ángulo de presión máximo | 8,3° — el límite está en 30° |
+| Hueco al poste | 9,73 mm |
+| Pila del cartucho | 19 mm (3 levas de 5 + 2 separadores de 2) |
+| Masa del cartucho | 178 g |
+| Inercia respecto del árbol | 2,44 × 10⁻⁴ kg·m² |
+| Trabajo por vuelta | 133 mJ |
+| Error del **modelo** | 0,108 mm |
+| Error esperado en la punta | **2,79 mm peor caso, 1,64 mm cuadrático** |
+| Tiempo de fresado de las tres levas | 7,5 min |
+| Levas por plancha de 1 × 1 m | 81, o sea 27 cartuchos |
+| Material y compras por máquina | 119,17 € con IVA |
+
+## El despiece, en tres categorías
+
+Cada pieza pertenece a una y solo una, y eso decide quién la produce y dónde
+viven sus cotas.
+
+**1 · Lo que genera el compilador** — las tres levas. Geometría distinta en
+cada pedido, determinista: mismo input, mismo DXF byte a byte. Nunca la
+dibuja nadie a mano.
+
+**2 · Lo que se compra hecho** — 49 piezas por máquina, en 14 referencias.
+Cada una tiene su ficha en `docs/piezas/` con sus **cotas de interfaz** —las
+que otra pieza toca— su proveedor, su enlace y su fecha.
+
+**3 · Lo que se hace en el taller** — base de nogal, bastidor de
+contrachapado, brazos, seguidores, manivela y volante.
+
+## Los cuatro contratos
+
+Un contrato congelado es lo que hace que un cartucho fabricado hoy encaje en
+una máquina construida dentro de tres años. Los números viven en
+`docs/contratos.json`; el porqué, en `docs/contratos.md`.
+
+| Contrato | Estado | Qué fija |
+| --- | --- | --- |
+| **Eje** | Congelado | Ø10 h7, giro horario, pila de 19 mm |
+| **Fase** | Congelado | Pasador Ø3 × 24 a 18 mm sobre +X, igual en las tres levas |
+| **Calaje** | Congelado | El ángulo del brazo con la punta en el centro de la caja |
+| **Bastidor** | **Pendiente** | Postes a 71,06 mm y 120°, caja de escritura, reductor |
+
+El de bastidor espera a E4. Se puede dibujar contra él; no se puede prometer.
+
+### El contrato de fase, que es el que evita el fallo más caro
+
+Cada leva lleva **dos** taladros: el del eje, que centra, y un pasador de
+índice, que orienta. El pasador está en el mismo ángulo en las tres, así que
+enhebradas quedan caladas entre sí. **El error de fase deja de ser posible en
+vez de ser improbable.** Un cartucho montado desfasado escribe basura y no se
+nota hasta que se gira la manivela.
+
+El pasador va **deslizante en el POM y apretado solo en el plato de arrastre
+metálico**: el m6 de la norma aprieta en acero, pero el POM fluye en frío y
+la interferencia se relajaría en semanas, perdiendo el calaje después de la
+venta y en silencio.
+
+### El contrato de calaje, que es el que hace del brazo pieza de stock
+
+El calaje —a qué ángulo se cala cada brazo sobre el eje de su seguidor— se
+calculaba como la media de los ángulos a lo largo del ciclo. Eso da la leva
+más pequeña posible, pero la media depende de por dónde escriba el cliente:
+se movía 3,3° entre frases, y sobre 90 mm de brazo proximal son 5 mm de trazo
+desplazado.
+
+Ahora es el ángulo del brazo con la punta en el **centro de la caja**:
+−3,749°, −176,251° y +2,149°, iguales en todos los pedidos. Cuesta unas
+décimas de milímetro de leva y devuelve el brazo al catálogo.
+
+## Las decisiones de fabricación que ya están tomadas
+
+| Decisión | Por qué |
+| --- | --- |
+| Las levas van en **POM-C**, no en metacrilato | Dos agujeros y curvatura mínima son concentradores de tensión; el PMMA entallado pierde un factor once en impacto. No se desgasta, se agrieta desde un agujero |
+| Se **fresan**, no se cortan a láser | Cortar POM a láser libera formaldehído. En un taller ocupacional eso basta. Y el láser deja conicidad en el canto, que es *la* superficie funcional |
+| Rodillo **MR63ZZ**, con las dos letras | El abierto mide 2,0 de ancho y dejaría 0,5 mm de juego axial; un 2RS con Ø3 de agujero arrastra tanto como el rozamiento que lo hace rodar |
+| Postes de **Ø8**, no Ø16 | Lo que la leva ve no es el poste: es la valona de su casquillo. Con Ø16 y valona de bronce Ø28 el hueco caía a 3 mm |
+| Muelle de **compresión** | El de tracción rompe por el gancho, se desengancha y tintinea. En un objeto cuyo argumento es que suena bien, eso lo descalifica |
+| El lápiz **no** va sobre guía deslizante | Con 3 mm de carrera la holgura radial se come el presupuesto de error entero, y el *stick-slip* es justo el ruido que no queremos. Paralelogramo o flexura |
+| Manivela y volante se **hacen en el taller** | Ninguna manivela de catálogo está a la altura del objeto, y el volante es donde más barato se compra aspecto |
+| El corte del cartucho se **externaliza** | Precio cerrado por bloque. No se compra máquina mientras E4 no diga si el modelo predice la realidad |
+
+---
+
+# Parte 3 · El sistema que lo produce
+
+## Un pedido, un comando
+
+```bash
+uv run python -m compile.cli pedido.json --out build/
+```
+
+Y sale:
+
+| Archivo | Para quién |
+| --- | --- |
+| `informe.md` | Quien vende y quien fabrica: veredicto, calajes, coste, presupuesto de error |
+| `plantillas.pdf` | El carpintero, sobre el tablero. 1:1 exacto |
+| `patron.pdf` | Quien verifica: el trazo esperado a 1:1 |
+| `leva_*.dxf` | El taller de corte |
+| `programa.json` | El archivo del pedido: las tres pistas θ |
+| `cartucho.step` | Onshape, con `--step` |
+
+El código de salida es 1 si el veredicto es negativo, para que un script sepa
+que ese pedido no se fabrica sin leer el informe. **Los archivos se escriben
+igualmente**: un pedido que no cabe también hay que poder mirarlo.
+
+## Dónde vive cada número
+
+Es la regla que más errores evita, y se aprendió pagándola: la valona del
+casquillo se anotó como Ø12, acabó copiada en tres documentos y en el cálculo
+del hueco, y el fabricante dice Ø15.
+
+```
+  docs/contratos.json        docs/piezas/*.json        bench/precios.json
+   las cotas congeladas       las piezas que se          los precios, con
+   con su estado              compran, con su fuente     fecha y enlace
+         |                            |                         |
+         +------------+---------------+-------------------------+
+                      |
+                      v
+            el compilador las lee
+                      |
+         +------------+------------------+
+         |                               |
+         v                               v
+   el cartucho, generado        scripts/exportar_variables.py
+   (DXF, STEP, plantillas)                |
+                                          v
+                                 Variable Studio de Onshape
+                                          |
+                                          v
+                                 la plataforma, paramétrica
+```
+
+**El flujo es de un solo sentido.** Se toca el dato, se regenera, se pega. Lo
+que se edite dentro de Onshape se pierde en la siguiente regeneración y deja
+de coincidir con lo que calcula el compilador sin que nadie se entere.
+
+Y hay tests que lo atan: `tests/compile/test_piezas_reales.py` comprueba que
+el número del compilador y la cota del proveedor son el mismo;
+`tests/compile/test_contratos.py`, que el contrato y el código no se han
+separado.
+
+## Las tres capas del código
+
+**Núcleo → Compilador → Emisores**, en ese orden de dependencia.
+
+- **`core/`** es puro. Sin red, sin disco, sin CAD. Entra dato, sale dato.
+  Ahí viven la geometría de levas, la cinemática, la energía y la cadena de
+  tolerancias.
+- **`compile/`** orquesta y decide. Lee ficheros, monta la máquina concreta,
+  valida y llama a los emisores.
+- **`emit/`** solo traduce a formato. No calcula nada que no sea maquetación.
+
+---
+
+# Parte 4 · Lo que sabemos y lo que no
+
+Esta parte es la más importante del documento y la que más se olvida escribir.
+
+## El presupuesto de error, sin adornos
+
+| De dónde | Magnitud | Amplificación | En la punta |
+| --- | --- | --- | --- |
+| Perfil de la leva, seguidor 0 | 0,050 mm | × 23,2 | **1,159 mm** |
+| Perfil de la leva, seguidor 1 | 0,050 mm | × 22,4 | **1,119 mm** |
+| Holgura del pivote 0 | 0,200 mm | × 1,04 | 0,208 mm |
+| Holgura del pivote 1 | 0,200 mm | × 1,00 | 0,200 mm |
+| Muestreo del modelo | 0,108 mm | × 1,00 | 0,108 mm |
+| | | **Peor caso** | **2,79 mm** |
+| | | **Cuadrático** | **1,64 mm** |
+
+Tres cosas que esta tabla dice y que no se veían antes de montarla:
+
+**El error del modelo es la décima parte del problema.** Los 0,108 mm que se
+estaban leyendo como la precisión de la máquina son la precisión del
+compilador. Perseguir décimas ahí no sirve de nada mientras el canto venga a
+±0,05.
+
+**La precisión la decide quien corta.** Los ±0,05 mm que se le piden al
+taller son 1,16 mm en el papel. Es la conversación más rentable que hay
+pendiente.
+
+**El varillaje amplifica 23 veces, no 12.** La cuenta corta —relación ×
+proximal / brazo del seguidor— da 12 y sirve para hablar con el taller. Pero
+el cinco barras mueve la punta con una palanca efectiva mayor que el brazo
+proximal, y el jacobiano lo dice. Para prometer, la cuenta corta es optimista.
+
+## Qué está medido y qué no
+
+| | Estado |
+| --- | --- |
+| Geometría de la leva, ángulo de presión, curvatura | **Calculado y con tests.** Dos caminos independientes en masa e inercia, que coinciden al 0,02 % |
+| Error del modelo | **Calculado**, y contrastado apoyando el rodillo en el perfil ya cortado |
+| Par, energía, volante | **Calculado** sobre cargas de seguidor **no medidas** |
+| Kerf del corte | **Sin medir.** `bench/kerf.json` está a cero |
+| Escalado de impresora | **Sin medir.** Sin perfil, factores 1,0 y aviso |
+| Juego de los pivotes | **Sin medir.** Estimación de catálogo. Es lo que impide subir la relación del varillaje |
+| Tolerancia real del taller | **Sin pedir.** Es la tolerancia que se pide, no la que se da |
+| Desgaste de la leva | **Sin medir** |
+| Que la máquina escriba | **Sin comprobar.** No existe ninguna máquina |
+
+**Todo lo de abajo es E4, y E4 no ha empezado.** Hasta entonces, los números
+de este expediente sirven para decidir arquitectura y no para prometerle una
+cota a un cliente.
+
+## Las decisiones abiertas
+
+**1 · La relación del varillaje.** Se subió a 6:1 para que la leva fuera
+pequeña, y el docstring avisaba de que C4 diría hasta dónde se puede subir.
+Ahora lo dice. Con radio base 65:
+
+| Relación | Ø leva | Presión | Hueco | Peor caso | RSS | |
+| --- | --- | --- | --- | --- | --- | --- |
+| 3:1 | 131,3 | 13,9° | 5,90 | 1,46 | 0,84 | `curvatura_justa` |
+| **4:1** | **129,5** | **10,5°** | **6,81** | **1,91** | **1,10** | limpio |
+| 6:1 | 127,7 | 7,1° | 7,73 | 2,79 | 1,64 | limpio |
+
+Bajar a 4:1 quita un tercio del error y sigue saliendo limpio, a cambio de
+una leva de Ø130 en vez de Ø108: el objeto crece un 20 % y salen 16 cartuchos
+por plancha en vez de 27. **Es decisión de producto y está sin tomar.**
+
+**2 · La línea de tallas.** Una sola caja de escritura de 80 × 30 mm limita
+el producto a una palabra o una firma. Tres plataformas congeladas —S, M, L—
+con el compilador eligiendo la menor en la que la frase entra resolvería «y
+si no cabe» sin volver la plataforma configurable.
+
+**3 · Transmisión por engranajes o por correa.** Los dos engranajes de latón
+son 25,64 € de los 119 totales. Un juego de poleas GT2 con correa ronda los
+10 €. Pero la rueda de latón **se ve**, y es parte de por qué el objeto vale
+lo que vale. Decisión de diseño, no de precio.
+
+**4 · El precio de venta.** Sobre 150-400 €, el material es del 30 al 79 %.
+En el extremo bajo no queda margen para pagar horas de taller, que es de lo
+que se trata. **A 150 € este producto no se sostiene**; su sitio está en
+300-400.
+
+---
+
+# Parte 5 · El paso a paso para terminarlo
+
+Diez pasos. Los seis primeros no necesitan ni CAD ni proveedor.
+
+## Hecho
+
+| | Paso | Qué dejó |
+| --- | --- | --- |
+| ✅ | **1 · Fijar el calaje** | Constante de máquina, congelada. El brazo vuelve a ser pieza de stock |
+| ✅ | **2 · Enchufar C4** | Cada pedido sale con su presupuesto de error. Destapó la amplificación de 23× |
+| ✅ | **3 · Fichas de piezas comerciales** | 14 fichas con cotas de interfaz y fuente. Encontró que el pasador de 16 mm no atravesaba la pila de 19 |
+| ✅ | **4 · `contratos.json` + variables** | Los números salen de un sitio y llegan a Onshape sin teclearlos |
+| ✅ | **6 · Emisor de trazo patrón** | `patron.pdf` en cada pedido: verificación visual sin instrumentos |
+
+## Pendiente
+
+### 5 · Pedir las piezas — **te toca a ti, y va en paralelo con todo**
+
+Unos 120 €. Es lo que desbloquea E4 y tiene plazo de entrega, mientras que el
+CAD no. Serializar «primero dibujo, luego pido» cuesta dos semanas gratis.
+
+- Compra **repuestos de lo barato**: un MR63ZZ cuesta 1,19 €, y que falte uno
+  para el año que viene.
+- Mete el **Lanky Doodler de 28 €** en la misma tanda: es la referencia de
+  banco más barata que existe.
+- Lleva al taller de corte las tres preguntas que valen dinero: precio
+  cerrado por bloque, que **las tres levas salgan de un amarre** —es la
+  diferencia entre 21 € y 49 €— y cuál es el mínimo de facturación.
+
+**Hecho cuando:** las piezas están en una caja en el taller.
+
+### 7 · Plataforma paramétrica en Onshape, talla M
+
+Ya se puede: los parámetros están fijos y salen de `contratos.json`.
+
+1. Pegar la salida de `scripts/exportar_variables.py` en un Variable Studio.
+2. Modelar la plataforma en Part Studios que referencien esas variables.
+3. Importar los STEP de igus y Mädler para comprobar que nada choca.
+4. Arrastrar el `cartucho.step` de un pedido y montar el conjunto.
+
+**Hecho cuando:** el conjunto cierra sin interferencias y cambiar una
+variable regenera la plataforma entera.
+
+### 8 · Cartucho de calibración en DM → **E4 empieza**
+
+Tres discos **excéntricos** en DM de 5 mm, no las levas reales. Un círculo es
+la única forma que se fabrica con precisión a mano: se recorta basto, se
+monta en un pivote sobre la lijadora y se gira. Sale redondo por
+construcción, no por pulso. Y un excéntrico tiene solución cerrada, así que
+das entrada conocida y mides salida.
+
+Eso da **el juego**, que es lo que C4 no modela y lo que impide subir la
+relación del varillaje. Amplificado 23×, se ve a simple vista.
+
+**Hecho cuando:** `bench/` tiene el juego, el par y la amplificación reales
+medidos, con fecha.
+
+### 9 · `emit/dossier.py`
+
+El hueco grande. Está en la estructura y vacío. Necesita el 3-D del paso 7.
+
+Vistas ortográficas e isométrica, explosionado **por subconjunto**,
+secuencia numerada con qué comprobar antes de seguir, las cotas de puesta a
+punto —calaje, precarga del muelle, juego axial— y la fase cero con foto.
+
+**Hecho cuando:** alguien que no ha visto la máquina la monta siguiéndolo.
+
+### 10 · Hoja de taller y galgas
+
+Lo que le falta al dossier para servir en un taller ocupacional: orden de
+operaciones con tiempos, qué operación es de qué nivel, y **galgas pasa /
+no-pasa en vez de cotas**. En lugar de «comprueba que quedan 9,7 mm», una
+galga cortada en el mismo DM que entra o no entra. Verificación binaria, sin
+instrumento y sin interpretación. Se cortan con las mismas plantillas.
+
+**Hecho cuando:** los puntos de control son todos binarios.
+
+## Y después
+
+| | |
+| --- | --- |
+| **El cartucho mudo** | Perfiles reales recortados a mano, para montar la máquina entera y ver que escribe algo |
+| **El cartucho real** | La única pregunta que queda: si el trazo sale a las décimas prometidas |
+| **E3b** | Imprimir las plantillas en dos copisterías, medir el cuadro y calibrar |
+| **La talla L** | Cuando haya demanda de frases que no caben |
+| **La máquina 2** | Caja de música o telar. Y entonces, y solo entonces, se refactoriza a marco genérico |
+
+---
+
+## Cómo saber que algo está mal
+
+Tres comprobaciones que valen para cualquiera que retome esto:
+
+```bash
+uv run python scripts/check.py     # lint, tipos y 640 tests
+uv run python -m compile.cli demo/hola.json --out build/
+```
+
+Si el segundo comando dice `APTO` y el primero dice `VERDE`, el proyecto está
+donde este documento dice que está. Si no, algo se ha movido desde el
+2026-09-30 y esta página ya no es de fiar.

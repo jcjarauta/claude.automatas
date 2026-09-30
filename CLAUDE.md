@@ -452,6 +452,7 @@ falla si el esquema versionado se queda atrás.
 
 | Documento | Contenido |
 | --- | --- |
+| **`docs/expediente.md`** | **La puerta de entrada**: qué es, cómo se hace, qué falta y en qué orden |
 | `docs/baseline.md` | Principios, ontología, núcleos, módulos, hitos, negocio |
 | `docs/contratos.md` | Por qué cada cota es la que es, y el registro de cambios |
 | `docs/contratos.json` | Los números de esos contratos, que es de donde los lee todo |

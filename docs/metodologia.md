@@ -3,6 +3,8 @@
 Cómo se diseña un escribiente, cómo se prueba antes de gastar dinero, y qué
 sale por la puerta con cada pedido.
 
+- El **expediente** (`docs/expediente.md`) es la puerta de entrada: qué es el
+  producto, en qué punto está y qué falta.
 - La **ficha de producto** (`docs/ficha-producto.md`) dice *qué* se compra y
   cuánto cuesta.
 - Este documento dice *cómo* se diseña, se prueba y se documenta.
