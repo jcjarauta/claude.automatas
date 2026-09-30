@@ -26,6 +26,8 @@ nunca.
 from __future__ import annotations
 
 import argparse
+import csv as _csv
+import io
 import json
 import sys
 from pathlib import Path
@@ -50,6 +52,8 @@ def leer(entrada: Path) -> Escritura:
     )
 
 
+CABECERA_PIEZAS = ("nombre", "valor", "unidad", "pieza", "critica", "tolerancia", "designacion")
+
 UNIDAD_A_SUFIJO = {"mm": "cota", "deg": "angulo", "": "num"}
 """Qué archivo se lleva cada unidad. Los nombres son los de la variable que
 se crea en el CAD: `#cota.radio_base`, `#angulo.calaje_izquierdo`."""
@@ -70,19 +74,35 @@ def por_unidad(tabla: str) -> dict[str, str]:
     calaje interpretado como milímetros no da un aviso, da una máquina que
     escribe torcido.
     """
-    lineas = tabla.strip().split("\n")
-    cabecera, filas = lineas[0], lineas[1:]
-    salida: dict[str, list[str]] = {s: [cabecera] for s in UNIDAD_A_SUFIJO.values()}
+    filas = list(_csv.reader(io.StringIO(tabla)))[1:]
+    salida: dict[str, list[list[str]]] = {s: [] for s in UNIDAD_A_SUFIJO.values()}
     for fila in filas:
-        unidad = fila.split(",")[2]
-        sufijo = UNIDAD_A_SUFIJO.get(unidad)
+        if not fila:
+            continue
+        sufijo = UNIDAD_A_SUFIJO.get(fila[2])
         if sufijo is None:
             raise ValueError(
-                f"la cota '{fila.split(',')[0]}' usa la unidad '{unidad}', que no "
-                f"sabe a qué archivo va. Añádela a UNIDAD_A_SUFIJO."
+                f"la cota '{fila[0]}' usa la unidad '{fila[2]}', que no sabe a qué "
+                f"archivo va. Añádela a UNIDAD_A_SUFIJO."
             )
         salida[sufijo].append(fila)
-    return {s: "\n".join(v) + "\n" for s, v in salida.items()}
+    return {s: _volcar(v) for s, v in salida.items() if v}
+
+
+def _volcar(filas: list[list[str]]) -> str:
+    """Filas a CSV, **sin cabecera**.
+
+    El Variable Studio lee «todos los valores» sin saber que la primera fila
+    es un rótulo, así que la cabecera entraría en el mapa como una clave
+    `nombre` cuyo valor es el texto `valor`. Con un factor de conversión
+    puesto, multiplicar ese texto por 1 mm no da una clave rara: **hace
+    fallar la regeneración de toda la variable**, y el error que sale no
+    menciona la cabecera por ningún lado.
+    """
+    salida = io.StringIO()
+    escritor = _csv.writer(salida, lineterminator="\n", quoting=_csv.QUOTE_MINIMAL)
+    escritor.writerows(filas)
+    return salida.getvalue()
 
 
 def materiales() -> str:
@@ -133,15 +153,23 @@ def cotas_comerciales() -> str:
     Lleva las críticas primero porque son las que otra pieza toca, y son las
     únicas que hay que acotar con cuidado.
     """
-    lineas = ["nombre,valor,unidad,pieza,critica,tolerancia,descripcion"]
+    salida = io.StringIO()
+    escritor = _csv.writer(salida, lineterminator="\n", quoting=_csv.QUOTE_MINIMAL)
+    escritor.writerow(CABECERA_PIEZAS)
     for pieza in cargar_piezas():
         for cota in sorted(pieza.cotas, key=lambda c: (not c.critica, c.nombre)):
-            lineas.append(
-                f"{pieza.nombre}_{cota.nombre},{float(cota.valor) * 1000:.4f},mm,"
-                f"{pieza.nombre},{'si' if cota.critica else 'no'},"
-                f'"{cota.tolerancia}","{pieza.designacion}"'
+            escritor.writerow(
+                (
+                    f"{pieza.nombre}_{cota.nombre}",
+                    f"{float(cota.valor) * 1000:.4f}",
+                    "mm",
+                    pieza.nombre,
+                    "si" if cota.critica else "no",
+                    cota.tolerancia,
+                    pieza.designacion,
+                )
             )
-    return "\n".join(lineas) + "\n"
+    return salida.getvalue()
 
 
 def hoja_de_ruta(nombre: str, catalogo: bool, solido: bool) -> str:
@@ -281,7 +309,10 @@ def main(argv: list[str] | None = None) -> int:
 
     # 6 · las cotas de las piezas comerciales, para poder dibujarlas
     #     paramétricas en vez de importarlas como sólidos mudos
-    (destino / "piezas.csv").write_text(cotas_comerciales(), encoding="utf-8")
+    comerciales = cotas_comerciales()
+    (destino / "piezas.csv").write_text(comerciales, encoding="utf-8")
+    for sufijo, contenido in por_unidad(comerciales).items():
+        (destino / f"piezas_{sufijo}.csv").write_text(contenido, encoding="utf-8")
 
     # 7 · el calaje, que es lo que se monta mal
     (destino / "calajes.md").write_text(

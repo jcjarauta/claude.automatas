@@ -122,12 +122,44 @@ def test_las_variables_van_partidas_por_unidad(paquete: Path):
     assert "radio_base" not in angulo
 
 
-def test_un_csv_que_se_importa_no_lleva_comentarios(paquete: Path):
-    """Un «#» al principio no es un comentario para el CAD: es una fila más,
-    y ensucia el mapa con una clave que no existe."""
-    for nombre in ("variables.csv", "variables_cota.csv", "piezas.csv", "materiales.csv"):
+def test_un_csv_que_se_importa_no_lleva_cabecera_ni_comentarios(paquete: Path):
+    """**Lo que rompía la importación en Onshape.**
+
+    El Variable Studio lee «todos los valores» sin saber que la primera fila
+    es un rótulo, así que la cabecera entra en el mapa como una clave
+    `nombre` cuyo valor es el texto `valor`. Con el factor de conversión
+    puesto, multiplicar ese texto por 1 mm **hace fallar la regeneración de
+    toda la variable**, y el error que sale no menciona la cabecera.
+
+    Un «#» al principio tampoco es un comentario para el CAD: es otra fila.
+    """
+    for nombre in ("variables_cota.csv", "variables_angulo.csv", "piezas_cota.csv"):
         primera = (paquete / nombre).read_text(encoding="utf-8").split("\n")[0]
         assert not primera.startswith("#"), f"{nombre} empieza por comentario"
+        assert not primera.startswith("nombre,"), f"{nombre} lleva cabecera"
+        assert primera.split(",")[2] in ("mm", "deg", ""), f"{nombre}: la fila 0 no es un dato"
+
+
+def test_los_archivos_legibles_si_llevan_cabecera(paquete: Path):
+    """Los que no se importan se leen, y sin cabecera no se entienden."""
+    for nombre in ("variables.csv", "piezas.csv", "materiales.csv"):
+        primera = (paquete / nombre).read_text(encoding="utf-8").split("\n")[0]
+        assert primera.startswith(("nombre,", "categoria,")), f"{nombre} sin cabecera"
+
+
+def test_una_tolerancia_con_coma_no_parte_la_fila():
+    """La del pasador de índice es «m6 en el plato metálico, deslizante en el
+    POM». Sin comillas parte la fila en dos columnas de más, y no se veía
+    porque las dos primeras —que son las que el CAD lee— quedaban en su
+    sitio."""
+    import csv as _csv
+    import io
+
+    from compile.contratos import cargar
+    from scripts.exportar_variables import csv as exportar
+
+    for fila in _csv.reader(io.StringIO(exportar(cargar()))):
+        assert len(fila) == 7, f"fila con {len(fila)} columnas: {fila}"
 
 
 def test_una_unidad_desconocida_se_queja_en_vez_de_colarse():

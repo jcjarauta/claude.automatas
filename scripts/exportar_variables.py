@@ -29,6 +29,8 @@ Dos formatos:
 from __future__ import annotations
 
 import argparse
+import csv as _csv
+import io
 import math
 import sys
 from pathlib import Path
@@ -69,9 +71,21 @@ def featurescript(contratos: Contratos) -> str:
     return "\n".join(lineas)
 
 
+COLUMNAS = ("nombre", "valor", "unidad", "contrato", "estado", "tolerancia", "descripcion")
+
+
 def csv(contratos: Contratos) -> str:
-    """La tabla, por si se importa en vez de pegarse."""
-    filas = ["nombre,valor,unidad,contrato,estado,tolerancia,descripcion"]
+    """La tabla, para leerla y para importarla al CAD.
+
+    **Se escribe con el módulo `csv` y no pegando comas**, que es como
+    estaba y como se coló un campo roto: la tolerancia del pasador de índice
+    es «m6 en el plato metálico, deslizante en el POM», lleva una coma dentro
+    y sin comillas parte la fila en dos columnas de más. No se vio porque las
+    dos primeras columnas —que son las que importan— quedaban en su sitio.
+    """
+    salida = io.StringIO()
+    escritor = _csv.writer(salida, lineterminator="\n", quoting=_csv.QUOTE_MINIMAL)
+    escritor.writerow(COLUMNAS)
     for contrato in contratos.contratos:
         for valor in contrato.valores:
             if valor.unidad == "m":
@@ -80,12 +94,18 @@ def csv(contratos: Contratos) -> str:
                 cifra, unidad = f"{math.degrees(valor.valor):.4f}", "deg"
             else:
                 cifra, unidad = f"{valor.valor:.6g}", ""
-            descripcion = valor.descripcion.replace('"', "'")
-            filas.append(
-                f"{valor.nombre},{cifra},{unidad},{contrato.nombre},"
-                f'{contrato.estado.value},{valor.tolerancia},"{descripcion}"'
+            escritor.writerow(
+                (
+                    valor.nombre,
+                    cifra,
+                    unidad,
+                    contrato.nombre,
+                    contrato.estado.value,
+                    valor.tolerancia,
+                    valor.descripcion,
+                )
             )
-    return "\n".join(filas) + "\n"
+    return salida.getvalue()
 
 
 def main(argv: list[str] | None = None) -> int:

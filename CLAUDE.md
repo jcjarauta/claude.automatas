@@ -433,6 +433,26 @@ falla si el esquema versionado se queda atrás.
   de donde va a trabajar y el ángulo de presión calculado no es el real. La
   diferencia es el **calaje**, y va en el dossier.
 - **Cuota de la API de Onshape.** Es anual, no por minuto. Una llamada por pedido.
+- **Un CSV que se importa al Variable Studio no lleva cabecera.** El
+  Variable Studio lee «todos los valores» sin saber que la primera fila es un
+  rótulo, así que la cabecera entra en el mapa como una clave `nombre` cuyo
+  valor es el texto `valor`. Con un factor de conversión puesto, multiplicar
+  ese texto por `1 mm` **hace fallar la regeneración de la variable entera**,
+  y el error que sale —«no se regeneró correctamente»— no menciona la
+  cabecera por ningún lado. Por eso el paquete de CAD saca dos juegos: los
+  `*_cota.csv`, `*_angulo.csv` y `*_num.csv` sin cabecera, para importar, y
+  `variables.csv` y `piezas.csv` con ella, para leer.
+- **El factor de conversión del Variable Studio sí acepta unidades.** Se
+  escribe `1 mm` o `1 deg`, no un número pelado, y entonces el mapa sale con
+  magnitudes y en el croquis se acota con `#cota.radio_base` a secas. Con un
+  número el mapa queda adimensional y la cota la interpreta Onshape en la
+  unidad por defecto del documento: funciona hasta que alguien cambia esa
+  preferencia y el bastidor pasa a medir 55 pulgadas sin un solo aviso.
+- **Un CSV escrito pegando comas se rompe con el primer campo que lleve una.**
+  La tolerancia del pasador de índice es «m6 en el plato metálico, deslizante
+  en el POM». Sin comillas parte la fila en dos columnas de más, y no se ve
+  porque las dos primeras —las que el CAD lee— quedan en su sitio. Se escribe
+  con el módulo `csv`.
 - **Mezclar precios con y sin IVA.** Medio catálogo español cotiza con IVA y
   los alemanes en neto. Sumados tal cual, el error es del 21 % en la parte
   que no se ve. En `bench/precios.json` cada línea declara `iva_incluido` y
