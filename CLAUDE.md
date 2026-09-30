@@ -390,8 +390,12 @@ falla si el esquema versionado se queda atrás.
 - `tests/core/` — unitarios y de propiedad (hypothesis). Obligatorios:
   cierre periódico del perfil, continuidad C², invarianza a la velocidad de giro,
   idempotencia de la compilación.
-- `tests/golden/` — comparación byte a byte de DXF contra referencias guardadas.
-  Detecta regresiones silenciosas en geometría.
+- `tests/golden/` — comparación byte a byte contra referencias guardadas.
+  `test_dxf.py` vigila el **escritor** con una leva sintética;
+  `test_compilado.py` vigila la **geometría que sale del compilador**, con los
+  cuatro casos de referencia de `tests/casos.py` —uno de ellos una frase que
+  no cabe—. Hacen falta los dos: el primero no habría cazado ningún cambio
+  del front-end de escritura.
 - `tests/bench/` — contrasta la predicción del núcleo con las medidas reales del
   banco de ensayo. Si esto falla, el modelo miente.
 
@@ -513,11 +517,20 @@ falla si el esquema versionado se queda atrás.
   llevó a diseñar una quíntica con curvatura impuesta que, una vez medida, no
   cambiaba **ni un dígito**. El fallo estaba en otro sitio y en otra capa: el
   trazo, no el vuelo. Cuando una nota diga «localizado», vuelve a medirlo.
-- **Ningún golden cubre el perfil compilado.** El de `tests/emit/test_dxf.py`
-  guarda una leva sintética, así que vigila el escritor de DXF y no la
-  geometría que sale del compilador. Cambiar el front-end de escritura
-  —como hizo el arreglo del vuelo— mueve los tres perfiles sin que salte
-  ninguna comparación byte a byte.
+- **Un golden de una pieza sintética no vigila el compilador.** El de
+  `tests/emit/test_dxf.py` guarda una leva sintética: mira el escritor de DXF
+  y no la geometría que sale de compilar un pedido. Con solo ese golden, el
+  front-end de escritura cambió **dos veces** —el arreglo del vuelo y el
+  redondeo de esquinas— moviendo los tres perfiles de `demo/hola.json` sin
+  que saltara ninguna comparación byte a byte, y E5 daba por cumplido un
+  criterio que pedía «los DXF de los casos de referencia».
+
+  Lo cubre `tests/golden/test_compilado.py` con **cuatro** casos
+  (`tests/casos.py`), uno de ellos una frase que no cabe, para que el camino
+  del veredicto negativo también esté vigilado. Guarda el sha256 de cada DXF
+  **y los números de cabecera**: un golden que solo dice «ha cambiado»
+  obliga a reconstruir el porqué a mano, y con los números el fallo dice
+  «error_trazo_mm pasa de 0,0676 a 0,0675».
 - **Fase.** Un cartucho montado desfasado escribe basura. La marca física y la
   verificación van en el dossier, no solo en el código.
 

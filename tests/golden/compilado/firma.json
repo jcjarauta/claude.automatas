@@ -1,0 +1,49 @@
+{
+  "apto": true,
+  "avisos": [],
+  "calajes_grados": {
+    "derecho": -176.251166,
+    "elevador": 2.149096,
+    "izquierdo": -3.748834
+  },
+  "caso": "firma",
+  "desviacion_de_lo_capturado_mm": 0.052743,
+  "error_trazo_mm": 0.067602,
+  "errores": [],
+  "levas": [
+    {
+      "canal": "izquierdo",
+      "curvatura_minima_mm": 28.816587,
+      "numero": "L-001",
+      "presion_maxima_grados": 4.180471,
+      "puntos_del_contorno": 720,
+      "radio_maximo_mm": 52.680382,
+      "radio_minimo_mm": 49.947624,
+      "sha256": "81a42915f851777a27050cffca19fc53cb6b70b2c06fa33b0c961a19c79dce79"
+    },
+    {
+      "canal": "derecho",
+      "curvatura_minima_mm": 29.863662,
+      "numero": "L-002",
+      "presion_maxima_grados": 4.312327,
+      "puntos_del_contorno": 720,
+      "radio_maximo_mm": 53.758475,
+      "radio_minimo_mm": 50.893087,
+      "sha256": "03c59f85eebf167ed07b1c9e50ac29e06ea3b60c3653c1a01ce5eae7aba4f589"
+    },
+    {
+      "canal": "elevador",
+      "curvatura_minima_mm": 13.493039,
+      "numero": "L-003",
+      "presion_maxima_grados": 8.347206,
+      "puntos_del_contorno": 720,
+      "radio_maximo_mm": 52.281314,
+      "radio_minimo_mm": 51.718289,
+      "sha256": "f517e2ea2c6f9f253e96db089d7091a1b689a6de80e93cae49a2db39d1f271a9"
+    }
+  ],
+  "tramos": [
+    "trazo0",
+    "vuelo0"
+  ]
+}

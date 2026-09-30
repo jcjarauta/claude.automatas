@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from emit.dxf import escribir_dxf
 from emit.layout import Formato, maquetar
 from emit.template import escribir_pdf
+from tests.casos import escribir_manifiestos
 from tests.emit.piezas_de_prueba import leva
 
 GOLDEN = Path(__file__).resolve().parent.parent / "tests" / "golden"
@@ -29,6 +30,8 @@ def main() -> int:
         escribir_dxf(leva(), GOLDEN / "leva.dxf"),
     ):
         print(f"regenerado {ruta.relative_to(GOLDEN.parent.parent)} ({ruta.stat().st_size} bytes)")
+    for ruta in escribir_manifiestos():
+        print(f"regenerado {ruta.relative_to(GOLDEN.parent.parent)}")
     return 0
 
 
