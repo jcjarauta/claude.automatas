@@ -23,6 +23,7 @@ from compile.coste import PrecioCerrado, cargar_precios, valorar
 from compile.energia import Accionamiento, analizar
 from compile.escribiente import Escribiente, compilar
 from compile.informe import escribir_informe, resumen
+from compile.tolerancias import presupuesto_de_error
 from core.energy.humano import Transmision
 from core.escritura import Capacidad, Escritura, Trazo
 from core.units import mm
@@ -100,8 +101,10 @@ def main(argv: list[str] | None = None) -> int:
     energia = None
     veredicto_energia = None
     valoracion = None
+    presupuesto = None
     if compilacion.perfiles:
         montaje, veredicto_montaje = montar(compilacion, maquina)
+        presupuesto = presupuesto_de_error(compilacion, maquina)
         energia, veredicto_energia = analizar(compilacion, montaje.inercia, accionamiento)
         if PRECIOS.exists():
             corte = (
@@ -123,6 +126,7 @@ def main(argv: list[str] | None = None) -> int:
         veredicto_energia,
         accionamiento,
         valoracion,
+        presupuesto,
     )
     escribir_programa(
         json.loads(compilacion.programa.model_dump_json()),
@@ -141,6 +145,11 @@ def main(argv: list[str] | None = None) -> int:
                 print("sin STEP: falta el kernel. Instálalo con  uv sync --group cad")
 
     print(resumen(compilacion))
+    if presupuesto is not None:
+        print(
+            f"error esperado en la punta: {presupuesto.peor_caso * 1000:.2f} mm en el peor "
+            f"caso, {presupuesto.cuadratica * 1000:.2f} mm cuadrático"
+        )
     if valoracion is not None:
         aviso = "" if valoracion.precio_cerrado else " (previsión)"
         print(

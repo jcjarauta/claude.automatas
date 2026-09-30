@@ -90,6 +90,7 @@ compile/              # Orquesta: intención -> piezas + informe. I/O permitido.
   escribiente.py      #   La máquina concreta: compilar y simular
   conjunto.py         #   El cartucho montado: interferencias, pila, masa
   energia.py          #   ¿Puede girarlo una persona, y sale limpio?
+  tolerancias.py      #   C4 aplicado: cuánto error llega de verdad a la punta
   coste.py            #   Qué cuesta: lo que se compra y lo que se corta
   informe.py          #   El informe del pedido, en markdown
   cli.py              #   Un pedido, un comando
@@ -453,6 +454,15 @@ que se decidieron midiendo y no eligiendo:
   por encima del 2,5 recomendado, y desaparece el aviso `curvatura_justa`.
 - **Error de trazo simulado: 0,11 mm** con 720 muestras por vuelta, más
   0,040 mm que cuesta exportar el perfil como polígono en vez de como curva.
+  **Ese no es el error de la máquina, es el del modelo.** Con C4 enchufado
+  (`compile/tolerancias.py`), el presupuesto completo con «hola» da
+  **2,79 mm en el peor caso y 1,64 mm cuadrático**, y lo domina el corte: los
+  ±0,05 mm que se le piden al taller llegan a la punta como 1,16 mm. El
+  varillaje amplifica un error del canto unas 12 veces de cuenta corta —
+  `relacion × proximal / brazo_seguidor`— y **23 veces según el jacobiano
+  real del cinco barras**, que mueve la punta con una palanca efectiva mayor
+  que el brazo proximal. La cuenta corta es optimista; sirve para hablar con
+  el taller, no para prometer.
 - **El cartucho pesa 185 g** y su momento de inercia respecto del árbol es de
   2,6 × 10⁻⁴ kg·m². Salen exactos del polígono, sin modelo 3-D: todas las
   piezas son prismas de plancha (`core/solido.py`).

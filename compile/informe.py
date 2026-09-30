@@ -14,6 +14,7 @@ from compile.conjunto import Montaje
 from compile.coste import Valoracion
 from compile.energia import Accionamiento, Energia
 from compile.escribiente import Compilacion, Escribiente
+from compile.tolerancias import Presupuesto, amplificacion_del_canto
 from core.units import Radianes, a_grados, a_mm
 from core.verdict import Incidencia, Veredicto
 
@@ -40,6 +41,7 @@ def informe(
     veredicto_energia: Veredicto | None = None,
     accionamiento: Accionamiento | None = None,
     valoracion: Valoracion | None = None,
+    presupuesto: Presupuesto | None = None,
 ) -> str:
     """El informe completo, en markdown."""
     v = compilacion.veredicto
@@ -171,6 +173,39 @@ def informe(
             "",
         ]
 
+    if presupuesto is not None:
+        lineas += [
+            "## Cuánto error cabe esperar",
+            "",
+            f"El varillaje amplifica: un error radial en el canto de la leva llega a la"
+            f" punta multiplicado por unas **{amplificacion_del_canto(maquina):.0f} veces**"
+            f" de cuenta corta, y algo más según el jacobiano real del cinco barras. Por"
+            f" eso lo que decide la precisión de esta máquina no es el compilador, es"
+            f" quien corta la leva.",
+            "",
+            "| De dónde | Magnitud | Amplificación | En la punta |",
+            "| --- | --- | --- | --- |",
+        ]
+        for contribucion in sorted(presupuesto.cadena.contribuciones, key=lambda c: -c.en_punta):
+            lineas.append(
+                f"| {contribucion.nombre} | {contribucion.magnitud * 1000:.3f} mm |"
+                f" × {contribucion.amplificacion:.1f} |"
+                f" **{contribucion.en_punta * 1000:.3f} mm** |"
+            )
+        lineas += [
+            "",
+            f"- **Peor caso: {presupuesto.peor_caso * 1000:.2f} mm** — todo conspirando en"
+            f" el mismo sentido. Es lo que se puede prometer.",
+            f"- Cuadrático: {presupuesto.cuadratica * 1000:.2f} mm — holguras"
+            f" independientes, que es lo que se suele medir.",
+            "",
+            "**Dos de estas contribuciones no están medidas**: el error de perfil es la"
+            " tolerancia que se le pide al taller, no la que da, y la holgura de pivote"
+            " es una estimación de catálogo. Las mide E4. Hasta entonces esto sirve para"
+            " decidir arquitectura, no para prometer una cota a un cliente.",
+            "",
+        ]
+
     if valoracion is not None:
         minutos = valoracion.segundos_de_maquina / 60.0
         lineas += [
@@ -226,6 +261,7 @@ def escribir_informe(
     veredicto_energia: Veredicto | None = None,
     accionamiento: Accionamiento | None = None,
     valoracion: Valoracion | None = None,
+    presupuesto: Presupuesto | None = None,
 ) -> Path:
     ruta = Path(destino)
     ruta.parent.mkdir(parents=True, exist_ok=True)
@@ -239,6 +275,7 @@ def escribir_informe(
             veredicto_energia,
             accionamiento,
             valoracion,
+            presupuesto,
         ),
         encoding="utf-8",
     )
