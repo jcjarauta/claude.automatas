@@ -1,0 +1,23 @@
+{
+  "nombre": "anillo_lapiz",
+  "familia": "fijacion",
+  "designacion": "Mädler 62311000GA",
+  "cantidad": 1,
+  "material": "aluminio anodizado",
+  "fuente": {
+    "proveedor": "Mädler",
+    "referencia": "62311000GA",
+    "url": "https://www.maedler.de/Article/62311000GA",
+    "fecha": "2026-09-29",
+    "verificado": true
+  },
+  "cotas": [
+    {
+      "nombre": "agujero",
+      "valor": 0.01,
+      "tolerancia": "",
+      "critica": true
+    }
+  ],
+  "nota": "Aprieta el portaminas sobre la palanca. El agujero tiene que casar con el cuerpo del portaminas, que HAY QUE MEDIR: el catálogo da 10 mm nominales de la caja, que no es la cota de la pieza."
+}

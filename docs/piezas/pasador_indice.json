@@ -1,0 +1,32 @@
+{
+  "nombre": "pasador_indice",
+  "familia": "pasador",
+  "designacion": "DIN 6325 Ø3 x 24",
+  "cantidad": 3,
+  "material": "acero templado",
+  "fuente": {
+    "proveedor": "esutil.es",
+    "referencia": "DIN 6325 3x24",
+    "url": "https://www.esutil.es/pasador-din-6325-cilindrico-templado-de-acero-b53d0/",
+    "fecha": "2026-09-29",
+    "verificado": true
+  },
+  "cotas": [
+    {
+      "nombre": "diametro",
+      "valor": 0.003,
+      "tolerancia": "m6",
+      "critica": true
+    },
+    {
+      "nombre": "longitud",
+      "valor": 0.024,
+      "tolerancia": "",
+      "critica": true
+    }
+  ],
+  "nota": "DESLIZANTE en las tres levas de POM y apretado solo en el plato de arrastre metálico. El m6 de la norma aprieta en acero; en POM la interferencia se relaja por fluencia en semanas y el calaje se perdería después de la venta. Contrato de fase.\n\nLARGO 24 Y NO 16: la pila son 19 mm (3 levas de 5 + 2 separadores de 2) y un pasador de 16 no llega a la tercera leva, que es justo lo que el contrato de fase promete calar. Con 24 atraviesa la pila y le sobran 5 para el plato de arrastre. Lo encontró un test que cruza la longitud del pasador con el espesor de la plancha y el del separador.",
+  "sustitutos": [
+    "DIN 6325 Ø3 x 26 si el plato de arrastre necesitara más apoyo"
+  ]
+}

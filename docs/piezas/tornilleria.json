@@ -1,0 +1,29 @@
+{
+  "nombre": "tornilleria",
+  "familia": "fijacion",
+  "designacion": "DIN 912 M3 inox A2",
+  "cantidad": 20,
+  "material": "inox A2",
+  "fuente": {
+    "proveedor": "Ferretería Campollano",
+    "referencia": "DIN 912 M3",
+    "url": "https://www.ferreteriacampollano.com/tornilleria-y-fijaciones/tornillos-allen/din-912.html",
+    "fecha": "2026-09-29",
+    "verificado": true
+  },
+  "cotas": [
+    {
+      "nombre": "metrica",
+      "valor": 0.003,
+      "tolerancia": "",
+      "critica": false
+    },
+    {
+      "nombre": "cabeza",
+      "valor": 0.0055,
+      "tolerancia": "",
+      "critica": false
+    }
+  ],
+  "nota": "Allen inox. Se compra en cajas de 100."
+}

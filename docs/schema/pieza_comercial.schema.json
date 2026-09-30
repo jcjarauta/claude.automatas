@@ -1,0 +1,154 @@
+{
+  "$defs": {
+    "Cota": {
+      "additionalProperties": false,
+      "description": "Una medida de interfaz, en metros, con su tolerancia si la tiene.",
+      "properties": {
+        "critica": {
+          "default": false,
+          "title": "Critica",
+          "type": "boolean"
+        },
+        "nombre": {
+          "minLength": 1,
+          "title": "Nombre",
+          "type": "string"
+        },
+        "tolerancia": {
+          "default": "",
+          "title": "Tolerancia",
+          "type": "string"
+        },
+        "valor": {
+          "maximum": 10.0,
+          "minimum": 0.0,
+          "title": "Valor",
+          "type": "number"
+        }
+      },
+      "required": [
+        "nombre",
+        "valor"
+      ],
+      "title": "Cota",
+      "type": "object"
+    },
+    "FamiliaComercial": {
+      "description": "Para qué sirve, que es como se busca en el despiece.",
+      "enum": [
+        "rodamiento",
+        "casquillo",
+        "eje",
+        "pasador",
+        "muelle",
+        "engranaje",
+        "separador",
+        "fijacion",
+        "instrumento",
+        "material"
+      ],
+      "title": "FamiliaComercial",
+      "type": "string"
+    },
+    "Fuente": {
+      "additionalProperties": false,
+      "description": "De dónde sale la cota, para poder volver a mirarla.\n\nSin esto, dentro de seis meses no hay forma de saber si un número se leyó\nen la ficha del fabricante o lo puso alguien de memoria.",
+      "properties": {
+        "fecha": {
+          "minLength": 1,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "title": "Fecha",
+          "type": "string"
+        },
+        "proveedor": {
+          "minLength": 1,
+          "title": "Proveedor",
+          "type": "string"
+        },
+        "referencia": {
+          "minLength": 1,
+          "title": "Referencia",
+          "type": "string"
+        },
+        "url": {
+          "minLength": 1,
+          "title": "Url",
+          "type": "string"
+        },
+        "verificado": {
+          "default": true,
+          "title": "Verificado",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "proveedor",
+        "referencia",
+        "url",
+        "fecha"
+      ],
+      "title": "Fuente",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Una referencia de catálogo, con lo que el diseño necesita de ella.",
+  "properties": {
+    "cantidad": {
+      "minimum": 1,
+      "title": "Cantidad",
+      "type": "integer"
+    },
+    "cotas": {
+      "items": {
+        "$ref": "#/$defs/Cota"
+      },
+      "minItems": 1,
+      "title": "Cotas",
+      "type": "array"
+    },
+    "designacion": {
+      "minLength": 1,
+      "title": "Designacion",
+      "type": "string"
+    },
+    "familia": {
+      "$ref": "#/$defs/FamiliaComercial"
+    },
+    "fuente": {
+      "$ref": "#/$defs/Fuente"
+    },
+    "material": {
+      "default": "",
+      "title": "Material",
+      "type": "string"
+    },
+    "nombre": {
+      "minLength": 1,
+      "title": "Nombre",
+      "type": "string"
+    },
+    "nota": {
+      "default": "",
+      "title": "Nota",
+      "type": "string"
+    },
+    "sustitutos": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Sustitutos",
+      "type": "array"
+    }
+  },
+  "required": [
+    "nombre",
+    "familia",
+    "designacion",
+    "cantidad",
+    "fuente",
+    "cotas"
+  ],
+  "title": "PiezaComercial",
+  "type": "object"
+}

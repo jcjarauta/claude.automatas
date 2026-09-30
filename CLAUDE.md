@@ -86,6 +86,7 @@ core/                 # PURO. Geometría, cinemática, energía.
     accumulator.py    #   C10 · carga y descarga
   tolerance.py        #   C4 · cadena de tolerancias
   solido.py           #   Masa y momento polar de un prisma, desde su polígono
+  comercial.py        #   Ficha de pieza de catálogo: cotas de interfaz y fuente
 compile/              # Orquesta: intención -> piezas + informe. I/O permitido.
   escribiente.py      #   La máquina concreta: compilar y simular
   conjunto.py         #   El cartucho montado: interferencias, pila, masa
@@ -295,6 +296,12 @@ Cuatro decisiones que condicionan todo lo demás:
   serializa. Vive en el actuador que consume el canal, nunca en la leva.
 - **El catálogo es dato**: un JSON por módulo en `docs/modulos/`, validado
   contra el esquema de `docs/schema/`. Añadir un módulo no es programar.
+- **Las piezas comerciales también tienen ficha**, en `docs/piezas/`: sus
+  **cotas de interfaz** —las que otra pieza toca— con fuente, fecha y enlace.
+  La ficha manda sobre el STEP del fabricante, que se importa para mirar y
+  no para acotar. `tests/compile/test_piezas_reales.py` cruza cada cota
+  crítica con el número que usa el compilador, y es lo que impide que una
+  cota mal leída se cuele en la geometría.
 
 Tras tocar un modelo: `uv run python scripts/export_schema.py`. Hay un test que
 falla si el esquema versionado se queda atrás.
@@ -418,6 +425,7 @@ falla si el esquema versionado se queda atrás.
 | `docs/ficha-producto.md` | Despiece, proveedores, coste de material y decisiones de fabricación |
 | `docs/metodologia.md` | Cómo se diseña, se prueba antes de gastar, y qué lleva el dossier |
 | `docs/modulos/` | Una ficha por módulo del catálogo |
+| `docs/piezas/` | Una ficha por pieza comercial: cotas de interfaz, fuente y sustitutos |
 | `bench/README.md` | Protocolo del banco de ensayo y datos medidos |
 
 ## El escribiente concreto (E5)

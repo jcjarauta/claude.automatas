@@ -1,0 +1,29 @@
+{
+  "nombre": "poste_pivote",
+  "familia": "eje",
+  "designacion": "eje inox X46Cr13 Ø8 h6",
+  "cantidad": 3,
+  "material": "X46Cr13 (1.4034) rectificado",
+  "fuente": {
+    "proveedor": "Dold Mechatronik",
+    "referencia": "eje de precisión Ø8 h6 inox",
+    "url": "https://www.dold-mechatronik.de/",
+    "fecha": "2026-09-29",
+    "verificado": false
+  },
+  "cotas": [
+    {
+      "nombre": "diametro",
+      "valor": 0.008,
+      "tolerancia": "h6",
+      "critica": true
+    },
+    {
+      "nombre": "longitud",
+      "valor": 0.07,
+      "tolerancia": "",
+      "critica": false
+    }
+  ],
+  "nota": "Bajó de Ø16 a Ø8 al descubrir que lo que come hueco es la valona del casquillo. El Ø16 nunca estuvo justificado: la fuerza tangencial en el seguidor es de 0,7 N, así que un Ø8 sobra por dos órdenes de magnitud. Precio sin verificar: falta IVA y portes a España."
+}

@@ -1,0 +1,44 @@
+{
+  "nombre": "muelle_seguidor",
+  "familia": "muelle",
+  "designacion": "RS PRO 751-540",
+  "cantidad": 3,
+  "material": "acero aleado",
+  "fuente": {
+    "proveedor": "RS España",
+    "referencia": "751-540",
+    "url": "https://es.rs-online.com/web/p/muelles-de-compresion/0751540",
+    "fecha": "2026-09-29",
+    "verificado": true
+  },
+  "cotas": [
+    {
+      "nombre": "hilo",
+      "valor": 0.0008,
+      "tolerancia": "",
+      "critica": false
+    },
+    {
+      "nombre": "exterior",
+      "valor": 0.0088,
+      "tolerancia": "",
+      "critica": false
+    },
+    {
+      "nombre": "longitud_libre",
+      "valor": 0.068,
+      "tolerancia": "",
+      "critica": false
+    },
+    {
+      "nombre": "longitud_minima",
+      "valor": 0.0238,
+      "tolerancia": "",
+      "critica": false
+    }
+  ],
+  "nota": "De compresión y no de tracción: el de tracción rompe por el gancho, se puede desenganchar y TINTINEA, que en un objeto cuyo argumento es que suena bien lo descalifica. k = 0,44 N/mm y Fmáx 19,5 N, que cumple variación menor del 15 % en los 3 mm de recorrido con precarga entre 8,8 y 18,2 N. Es esbelto y necesita varilla guía.",
+  "sustitutos": [
+    "RS PRO 821-380, k = 0,29 N/mm, para el tramo de 5,8 a 9,5 N"
+  ]
+}

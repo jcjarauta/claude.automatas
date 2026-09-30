@@ -1,0 +1,35 @@
+{
+  "nombre": "plancha_pom",
+  "familia": "material",
+  "designacion": "POM-C negro, plancha 5 mm",
+  "cantidad": 1,
+  "material": "POM-C (acetal copolímero)",
+  "fuente": {
+    "proveedor": "Polygom",
+    "referencia": "plancha 1000x1000x5",
+    "url": "https://www.polygom.es/products/plancha-de-delrin%C2%AE-acetal-negra-pom-c",
+    "fecha": "2026-09-29",
+    "verificado": true
+  },
+  "cotas": [
+    {
+      "nombre": "espesor",
+      "valor": 0.005,
+      "tolerancia": "SIN CONFIRMAR",
+      "critica": true
+    },
+    {
+      "nombre": "ancho",
+      "valor": 1.0,
+      "tolerancia": "",
+      "critica": false
+    },
+    {
+      "nombre": "largo",
+      "valor": 1.0,
+      "tolerancia": "",
+      "critica": false
+    }
+  ],
+  "nota": "El material de las tres levas. POM y no metacrilato: la leva tiene dos agujeros y zonas de curvatura mínima, que son concentradores de tensión, y el PMMA entallado pierde un factor once en impacto — no se desgasta, se agrieta desde un agujero. LA TOLERANCIA DE ESPESOR NO ESTÁ PUBLICADA y es lo que decide si la pila de tres levas se come el hueco: hay que preguntarla. Salen 81 levas por plancha, o sea 27 cartuchos."
+}

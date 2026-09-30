@@ -22,7 +22,7 @@ donde no toca escribe basura, y no se nota hasta que se gira la manivela.
 | --- | --- |
 | Cero lógico | θ = 0 del árbol maestro, que es el eje **+X** del marco de la leva |
 | Taladro del eje | Ø10 mm, centrado. **Centra, no orienta** |
-| Pasador de índice | Ø3 mm, a **18 mm** del centro, sobre +X |
+| Pasador de índice | Ø3 mm, **largo 24**, a **18 mm** del centro, sobre +X |
 | Marca grabada | Una línea del pasador al borde, rotulada `FASE 0`. Apunta al pasador |
 | Alcance | **Las tres levas y los separadores llevan el pasador en el mismo sitio** |
 | Ajuste | **Deslizante en las tres levas** (POM, H8). Apretado solo en el plato de arrastre metálico |
@@ -72,7 +72,7 @@ pasador y llega al borde, para que la pieza y el dibujo digan lo mismo.
 | --- | --- |
 | Diámetro | **Ø10 mm**, tolerancia h7 |
 | Sentido de giro | Horario visto desde arriba, θ creciente |
-| Índice | Un pasador Ø3 transversal, a 18 mm del centro (ver contrato de fase) |
+| Índice | Un pasador Ø3 × 24 transversal, a 18 mm del centro (ver contrato de fase) |
 | Pila del cartucho | 3 levas de 5 mm + 2 separadores de 2 mm = **19 mm** |
 | Altura máxima de pila | 80 mm |
 
@@ -165,3 +165,4 @@ un solo compromiso, y todavía falta el dato que lo cierra.
 | 2026-09-29 | Bastidor | Corregida la valona del GFM-0810: **Ø15**, no Ø12. El hueco pasa de 11,0 a **9,5 mm** | El Ø12 se anotó de una investigación sin contrastar con el fabricante. La ficha de igus da d3 = 15 mm. Sigue holgado, pero con menos margen del que se dijo |
 | 2026-09-30 | **Calaje** | Congelado. El calaje pasa de ser la media de los ángulos de la frase a ser el ángulo del brazo en el centro de la caja | Con la media, el calaje se movía 3,3° entre frases y el brazo dejaba de ser pieza de stock. Cuesta décimas de milímetro de leva |
 | 2026-09-30 | Bastidor | Hueco al poste de 9,5 a **9,7 mm** con «hola» | Consecuencia de fijar el calaje. No es una decisión, es el número que sale |
+| 2026-09-30 | Fase | Pasador de índice de Ø3 × 16 a **Ø3 × 24** | Con 16 no llegaba a la tercera leva de una pila de 19 mm, que es justo lo que el contrato promete calar. Lo encontró un test que cruza la ficha del pasador con la de la plancha y la del separador |

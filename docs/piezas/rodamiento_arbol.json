@@ -1,0 +1,38 @@
+{
+  "nombre": "rodamiento_arbol",
+  "familia": "rodamiento",
+  "designacion": "6800-2Z",
+  "cantidad": 2,
+  "material": "acero cromo, blindado con chapa",
+  "fuente": {
+    "proveedor": "123rodamiento",
+    "referencia": "6800-2Z genérico",
+    "url": "https://www.123rodamiento.es/rodamiento-cojinete/rodamiento-bola/una-hilera/6800-zz",
+    "fecha": "2026-09-29",
+    "verificado": true
+  },
+  "cotas": [
+    {
+      "nombre": "agujero",
+      "valor": 0.01,
+      "tolerancia": "",
+      "critica": true
+    },
+    {
+      "nombre": "exterior",
+      "valor": 0.019,
+      "tolerancia": "",
+      "critica": false
+    },
+    {
+      "nombre": "ancho",
+      "valor": 0.005,
+      "tolerancia": "",
+      "critica": false
+    }
+  ],
+  "nota": "El agujero Ø10 fija el árbol de levas y está en el contrato de eje.",
+  "sustitutos": [
+    "MR106-2Z (10x6x3) si hiciera falta menos altura"
+  ]
+}

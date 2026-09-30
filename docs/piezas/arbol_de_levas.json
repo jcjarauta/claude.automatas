@@ -1,0 +1,29 @@
+{
+  "nombre": "arbol_de_levas",
+  "familia": "eje",
+  "designacion": "eje de precisión Ø10 h6, CF53",
+  "cantidad": 1,
+  "material": "CF53 templado y rectificado, Ra 0,3",
+  "fuente": {
+    "proveedor": "Motedis",
+    "referencia": "W10H6",
+    "url": "https://www.motedis.es/es/Eje-de-precision-10-mm-H6-acero-templado-y-rectificado",
+    "fecha": "2026-09-29",
+    "verificado": true
+  },
+  "cotas": [
+    {
+      "nombre": "diametro",
+      "valor": 0.01,
+      "tolerancia": "h6",
+      "critica": true
+    },
+    {
+      "nombre": "longitud",
+      "valor": 0.12,
+      "tolerancia": "",
+      "critica": false
+    }
+  ],
+  "nota": "Contrato de eje: Ø10 porque es la varilla calibrada más corriente y tiene rodamiento barato en cualquier catálogo."
+}

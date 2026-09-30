@@ -1,0 +1,41 @@
+{
+  "nombre": "rueda_reductor",
+  "familia": "engranaje",
+  "designacion": "Mädler 26206000, m0,7 Z60",
+  "cantidad": 1,
+  "material": "latón Ms58 (2.0401), calidad 8d DIN 58405",
+  "fuente": {
+    "proveedor": "Mädler",
+    "referencia": "26206000",
+    "url": "https://www.maedler.de/article/26206000",
+    "fecha": "2026-09-29",
+    "verificado": true
+  },
+  "cotas": [
+    {
+      "nombre": "modulo",
+      "valor": 0.0007,
+      "tolerancia": "",
+      "critica": true
+    },
+    {
+      "nombre": "exterior",
+      "valor": 0.0434,
+      "tolerancia": "",
+      "critica": true
+    },
+    {
+      "nombre": "ancho",
+      "valor": 0.004,
+      "tolerancia": "",
+      "critica": false
+    },
+    {
+      "nombre": "agujero",
+      "valor": 0.015,
+      "tolerancia": "H7",
+      "critica": true
+    }
+  ],
+  "nota": "Z60. Va en el árbol de levas, que es el eje LENTO, así que no es el volante: aporta 0,65 de los 5,5 x 10-4 kg.m2 que hacen falta, un 12 %. Pasar de módulo 1 a 0,7 ahorró 2,63 EUR y bajó la rueda de Ø62 a Ø43. Par máximo 59 N.cm, muy por encima de los 4,8 que pide el árbol."
+}

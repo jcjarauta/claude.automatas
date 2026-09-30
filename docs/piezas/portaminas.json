@@ -1,0 +1,38 @@
+{
+  "nombre": "portaminas",
+  "familia": "instrumento",
+  "designacion": "Staedtler Mars technico 780 C",
+  "cantidad": 1,
+  "material": "cuerpo de plástico, pinza y agarre metálicos",
+  "fuente": {
+    "proveedor": "hipermaterial.es",
+    "referencia": "780 C (PR5)",
+    "url": "https://www.hipermaterial.es/portaminas/portaminas-staedtler-mars-2-mm-780c-prs-06530.html",
+    "fecha": "2026-09-29",
+    "verificado": true
+  },
+  "cotas": [
+    {
+      "nombre": "mina",
+      "valor": 0.002,
+      "tolerancia": "",
+      "critica": true
+    },
+    {
+      "nombre": "cuerpo",
+      "valor": 0.01,
+      "tolerancia": "nominal, SIN MEDIR",
+      "critica": true
+    },
+    {
+      "nombre": "longitud",
+      "valor": 0.15,
+      "tolerancia": "",
+      "critica": false
+    }
+  ],
+  "nota": "De pinza y 2 mm, no de 0,5: el de 2 mm no necesita avanzar la mina, tiene cuerpo cilíndrico que entra directo en el anillo de apriete, y la mina no se rompe. EL DIÁMETRO DEL CUERPO NO ESTÁ MEDIDO: los 10 mm son la cota nominal de la caja. Hay que medir un ejemplar con pie de rey antes de dimensionar el anillo.",
+  "sustitutos": [
+    "Caran d'Ache Fixpencil 22: todo metal y mucho mejor acabado, pero cuerpo hexagonal y 20,80 EUR"
+  ]
+}

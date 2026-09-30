@@ -1,0 +1,44 @@
+{
+  "nombre": "pinon_reductor",
+  "familia": "engranaje",
+  "designacion": "Mädler 26202000, m0,7 Z20",
+  "cantidad": 1,
+  "material": "latón Ms58 (2.0401), calidad 8d DIN 58405",
+  "fuente": {
+    "proveedor": "Mädler",
+    "referencia": "26202000",
+    "url": "https://www.maedler.de/article/26202000",
+    "fecha": "2026-09-29",
+    "verificado": true
+  },
+  "cotas": [
+    {
+      "nombre": "modulo",
+      "valor": 0.0007,
+      "tolerancia": "",
+      "critica": true
+    },
+    {
+      "nombre": "exterior",
+      "valor": 0.0154,
+      "tolerancia": "",
+      "critica": true
+    },
+    {
+      "nombre": "ancho",
+      "valor": 0.004,
+      "tolerancia": "",
+      "critica": false
+    },
+    {
+      "nombre": "agujero",
+      "valor": 0.01,
+      "tolerancia": "H7",
+      "critica": true
+    }
+  ],
+  "nota": "Z20, en el eje de la manivela, que es el RÁPIDO. Relación 3:1. Ojo con el cubo: Ø10 de agujero sobre 15,4 de exterior deja muy poca pared. Par máximo 5,0 N.cm frente a los 1,6 que pide la manivela.",
+  "sustitutos": [
+    "juego de poleas GT2 20T/60T más correa, unos 10 EUR frente a 25,64: más barato pero se ve, y la rueda de latón es parte del producto"
+  ]
+}

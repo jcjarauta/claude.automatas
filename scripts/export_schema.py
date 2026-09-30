@@ -14,6 +14,7 @@ import json
 import sys
 from pathlib import Path
 
+from core.comercial import PiezaComercial
 from core.module import FichaModulo, Maquina
 from core.program import Programa
 from core.verdict import Veredicto
@@ -25,6 +26,7 @@ MODELOS = {
     "ficha_modulo": FichaModulo,
     "maquina": Maquina,
     "veredicto": Veredicto,
+    "pieza_comercial": PiezaComercial,
 }
 
 

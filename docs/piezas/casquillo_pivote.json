@@ -1,0 +1,51 @@
+{
+  "nombre": "casquillo_pivote",
+  "familia": "casquillo",
+  "designacion": "igus GFM-0810-06",
+  "cantidad": 3,
+  "material": "iglidur G",
+  "fuente": {
+    "proveedor": "igus",
+    "referencia": "GFM-0810-06",
+    "url": "https://www.igus.eu/product/739?artNr=GFM-0810-06",
+    "fecha": "2026-09-29",
+    "verificado": true
+  },
+  "cotas": [
+    {
+      "nombre": "agujero",
+      "valor": 0.008,
+      "tolerancia": "",
+      "critica": true
+    },
+    {
+      "nombre": "exterior",
+      "valor": 0.01,
+      "tolerancia": "",
+      "critica": false
+    },
+    {
+      "nombre": "valona",
+      "valor": 0.015,
+      "tolerancia": "d13",
+      "critica": true
+    },
+    {
+      "nombre": "espesor_valona",
+      "valor": 0.001,
+      "tolerancia": "h13",
+      "critica": false
+    },
+    {
+      "nombre": "longitud",
+      "valor": 0.006,
+      "tolerancia": "",
+      "critica": false
+    }
+  ],
+  "nota": "LA VALONA ES Ø15, no Ø12. Es la cota que decide el hueco de la leva al poste, porque lo que la leva ve al girar no es el poste sino la valona del casquillo. Se anotó Ø12 leyendo mal un catálogo y acabó copiada en tres documentos; el fabricante da d3 = 15 mm. Con Ø15 el hueco con «hola» queda en 9,7 mm.",
+  "sustitutos": [
+    "igus GFM-081012-125, que sí tiene valona Ø12 pero mide 12,5 de largo: por confirmar con el plano",
+    "casquillo de bronce sinterizado B-8-12-8, valona Ø16: quedan 9,0 mm"
+  ]
+}

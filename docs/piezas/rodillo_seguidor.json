@@ -1,0 +1,38 @@
+{
+  "nombre": "rodillo_seguidor",
+  "familia": "rodamiento",
+  "designacion": "MR63ZZ",
+  "cantidad": 7,
+  "material": "acero cromo, blindado con chapa",
+  "fuente": {
+    "proveedor": "123rodamiento",
+    "referencia": "MR63-ZZ genérico",
+    "url": "https://www.123rodamiento.es/rodamiento-cojinete/rodamiento-bola/una-hilera/mr63-zz",
+    "fecha": "2026-09-29",
+    "verificado": true
+  },
+  "cotas": [
+    {
+      "nombre": "agujero",
+      "valor": 0.003,
+      "tolerancia": "",
+      "critica": true
+    },
+    {
+      "nombre": "exterior",
+      "valor": 0.006,
+      "tolerancia": "",
+      "critica": true
+    },
+    {
+      "nombre": "ancho",
+      "valor": 0.0025,
+      "tolerancia": "",
+      "critica": true
+    }
+  ],
+  "nota": "Las dos letras del sufijo importan. El MR63 ABIERTO mide 2,0 de ancho y dejaría 0,5 mm de juego axial en la pila; solo el blindado mide 2,5. Y ZZ y no 2RS: con Ø3 de agujero, dos retenes de contacto arrastran tanto como el rozamiento que hace rodar al rodillo, y el rodillo deslizaría labrando una cara plana. El exterior Ø6 es `Escribiente.radio_rodillo`.",
+  "sustitutos": [
+    "623-2Z (3x10x4), única medida ISO con marca europea; obligaría a rehacer la curvatura"
+  ]
+}
