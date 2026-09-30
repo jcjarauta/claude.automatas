@@ -383,10 +383,90 @@ Orden correcto: llamar al taller, medir el juego con las excéntricas, y
 entonces decidir. Cambiar la geometría ahora sería optimizar contra un número
 que todavía no conocemos.
 
-**2 · La línea de tallas.** Una sola caja de escritura de 80 × 30 mm limita
-el producto a una palabra o una firma. Tres plataformas congeladas —S, M, L—
-con el compilador eligiendo la menor en la que la frase entra resolvería «y
-si no cabe» sin volver la plataforma configurable.
+**2 · Cuánto texto cabe, que resultó no ser una cuestión de tamaño.**
+
+La intuición razonable es que una frase larga pide una máquina mayor. **Es
+medio verdad, y la mitad que falla es la que decide el producto.**
+
+Lo que limita no es la amplitud del trazo: es su **frecuencia**. Una leva de
+disco guarda todo el programa en una vuelta, así que más texto en la misma
+caja de escritura no significa un recorrido mayor, significa el mismo
+recorrido con muchas más idas y venidas. El radio de la leva casi no cambia;
+lo que se desploma es el radio de curvatura del perfil.
+
+Barrido con escritura sintética, misma caja, sólo crece la longitud de arco:
+
+| Arco | mm/muestra | Error de trazo | Ángulo de presión | Ø leva | Veredicto |
+| --- | --- | --- | --- | --- | --- |
+| 82 mm | 0,11 | 0,076 mm | 8,3° | 107,2 | limpio |
+| 166 | 0,23 | 0,104 | 9,5° | 109,0 | `curvatura_justa` |
+| 335 | 0,47 | 0,360 | 12,4° | 109,0 | **`perfil_autointersecado`** |
+| 673 | 0,94 | 0,930 | 22,7° | 109,0 | socavado y trazo infiel |
+| 1.348 | 1,87 | 3,021 | 49,4° | 109,5 | **ángulo de presión excedido** |
+| 5.395 | 7,49 | 2,353 | 70,4° | 110,9 | todo roto |
+
+**El diámetro de la leva pasa de 107 a 111 mm mientras el arco se multiplica
+por 65.** Agrandar la máquina no es la palanca que parece.
+
+### Lo que sí compra el tamaño, y dónde se acaba
+
+Sobre el caso de 335 mm, que hoy ya socava:
+
+| Radio base | Ø leva | Presión | Veredicto |
+| --- | --- | --- | --- |
+| 55 mm | 109 | 12,4° | socavado |
+| **80 mm** | **159** | **9,4°** | **limpio** |
+| 110 mm | 219 | 7,7° | `poco_hueco_al_poste` |
+| 150 mm | 299 | 6,5° | **la leva choca con el poste** |
+
+Crecer sí rescata el doble de texto. Pero **la arquitectura se cierra sola**:
+la leva crece con el radio base y los postes sólo con
+`hypot(radio_base, 45)`, así que convergen. Pasado Ø160 la leva se come al
+poste vecino y no hay talla que lo arregle.
+
+Subir las muestras por vuelta arregla el error (0,360 → 0,078 mm con 2.880)
+pero **no toca el socavado**, que es geometría.
+
+### La conclusión, y es de producto
+
+| Lo que se quiere escribir | Arco | Se puede |
+| --- | --- | --- |
+| Una firma, una palabra | ~80-170 mm | **Sí, con la máquina de hoy** |
+| Dos palabras, una frase corta | ~350 mm | Sí, con radio base 80 y leva de Ø160 |
+| Una frase larga | ~1.000 mm | No con leva de disco |
+| Un párrafo | ~3.000 mm y más | No, ni de lejos |
+
+**El escribiente es una máquina de firmas, no de textos.** Y eso no es una
+limitación que haya que vencer: es lo que hace que el producto valga. Lo que
+se vende es *la letra de alguien*, y una firma es exactamente donde esa letra
+significa algo. Una máquina que escribiera párrafos sería un plóter.
+
+### Y si aun así hay que escribir párrafos
+
+Hace falta **otra clase de memoria**, y la ontología del baseline casi la
+tiene: distingue valor continuo de evento discreto, pero le falta el tercer
+eje, que es la **longitud del programa**.
+
+- **Leva de disco**: alta resolución, pocos canales, **una vuelta de
+  programa**. Es lo que hay.
+- **Tambor con hélice**: la misma resolución y los mismos canales, pero el
+  programa avanza a lo largo del eje. Un tambor de Ø60 × 80 con paso de 1 mm
+  son ochenta vueltas: quince metros de programa.
+
+Es exactamente por lo que las cajas de música son de cilindro y no de disco,
+y por lo que los discos de polifón tocan melodías cortas. **La máquina 2 del
+plan ya es una caja de música**, o sea un cilindro: la arquitectura para
+párrafos ya está en la hoja de ruta, sólo que nadie la había conectado con
+este límite.
+
+Alternativa sin diseño nuevo, por si hiciera falta antes: **un párrafo son
+varios cartuchos**, uno por línea, cambiados a mano. El cartucho ya está
+pensado para cambiarse en un minuto. Es feo y es lento, pero cuesta cero en
+ingeniería.
+
+**Esta decisión va antes del CAD paramétrico**, no después: si la respuesta
+fuera «frases cortas», el radio base sube a 80 y la plataforma entera cambia
+de cotas.
 
 **3 · Transmisión por engranajes o por correa.** Los dos engranajes de latón
 son 25,64 € de los 119 totales. Un juego de poleas GT2 con correa ronda los
