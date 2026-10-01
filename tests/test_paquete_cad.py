@@ -328,12 +328,15 @@ def test_cada_cota_circular_tiene_sus_dos_formas(paquete: Path):
             if nombre.endswith(sufijo) and base in filas:
                 assert valor == pytest.approx(factor * filas[base]), nombre
                 gemelos += 1
-    # Catorce: las siete del contrato original, el sector y el tambor del
+    # Quince: las siete del contrato original, el sector y el tambor del
     # cabestrante, los radios MECANIZADOS de los dos, el eje del pivote del
-    # cinco barras, y el cubo y el perno de los brazos. Que el número esté
-    # escrito a mano es a propósito: añadir una cota circular sin enterarse de
-    # que le sale un gemelo es exactamente lo que este test cuenta.
-    assert gemelos == 14, f"esperaba 14 cotas circulares con gemelo, hay {gemelos}"
+    # cinco barras, y el cubo, el perno y el extremo de los brazos. Que el
+    # número esté escrito a mano es a propósito: añadir una cota circular sin
+    # enterarse de que le sale un gemelo es exactamente lo que este test cuenta,
+    # y el extremo de los brazos llegó así: se llamaba `brazo_ancho`, que no es
+    # un nombre circular, y por eso no tenía el radio con el que hay que acotar
+    # el contorno del brazo.
+    assert gemelos == 15, f"esperaba 15 cotas circulares con gemelo, hay {gemelos}"
 
 
 def test_el_gemelo_dice_que_es_derivado(paquete: Path):

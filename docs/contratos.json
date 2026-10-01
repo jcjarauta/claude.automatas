@@ -348,10 +348,10 @@
           "tolerancia": ""
         },
         {
-          "nombre": "brazo_ancho",
+          "nombre": "brazo_extremo_diametro",
           "valor": 0.012,
           "unidad": "m",
-          "descripcion": "Ancho de la barra de los brazos, entre los dos cubos",
+          "descripcion": "Diametro del cubo del extremo libre, que es tambien el ancho de la barra donde esa tangente lo toca. Se llama diametro y no ancho porque es lo que el CAD acota, y asi el exportador saca el gemelo en radio",
           "tolerancia": ""
         },
         {
@@ -380,6 +380,20 @@
           "valor": 0.004,
           "unidad": "m",
           "descripcion": "Del eje al plano de la cara plana del agujero: es lo que cala el brazo",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "brazo_chaveta_angulo",
+          "valor": 0.0,
+          "unidad": "rad",
+          "descripcion": "Orientacion de la cara plana respecto de la linea de centros del brazo, con la normal apuntando al otro cubo. Vale CERO y no es una eleccion: a cualquier otro angulo el brazo deja de ser simetrico respecto de su propio eje, y entonces el proximal volteado no sirve para el otro lado",
+          "tolerancia": "+-0,5 grados"
+        },
+        {
+          "nombre": "brazo_chaveta_cuerda",
+          "valor": 0.006,
+          "unidad": "m",
+          "descripcion": "Cuerda de la cara plana, derivada de brazo_eje_diametro y brazo_chaveta. Esta porque el CAD deja acotar el plano por la cuerda o por la distancia al eje, y haciendo la raiz de cabeza se equivoca uno",
           "tolerancia": ""
         },
         {

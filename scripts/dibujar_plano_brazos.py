@@ -31,8 +31,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from scripts.acotar import ESTILO, FLECHA, MM, auxiliar, contrato, cota_h, cota_v, radial
 
-CABECERA = 50.0
-PIE = 46.0
+CABECERA = 44.0
+PIE = 104.0
 
 BRAZOS = {
     "proximal": ("brazo proximal · x2", "entre el eje del pivote y el codo", True),
@@ -54,8 +54,10 @@ AVISOS = {
         "con la palanca girada, el lápiz no apoya donde debe."
     ),
     "seccion": (
-        "SIN DEFINIR: el apriete axial de los pernos. Depende de cuántas piezas se "
-        "apilan en el codo y en la punta, que es cosa del montaje."
+        "SIN DEFINIR: el apriete axial de los pernos, que depende de cuántas piezas se "
+        "apilan en el codo y en la punta. Y FALTA UNA PIEZA: los dos ejes de pivote y el "
+        "del elevador llevan la cara plana que casa con la del brazo, mecanizada a su "
+        "calaje. Sin ese plano, el brazo cala contra nada."
     ),
 }
 
@@ -88,21 +90,112 @@ def medidas(c: dict[str, float], cual: str) -> tuple[float, float, float, float,
     """Largo entre centros, radios de los dos cubos y de los dos agujeros."""
     largo = c[f"brazo_{cual}"] * MM
     perno = c["brazo_perno_diametro"] * MM / 2.0
-    ancho = c["brazo_ancho"] * MM / 2.0
+    extremo = c["brazo_extremo_diametro"] * MM / 2.0
     if cual == "distal":
-        return largo, ancho, ancho, perno, perno
+        return largo, extremo, extremo, perno, perno
     eje = c["brazo_eje_diametro"] * MM / 2.0
     cubo = c["brazo_cubo_diametro"] * MM / 2.0
-    return largo, cubo, ancho, eje, perno
+    return largo, cubo, extremo, eje, perno
+
+
+COMUNES = [
+    ("cota", "brazo_extremo_diametro_radio", "R del cubo del extremo libre"),
+    ("cota", "brazo_perno_diametro", "agujero del perno, H7"),
+    ("cota", "brazo_espesor", "espesor de la pletina"),
+]
+CALADAS = [
+    ("cota", "brazo_eje_diametro", "agujero del eje, H7"),
+    ("cota", "brazo_cubo_diametro_radio", "R del cubo que va al eje"),
+    ("cota", "brazo_chaveta", "del eje al plano de la cara"),
+    ("cota", "brazo_chaveta_cuerda", "cuerda de la cara plana"),
+    ("angulo", "brazo_chaveta_angulo", "giro de la cara, 0 y no es libre"),
+]
+
+VARIABLES: dict[str, list[tuple[str, str, str]]] = {
+    "proximal": [
+        ("cota", "brazo_proximal", "entre centros · lo fija la cinemática"),
+        *CALADAS,
+        *COMUNES,
+        ("angulo", "calaje_izquierdo", "a qué ángulo lo cala el eje"),
+    ],
+    "distal": [
+        ("cota", "brazo_distal", "entre centros · lo fija la cinemática"),
+        ("cota", "brazo_extremo_diametro_radio", "R de los DOS cubos: son iguales"),
+        ("cota", "brazo_perno_diametro", "los dos agujeros, H7"),
+        ("cota", "brazo_espesor", "espesor de la pletina"),
+    ],
+    "palanca": [
+        ("cota", "brazo_palanca", "del eje al punto donde levanta"),
+        *CALADAS,
+        *COMUNES,
+        ("angulo", "calaje_elevador", "a qué ángulo lo cala el eje"),
+    ],
+    "seccion": [
+        ("cota", "brazo_extremo_diametro", "ancho de la barra en el extremo"),
+        ("cota", "brazo_espesor", "altura de la extrusión"),
+        ("cota", "brazo_perno_diametro", "el perno pasa, no se aloja"),
+    ],
+}
+"""Lo que hay que teclear para dibujar cada brazo, y nada más.
+
+Está aquí y no junto a cada flecha porque los nombres son largos: puestos
+sobre el dibujo se montaban unos encima de otros y se salían del marco, y un
+rótulo que se sale es peor que no ponerlo. Al pie se leen de corrido, que es
+como se teclean.
+
+**Los que acaban en `_radio` son los gemelos**, no cotas del contrato: el
+contrato guarda `brazo_cubo_diametro` y el exportador saca su mitad. En un
+arco de contorno el CAD pide radio, así que es el gemelo el que se teclea.
+"""
+
+
+def valor_de(c: dict[str, float], mapa: str, nombre: str) -> float:
+    """El número que hay que ver al lado del rótulo, en la unidad del mapa.
+
+    Resuelve el gemelo aquí mismo: si el nombre no está en el contrato pero
+    sí lo está sin el sufijo, es la mitad o el doble. Así la tabla no puede
+    decir un valor y el CSV otro.
+    """
+    if mapa == "angulo":
+        return math.degrees(c[nombre])
+    if nombre in c:
+        return c[nombre] * MM
+    if nombre.endswith("_radio"):
+        return c[nombre.removesuffix("_radio")] * MM / 2.0
+    if nombre.endswith("_diametro"):
+        return c[nombre.removesuffix("_diametro")] * MM * 2.0
+    raise KeyError(nombre)
+
+
+def tabla(c: dict[str, float], cual: str, x: float, y: float, ancho: float) -> list[str]:
+    """Las variables de la vista, al pie y en dos columnas."""
+    filas = VARIABLES[cual]
+    mitad = (len(filas) + 1) // 2
+    d = [
+        f'<text class="nota" x="{x + ancho / 2:.1f}" y="{y:.1f}">'
+        "lo que se teclea en el croquis</text>"
+    ]
+    for i, (mapa, nombre, para_que) in enumerate(filas):
+        col, fila = divmod(i, mitad) if mitad else (0, 0)
+        cx = x + 6 + col * (ancho - 12) / 2
+        cy = y + 9 + fila * 11.0
+        valor = valor_de(c, mapa, nombre)
+        numero = f"{valor:.3f}°" if mapa == "angulo" else f"{valor:g}"
+        d += [
+            f'<text class="varl" x="{cx:.1f}" y="{cy:.1f}">#{mapa}.{nombre}</text>',
+            f'<text class="cotatxi" x="{cx + 3:.1f}" y="{cy + 4.8:.1f}">'
+            f"{numero} · {para_que}</text>",
+        ]
+    return d
 
 
 def frente(c: dict[str, float], cual: str, x: float, y: float, ancho: float, alto: float):
     titulo, bajo, calado = BRAZOS[cual]
     largo, r0, r1, a0, a1 = medidas(c, cual)
     chaveta = c["brazo_chaveta"] * MM
-    k = min(ancho * 0.78 / (largo + r0 + r1), (alto - CABECERA - PIE) / (3.2 * r0))
+    k = min(ancho * 0.78 / (largo + r0 + r1), (alto - CABECERA - PIE) / (3.6 * r0))
     cx = x + ancho / 2 - (largo / 2) * k
-    cy = y + CABECERA + (alto - CABECERA - PIE) / 2
+    cy = y + CABECERA + (alto - CABECERA - PIE) * 0.42
 
     d = [
         f'<text class="vista" x="{x + ancho / 2:.1f}" y="{y + 14:.1f}">{titulo}</text>',
@@ -111,12 +204,24 @@ def frente(c: dict[str, float], cual: str, x: float, y: float, ancho: float, alt
         f"pletina de latón de {c['brazo_espesor'] * MM:g} · escala {k:.2f}:1</text>",
         f'<path class="corte" d="{obround(cx, cy, largo, r0, r1, k)}"/>',
     ]
+    media = c["brazo_chaveta_cuerda"] * MM * k / 2.0
     for i, (radio, agujero) in enumerate(((r0, a0), (r1, a1))):
         px = cx + i * largo * k
-        d.append(
-            f'<circle class="contorno" cx="{px:.2f}" cy="{cy:.2f}" '
-            f'r="{agujero * k:.2f}" fill="#fff"/>'
-        )
+        if calado and i == 0:
+            # El agujero del eje es una D, no un círculo con una raya: dibujarlo
+            # redondo y cruzarlo con la cuerda se lee como un agujero redondo
+            # con una marca, y entonces el brazo no cala.
+            d.append(
+                f'<path class="contorno" fill="#fff" '
+                f'd="M {px + chaveta * k:.2f},{cy + media:.2f} '
+                f"A {agujero * k:.2f},{agujero * k:.2f} 0 1 1 "
+                f'{px + chaveta * k:.2f},{cy - media:.2f} Z"/>'
+            )
+        else:
+            d.append(
+                f'<circle class="contorno" cx="{px:.2f}" cy="{cy:.2f}" '
+                f'r="{agujero * k:.2f}" fill="#fff"/>'
+            )
         d.append(
             f'<line class="eje" x1="{px:.2f}" y1="{cy - radio * k - 6:.2f}" '
             f'x2="{px:.2f}" y2="{cy + radio * k + 6:.2f}"/>'
@@ -124,36 +229,38 @@ def frente(c: dict[str, float], cual: str, x: float, y: float, ancho: float, alt
         d.append(auxiliar(px, cy, px, cy + radio * k + 24))
     # La cara plana del agujero del eje: lo que cala el brazo.
     if calado:
-        media = math.sqrt(max(a0**2 - chaveta**2, 0.0))
+        cuerda = c["brazo_chaveta_cuerda"] * MM
+        plano = cx + chaveta * k
+        # Fuera del cubo: dentro, la cota de la cuerda cae sobre el agujero y
+        # el número se lee con lupa.
+        fuera = cx + r0 * k + 16
         d += [
-            f'<line class="contorno" x1="{cx + chaveta * k:.2f}" y1="{cy - media * k:.2f}" '
-            f'x2="{cx + chaveta * k:.2f}" y2="{cy + media * k:.2f}"/>',
-            f'<text class="cotatx" x="{cx:.2f}" y="{cy - r0 * k - 9:.2f}">'
-            f"cara plana a {chaveta:g} del eje, cuerda {2 * media:g}</text>",
+            auxiliar(plano, cy - cuerda * k / 2, fuera, cy - cuerda * k / 2),
+            auxiliar(plano, cy + cuerda * k / 2, fuera, cy + cuerda * k / 2),
         ]
+        d += cota_v(cy - cuerda * k / 2, cy + cuerda * k / 2, fuera - 3, f"{cuerda:g}")
+        d += cota_h(cx, plano, cy - r0 * k - 9, f"{chaveta:g}")
+        d.append(
+            f'<text class="cotatx" x="{cx + 2 * chaveta * k:.2f}" '
+            f'y="{cy - r0 * k - 17:.2f}">cara plana a '
+            f"{math.degrees(c['brazo_chaveta_angulo']):g}° del eje del brazo</text>"
+        )
     d.append(
         f'<line class="eje" x1="{cx - r0 * k - 8:.2f}" y1="{cy:.2f}" '
         f'x2="{cx + largo * k + r1 * k + 8:.2f}" y2="{cy:.2f}"/>'
     )
-    d += cota_h(cx, cx + largo * k, cy + r0 * k + 22, f"{largo:g}", f"#cota.brazo_{cual}")
+    d += cota_h(cx, cx + largo * k, cy + r0 * k + 22, f"{largo:g}")
     d += radial(cx, cy, a0 * k, math.radians(205), f"Ø{2 * a0:g} H7")
     d += radial(cx + largo * k, cy, a1 * k, math.radians(-25), f"Ø{2 * a1:g} H7")
     d += radial(cx, cy, r0 * k, math.radians(130), f"R{r0:g}")
     d += radial(cx + largo * k, cy, r1 * k, math.radians(50), f"R{r1:g}")
-    if calado:
-        d.append(
-            f'<text class="var" x="{x + ancho / 2:.1f}" y="{y + alto - 32:.1f}">'
-            f"#angulo.calaje_{'elevador' if cual == 'palanca' else 'izquierdo'} = "
-            f"{math.degrees(c['calaje_' + ('elevador' if cual == 'palanca' else 'izquierdo')]):.3f}"
-            "°</text>"
-        )
-    return d
+    return d + tabla(c, cual, x, y + alto - PIE + 12, ancho)
 
 
 def seccion(c: dict[str, float], x: float, y: float, ancho: float, alto: float):
     """El espesor, común a los tres, y la pila en un perno."""
     espesor = c["brazo_espesor"] * MM
-    ancho_barra = c["brazo_ancho"] * MM
+    ancho_barra = c["brazo_extremo_diametro"] * MM
     perno = c["brazo_perno_diametro"] * MM
     k = min(ancho * 0.5 / ancho_barra, (alto - CABECERA - PIE) / (4.0 * espesor), 9.0)
     cx = x + ancho / 2
@@ -192,17 +299,12 @@ def seccion(c: dict[str, float], x: float, y: float, ancho: float, alto: float):
         cx + ancho_barra * k / 2,
         base + 18,
         f"{ancho_barra:g}",
-        "#cota.brazo_ancho",
     )
     borde = cx + ancho_barra * k / 2
     d.append(auxiliar(borde, base, borde + 18, base))
     d.append(auxiliar(borde, base - espesor * k, borde + 18, base - espesor * k))
     d += cota_v(base - espesor * k, base, borde + 15, f"{espesor:g}")
-    d.append(
-        f'<text class="var" x="{cx:.1f}" y="{y + alto - 32:.1f}">'
-        "#cota.brazo_espesor · #cota.brazo_perno_diametro</text>"
-    )
-    return d
+    return d + tabla(c, "seccion", x, y + alto - PIE + 12, ancho)
 
 
 def panel(c: dict[str, float], cual: str, x: float, y: float, ancho: float, alto: float):
@@ -220,7 +322,7 @@ def panel(c: dict[str, float], cual: str, x: float, y: float, ancho: float, alto
 
 def hoja() -> str:
     c = contrato()
-    ancho, alto, borde = 238.0, 196.0, 12.0
+    ancho, alto, borde = 248.0, 232.0, 12.0
     w, h = borde * 2 + 2 * ancho, 46 + 2 * alto + borde
     partes = [
         '<?xml version="1.0" encoding="UTF-8"?>',
@@ -233,7 +335,8 @@ def hoja() -> str:
         "con scripts/dibujar_plano_brazos.py. Pletina de latón de 3: una tira y tres "
         "contornos. Lo que la cinemática fija es la distancia entre centros.</text>",
         f'<text class="sub" x="{borde}" y="38">Del proximal se corta UNA y valen las dos: '
-        "los dos calajes suman -180°, así que el derecho es el izquierdo volteado.</text>",
+        "los calajes suman -180°, así que el derecho es el izquierdo volteado. El calaje no "
+        "está en el brazo: está en la cara plana del EJE, que aún no tiene plano.</text>",
     ]
     for i, cual in enumerate(("proximal", "distal", "palanca", "seccion")):
         partes += panel(c, cual, borde + (i % 2) * ancho, 46 + (i // 2) * alto, ancho, alto)

@@ -44,6 +44,7 @@ text{font-family:Helvetica,Arial,sans-serif;fill:#1b1b1b}
 .cotatx{font-size:5.4px;fill:#b03030;text-anchor:middle}
 .cotatxi{font-size:5.4px;fill:#b03030}
 .var{font-size:4.8px;fill:#1b5fb0;font-family:monospace;text-anchor:middle}
+.varl{font-size:4.8px;fill:#1b5fb0;font-family:monospace}
 """
 
 FLECHA = (
@@ -64,30 +65,44 @@ def cota_h(x0: float, x1: float, y: float, texto: str, variable: str = "") -> li
     return d
 
 
-def cota_v(y0: float, y1: float, x: float, texto: str) -> list[str]:
+def cota_v(y0: float, y1: float, x: float, texto: str, variable: str = "") -> list[str]:
     """Cota vertical, con el número girado para que se lea de abajo arriba."""
     ym = (y0 + y1) / 2
-    return [
+    d = [
         f'<line class="cotaln" marker-start="url(#f)" marker-end="url(#f)" '
         f'x1="{x:.2f}" y1="{y0:.2f}" x2="{x:.2f}" y2="{y1:.2f}"/>',
         f'<text class="cotatx" x="{x - 3:.2f}" y="{ym:.2f}" '
         f'transform="rotate(-90 {x - 3:.2f} {ym:.2f})">{texto}</text>',
     ]
+    if variable:
+        d.append(
+            f'<text class="var" x="{x + 4:.2f}" y="{ym:.2f}" '
+            f'transform="rotate(-90 {x + 4:.2f} {ym:.2f})">{variable}</text>'
+        )
+    return d
 
 
 def auxiliar(x0: float, y0: float, x1: float, y1: float) -> str:
     return f'<line class="aux" x1="{x0:.2f}" y1="{y0:.2f}" x2="{x1:.2f}" y2="{y1:.2f}"/>'
 
 
-def radial(cx: float, cy: float, r: float, ang: float, texto: str) -> list[str]:
-    """Cota de radio: una flecha desde el centro hasta el arco."""
+def radial(cx: float, cy: float, r: float, ang: float, texto: str, variable: str = "") -> list[str]:
+    """Cota de radio: una flecha desde el centro hasta el arco.
+
+    `variable` va debajo del número porque una cota circular sin el nombre al
+    lado invita a teclear el radio en un campo de diámetro, que es el error
+    documentado en CLAUDE.md: la mitad, y sin un solo aviso.
+    """
     x1, y1 = cx + r * math.cos(ang), cy + r * math.sin(ang)
     xt, yt = cx + (r + 9) * math.cos(ang), cy + (r + 9) * math.sin(ang)
-    return [
+    d = [
         f'<line class="cotaln" marker-end="url(#f)" x1="{cx:.2f}" y1="{cy:.2f}" '
         f'x2="{x1:.2f}" y2="{y1:.2f}"/>',
         f'<text class="cotatx" x="{xt:.2f}" y="{yt:.2f}">{texto}</text>',
     ]
+    if variable:
+        d.append(f'<text class="var" x="{xt:.2f}" y="{yt + 5.4:.2f}">{variable}</text>')
+    return d
 
 
 def arco(cx: float, cy: float, r: float, a0: float, a1: float) -> str:
