@@ -56,6 +56,7 @@ uv run python scripts/dibujar_perfiles.py     # lámina de perfiles para revisar
 uv run python scripts/dibujar_maquina.py      # el dibujo conceptual, generado desde el modelo
 uv run python scripts/dibujar_piezas.py       # sección y cotas de cada pieza comercial, para dibujarla en el CAD
 uv run python scripts/dibujar_amplificador.py # el cabestrante 6:1, acotado desde el contrato
+uv run python scripts/dibujar_cinco_barras.py # el varillaje y la palanca, acotados desde el contrato
 uv run python scripts/plantillas_demo.py      # plantillas 1:1 de muestra
 uv run python scripts/regenerar_golden.py     # SOLO si el cambio es intencionado
 

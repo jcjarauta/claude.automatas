@@ -144,6 +144,35 @@ def test_el_amplificador_tiene_la_relacion_que_usa_el_compilador():
     assert sector / tambor == pytest.approx(contrato("relacion_varillaje"))
 
 
+def test_el_contrato_y_el_compilador_dicen_lo_mismo_de_la_maquina():
+    """**El cruce que faltaba, y es el que sostiene todo el paquete de CAD.**
+
+    `docs/contratos.json` es lo que se importa al Variable Studio y con lo que
+    se dibuja la plataforma; `Escribiente` es con lo que se sintetizan las
+    levas. Nadie comprobaba que coincidieran. Si se tocara uno solo, el CAD
+    dibujaría una máquina y el compilador cortaría levas para otra, y no
+    saltaría nada hasta tener las piezas encima de la mesa.
+    """
+    maquina = Escribiente()
+    for cota_, atributo in (
+        ("brazo_separacion", "separacion"),
+        ("brazo_proximal", "proximal"),
+        ("brazo_distal", "distal"),
+        ("brazo_palanca", "brazo_palanca"),
+        ("brazo_seguidor", "brazo_seguidor"),
+        ("radio_base", "radio_base"),
+        ("rodillo_radio", "radio_rodillo"),
+        ("caja_ancho", "caja_ancho"),
+        ("caja_alto", "caja_alto"),
+        ("caja_centro_y", "caja_centro_y"),
+        ("eje_diametro", "taladro_eje"),
+        ("pasador_diametro", "pasador_indice"),
+        ("pasador_radio", "radio_del_pasador"),
+    ):
+        assert contrato(cota_) == pytest.approx(float(getattr(maquina, atributo))), cota_
+    assert contrato("relacion_varillaje") == pytest.approx(maquina.relacion)
+
+
 def test_el_canto_mecanizado_sale_de_la_fibra_neutra_y_no_al_reves():
     """**La trampa del cabestrante, y cuesta un cuarto de milímetro.**
 

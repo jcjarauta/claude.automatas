@@ -147,6 +147,15 @@ banco diga que el modelo predice:
   cuando la frase crece —8,9 mm con un barrido de toda la caja— y es el
   límite de conjunto que decide qué frases caben.
 - Caja de escritura: 80 × 30 mm, centrada a 100 mm sobre la línea de pivotes.
+- **Del cinco barras se acotan las distancias entre ejes, no el contorno.** Un
+  brazo es, para la cinemática, una distancia entre dos agujeros; ancho,
+  espesor y material no cambian ningún número del compilador y se deciden en
+  el CAD. Los agujeros de codo y punta tampoco están aquí: no los fuerza
+  ninguna pieza que ya exista.
+- **Los codos van hacia fuera**, que es la rama más lejana de la singularidad
+  del brazo estirado, y la consecuencia visible es que los dos proximales se
+  cruzan: con la punta en el centro de la caja, los codos caen a 5,9 mm **por
+  debajo** de la línea de pivotes.
 - **El amplificador 6:1 es un cabestrante de cinta**: sector de R 48 en el
   poste del seguidor, tambor de R 8 en el eje del brazo, fleje de 1.4310 de
   0,05 × 10 anclado por los dos extremos. La relación es el cociente de
@@ -202,3 +211,5 @@ un solo compromiso, y todavía falta el dato que lo cierra.
 | 2026-09-30 | Fase | Pasador de índice de Ø3 × 16 a **Ø3 × 24** | Con 16 no llegaba a la tercera leva de una pila de 19 mm, que es justo lo que el contrato promete calar. Lo encontró un test que cruza la ficha del pasador con la de la plancha y la del separador |
 | 2026-10-01 | Bastidor | **Añadido el amplificador 6:1**: cabestrante de cinta, sector R 48 y tambor R 8 | Era un escalar en el código sin mecanismo. Se eligió frente a engranajes por el juego: un par de calidad 8d daba 1,98 mm en la punta y llevaba el peor caso de 2,84 a 6,74; la cinta da 0,0115 |
 | 2026-10-01 | Bastidor | **Añadida la transformación** entre el marco de la leva y el del cinco barras: origen (−16,225, −28,103), 150° | Eran dos sistemas de coordenadas sin relación. Con cinta el entre-ejes es libre, así que es una elección de empaquetado y `brazo_separacion` no se toca |
+| 2026-10-01 | Bastidor | **Añadidas las cotas del cabestrante**: fibra neutra y canto mecanizado del sector y del tambor, cinta, tangencia y arcos | La relación la fija la fibra neutra y no el canto; la tangencia cae a 126° y no a 54, así que el sector necesita 140° de semiarco y no 25 |
+| 2026-10-01 | Bastidor | **Añadidos `brazo_palanca` y `brazo_eje_diametro`** | El primero faltaba: la palanca del lápiz es una longitud de máquina que el compilador usa y el CAD necesita. El segundo estaba conflado con `eje_diametro`, que es el árbol de levas: son el mismo stock Ø10 y dos ejes distintos |

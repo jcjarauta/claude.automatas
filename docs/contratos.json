@@ -325,6 +325,20 @@
           "unidad": "rad",
           "descripcion": "Donde la cinta deja el sector, desde la direccion al tambor: 90 + asin((R-r)/a)",
           "tolerancia": ""
+        },
+        {
+          "nombre": "brazo_palanca",
+          "valor": 0.04,
+          "unidad": "m",
+          "descripcion": "Palanca del lapiz: del eje al punto donde levanta. Faltaba en el contrato",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "brazo_eje_diametro",
+          "valor": 0.01,
+          "unidad": "m",
+          "descripcion": "Eje del pivote anclado del cinco barras, que tambien lleva el tambor. Mismo stock W10H6 que el arbol, OTRO eje",
+          "tolerancia": "h6"
         }
       ]
     }

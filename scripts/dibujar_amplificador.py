@@ -124,7 +124,7 @@ def seccion(
     neutra = c[f"amplificador_{cual}_radio"] * MM
     canto = c[f"amplificador_{cual}_radio_mecanizado"] * MM
     w = c["cinta_ancho"] * MM
-    agujero = (c["poste_diametro"] if es_sector else c["eje_diametro"]) * MM / 2.0
+    agujero = (c["poste_diametro"] if es_sector else c["brazo_eje_diametro"]) * MM / 2.0
     arriba = y + CABECERA
     hueco = alto - CABECERA - PIE_SIN_LISTA - 9.0 * len(filas(c, cual))
     k = min(ancho * 0.42 / neutra, hueco / w, 8.0)
@@ -190,7 +190,7 @@ def filas(c: dict[str, float], cual: str) -> list[tuple[str, str]]:
             f"#{angulo}.amplificador_tambor_abrazado",
             f"{math.degrees(c['amplificador_tambor_abrazado']):g}",
         ),
-        (f"#{cota}.eje_diametro", f"{c['eje_diametro'] * MM:g}"),
+        (f"#{cota}.brazo_eje_diametro", f"{c['brazo_eje_diametro'] * MM:g}"),
     ]
 
 
