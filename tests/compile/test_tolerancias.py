@@ -91,14 +91,52 @@ def test_el_error_del_modelo_no_se_amplifica():
     assert modelo.amplificacion == pytest.approx(1.0)
 
 
-def test_el_corte_domina_sobre_el_modelo():
+def test_el_hardware_domina_sobre_el_modelo():
     """La conclusión que reordena dónde mirar: la precisión de este producto
-    no la decide el compilador, la decide quien corta la leva."""
+    no la decide el compilador.
+
+    Decía «la decide quien corta la leva», y era verdad hasta que el
+    amplificador 6:1 pasó de ser un escalar a ser un par de engranajes. Lo
+    que no cambia es que **el término del compilador es el pequeño**: el
+    muestreo de la leva aporta menos de la quinta parte que el dominante,
+    sea cual sea. Ajustar el muestreo no arregla esta máquina.
+    """
     p = presupuesto()
     modelo = next(c for c in p.cadena.contribuciones if "modelo" in c.nombre)
     assert p.dominante is not None
-    assert "perfil" in p.dominante.nombre
+    assert "modelo" not in p.dominante.nombre
     assert p.dominante.en_punta > 5.0 * modelo.en_punta
+
+
+def test_con_engranajes_el_juego_de_flanco_domina_sobre_el_corte():
+    """**El precio de elegir engranajes para el amplificador**, pinchado.
+
+    El juego de flanco nace en el lado del brazo, donde la palanca a la
+    punta es de 172,5 mm, y entra sin dividir por la relación. Con la
+    estimación de catálogo supera al corte, que era el término dominante, y
+    lleva el peor caso de 2,8 a 6,7 mm.
+
+    Si alguien precarga el engrane con un muelle, o cambia a transmisión por
+    cable, este test deja de tener sentido y hay que borrarlo: eso es lo que
+    significa que esté aquí.
+    """
+    con = presupuesto()
+    sin = presupuesto(holguras=Holguras(juego_del_amplificador=Radianes(0.0)))
+    assert "juego de la transmisión" in con.dominante.nombre
+    assert "perfil" in sin.dominante.nombre
+    assert con.peor_caso > 2.0 * sin.peor_caso
+
+
+def test_el_juego_de_flanco_no_lo_divide_la_relacion():
+    """Lo mismo que vigila `core`, visto desde el escribiente: subir la
+    relación del varillaje amplifica el error del canto y **no** el juego de
+    los engranajes, porque este ya está en el lado del brazo."""
+    seis = presupuesto(maquina=Escribiente(relacion=6.0))
+    tres = presupuesto(maquina=Escribiente(relacion=3.0))
+    juego = lambda p: sum(  # noqa: E731
+        c.en_punta for c in p.cadena.contribuciones if "transmisión" in c.nombre
+    )
+    assert juego(seis) == pytest.approx(juego(tres), rel=1e-9)
 
 
 # ---------------------------------------------------------------------------

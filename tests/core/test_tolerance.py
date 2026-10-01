@@ -116,6 +116,59 @@ def test_la_reduccion_del_pantografo_divide_todo_el_error():
     assert reducido.peor_caso == pytest.approx(directo.peor_caso / 4.0, rel=1e-9)
 
 
+def test_el_juego_de_la_transmision_no_lo_divide_la_reduccion():
+    """**El error de un factor `reduccion` que es fácil de cometer.**
+
+    El error de perfil nace en el canto de la leva, antes de la transmisión,
+    así que la transmisión lo divide —o lo amplifica, si `reduccion` < 1—.
+    El juego de flanco nace **dentro** de la transmisión y se mide en su
+    salida, que es el eje del actuador: no lo divide nadie. Meterlo por el
+    mismo sitio que el error de perfil lo equivocaría por el factor entero,
+    que en el escribiente son seis veces.
+    """
+    comun = {
+        "brazos_seguidor": (mm(60.0), mm(60.0)),
+        "angulos_presion": (grados(20.0), grados(20.0)),
+        "error_perfil": 0.0,
+        "holgura_pivote": 0.0,
+        "juego_de_la_transmision": grados(0.1),
+    }
+    uno = cadena(brazo(), psi_en_reposo(), reduccion=1.0, **comun)  # type: ignore[arg-type]
+    seis = cadena(brazo(), psi_en_reposo(), reduccion=1.0 / 6.0, **comun)  # type: ignore[arg-type]
+    assert seis.peor_caso == pytest.approx(uno.peor_caso, rel=1e-9)
+
+
+def test_sin_juego_de_transmision_la_cadena_es_la_de_antes():
+    """El parámetro es opcional y su ausencia no cambia ningún número: una
+    máquina sin transmisión no gana contribuciones de cero que ensucien el
+    recuento de `dominante`."""
+    comun = {
+        "brazos_seguidor": (mm(60.0), mm(60.0)),
+        "angulos_presion": (grados(20.0), grados(20.0)),
+        "error_perfil": mm(0.15),
+        "holgura_pivote": grados(0.2),
+    }
+    sin = cadena(brazo(), psi_en_reposo(), **comun)  # type: ignore[arg-type]
+    cero = cadena(brazo(), psi_en_reposo(), juego_de_la_transmision=0.0, **comun)  # type: ignore[arg-type]
+    assert len(sin.contribuciones) == len(cero.contribuciones)
+    assert sin.peor_caso == pytest.approx(cero.peor_caso)
+
+
+def test_el_juego_de_la_transmision_entra_una_vez_por_seguidor():
+    """Cada canal tiene su propio par de engranajes, con su propio juego."""
+    c = cadena(
+        brazo(),
+        psi_en_reposo(),
+        brazos_seguidor=(mm(60.0), mm(60.0)),
+        angulos_presion=(grados(20.0), grados(20.0)),
+        error_perfil=0.0,
+        holgura_pivote=0.0,
+        juego_de_la_transmision=grados(0.1),
+    )
+    cuantos = [c_.nombre for c_ in c.contribuciones if "transmisión" in c_.nombre]
+    assert len(cuantos) == 2
+
+
 def test_la_cadena_del_escribiente_da_un_orden_de_magnitud_razonable():
     """Con kerf de 0,15 mm y holguras de 0,2°, el error en la punta debe
     quedar por debajo del milímetro. Si no, la escritura no se reconoce."""

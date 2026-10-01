@@ -134,6 +134,7 @@ def cadena(
     error_perfil: float,
     holgura_pivote: float,
     reduccion: float = 1.0,
+    juego_de_la_transmision: float = 0.0,
 ) -> CadenaTolerancias:
     """Monta la cadena completa en una posición del ciclo.
 
@@ -142,6 +143,19 @@ def cadena(
     juego angular de cada articulación, en radianes. `reduccion` es lo que
     divide el pantógrafo, si lo hay: es el número que hace pequeño todo lo
     anterior.
+
+    `juego_de_la_transmision` es el juego angular de la propia transmisión
+    —el de flanco de un par de engranajes, el estiramiento de un cable—, en
+    radianes y **medido en su salida**, que es el eje del actuador.
+
+    **Por eso no lo divide `reduccion` y el error de perfil sí.** El error
+    de perfil nace antes de la transmisión y la atraviesa; el juego nace
+    dentro y ya está en el lado del actuador. Pasarlo por el mismo sitio lo
+    equivocaría por el factor entero, que en el escribiente son seis veces.
+
+    Con cero no añade nada, ni siquiera una contribución nula: una máquina
+    de transmisión directa no tiene por qué cargar con un término que no
+    existe y que ensuciaría el recuento de `dominante`.
     """
     if reduccion <= 0.0:
         raise ValueError(f"la reducción debe ser positiva, no {reduccion}")
@@ -167,4 +181,12 @@ def cadena(
                 amplificacion=a_punta,
             )
         )
+        if juego_de_la_transmision > 0.0:
+            contribuciones.append(
+                Contribucion(
+                    nombre=f"juego de la transmisión {i}",
+                    magnitud=juego_de_la_transmision,
+                    amplificacion=a_punta * reduccion,
+                )
+            )
     return CadenaTolerancias(contribuciones=tuple(contribuciones))

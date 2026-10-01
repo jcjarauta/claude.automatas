@@ -1,0 +1,45 @@
+{
+  "nombre": "rueda_amplificador",
+  "familia": "engranaje",
+  "designacion": "Mädler 26212000, m0,7 Z120",
+  "cantidad": 3,
+  "material": "latón Ms58 (2.0401), calidad 8d DIN 58405",
+  "fuente": {
+    "proveedor": "Mädler",
+    "referencia": "26212000",
+    "url": "https://www.maedler.de/article/26212000",
+    "fecha": "2026-10-01",
+    "verificado": true
+  },
+  "cotas": [
+    {
+      "nombre": "modulo",
+      "valor": 0.0007,
+      "tolerancia": "",
+      "critica": true
+    },
+    {
+      "nombre": "exterior",
+      "valor": 0.0854,
+      "tolerancia": "",
+      "critica": true
+    },
+    {
+      "nombre": "ancho",
+      "valor": 0.004,
+      "tolerancia": "",
+      "critica": false
+    },
+    {
+      "nombre": "agujero",
+      "valor": 0.025,
+      "tolerancia": "H7",
+      "critica": true
+    }
+  ],
+  "nota": "El lado lento del amplificador 6:1: va en el poste del seguidor, atornillada al brazo del seguidor y girando con él, no sobre el poste. El agujero de Ø25 no es un ajuste: es hueco de paso, y por eso le caben de sobra el poste de Ø8 y la valona de Ø15 de su casquillo. Z120 contra Z20 da la relación exacta 6 y un entre-ejes de 49,0 mm. Mismo módulo que el reductor, así que una sola familia de dentado en toda la máquina. Ø85,4 contra 123,085 mm entre postes vecinos deja 37,7 mm de hueco: las tres ruedas no se tocan. Lo que sí: la rueda llega a 28,4 mm del árbol y la leva mide 55 de radio base, así que el amplificador va en un plano distinto del de las levas.",
+  "pedir": "El JUEGO DE FLANCO del par Z120/Z20 en calidad 8d. El catálogo da la calidad pero no la desviación de espesor de diente, y es el término que decide si esta decisión cuesta medio milímetro en la punta o dos. Preguntar también las cotas del cubo (diámetro y saliente), que la página no publica y deciden la altura de la pila.",
+  "sustitutos": [
+    "Z108 m0,7 con piñón Z18 si hiciera falta bajar el diámetro: relación 6 igual y entre-ejes 44,1"
+  ]
+}

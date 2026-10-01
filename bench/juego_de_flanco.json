@@ -1,0 +1,7 @@
+{
+  "medido": false,
+  "nota": "Juego circunferencial del par de engranajes, en el primitivo. SIN MEDIR: el catálogo de Mädler da la calidad del dentado (8d DIN 58405) pero no la desviación de espesor de diente, y la norma no es pública. El valor de abajo es una estimación de orden para un par de latón de módulo 0,7 en esa calidad, y está puesto para que se vea qué se está suponiendo, no para prometer nada. Lo sustituye lo que conteste Mädler (ver el campo 'pedir' de docs/piezas/rueda_amplificador.json) o lo que mida E4 con un comparador en el brazo.",
+  "por_defecto_mm": 0.08,
+  "rango_plausible_mm": [0.04, 0.12],
+  "pares": {}
+}

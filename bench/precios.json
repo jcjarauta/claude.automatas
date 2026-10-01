@@ -237,6 +237,28 @@
       "url": "https://www.maedler.de/article/26202000"
     },
     {
+      "concepto": "Rueda del amplificador 6:1",
+      "referencia": "Mädler 26212000, m0,7 Z120 latón, Ø ext 85,4",
+      "proveedor": "Mädler",
+      "cantidad": 3,
+      "precio": 43.45,
+      "escalado": "50 ud",
+      "iva_incluido": false,
+      "verificado": true,
+      "url": "https://www.maedler.de/article/26212000"
+    },
+    {
+      "concepto": "Piñón del amplificador 6:1",
+      "referencia": "Mädler 26202000, m0,7 Z20 latón, Ø ext 15,4",
+      "proveedor": "Mädler",
+      "cantidad": 3,
+      "precio": 8.89,
+      "escalado": "50 ud",
+      "iva_incluido": false,
+      "verificado": true,
+      "url": "https://www.maedler.de/article/26202000"
+    },
+    {
       "concepto": "Anillo de apriete del lápiz",
       "referencia": "Mädler 62311000GA",
       "proveedor": "Mädler",

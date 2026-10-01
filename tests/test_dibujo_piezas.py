@@ -80,11 +80,15 @@ def test_la_hoja_lleva_los_dientes_de_cada_engranaje():
     """
     texto = hoja(cargar())
     engranajes = [p for p in cargar() if p.dientes is not None]
-    assert [p.nombre for p in engranajes] == ["pinon_reductor", "rueda_reductor"]
+    assert [p.nombre for p in engranajes] == [
+        "pinon_amplificador",
+        "pinon_reductor",
+        "rueda_amplificador",
+        "rueda_reductor",
+    ]
     for pieza in engranajes:
         assert f"#pieza_num.{pieza.nombre}_dientes" in texto
-    assert ">20<" in texto
-    assert ">60<" in texto
+    assert [p.dientes for p in engranajes] == [20, 20, 120, 60]
 
 
 def test_el_prefijo_de_cada_fila_es_el_mapa_donde_de_verdad_esta():
