@@ -82,6 +82,14 @@ class Ficha:
     entre_centros: tuple[str, ...] = ()
     segmentos: tuple[str, ...] = ()
     tangentes: int = 0
+    cara_plana: str = ""
+    """La cota del desplazamiento del eje al plano de la cara, **con signo**.
+
+    La cuerda sola no la sitúa: en un agujero de Ø10 una cuerda de 6 cae a 4
+    del centro, pero puede caer a +4 o a -4, y la cara mirando al lado
+    contrario cala el brazo media vuelta girado. Es la misma pieza vista en
+    el croquis y otra distinta montada.
+    """
     datum: str = ""
     """La cota del rasgo que va en el ORIGEN, y de ahí a +X el siguiente.
 
@@ -117,6 +125,7 @@ FICHAS: dict[str, Ficha] = {
         entre_centros=("brazo_proximal",),
         segmentos=("brazo_chaveta_cuerda",),
         tangentes=4,
+        cara_plana="brazo_chaveta",
         datum="brazo_eje_diametro_radio",
     ),
     "brazo_distal": Ficha(
@@ -137,6 +146,7 @@ FICHAS: dict[str, Ficha] = {
         entre_centros=("brazo_palanca",),
         segmentos=("brazo_chaveta_cuerda",),
         tangentes=4,
+        cara_plana="brazo_chaveta",
         datum="brazo_eje_diametro_radio",
     ),
     "sector": Ficha(
@@ -346,6 +356,35 @@ def comparar(ruta: Path, pieza: str, tol: float = TOLERANCIA) -> Informe:
             )
     for x in sueltos:
         inf.hallazgos.append(Hallazgo("huerfano", f"segmento de {x:.4f} sin cota ni tangencia"))
+
+    # --- la cara plana, con signo ---
+    if ficha.cara_plana:
+        esperado = cotas[ficha.cara_plana]
+        cuerda = cotas[ficha.segmentos[0]] if ficha.segmentos else 0.0
+        datum = min(
+            (c for c, r in circulares if abs(r - cotas[ficha.datum]) <= tol),
+            key=lambda c: math.hypot(*c),
+            default=None,
+        )
+        planas = [
+            ((a[0] + b[0]) / 2 - (datum[0] if datum else 0.0))
+            for a, b in segmentos
+            if abs(math.dist(a, b) - cuerda) <= tol and abs(a[0] - b[0]) <= tol
+        ]
+        if not planas:
+            inf.hallazgos.append(
+                Hallazgo("falta", f"#cota.{ficha.cara_plana}: no hay ninguna cara plana vertical")
+            )
+        elif any(abs(x - esperado) <= tol for x in planas):
+            inf.bien.append(f"cara plana a {esperado:g} del eje   #cota.{ficha.cara_plana}")
+        else:
+            inf.hallazgos.append(
+                Hallazgo(
+                    "falta",
+                    f"#cota.{ficha.cara_plana} pide la cara a {esperado:+g} del eje y está a "
+                    f"{planas[0]:+g}: mirando al otro lado cala el brazo media vuelta girado",
+                )
+            )
 
     # --- dónde está puesta: ni cota ni incumplimiento, convención ---
     if ficha.datum:

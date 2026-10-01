@@ -131,8 +131,10 @@ def brazo(cual: str, c: dict[str, float] | None = None) -> Perfil:
     extremo, perno = c["brazo_extremo_diametro"] / 2, c["brazo_perno_diametro"] / 2
     if not calado:
         # Biela: los dos extremos iguales porque no cala nada.
-        return barra(largo, extremo, extremo) + circulo((0.0, 0.0), perno) + circulo(
-            (largo, 0.0), perno
+        return (
+            barra(largo, extremo, extremo)
+            + circulo((0.0, 0.0), perno)
+            + circulo((largo, 0.0), perno)
         )
     cubo, eje = c["brazo_cubo_diametro"] / 2, c["brazo_eje_diametro"] / 2
     return (
@@ -140,6 +142,131 @@ def brazo(cual: str, c: dict[str, float] | None = None) -> Perfil:
         + agujero_en_d((0.0, 0.0), eje, c["brazo_chaveta"])
         + circulo((largo, 0.0), perno)
     )
+
+
+@dataclass(frozen=True)
+class Variable:
+    """Una cota que hay que teclear, con cómo se lee en la hoja."""
+
+    mapa: str
+    nombre: str
+    etiqueta: str
+    sufijo: str = ""
+    en_el_perfil: bool = True
+    """Si el DXF ya la trae resuelta. Las que no —el espesor, el calaje— no
+    son geometría del perfil y hay que teclearlas igual: el archivo no
+    sustituye a la tabla de variables, la adelgaza."""
+
+
+@dataclass(frozen=True)
+class Ficha:
+    forma: str
+    cantidad: int
+    variables: tuple[Variable, ...]
+
+
+def _barra_calada(entre_centros: str, etiqueta: str, calaje: str) -> Ficha:
+    """El proximal y la palanca son la misma pieza con otra longitud, así que
+    su lista de variables se escribe una vez. Repetirla era la forma segura
+    de que una de las dos se quedara atrás."""
+    return Ficha(
+        "barra de dos cubos **desiguales** en pletina de latón",
+        2 if calaje == "calaje_izquierdo" else 1,
+        (
+            Variable("cota", entre_centros, etiqueta),
+            Variable("cota", "brazo_espesor", "espesor", en_el_perfil=False),
+            Variable("cota", "brazo_eje_diametro", "Ø eje", "H7"),
+            Variable("cota", "brazo_perno_diametro", "Ø perno", "H7"),
+            Variable("cota", "brazo_cubo_diametro_radio", "R del cubo del eje"),
+            Variable("cota", "brazo_extremo_diametro_radio", "R del extremo"),
+            Variable("cota", "brazo_chaveta", "cara plana a"),
+            Variable("cota", "brazo_chaveta_cuerda", "cuerda"),
+            Variable("angulo", "brazo_chaveta_angulo", "girada"),
+            Variable("angulo", calaje, "calaje del EJE", en_el_perfil=False),
+        ),
+    )
+
+
+LISTADO: dict[str, Ficha] = {
+    "brazo_proximal": _barra_calada("brazo_proximal", "entre centros", "calaje_izquierdo"),
+    "brazo_distal": Ficha(
+        "barra de dos cubos **iguales** en pletina de latón",
+        2,
+        (
+            Variable("cota", "brazo_distal", "entre centros"),
+            Variable("cota", "brazo_espesor", "espesor", en_el_perfil=False),
+            Variable("cota", "brazo_perno_diametro", "Ø los dos", "H7"),
+            Variable("cota", "brazo_extremo_diametro_radio", "R los dos"),
+        ),
+    ),
+    "palanca_lapiz": _barra_calada("brazo_palanca", "entre centros", "calaje_elevador"),
+    "sector": Ficha(
+        "disco entero de POM, sin muesca",
+        3,
+        (
+            Variable("cota", "amplificador_sector_radio_mecanizado", "canto"),
+            Variable("cota", "amplificador_sector_espesor", "espesor", en_el_perfil=False),
+            Variable("cota", "amplificador_sector_agujero_diametro", "Ø de paso"),
+            Variable("angulo", "amplificador_tangencia", "la cinta entra a", en_el_perfil=False),
+        ),
+    ),
+    "tambor": Ficha(
+        "cilindro liso con agujero, sin pestañas",
+        3,
+        (
+            Variable("cota", "amplificador_tambor_radio_mecanizado", "canto"),
+            Variable("cota", "amplificador_tambor_ancho", "ancho", en_el_perfil=False),
+            Variable("cota", "brazo_eje_diametro", "Ø agujero", "H7"),
+            Variable("angulo", "amplificador_tambor_abrazado", "abrazado", en_el_perfil=False),
+        ),
+    ),
+}
+"""Qué se teclea en cada pieza de la plataforma, y nada más.
+
+**Está aquí y no en la hoja ni en el documento** porque los tres lo
+imprimen: el plano, `docs/metodologia.md` y el que lo copia. Tres listas de
+variables es la forma garantizada de que una se quede atrás, que es la
+trampa de «rotular una variable que no existe» con otro disfraz.
+"""
+
+
+def _numero(x: float) -> str:
+    """Tres decimales como mucho, sin ceros de relleno, y coma.
+
+    La coma no es coquetería: la hoja, el plano y el informe se leen en el
+    mismo taller, y un separador que cambia de sitio invita a leer 47.975
+    como cuarenta y siete mil."""
+    return f"{round(x, 3):g}".replace(".", ",")
+
+
+def _valor(c: dict[str, float], v: Variable) -> str:
+    if v.mapa == "angulo":
+        return _numero(math.degrees(c[v.nombre]))
+    if v.nombre in c:
+        return _numero(c[v.nombre])
+    # Los gemelos los fabrica el exportador, no el contrato.
+    for sufijo, factor in (("_radio", 0.5), ("_diametro", 2.0)):
+        if v.nombre.endswith(sufijo) and v.nombre.removesuffix(sufijo) in c:
+            return _numero(c[v.nombre.removesuffix(sufijo)] * factor)
+    raise KeyError(v.nombre)
+
+
+def tabla_markdown(c: dict[str, float] | None = None) -> str:
+    """El listado de piezas y variables, en markdown.
+
+    Se genera y no se escribe a mano: una tabla de variables copiada envejece
+    en silencio, y lo que la lee es alguien tecleando en un CAD.
+    """
+    c = contrato_mm() if c is None else c
+    filas = ["| Pieza | Forma | Cotas |", "| --- | --- | --- |"]
+    for pieza, ficha in LISTADO.items():
+        cotas = " · ".join(
+            f"{v.etiqueta} `#{v.mapa}.{v.nombre}` {_valor(c, v)}"
+            + (f" {v.sufijo}" if v.sufijo else "")
+            for v in ficha.variables
+        )
+        filas.append(f"| `{pieza}` ×{ficha.cantidad} | {ficha.forma} | {cotas} |")
+    return "\n".join(filas) + "\n"
 
 
 def escribir_dxf(perfil: Perfil, destino: Path, capa: str = "VISIBLE") -> Path:

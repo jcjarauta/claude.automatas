@@ -28,6 +28,7 @@ def brazo(
     plana: bool = True,
     tangentes: bool = True,
     en_datum: bool = False,
+    cara_al_reves: bool = False,
 ) -> Path:
     """Un `brazo_proximal` en DXF, con los defectos que se le pidan.
 
@@ -53,9 +54,11 @@ def brazo(
         # que es justo lo que pasa cuando el croquis se traza punto a punto.
         msp.add_line(p0, p1 if tangentes else (p1[0], p1[1] + 0.4))
     if plana:
+        signo = -1.0 if cara_al_reves else 1.0
         th = math.degrees(math.acos(ch / a0))
-        msp.add_arc((x0, 0), a0, th, 360 - th)
-        msp.add_line((x0 + ch, -cu / 2), (x0 + ch, cu / 2))
+        desde, hasta = (th, 360 - th) if not cara_al_reves else (180 + th, 180 - th)
+        msp.add_arc((x0, 0), a0, desde, hasta)
+        msp.add_line((x0 + signo * ch, -cu / 2), (x0 + signo * ch, cu / 2))
     else:
         msp.add_circle((x0, 0), a0)
     msp.add_circle((x1, 0), a1)
@@ -67,7 +70,7 @@ def brazo(
 def test_un_brazo_bien_dibujado_cuadra(tmp_path: Path):
     inf = comparar(brazo(tmp_path), "brazo_proximal")
     assert inf.cuadra, [h.texto for h in inf.hallazgos]
-    assert len(inf.bien) == 7
+    assert len(inf.bien) == 8, "la cara plana con signo es una comprobación más"
 
 
 def test_caza_la_cara_plana_que_falta(tmp_path: Path):
@@ -166,3 +169,15 @@ def test_toda_ficha_declara_donde_se_ancla():
     for pieza, ficha in FICHAS.items():
         assert ficha.datum, pieza
         assert ficha.datum in ficha.radios, f"{pieza}: el datum tiene que ser un rasgo suyo"
+
+
+def test_caza_la_cara_plana_mirando_al_lado_contrario(tmp_path: Path):
+    """**La cuerda sola no sitúa la cara.** En un agujero de Ø10 una cuerda de
+    6 cae a 4 del centro, pero puede caer a +4 o a -4, y con la cara al otro
+    lado el brazo se cala media vuelta girado: misma pieza en el croquis,
+    otra distinta montada. El comparador lo dejaba pasar hasta que el cruce
+    con `emit.plataforma.LISTADO` enseñó que esa cota no la miraba nadie.
+    """
+    inf = comparar(brazo(tmp_path, cara_al_reves=True), "brazo_proximal")
+    assert not inf.cuadra
+    assert any("media vuelta" in h.texto for h in inf.hallazgos)

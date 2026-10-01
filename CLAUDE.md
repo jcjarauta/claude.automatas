@@ -63,6 +63,7 @@ uv run python scripts/plantillas_demo.py      # plantillas 1:1 de muestra
 uv run python scripts/regenerar_golden.py     # SOLO si el cambio es intencionado
 
 uv run python scripts/comparar_dxf.py pieza.dxf  # cruzar un DXF contra el contrato
+uv run python scripts/listado_piezas.py --escribir  # el listado de docs/metodologia.md §2d
 
 uv run python -m compile.cli demo/hola.json --out build/   # compilar un pedido
 uv run python -m compile.cli demo/hola.json --corte 28      # con un presupuesto real del taller
@@ -704,6 +705,17 @@ falla si el esquema versionado se queda atrás.
   **El comparador no lo caza**: un croquis exacto y suelto lo pasa entero. Ese
   paso es de la persona, mirando que Onshape diga «totalmente definida», y el
   informe lo recuerda cada vez.
+- **Una cuerda no sitúa una cara plana.** En un agujero de Ø10 una cuerda de
+  6 cae a 4 del centro, pero puede caer a **+4 o a -4**, y con la cara mirando
+  al lado contrario el brazo se cala media vuelta girado: la misma pieza en el
+  croquis y otra distinta montada. El comparador lo dejaba pasar, y lo enseñó
+  el cruce entre `emit.plataforma.LISTADO` y `FICHAS`: el listado decía que
+  `brazo_chaveta` se teclea y la ficha no la miraba nadie. Ahora se comprueba
+  **con signo**.
+
+  La lección general es la del cruce, no la de la cota: dos listas que
+  describen lo mismo desde lados distintos se contrastan, y lo que aparece en
+  una y falta en la otra es siempre algo.
 - **Comparar contra el contrato entero no comprueba nada.** Con ochenta cotas,
   cualquier número redondo encuentra una que lo explique: la primera versión de
   `comparar_dxf.py` daba por bueno un radio de 6 en un brazo citando el ancho

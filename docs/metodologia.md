@@ -288,6 +288,46 @@ agujero está a `brazo_chaveta_angulo` = 0, así que la pieza espejada es la
 misma. La propiedad que ahorra el brazo derecho del despiece ahorra también
 una restricción.
 
+#### Las piezas y lo que se teclea en cada una
+
+**Esta tabla se genera**, con `scripts/listado_piezas.py --escribir`, desde
+`emit.plataforma.LISTADO`. Escrita a mano envejecería en silencio, y lo que la
+lee es alguien tecleando cotas en un CAD: una fila que dice 40 donde el
+contrato dice 80 no se nota hasta que la pieza está cortada. Un test falla si
+el markdown y el código se separan.
+
+<!-- listado:inicio · generado por scripts/listado_piezas.py, no editar a mano -->
+
+| Pieza | Forma | Cotas |
+| --- | --- | --- |
+| `brazo_proximal` ×2 | barra de dos cubos **desiguales** en pletina de latón | entre centros `#cota.brazo_proximal` 90 · espesor `#cota.brazo_espesor` 3 · Ø eje `#cota.brazo_eje_diametro` 10 H7 · Ø perno `#cota.brazo_perno_diametro` 6 H7 · R del cubo del eje `#cota.brazo_cubo_diametro_radio` 9 · R del extremo `#cota.brazo_extremo_diametro_radio` 6 · cara plana a `#cota.brazo_chaveta` 4 · cuerda `#cota.brazo_chaveta_cuerda` 6 · girada `#angulo.brazo_chaveta_angulo` 0 · calaje del EJE `#angulo.calaje_izquierdo` -3,749 |
+| `brazo_distal` ×2 | barra de dos cubos **iguales** en pletina de latón | entre centros `#cota.brazo_distal` 110 · espesor `#cota.brazo_espesor` 3 · Ø los dos `#cota.brazo_perno_diametro` 6 H7 · R los dos `#cota.brazo_extremo_diametro_radio` 6 |
+| `palanca_lapiz` ×1 | barra de dos cubos **desiguales** en pletina de latón | entre centros `#cota.brazo_palanca` 40 · espesor `#cota.brazo_espesor` 3 · Ø eje `#cota.brazo_eje_diametro` 10 H7 · Ø perno `#cota.brazo_perno_diametro` 6 H7 · R del cubo del eje `#cota.brazo_cubo_diametro_radio` 9 · R del extremo `#cota.brazo_extremo_diametro_radio` 6 · cara plana a `#cota.brazo_chaveta` 4 · cuerda `#cota.brazo_chaveta_cuerda` 6 · girada `#angulo.brazo_chaveta_angulo` 0 · calaje del EJE `#angulo.calaje_elevador` 2,149 |
+| `sector` ×3 | disco entero de POM, sin muesca | canto `#cota.amplificador_sector_radio_mecanizado` 47,975 · espesor `#cota.amplificador_sector_espesor` 5 · Ø de paso `#cota.amplificador_sector_agujero_diametro` 16 · la cinta entra a `#angulo.amplificador_tangencia` 53,968 |
+| `tambor` ×3 | cilindro liso con agujero, sin pestañas | canto `#cota.amplificador_tambor_radio_mecanizado` 7,975 · ancho `#cota.amplificador_tambor_ancho` 6 · Ø agujero `#cota.brazo_eje_diametro` 10 H7 · abrazado `#angulo.amplificador_tambor_abrazado` 185 |
+
+<!-- listado:fin -->
+
+Del `brazo_proximal` se corta **una** y valen las dos: los calajes suman -180°,
+así que el derecho es el izquierdo volteado.
+
+Tres cosas que la tabla no dice sola:
+
+**Los `_radio` son gemelos**, no cotas del contrato. El contrato guarda
+`brazo_cubo_diametro`; el exportador saca su mitad porque el contorno de una
+barra son dos arcos y ahí el CAD pide radio. Meter el diámetro en ese campo da
+un cubo del doble, sin un solo aviso.
+
+**El calaje no se acota en la pieza.** Va en la fila porque hay que saberlo,
+pero con la cara plana a 0° el brazo es simétrico respecto de su propio eje y
+no tiene orientación: el ángulo se mecaniza en la cara plana del **eje**, que
+es otra pieza y aún no tiene plano.
+
+**Las que no están en el perfil hay que teclearlas igual.** El espesor, el
+ancho del tambor, el abrazado, el calaje: no son geometría del croquis, así
+que el DXF no las trae. El archivo no sustituye a la tabla de variables, la
+adelgaza.
+
 #### Qué comprueba el comparador y qué no
 
 Comprueba **la forma**: cada radio con su cota y su recuento, la distancia
