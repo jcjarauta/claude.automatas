@@ -9,6 +9,7 @@ montón de archivos sin orden no es un paquete de importación.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -143,6 +144,51 @@ def test_las_variables_van_partidas_por_unidad(paquete: Path):
     # y ninguna se cuela en el archivo de otra unidad
     assert "calaje_izquierdo" not in cota
     assert "radio_base" not in angulo
+
+
+def test_toda_hoja_que_se_copia_rotula_variables_que_existen_en_los_csv(paquete: Path):
+    """**El mismo cruce de la hoja de piezas, extendido a las otras cuatro.**
+
+    Estaba cubierta solo la hoja de piezas comerciales. Las dos conceptuales
+    y los dos planos comprobaban sus variables contra `docs/contratos.json`,
+    que no es lo que se importa: lo que se importa son los CSV, y entre el
+    contrato y el CSV hay un reparto por unidades que puede equivocar el
+    PREFIJO sin equivocar el nombre. Un `#cota.calaje_izquierdo` existiría
+    en el contrato y no en `variables_cota.csv`, y el que lo copia se entera
+    cuando el campo se pone en rojo.
+
+    Es literalmente lo que ya pasó con `#pieza.…_dientes`. Aquí se cruza
+    cada hoja contra los CSV de verdad.
+    """
+    import csv as _csv
+
+    from scripts import (
+        dibujar_amplificador,
+        dibujar_cinco_barras,
+        dibujar_plano_brazos,
+        dibujar_plano_cabestrante,
+    )
+
+    existentes: dict[str, set[str]] = {}
+    for archivo, (variable, _) in MAPAS.items():
+        ruta = paquete / f"{archivo}.csv"
+        if ruta.exists():
+            filas = _csv.reader(ruta.read_text(encoding="utf-8").splitlines())
+            existentes.setdefault(variable, set()).update(f[0] for f in filas if f)
+
+    hojas = {
+        "amplificador": dibujar_amplificador.hoja(),
+        "cinco_barras": dibujar_cinco_barras.hoja(),
+        "plano_cabestrante": dibujar_plano_cabestrante.hoja(),
+        "plano_brazos": dibujar_plano_brazos.hoja(),
+    }
+    vistas = 0
+    for nombre_hoja, texto in hojas.items():
+        for mapa, nombre in re.findall(r"#([a-z_]+)\.([a-z0-9_]+)", texto):
+            assert mapa in existentes, f"{nombre_hoja}: no hay CSV para el mapa «{mapa}»"
+            assert nombre in existentes[mapa], f"{nombre_hoja}: #{mapa}.{nombre}"
+            vistas += 1
+    assert vistas >= 30, f"esperaba muchas más variables rotuladas, vi {vistas}"
 
 
 def test_la_hoja_de_ruta_dice_que_archivo_va_a_que_variable_y_con_que_factor(

@@ -482,6 +482,17 @@ falla si el esquema versionado se queda atrás.
   estar en el CSV de ese mapa. Si no está, no hace falta saber por qué —no
   se puede teclear—. Lo que el perfil dibuja con un valor por defecto se
   rotula como hueco, con asterisco, y no como variable.
+
+  **Y salió una cuarta, por tener el cruce solo en una hoja.** Las otras
+  cuatro —las dos conceptuales y los dos planos— comprobaban sus variables
+  contra `docs/contratos.json`, que no es lo que se importa: entre el
+  contrato y el CSV hay un reparto por unidades que puede equivocar el
+  prefijo sin equivocar el nombre. Al extender el cruce a todas, el primer
+  fallo apareció solo: `dibujar_amplificador.py` seguía pidiendo
+  `amplificador_sector_semiarco`, borrada del contrato dos commits antes.
+  El script estaba roto y nadie lo ejecutaba.
+  `test_toda_hoja_que_se_copia_rotula_variables_que_existen_en_los_csv` las
+  cubre las cuatro, y de paso las ejecuta.
 - **Un factor de conversión por archivo, así que un mapa por unidad.** Una
   importación de Onshape crea **una** variable de tipo mapa y aplica su
   factor a **todas** las filas. Por eso el paquete saca cinco CSV y no uno:

@@ -134,7 +134,7 @@ def seccion(
         f'<text class="pieza" x="{cx:.1f}" y="{y + 12:.1f}">{cual} · sección</text>',
         f'<text class="ref" x="{cx:.1f}" y="{y + 20:.1f}">'
         + (
-            "dos planchas de POM de 5 apiladas, en el poste del seguidor"
+            "un disco de POM de 5, entero, en el poste del seguidor"
             if es_sector
             else "aluminio torneado, en el eje del brazo"
         )
@@ -179,10 +179,13 @@ def filas(c: dict[str, float], cual: str) -> list[tuple[str, str]]:
         return [
             *comunes,
             (
-                f"#{angulo}.amplificador_sector_semiarco",
-                f"{math.degrees(c['amplificador_sector_semiarco']):g}",
+                f"#{angulo}.amplificador_tangencia",
+                f"{math.degrees(c['amplificador_tangencia']):g}",
             ),
-            (f"#{cota}.poste_diametro", f"{c['poste_diametro'] * MM:g}"),
+            (
+                f"#{cota}.amplificador_sector_agujero",
+                f"{c['amplificador_sector_agujero'] * MM:g}",
+            ),
         ]
     return [
         *comunes,
