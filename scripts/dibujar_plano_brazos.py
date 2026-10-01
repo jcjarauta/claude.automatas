@@ -29,6 +29,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from emit.plataforma import Segmento, barra
 from scripts.acotar import ESTILO, FLECHA, MM, auxiliar, contrato, cota_h, cota_v, radial
 
 CABECERA = 44.0
@@ -63,27 +64,43 @@ AVISOS = {
 
 
 def obround(cx: float, cy: float, largo: float, r0: float, r1: float, k: float) -> str:
-    """Contorno de una barra de dos cubos: dos círculos y sus tangentes.
+    """El contorno, en coordenadas de la hoja.
 
-    Los dos cubos pueden tener radios distintos —el que va al eje es mayor
-    porque tiene que dejar pared sobre un agujero de Ø10—, así que las
-    tangentes no son paralelas. El ángulo sale de la misma condición de
-    perpendicularidad que la cinta del cabestrante: `cos t = (r0-r1)/largo`.
+    **La forma no se calcula aquí.** Sale de `emit.plataforma.barra`, que es
+    la misma que escribe el DXF: si la hoja enseñara un contorno y el archivo
+    otro, quien dibuja haría un tercero. Esto solo traslada y escala.
     """
-    t = math.acos((r0 - r1) / largo)
-    x0, x1 = cx, cx + largo * k
-    p = [
-        (x0 + r0 * k * math.cos(t), cy - r0 * k * math.sin(t)),
-        (x1 + r1 * k * math.cos(t), cy - r1 * k * math.sin(t)),
-        (x1 + r1 * k * math.cos(t), cy + r1 * k * math.sin(t)),
-        (x0 + r0 * k * math.cos(t), cy + r0 * k * math.sin(t)),
-    ]
-    return (
-        f"M {p[0][0]:.2f},{p[0][1]:.2f} L {p[1][0]:.2f},{p[1][1]:.2f} "
-        f"A {r1 * k:.2f},{r1 * k:.2f} 0 1 1 {p[2][0]:.2f},{p[2][1]:.2f} "
-        f"L {p[3][0]:.2f},{p[3][1]:.2f} "
-        f"A {r0 * k:.2f},{r0 * k:.2f} 0 1 1 {p[0][0]:.2f},{p[0][1]:.2f} Z"
-    )
+    trozos = barra(largo, r0, r1)
+    punto = lambda p: (cx + p[0] * k, cy - p[1] * k)  # noqa: E731
+    d = []
+    for e in trozos:
+        if isinstance(e, Segmento):
+            a, b = punto(e.a), punto(e.b)
+            if not d:
+                d.append(f"M {a[0]:.2f},{a[1]:.2f}")
+            d.append(f"L {b[0]:.2f},{b[1]:.2f}")
+        else:
+            # La Y se invierte al pasar a coordenadas de pantalla, así que el
+            # arco antihorario del perfil se dibuja horario en el SVG.
+            fin = punto(
+                (
+                    e.centro[0] + e.radio * math.cos(e.hasta),
+                    e.centro[1] + e.radio * math.sin(e.hasta),
+                )
+            )
+            ini = punto(
+                (
+                    e.centro[0] + e.radio * math.cos(e.desde),
+                    e.centro[1] + e.radio * math.sin(e.desde),
+                )
+            )
+            grande = 1 if (e.hasta - e.desde) % (2 * math.pi) > math.pi else 0
+            if not d:
+                d.append(f"M {ini[0]:.2f},{ini[1]:.2f}")
+            d.append(
+                f"A {e.radio * k:.2f},{e.radio * k:.2f} 0 {grande} 0 {fin[0]:.2f},{fin[1]:.2f}"
+            )
+    return " ".join(d) + " Z"
 
 
 def medidas(c: dict[str, float], cual: str) -> tuple[float, float, float, float, float]:
@@ -254,6 +271,11 @@ def frente(c: dict[str, float], cual: str, x: float, y: float, ancho: float, alt
     d += radial(cx + largo * k, cy, a1 * k, math.radians(-25), f"Ø{2 * a1:g} H7")
     d += radial(cx, cy, r0 * k, math.radians(130), f"R{r0:g}")
     d += radial(cx + largo * k, cy, r1 * k, math.radians(50), f"R{r1:g}")
+    d.append(
+        f'<text class="aviso" x="{x + ancho / 2:.1f}" y="{y + 39:.1f}" '
+        f'text-anchor="middle">importa {cual}.dxf · ancla con DOS coincidentes: '
+        "el agujero del datum al origen y el otro centro al eje X</text>"
+    )
     return d + tabla(c, cual, x, y + alto - PIE + 12, ancho)
 
 
@@ -323,7 +345,7 @@ def panel(c: dict[str, float], cual: str, x: float, y: float, ancho: float, alto
 def hoja() -> str:
     c = contrato()
     ancho, alto, borde = 248.0, 232.0, 12.0
-    w, h = borde * 2 + 2 * ancho, 46 + 2 * alto + borde
+    w, h = borde * 2 + 2 * ancho, 54 + 2 * alto + borde
     partes = [
         '<?xml version="1.0" encoding="UTF-8"?>',
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{w * 2:.0f}" height="{h * 2:.0f}" '
@@ -334,12 +356,15 @@ def hoja() -> str:
         f'<text class="sub" x="{borde}" y="30">Cotas en mm, sacadas de docs/contratos.json '
         "con scripts/dibujar_plano_brazos.py. Pletina de latón de 3: una tira y tres "
         "contornos. Lo que la cinemática fija es la distancia entre centros.</text>",
+        f'<text class="sub" x="{borde}" y="46">El DXF llega con el rasgo DATUM en el origen '
+        "y el centro siguiente sobre +X: no hay nada que partir por la mitad. Después, acotar "
+        "y comprobar que Onshape diga «totalmente definida».</text>",
         f'<text class="sub" x="{borde}" y="38">Del proximal se corta UNA y valen las dos: '
         "los calajes suman -180°, así que el derecho es el izquierdo volteado. El calaje no "
         "está en el brazo: está en la cara plana del EJE, que aún no tiene plano.</text>",
     ]
     for i, cual in enumerate(("proximal", "distal", "palanca", "seccion")):
-        partes += panel(c, cual, borde + (i % 2) * ancho, 46 + (i // 2) * alto, ancho, alto)
+        partes += panel(c, cual, borde + (i % 2) * ancho, 54 + (i // 2) * alto, ancho, alto)
     partes.append("</svg>")
     return "\n".join(partes) + "\n"
 

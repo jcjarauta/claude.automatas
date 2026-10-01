@@ -60,7 +60,14 @@ def test_la_hoja_de_ruta_dice_el_orden_y_de_quien_es_cada_pieza(paquete: Path):
     # rompe la variable entera al importarlo. El test la pinchaba tal cual.
     assert "2. **Importa los cinco CSV en un Variable Studio**" in guia
     assert "un solo sentido" in guia, "hay que decir que lo editado en el CAD se pierde"
-    assert "La plataforma se dibuja dentro del CAD" in guia
+    # La plataforma prismática ya no se dibuja a mano desde cero: sale en DXF
+    # con su datum. Lo que sigue siendo de la persona es acotar y comprobar
+    # que el croquis queda definido, y la hoja tiene que decirlo las dos cosas
+    # o el DXF se extruye suelto.
+    assert "plataforma/*.dxf" in guia
+    assert "dos coincidentes" in guia
+    assert "totalmente definida" in guia
+    assert "andamio, no vínculo" in guia
 
 
 def test_un_pedido_que_no_cabe_escribe_el_paquete_pero_avisa(tmp_path: Path):

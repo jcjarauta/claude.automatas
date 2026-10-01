@@ -41,6 +41,9 @@ from core.solido import DENSIDADES
 from core.units import mm
 from emit.catalogo import cargar as cargar_piezas
 from emit.dxf import escribir_dxf
+from emit.plataforma import BRAZOS
+from emit.plataforma import brazo as brazo_de
+from emit.plataforma import escribir_dxf as escribir_perfil
 from scripts.exportar_variables import csv, featurescript
 
 
@@ -340,9 +343,22 @@ el contrato o la ficha y se regenera.
    del comando normal del compilador.
 
 {paso_solido}
-7. **La plataforma se dibuja dentro del CAD**, a mano y una sola vez. No sale
-   de aquí a propósito: no cambia entre pedidos y tiene que seguir siendo
-   paramétrica.
+7. **Importa los perfiles de la plataforma**, `plataforma/*.dxf`, uno por
+   Part Studio. Llegan con el rasgo **datum en el origen** y el centro
+   siguiente sobre +X, así que se anclan con **dos coincidentes** —el agujero
+   del datum al origen, el otro centro al eje X— y no hay que partir ningún
+   número por la mitad.
+
+   Luego **acota con las variables** y comprueba que Onshape diga
+   «totalmente definida». Esa comprobación no la puede hacer nadie más: un
+   croquis exacto y suelto se ve bien y se mueve luego, y eso no viaja en un
+   DXF. Al terminar, exporta el croquis y pásalo por
+   `scripts/comparar_dxf.py`.
+
+   **El DXF es andamio, no vínculo.** Trae la forma resuelta —la tangente
+   exterior entre dos círculos desiguales, el agujero en D— que es lo caro de
+   construir a mano. El vínculo con el contrato lo sigue poniendo quien
+   acota, y por eso la pieza sigue siendo paramétrica.
 
 ## Qué es de quién
 
@@ -350,7 +366,8 @@ el contrato o la ficha y se regenera.
 | --- | --- | --- |
 | El cartucho | El compilador, en cada pedido | Se arrastra el DXF o el STEP |
 | Las piezas comerciales | Se generan desde su ficha | Se arrastra el STEP |
-| La plataforma | A mano, una vez | Se dibuja dentro |
+| La plataforma, prismática | El compilador da la forma | Se importa el DXF y se acota |
+| La plataforma, lo demás | A mano, una vez | Se dibuja dentro |
 | Las cotas que comparten | `docs/contratos.json` | Se pega en el Variable Studio |
 
 ## Antes de montar
@@ -395,6 +412,11 @@ def main(argv: list[str] | None = None) -> int:
     carpeta.mkdir(exist_ok=True)
     for pieza in compilacion.piezas:
         escribir_dxf(pieza, carpeta / f"{pieza.numero}.dxf", rotulo=False)
+
+    # 3bis · los perfiles prismáticos de la plataforma, en su datum
+    plataforma = destino / "plataforma"
+    for cual in BRAZOS:
+        escribir_perfil(brazo_de(cual), plataforma / f"{cual}.dxf")
 
     # 4 · el sólido, si hay kernel y si el perfil lo admite
     #
