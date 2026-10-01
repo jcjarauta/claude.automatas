@@ -157,10 +157,12 @@ def mordaza(c: dict[str, float] | None = None) -> Perfil:
     largo, ancho = c["mordaza_largo"], c["mordaza_ancho"]
     apriete = c["mordaza_tornillo_diametro"] / 2
     fijacion = c["mordaza_fijacion_diametro"] / 2
-    entre = c["mordaza_entre_tornillos"]
-    # El bloque se centra entre los dos agujeros, que es como se corta.
+    entre, voladizo = c["mordaza_entre_tornillos"], c["mordaza_voladizo"]
+    # El bloque NO se centra entre los dos agujeros: la ranura llega más lejos
+    # que el segundo centro, y centrándolo se salía por el extremo. Lo sitúa
+    # `mordaza_voladizo` desde el tornillo de apriete, que es el datum.
     return (
-        rectangulo((entre / 2, 0.0), largo, ancho)
+        rectangulo((largo / 2 - voladizo, 0.0), largo, ancho)
         + circulo((0.0, 0.0), apriete)
         + ranura((entre, 0.0), c["mordaza_recorrido"], fijacion)
     )
@@ -320,6 +322,7 @@ LISTADO: dict[str, Ficha] = {
         6,
         (
             Variable("cota", "mordaza_largo", "largo"),
+            Variable("cota", "mordaza_voladizo", "del tornillo al borde"),
             Variable("cota", "mordaza_ancho", "ancho"),
             Variable("cota", "mordaza_espesor", "espesor", en_el_perfil=False),
             Variable("cota", "mordaza_tornillo_diametro", "Ø aprieta la cinta", "M3"),

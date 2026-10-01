@@ -181,3 +181,35 @@ def test_caza_la_cara_plana_mirando_al_lado_contrario(tmp_path: Path):
     inf = comparar(brazo(tmp_path, cara_al_reves=True), "brazo_proximal")
     assert not inf.cuadra
     assert any("media vuelta" in h.texto for h in inf.hallazgos)
+
+
+def test_caza_un_contorno_centrado_donde_no_toca(tmp_path: Path):
+    """**El fallo que encontró una cota dibujada.**
+
+    El bloque de la mordaza estaba centrado entre sus dos tornillos, que
+    parece lo natural, y por el extremo derecho la ranura se salía un
+    milímetro. Desde el datum no había cota que situara el borde, así que
+    nada lo decía: ni el dibujo, que no lo acotaba, ni el comparador.
+    """
+    import ezdxf
+
+    from emit.plataforma import contrato_mm, mordaza
+    from scripts.comparar_dxf import comparar as comparar_pieza
+
+    c = contrato_mm()
+    doc = ezdxf.new("R2010")
+    msp = doc.modelspace()
+    for e in mordaza(c):
+        if hasattr(e, "a"):
+            # El contorno se desplaza: el bloque centrado entre los tornillos.
+            dx = c["mordaza_voladizo"] - c["mordaza_largo"] / 2 + c["mordaza_entre_tornillos"] / 2
+            mover = abs(e.a[0] - e.b[0]) > 1e-9 or abs(e.a[1]) > c["mordaza_ancho"] / 2 - 1e-9
+            d = dx if mover else 0.0
+            msp.add_line((e.a[0] + d, e.a[1]), (e.b[0] + d, e.b[1]))
+        else:
+            msp.add_arc(e.centro, e.radio, math.degrees(e.desde), math.degrees(e.hasta))
+    ruta = tmp_path / "torcida.dxf"
+    doc.saveas(ruta)
+    inf = comparar_pieza(ruta, "mordaza")
+    assert not inf.cuadra
+    assert any("mordaza_voladizo" in h.texto for h in inf.hallazgos)

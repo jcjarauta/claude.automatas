@@ -419,9 +419,16 @@
         },
         {
           "nombre": "mordaza_largo",
-          "valor": 0.016,
+          "valor": 0.022,
           "unidad": "m",
-          "descripcion": "Largo del bloque de la mordaza, en la direccion de la cinta",
+          "descripcion": "Largo del bloque en la direccion de la cinta. Lo fija el final de la ranura mas la pared: con 16 la ranura se salia del bloque",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "mordaza_voladizo",
+          "valor": 0.005,
+          "unidad": "m",
+          "descripcion": "Del tornillo de apriete al borde cercano del bloque. Es lo que situa el contorno respecto del datum: sin ella el que dibuja tiene que deducir que el bloque esta centrado entre no se sabe que dos cosas",
           "tolerancia": ""
         },
         {
@@ -471,6 +478,13 @@
           "valor": 0.008,
           "unidad": "m",
           "descripcion": "Del tornillo de apriete al centro de la ranura de fijacion",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "mordaza_pared",
+          "valor": 0.003,
+          "unidad": "m",
+          "descripcion": "Pared minima entre un agujero o la ranura y el borde del bloque",
           "tolerancia": ""
         }
       ]

@@ -426,6 +426,15 @@ def main(argv: list[str] | None = None) -> int:
     for cual in PERFIL_DE:
         (plataforma / f"{cual}.svg").write_text(hoja_de_pieza([cual]), encoding="utf-8")
 
+    # 3ter · qué CSV hay que reimportar, que es lo único que el paquete no
+    # puede saber mirándose a sí mismo: depende de lo que ya esté en Onshape.
+    from scripts.csv_pendientes import informe as informe_pendientes
+    from scripts.csv_pendientes import pendientes
+
+    (destino / "REIMPORTAR.md").write_text(
+        informe_pendientes(pendientes(destino), MAPAS), encoding="utf-8"
+    )
+
     # 4 · el sólido, si hay kernel y si el perfil lo admite
     #
     # Un perfil autointersecado no levanta cara y el kernel lanza. Eso **no**

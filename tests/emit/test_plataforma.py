@@ -24,6 +24,7 @@ from emit.plataforma import (
     contrato_mm,
     eje_pivote,
     escribir_dxf,
+    mordaza,
 )
 from scripts.comparar_dxf import comparar
 
@@ -197,3 +198,48 @@ def test_cada_perfil_nuevo_lo_aprueba_el_comparador(cual: str, tmp_path: Path):
     inf = comparar(escribir_dxf(PERFILES[cual](None), tmp_path / f"{cual}.dxf"), cual)
     assert inf.cuadra, [h.texto for h in inf.hallazgos]
     assert "totalmente definida" in inf.datum
+
+
+def test_la_mordaza_envuelve_sus_agujeros_con_pared_de_sobra():
+    """**El fallo que cazó una cota que faltaba.**
+
+    El bloque estaba centrado entre los dos tornillos, que parece lo natural,
+    pero la ranura llega más lejos que el segundo centro —su recorrido más su
+    radio— y por el extremo derecho se salía un milímetro. En el dibujo se ve
+    si alguien lo acota; mientras nadie acotara el borde no se veía, porque
+    desde el datum no había cota que lo situara.
+
+    Ahora lo sitúa `mordaza_voladizo` y lo vigila esto.
+    """
+    c = contrato_mm()
+    izquierda = -c["mordaza_voladizo"]
+    derecha = izquierda + c["mordaza_largo"]
+    pared = c["mordaza_pared"]
+
+    fin_ranura = (
+        c["mordaza_entre_tornillos"]
+        + c["mordaza_recorrido"] / 2
+        + c["mordaza_fijacion_diametro"] / 2
+    )
+    assert derecha - fin_ranura >= pared, "la ranura se sale por el extremo"
+    assert -c["mordaza_tornillo_diametro"] / 2 - izquierda >= pared, "el apriete se sale"
+
+    arriba = c["mordaza_ancho"] / 2
+    for agujero in ("mordaza_tornillo_diametro", "mordaza_fijacion_diametro"):
+        assert arriba - c[agujero] / 2 >= pared, f"{agujero} deja el bloque sin pared a lo ancho"
+
+
+def test_el_contorno_de_la_mordaza_contiene_todo_lo_demas():
+    """Lo mismo medido sobre el perfil que se emite, y no sobre las cotas: si
+    alguna vez el dibujo dejara de seguir al contrato, esto lo diría."""
+    perfil = mordaza()
+    rect = [e for e in perfil if isinstance(e, Segmento) and len(perfil) > 4][:4]
+    xs = [p[0] for e in rect for p in (e.a, e.b)]
+    ys = [p[1] for e in rect for p in (e.a, e.b)]
+    for e in perfil:
+        if not isinstance(e, Arco):
+            continue
+        assert min(xs) <= e.centro[0] - e.radio, "se sale por la izquierda"
+        assert e.centro[0] + e.radio <= max(xs), "se sale por la derecha"
+        assert min(ys) <= e.centro[1] - e.radio, "se sale por abajo"
+        assert e.centro[1] + e.radio <= max(ys), "se sale por arriba"

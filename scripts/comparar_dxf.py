@@ -89,6 +89,14 @@ class Ficha:
     extremos de un rasgo. Sin declararla, el barrido de distancias entre
     centros saca tres huérfanas de una pieza que solo tiene dos agujeros.
     """
+    voladizo: str = ""
+    """Del datum al borde más cercano del contorno, hacia -X.
+
+    Sitúa el contorno respecto del datum, que es lo que ninguna otra cota
+    hace: largo y ancho dicen cuánto mide el bloque y no dónde está. Sin
+    ella el bloque se puede dibujar centrado entre los tornillos —que es lo
+    natural y lo que estaba mal— y la ranura se sale por el extremo.
+    """
     cara_plana: str = ""
     """La cota del desplazamiento del eje al plano de la cara, **con signo**.
 
@@ -163,6 +171,7 @@ FICHAS: dict[str, Ficha] = {
             "mordaza_fijacion_diametro_radio": 2,
         },
         segmentos={"mordaza_largo": 2, "mordaza_ancho": 2},
+        voladizo="mordaza_voladizo",
         ranura=("mordaza_recorrido", "mordaza_fijacion_diametro_radio"),
         entre_centros=("mordaza_entre_tornillos",),
         datum="mordaza_tornillo_diametro_radio",
@@ -332,6 +341,25 @@ def comparar(ruta: Path, pieza: str, tol: float = TOLERANCIA) -> Informe:
                 "ninguna cota de esta pieza",
             )
         )
+
+    # --- dónde empieza el contorno respecto del datum ---
+    if ficha.voladizo:
+        esperado = cotas[ficha.voladizo]
+        bordes = [min(a[0], b[0]) for a, b in segmentos if abs(a[0] - b[0]) <= tol]
+        if not bordes:
+            inf.hallazgos.append(
+                Hallazgo("falta", f"#cota.{ficha.voladizo}: no hay ningún borde vertical")
+            )
+        elif abs(min(bordes) + esperado) <= tol:
+            inf.bien.append(f"borde a {esperado:g} del datum   #cota.{ficha.voladizo}")
+        else:
+            inf.hallazgos.append(
+                Hallazgo(
+                    "falta",
+                    f"#cota.{ficha.voladizo} pide el borde a {-esperado:+g} del datum "
+                    f"y está a {min(bordes):+g}: el contorno no está donde dice el contrato",
+                )
+            )
 
     # --- la ranura: dos arcos que son UN rasgo ---
     circulares_sueltos = list(circulares)

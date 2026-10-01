@@ -246,21 +246,42 @@ El bucle, por pieza:
 
 | | Quién | Qué sale |
 | --- | --- | --- |
-| 1. **Generar** | el compilador | tres cosas, siempre las tres: `pieza.dxf` en su datum, la **tabla** de cotas y variables, y el **boceto en PNG** con vistas y explicación |
+| 1. **Generar** | el compilador | cuatro cosas, siempre las cuatro: `pieza.dxf` en su datum, la **tabla** de cotas y variables, el **boceto** con vistas y explicación, y **qué CSV hay que reimportar** |
 | 2. **Dibujar** | la persona, en Onshape | importa el DXF, ancla con dos coincidentes, acota con los `#cota.…` de la tabla |
 | 3. **Comprobar** | la persona | que Onshape diga **totalmente definida** |
 | 4. **Devolver** | la persona | exporta el croquis a DXF y lo pasa |
 | 5. **Comparar** | `scripts/comparar_dxf.py` | lo cruza contra el contrato y dice qué falta, qué sobra y dónde está puesta |
 
 Si el paso 5 falla, se corrige y se vuelve al 2. Si hace falta tocar una cota,
-se toca el contrato —nunca el croquis a mano— y se regeneran los CSV; la hoja
-de ruta del paquete dice cuáles hay que reimportar.
+se toca el **contrato** —nunca el croquis a mano— y se regenera.
 
-Los tres artefactos del paso 1 no son opcionales y no se reparten: el DXF da la
-forma, la tabla da lo que se teclea, y el PNG da el porqué y las vistas. Faltando
-el PNG se dibuja sin entender la pieza; faltando la tabla se teclean números
-leídos del dibujo, que es de donde vienen los errores que este documento
-existe para evitar.
+Los cuatro artefactos del paso 1 no son opcionales y no se reparten: el DXF da
+la forma, la tabla da lo que se teclea, el boceto da el porqué y las vistas, y
+`REIMPORTAR.md` dice qué hay que volver a meter en el Variable Studio. Faltando
+el boceto se dibuja sin entender la pieza; faltando la tabla se teclean números
+leídos del dibujo, que es de donde vienen los errores que este documento existe
+para evitar.
+
+#### Qué CSV hay que reimportar
+
+Lo escribe `scripts/csv_pendientes.py` en `REIMPORTAR.md`, dentro del paquete.
+Compara el paquete recién generado contra `docs/importado.json`, que guarda lo
+que está **ahora mismo** en Onshape, y dice fila a fila qué entra, qué sale y
+qué cambia de valor. Después de importar se marca con
+`scripts/marcar_importado.py`.
+
+**Decir «reimporta los cinco» por si acaso no es prudente, es caro.** Un mapa
+del Variable Studio no se actualiza: se borra y se vuelve a crear, y mientras
+tanto todo lo que lo referencia se pone en rojo. Normalmente ha cambiado uno.
+
+Y cuando una cota **se va** —porque se renombró, como `brazo_ancho` o
+`amplificador_sector_agujero`— el informe lo dice aparte, porque reimportar
+encima no la borra: la clave vieja se queda en el mapa hasta que se borre la
+tabla entera. No rompe nada mientras nadie la referencie, pero conviene saberlo
+antes de buscar por qué hay una variable que ya no existe en el contrato.
+
+Se guarda el **contenido** y no solo un hash: un hash dice que algo cambió y no
+qué, y reconstruir eso a mano es justo el trabajo que esto quita.
 
 El DXF entra como **andamio, no como vínculo**. Trae la forma resuelta —la
 tangente exterior entre dos círculos desiguales, el agujero en D— que es lo
@@ -318,7 +339,7 @@ el markdown y el código se separan.
 | `brazo_proximal` ×2 | barra de dos cubos **desiguales** en pletina de latón | entre centros `#cota.brazo_proximal` 90 · espesor `#cota.brazo_espesor` 3 · Ø eje `#cota.brazo_eje_diametro` 10 H7 · Ø perno `#cota.brazo_perno_diametro` 6 H7 · R del cubo del eje `#cota.brazo_cubo_diametro_radio` 9 · R del extremo `#cota.brazo_extremo_diametro_radio` 6 · cara plana a `#cota.brazo_chaveta` 4 · cuerda `#cota.brazo_chaveta_cuerda` 6 · girada `#angulo.brazo_chaveta_angulo` 0 · calaje del EJE `#angulo.calaje_izquierdo` -3,749 |
 | `brazo_distal` ×2 | barra de dos cubos **iguales** en pletina de latón | entre centros `#cota.brazo_distal` 110 · espesor `#cota.brazo_espesor` 3 · Ø los dos `#cota.brazo_perno_diametro` 6 H7 · R los dos `#cota.brazo_extremo_diametro_radio` 6 |
 | `palanca_lapiz` ×1 | barra de dos cubos **desiguales** en pletina de latón | entre centros `#cota.brazo_palanca` 40 · espesor `#cota.brazo_espesor` 3 · Ø eje `#cota.brazo_eje_diametro` 10 H7 · Ø perno `#cota.brazo_perno_diametro` 6 H7 · R del cubo del eje `#cota.brazo_cubo_diametro_radio` 9 · R del extremo `#cota.brazo_extremo_diametro_radio` 6 · cara plana a `#cota.brazo_chaveta` 4 · cuerda `#cota.brazo_chaveta_cuerda` 6 · girada `#angulo.brazo_chaveta_angulo` 0 · calaje del EJE `#angulo.calaje_elevador` 2,149 |
-| `mordaza` ×6 | bloque con un tornillo que aprieta y una ranura que cala | largo `#cota.mordaza_largo` 16 · ancho `#cota.mordaza_ancho` 10 · espesor `#cota.mordaza_espesor` 6 · Ø aprieta la cinta `#cota.mordaza_tornillo_diametro` 3 M3 · Ø fija al sector `#cota.mordaza_fijacion_diametro` 4 M4 · entre los dos `#cota.mordaza_entre_tornillos` 8 · recorrido de la ranura `#cota.mordaza_recorrido` 6 · radio mínimo de la cinta `#cota.cinta_radio_minimo` 5 |
+| `mordaza` ×6 | bloque con un tornillo que aprieta y una ranura que cala | largo `#cota.mordaza_largo` 22 · del tornillo al borde `#cota.mordaza_voladizo` 5 · ancho `#cota.mordaza_ancho` 10 · espesor `#cota.mordaza_espesor` 6 · Ø aprieta la cinta `#cota.mordaza_tornillo_diametro` 3 M3 · Ø fija al sector `#cota.mordaza_fijacion_diametro` 4 M4 · entre los dos `#cota.mordaza_entre_tornillos` 8 · recorrido de la ranura `#cota.mordaza_recorrido` 6 · radio mínimo de la cinta `#cota.cinta_radio_minimo` 5 |
 | `eje_pivote` ×3 | barra Ø10 h6 con una cara plana, cortada a medida | Ø `#cota.brazo_eje_diametro` 10 h6 · largo `#cota.eje_pivote_largo` 45 PENDIENTE · cara plana a `#cota.brazo_chaveta` 4 · cuerda `#cota.brazo_chaveta_cuerda` 6 |
 | `sector` ×3 | disco entero de POM, sin muesca | canto `#cota.amplificador_sector_radio_mecanizado` 47,975 · espesor `#cota.amplificador_sector_espesor` 5 · Ø de paso `#cota.amplificador_sector_agujero_diametro` 16 · la cinta entra a `#angulo.amplificador_tangencia` 53,968 |
 | `tambor` ×3 | cilindro liso con agujero, sin pestañas | canto `#cota.amplificador_tambor_radio_mecanizado` 7,975 · ancho `#cota.amplificador_tambor_ancho` 6 · Ø agujero `#cota.brazo_eje_diametro` 10 H7 · abrazado `#angulo.amplificador_tambor_abrazado` 185 |

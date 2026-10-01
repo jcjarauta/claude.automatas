@@ -101,6 +101,8 @@ def test_la_hoja_acota_todo_lo_que_la_ficha_declara():
             esperadas.add(f.cara_plana)
         if f.ranura:
             esperadas.add(f.ranura[0])
+        if f.voladizo:
+            esperadas.add(f.voladizo)
         esperadas.add(LISTADO[pieza].solido[1])
         for cota in esperadas:
             assert f"#cota.{cota}" in texto, f"{pieza}: {cota} no está acotada en el boceto"
