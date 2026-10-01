@@ -474,6 +474,23 @@ falla si el esquema versionado se queda atrás.
   y el test del catálogo la leen de ahí. La regla general: **en la hoja va lo
   que se teclea, no lo que se mide**, y cuando no coinciden, el derivado sale
   también.
+- **Un rótulo correcto puesto en el sitio equivocado miente, y el dibujo se
+  ve bien.** La hoja de la mordaza sacaba el «R2» de la ranura con la
+  directriz de largo fijo, 9 px, y lo dejaba a 18 px del «Ø3» del datum:
+  **más cerca del agujero que no describe que del que sí**. Los dos números
+  eran correctos, cada uno tenía su flecha, y el croquis salió con el Ø4 en
+  el datum y el Ø3 en la ranura.
+
+  No lo caza mirar el dibujo; hay que montar la caja de cada rótulo y medir
+  si solapa con las demás, que es lo que hace
+  `test_dos_rotulos_de_la_banda_de_arriba_no_se_tapan`. Encontró de paso un
+  segundo caso que nadie había visto, el «R5» del brazo proximal escrito
+  sobre un nombre de variable.
+
+  Los rótulos de radio van ahora a una banda **encima** de la planta, con
+  `alto_de_leyenda` reservando el sitio: abajo está la pila de cotas
+  horizontales y un radio que la cruza se lee como parte de ella.
+
 - **Rotular una variable que no existe.** Es la misma familia, y ha salido
   **tres veces**: los dientes que no estaban en la hoja, los dientes puestos
   en el mapa de milímetros, y `#pieza.tornilleria_longitud`, que el perfil
