@@ -64,6 +64,7 @@ uv run python scripts/regenerar_golden.py     # SOLO si el cambio es intencionad
 
 uv run python scripts/comparar_dxf.py pieza.dxf  # cruzar un DXF contra el contrato
 uv run python scripts/listado_piezas.py --escribir  # el listado de docs/metodologia.md §2d
+uv run python scripts/dibujar_pieza.py mordaza --out build/mordaza.svg  # el boceto de una pieza
 
 uv run python -m compile.cli demo/hola.json --out build/   # compilar un pedido
 uv run python -m compile.cli demo/hola.json --corte 28      # con un presupuesto real del taller

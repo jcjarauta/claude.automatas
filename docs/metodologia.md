@@ -238,14 +238,29 @@ a ojo. La pieza salió bien, pero la comprobación a ojo **dio un diagnóstico
 falso** —tres defectos que no existían— y costó más que el dibujo. Lo que
 faltaba no era cuidado, era un paso mecánico al final.
 
+**Una pieza cada vez.** No se abre la siguiente hasta que la anterior ha
+pasado el paso 5. Ir a dos a la vez ahorra una hora y cuesta la tarde en que
+aparece un número que ya se había copiado en otro sitio.
+
 El bucle, por pieza:
 
 | | Quién | Qué sale |
 | --- | --- | --- |
-| 1. Generar | el compilador | `pieza.dxf` en el datum, el listado de variables y el boceto acotado |
-| 2. Dibujar | la persona, en Onshape | importa el DXF, ancla, acota con `#cota.…` |
-| 3. Comprobar | la persona | que Onshape diga **totalmente definida** |
-| 4. Comparar | `scripts/comparar_dxf.py` | exporta el DXF y lo cruza contra el contrato |
+| 1. **Generar** | el compilador | tres cosas, siempre las tres: `pieza.dxf` en su datum, la **tabla** de cotas y variables, y el **boceto en PNG** con vistas y explicación |
+| 2. **Dibujar** | la persona, en Onshape | importa el DXF, ancla con dos coincidentes, acota con los `#cota.…` de la tabla |
+| 3. **Comprobar** | la persona | que Onshape diga **totalmente definida** |
+| 4. **Devolver** | la persona | exporta el croquis a DXF y lo pasa |
+| 5. **Comparar** | `scripts/comparar_dxf.py` | lo cruza contra el contrato y dice qué falta, qué sobra y dónde está puesta |
+
+Si el paso 5 falla, se corrige y se vuelve al 2. Si hace falta tocar una cota,
+se toca el contrato —nunca el croquis a mano— y se regeneran los CSV; la hoja
+de ruta del paquete dice cuáles hay que reimportar.
+
+Los tres artefactos del paso 1 no son opcionales y no se reparten: el DXF da la
+forma, la tabla da lo que se teclea, y el PNG da el porqué y las vistas. Faltando
+el PNG se dibuja sin entender la pieza; faltando la tabla se teclean números
+leídos del dibujo, que es de donde vienen los errores que este documento
+existe para evitar.
 
 El DXF entra como **andamio, no como vínculo**. Trae la forma resuelta —la
 tangente exterior entre dos círculos desiguales, el agujero en D— que es lo

@@ -419,6 +419,12 @@ def main(argv: list[str] | None = None) -> int:
         escribir_perfil(brazo_de(cual), plataforma / f"{cual}.dxf")
     for cual, hacer in PERFILES.items():
         escribir_perfil(hacer(None), plataforma / f"{cual}.dxf")
+    # El tercer artefacto del bucle: el boceto, junto a su DXF.
+    from scripts.dibujar_pieza import PERFIL_DE
+    from scripts.dibujar_pieza import hoja as hoja_de_pieza
+
+    for cual in PERFIL_DE:
+        (plataforma / f"{cual}.svg").write_text(hoja_de_pieza([cual]), encoding="utf-8")
 
     # 4 · el sólido, si hay kernel y si el perfil lo admite
     #
