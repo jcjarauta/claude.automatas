@@ -213,3 +213,61 @@ def test_caza_un_contorno_centrado_donde_no_toca(tmp_path: Path):
     inf = comparar_pieza(ruta, "mordaza")
     assert not inf.cuadra
     assert any("mordaza_voladizo" in h.texto for h in inf.hallazgos)
+
+
+def test_un_lado_partido_en_dos_sigue_siendo_un_lado(tmp_path: Path):
+    """**Un falso positivo sobre cómo se dibujó, no sobre qué se dibujó.**
+
+    Onshape parte las verticales de un rectángulo por el eje de simetría, y
+    el comparador veía cuatro segmentos de 5 donde hay dos de 10. Lo que se
+    compara tiene que ser la pieza; si el comparador opina del estilo de
+    croquis, se le deja de hacer caso.
+    """
+    import ezdxf
+
+    from emit.plataforma import Segmento, contrato_mm, mordaza
+    from scripts.comparar_dxf import comparar as comparar_pieza
+
+    c = contrato_mm()
+    doc = ezdxf.new("R2010")
+    msp = doc.modelspace()
+    for e in mordaza(c):
+        if isinstance(e, Segmento):
+            # Cada lado, partido por su punto medio.
+            medio = ((e.a[0] + e.b[0]) / 2, (e.a[1] + e.b[1]) / 2)
+            msp.add_line(e.a, medio)
+            msp.add_line(medio, e.b)
+        else:
+            msp.add_arc(e.centro, e.radio, math.degrees(e.desde), math.degrees(e.hasta))
+    ruta = tmp_path / "partida.dxf"
+    doc.saveas(ruta)
+    inf = comparar_pieza(ruta, "mordaza")
+    assert inf.cuadra, [h.texto for h in inf.hallazgos]
+
+
+def test_caza_los_dos_diametros_cambiados(tmp_path: Path):
+    """El M3 de apriete y el M4 de la ranura son distintos a propósito —para
+    que no se puedan cambiar de agujero al MONTAR— pero al dibujar sí se
+    pueden cambiar, y entonces la pieza es otra."""
+    import ezdxf
+
+    from emit.plataforma import Segmento, contrato_mm, mordaza
+    from scripts.comparar_dxf import comparar as comparar_pieza
+
+    c = contrato_mm()
+    apriete, fijacion = c["mordaza_tornillo_diametro"] / 2, c["mordaza_fijacion_diametro"] / 2
+    doc = ezdxf.new("R2010")
+    msp = doc.modelspace()
+    for e in mordaza(c):
+        if isinstance(e, Segmento):
+            y = [apriete if p[1] > 0 else -apriete if p[1] < 0 else 0.0 for p in (e.a, e.b)]
+            dentro = abs(abs(e.a[1]) - fijacion) < 1e-9
+            msp.add_line((e.a[0], y[0] if dentro else e.a[1]), (e.b[0], y[1] if dentro else e.b[1]))
+        else:
+            radio = fijacion if abs(e.radio - apriete) < 1e-9 else apriete
+            msp.add_arc(e.centro, radio, math.degrees(e.desde), math.degrees(e.hasta))
+    ruta = tmp_path / "cambiados.dxf"
+    doc.saveas(ruta)
+    inf = comparar_pieza(ruta, "mordaza")
+    assert not inf.cuadra
+    assert any("mordaza_tornillo_diametro" in h.texto for h in inf.hallazgos)

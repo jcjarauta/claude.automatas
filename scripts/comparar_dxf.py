@@ -280,6 +280,49 @@ def _circulares(msp) -> list[tuple[tuple[float, float], float]]:
     return salida
 
 
+def _fundir(segmentos, tol: float = 1e-6):
+    """Une los segmentos colineales que se tocan.
+
+    **Un lado partido en dos sigue siendo un lado.** Onshape parte las
+    verticales de un rectángulo por el eje de simetría, y sin fundirlas el
+    comparador veía cuatro segmentos de 5 donde hay dos de 10: un falso
+    positivo sobre cómo se dibujó, no sobre qué se dibujó. Lo que se compara
+    tiene que ser la pieza, no el estilo de croquis.
+    """
+    sueltos = [list(map(list, s)) for s in segmentos]
+    cambio = True
+    while cambio:
+        cambio = False
+        for i, a in enumerate(sueltos):
+            for j, b in enumerate(sueltos[i + 1 :], i + 1):
+                ua = (a[1][0] - a[0][0], a[1][1] - a[0][1])
+                ub = (b[1][0] - b[0][0], b[1][1] - b[0][1])
+                if abs(ua[0] * ub[1] - ua[1] * ub[0]) > tol * max(
+                    1.0, math.hypot(*ua) * math.hypot(*ub)
+                ):
+                    continue  # no son paralelos
+                for pa in (0, 1):
+                    for pb in (0, 1):
+                        if math.dist(a[pa], b[pb]) > tol:
+                            continue
+                        nuevo = [a[1 - pa], b[1 - pb]]
+                        # Y colineales de verdad: paralelos y tocándose basta,
+                        # pero un pliegue de 180 grados volvería sobre sí mismo.
+                        if math.dist(nuevo[0], nuevo[1]) < math.dist(a[0], a[1]):
+                            continue
+                        sueltos[i] = nuevo
+                        del sueltos[j]
+                        cambio = True
+                        break
+                    if cambio:
+                        break
+                if cambio:
+                    break
+            if cambio:
+                break
+    return [(tuple(a), tuple(b)) for a, b in sueltos]
+
+
 def _segmentos(msp) -> list[tuple[tuple[float, float], tuple[float, float]]]:
     salida = []
     for e in msp:
@@ -293,7 +336,7 @@ def _segmentos(msp) -> list[tuple[tuple[float, float], tuple[float, float]]]:
             if e.closed:
                 puntos.append(puntos[0])
             salida += list(itertools.pairwise(puntos))
-    return salida
+    return _fundir(salida)
 
 
 def _tangente(a, b, circulares, tol) -> list[float]:
