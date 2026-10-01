@@ -306,13 +306,6 @@
           "tolerancia": "+0/-0,02"
         },
         {
-          "nombre": "amplificador_sector_semiarco",
-          "valor": 2.443460952792061,
-          "unidad": "rad",
-          "descripcion": "Medio arco util del sector, a cada lado de la direccion CONTRARIA al tambor: 126 de abrazado mas anclaje",
-          "tolerancia": ""
-        },
-        {
           "nombre": "amplificador_tambor_abrazado",
           "valor": 3.2288591161895095,
           "unidad": "rad",
@@ -323,7 +316,7 @@
           "nombre": "amplificador_tangencia",
           "valor": 0.9419214012998448,
           "unidad": "rad",
-          "descripcion": "Donde la cinta deja el sector, desde la direccion al tambor: acos((R-r)/a). La cinta abraza el arco OPUESTO",
+          "descripcion": "Donde la cinta deja el sector, desde la direccion al tambor: acos((R-r)/a). Abraza el arco OPUESTO, y los anclajes van justo por fuera de estos dos puntos",
           "tolerancia": ""
         },
         {
@@ -348,17 +341,52 @@
           "tolerancia": "+0,3/0"
         },
         {
-          "nombre": "amplificador_tambor_pestana_radio",
-          "valor": 0.01,
+          "nombre": "amplificador_tambor_ancho",
+          "valor": 0.006,
           "unidad": "m",
-          "descripcion": "Pestana que retiene la cinta en el tambor, a cada lado",
+          "descripcion": "Ancho del tambor: el de la cinta mas un milimetro. Sin pestanas: la cinta va anclada por los dos extremos y no puede andar",
           "tolerancia": ""
         },
         {
-          "nombre": "amplificador_tambor_ancho",
-          "valor": 0.008,
+          "nombre": "brazo_ancho",
+          "valor": 0.012,
           "unidad": "m",
-          "descripcion": "Ancho total del tambor: 5 de canto util y 1,5 de pestana a cada lado",
+          "descripcion": "Ancho de la barra de los brazos, entre los dos cubos",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "brazo_espesor",
+          "valor": 0.003,
+          "unidad": "m",
+          "descripcion": "Espesor de los brazos: pletina de laton de 3",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "brazo_cubo_diametro",
+          "valor": 0.018,
+          "unidad": "m",
+          "descripcion": "Cubo del extremo que va en el eje: 4 de pared sobre un agujero de 10",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "brazo_perno_diametro",
+          "valor": 0.006,
+          "unidad": "m",
+          "descripcion": "Perno de codo y de punta, y agujero que lo recibe",
+          "tolerancia": "H7"
+        },
+        {
+          "nombre": "brazo_chaveta",
+          "valor": 0.004,
+          "unidad": "m",
+          "descripcion": "Del eje al plano de la cara plana del agujero: es lo que cala el brazo",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "amplificador_coplanaridad",
+          "valor": 0.0002,
+          "unidad": "m",
+          "descripcion": "Lo que pueden desalinearse los dos asientos de la cinta. Es lo que sustituye a las pestanas: sin ellas, lo que mantiene la cinta en su sitio es que los dos planos coincidan",
           "tolerancia": ""
         }
       ]

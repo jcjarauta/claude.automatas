@@ -174,8 +174,17 @@ banco diga que el modelo predice:
 
   **La cinta deja el sector a ±54° de la línea de centros** —`cos t = (R−r)/a`,
   porque el radio a la tangencia es perpendicular a la cinta— y **abraza los
-  252° del lado opuesto al tambor**. De ahí el semiarco de 140° medido desde
-  la dirección contraria, con una muesca de 80° mirando al tambor.
+  252° del lado opuesto al tambor**. Los anclajes van justo por fuera de esos
+  dos puntos.
+
+  **El sector es un disco entero y ninguna de las dos piezas lleva pestañas.**
+  La muesca de 80° en el lado libre no compraba nada —el ramal sale tangente
+  y se aleja, el tambor queda a 10 mm del borde y los discos vecinos se llevan
+  27— y además daba a la pieza una orientación que un disco con un agujero no
+  tiene. Y las pestañas no hacen falta porque la cinta va anclada por los dos
+  extremos: no puede andar sin estirarse. Lo que sí hay que respetar es que
+  los dos asientos queden **coplanarios dentro de 0,2 mm**, que es un criterio
+  y no una medida: lo mide E4.
 - **Dónde está el cinco barras respecto de las levas.** Hasta ahora eran dos
   sistemas de coordenadas sin transformación entre ellos: las levas con el
   árbol en el origen y el cinco barras con sus pivotes en ±60. El marco del
@@ -216,3 +225,5 @@ un solo compromiso, y todavía falta el dato que lo cierra.
 | 2026-10-01 | Bastidor | **Añadidos `brazo_palanca` y `brazo_eje_diametro`** | El primero faltaba: la palanca del lápiz es una longitud de máquina que el compilador usa y el CAD necesita. El segundo estaba conflado con `eje_diametro`, que es el árbol de levas: son el mismo stock Ø10 y dos ejes distintos |
 | 2026-10-01 | Bastidor | **Corregida la tangencia**: 53,968° y no 126, y la cinta abraza el arco OPUESTO al tambor | Se escribió mal dos veces: primero con el seno en vez del coseno, después poniendo el material en el lado libre. Lo cazó el plano al dibujarlo |
 | 2026-10-01 | Bastidor | **Cinta de 10 a 5 mm de ancho**, y añadidas las cotas de contorno del sector y del tambor | Con 5 el sector es una plancha de POM en vez de dos laminadas: una operación de montaje menos por canal, a cambio de 0,046 mm de elasticidad |
+| 2026-10-01 | Bastidor | **El sector pasa a disco entero y desaparecen las pestañas del tambor**; en su lugar, una tolerancia de coplanaridad | La muesca no daba holgura a nada y le ponía orientación a una pieza que no la necesita. Las pestañas no sujetan una cinta anclada por los dos extremos: lo que la sujeta es que los dos asientos sean coplanarios |
+| 2026-10-01 | Bastidor | **Añadido el contorno de los brazos**: ancho, espesor, cubo, perno y cara plana del calaje | Sin contorno no hay plano que copiar. Las interfaces siguen saliendo de la cinemática; el contorno es una propuesta |

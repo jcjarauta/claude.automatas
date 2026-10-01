@@ -41,6 +41,14 @@ def cota(nombre_pieza: str, nombre_cota: str) -> float:
 CONTRATOS = Path(__file__).resolve().parents[2] / "docs" / "contratos.json"
 
 
+def _existe(nombre: str) -> bool:
+    try:
+        contrato(nombre)
+    except KeyError:
+        return False
+    return True
+
+
 def contrato(nombre: str) -> float:
     """Un valor de `docs/contratos.json` por su nombre, sea del grupo que sea."""
     datos = json.loads(CONTRATOS.read_text(encoding="utf-8"))
@@ -198,6 +206,30 @@ def test_el_canto_mecanizado_sale_de_la_fibra_neutra_y_no_al_reves():
     assert cantos != pytest.approx(fibras, rel=1e-4)
 
 
+def test_la_cinta_no_la_sujeta_nada_mas_que_sus_anclajes():
+    """**Por que ni el sector ni el tambor llevan pestanas.**
+
+    El tambor se dibujo primero con dos y el sector sin nada, y la pregunta
+    obvia es por que uno si y el otro no. La respuesta es que ninguno las
+    necesita: la cinta va anclada por los dos extremos, asi que no puede
+    andar axialmente sin estirarse. Lo que de verdad la mantiene en su sitio
+    es que los dos asientos sean coplanarios, y una pestana no arregla una
+    desalineacion: roza contra ella.
+
+    Por eso el contrato no declara ninguna pestana y si declara cuanto
+    pueden desalinearse los dos asientos. SIN MEDIR: los 0,2 mm son un
+    criterio, no una medida, y es de lo primero que tiene que mirar E4.
+    """
+    con_pestana = [
+        n
+        for n in ("amplificador_tambor_pestana_radio", "amplificador_sector_garganta")
+        if _existe(n)
+    ]
+    assert not con_pestana, f"alguien ha vuelto a poner pestanas: {con_pestana}"
+    assert contrato("amplificador_coplanaridad") > 0.0
+    assert contrato("amplificador_tambor_ancho") > contrato("cinta_ancho")
+
+
 def test_la_cinta_no_se_pasa_de_flexion_al_arrollar_el_tambor():
     """Una cinta que se dobla millones de veces quiere r/t >= 100. Con el
     fleje de 0,1 que se eligió primero y un tambor de R 8 salían 80, y
@@ -224,9 +256,10 @@ def test_la_cinta_abraza_el_lado_opuesto_al_tambor():
     pasa por el lado OPUESTO al tambor. Lo confirma la formula de correa
     abierta, pi + 2*gamma con sin(gamma) = (R-r)/a.
 
-    Asi que el sector lleva material a 126 grados a cada lado de la
-    direccion contraria al tambor, y lo que le falta es una muesca de 80
-    grados mirando al tambor.
+    El sector, al final, es un disco entero: la muesca de 80 grados que se
+    llego a dibujar en el lado libre no compraba nada, porque el ramal sale
+    tangente y se aleja, el tambor queda a 10 mm del borde y los discos
+    vecinos se llevan 27.
 
     Este test existe porque se escribio dos veces mal: primero con el seno en
     vez del coseno, que ponia la tangencia a 126 grados, y despues con el
@@ -241,9 +274,7 @@ def test_la_cinta_abraza_el_lado_opuesto_al_tambor():
     abrazado = 2.0 * (math.pi - tang)
     gamma = math.asin((sector - tambor) / entre)
     assert abrazado == pytest.approx(math.pi + 2.0 * gamma)
-    # El semiarco se mide desde la direccion CONTRARIA, y tiene que cubrir
-    # medio abrazado mas lo que pida el anclaje.
-    assert contrato("amplificador_sector_semiarco") > abrazado / 2.0
+    assert math.degrees(abrazado) == pytest.approx(252.06, abs=0.01)
     # El vano libre es el cateto, y sale igual por los dos caminos.
     assert contrato("amplificador_vano_libre") == pytest.approx(entre * math.sin(tang))
     assert contrato("amplificador_vano_libre") == pytest.approx(entre * math.cos(gamma))

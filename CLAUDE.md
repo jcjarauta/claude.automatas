@@ -58,6 +58,7 @@ uv run python scripts/dibujar_piezas.py       # sección y cotas de cada pieza c
 uv run python scripts/dibujar_amplificador.py # el cabestrante 6:1, acotado desde el contrato
 uv run python scripts/dibujar_cinco_barras.py # el varillaje y la palanca, acotados desde el contrato
 uv run python scripts/dibujar_plano_cabestrante.py  # plano con vistas y cotas del sector y del tambor
+uv run python scripts/dibujar_plano_brazos.py       # plano con vistas y cotas de los tres brazos
 uv run python scripts/plantillas_demo.py      # plantillas 1:1 de muestra
 uv run python scripts/regenerar_golden.py     # SOLO si el cambio es intencionado
 
@@ -655,8 +656,11 @@ falla si el esquema versionado se queda atrás.
   el de **252°**, que pasa por el lado **opuesto**. Lo confirma la fórmula
   de correa abierta, `π + 2γ` con `sin γ = (R−r)/a`.
 
-  Así que el sector lleva material a 126° a cada lado de la dirección
-  **contraria** al tambor, con una muesca de 80° mirando al tambor.
+  Así que la cinta toca el canto del lado contrario al tambor, y los
+  anclajes van justo por fuera de los dos puntos de tangencia. El sector,
+  al final, es un **disco entero**: la muesca en el lado libre no daba
+  holgura a nada —el ramal sale tangente y se aleja— y le ponía orientación
+  a una pieza que, siendo un disco con un agujero, no la tiene.
 
   **Esto se escribió mal dos veces seguidas.** Primero con el seno en vez
   del coseno, que ponía la tangencia a 126°; después se «corrigió» poniendo
