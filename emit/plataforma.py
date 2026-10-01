@@ -114,6 +114,30 @@ def circulo(centro: Punto, radio: float) -> Perfil:
     return [Arco(centro, radio, 0.0, 2 * math.pi)]
 
 
+def disco(radio: float, agujero: float) -> Perfil:
+    """Un disco con un agujero concéntrico: el sector y el tambor.
+
+    Los dos rasgos son **círculos enteros**, y eso decide cómo se teclean:
+    Onshape acota el diámetro de un círculo, así que la cota que va en el
+    campo es la forma `_diametro`. El contrato guarda los dos cantos como
+    radio —47,975 y 7,975— y meterlos tal cual deja la pieza a la mitad, que
+    es lo que pasó con las dos.
+    """
+    return circulo((0.0, 0.0), radio) + circulo((0.0, 0.0), agujero / 2)
+
+
+def sector(c: dict[str, float] | None = None) -> Perfil:
+    c = contrato_mm() if c is None else c
+    return disco(
+        c["amplificador_sector_radio_mecanizado"], c["amplificador_sector_agujero_diametro"]
+    )
+
+
+def tambor(c: dict[str, float] | None = None) -> Perfil:
+    c = contrato_mm() if c is None else c
+    return disco(c["amplificador_tambor_radio_mecanizado"], c["brazo_eje_diametro"])
+
+
 def ranura(centro: Punto, largo: float, radio: float) -> Perfil:
     """Una ranura recta: dos semicírculos y sus dos tangentes, horizontal.
 
@@ -192,8 +216,15 @@ def eje_pivote(c: dict[str, float] | None = None) -> Perfil:
 PERFILES = {
     "mordaza": lambda c: mordaza(c),
     "eje_pivote": lambda c: eje_pivote(c),
+    "sector": lambda c: sector(c),
+    "tambor": lambda c: tambor(c),
 }
-"""Las piezas prismáticas que no son barras. El resto sale de `BRAZOS`."""
+"""Las piezas prismáticas que no son barras. El resto sale de `BRAZOS`.
+
+El sector y el tambor estaban fuera «porque son discos y su hoja lleva
+secciones». Fuera del bucle salieron **las dos a la mitad**, y por la misma
+causa: la hoja del cabestrante rotulaba el canto como radio y el campo del
+CAD pide diámetro. Un disco con un agujero es una forma como otra."""
 
 BRAZOS = {
     "brazo_proximal": ("brazo_proximal", True),
@@ -359,7 +390,7 @@ LISTADO: dict[str, Ficha] = {
         "disco entero de POM, sin muesca",
         3,
         (
-            Variable("cota", "amplificador_sector_radio_mecanizado", "canto"),
+            Variable("cota", "amplificador_sector_radio_mecanizado_diametro", "Ø del canto"),
             Variable("cota", "amplificador_sector_espesor", "espesor", en_el_perfil=False),
             Variable("cota", "amplificador_sector_agujero_diametro", "Ø de paso"),
             Variable("angulo", "amplificador_tangencia", "la cinta entra a", en_el_perfil=False),
@@ -373,7 +404,7 @@ LISTADO: dict[str, Ficha] = {
         "cilindro liso con agujero, sin pestañas",
         3,
         (
-            Variable("cota", "amplificador_tambor_radio_mecanizado", "canto"),
+            Variable("cota", "amplificador_tambor_radio_mecanizado_diametro", "Ø del canto"),
             Variable("cota", "amplificador_tambor_ancho", "ancho", en_el_perfil=False),
             Variable("cota", "brazo_eje_diametro", "Ø agujero", "H7"),
             Variable("angulo", "amplificador_tambor_abrazado", "abrazado", en_el_perfil=False),

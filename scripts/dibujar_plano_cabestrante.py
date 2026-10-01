@@ -81,7 +81,7 @@ def sector_frente(c: dict[str, float], x: float, y: float, ancho: float, alto: f
         )
     d += [
         f'<text class="var" x="{x + ancho / 2:.1f}" y="{y + alto - 41:.1f}">'
-        "#cota.amplificador_sector_radio_mecanizado · "
+        "#cota.amplificador_sector_radio_mecanizado_diametro · "
         "#cota.amplificador_sector_agujero_diametro</text>",
         f'<text class="var" x="{x + ancho / 2:.1f}" y="{y + alto - 34:.1f}">'
         "#angulo.amplificador_tangencia</text>",
@@ -169,7 +169,7 @@ def tambor_frente(c: dict[str, float], x: float, y: float, ancho: float, alto: f
     d += radial(cx, cy, agujero * k, math.radians(-65), f"Ø{2 * agujero:g} H7")
     d += [
         f'<text class="var" x="{x + ancho / 2:.1f}" y="{y + alto - 41:.1f}">'
-        "#cota.amplificador_tambor_radio_mecanizado · #cota.brazo_eje_diametro</text>",
+        "#cota.amplificador_tambor_radio_mecanizado_diametro · #cota.brazo_eje_diametro</text>",
         f'<text class="var" x="{x + ancho / 2:.1f}" y="{y + alto - 34:.1f}">'
         "#angulo.amplificador_tambor_abrazado</text>",
     ]

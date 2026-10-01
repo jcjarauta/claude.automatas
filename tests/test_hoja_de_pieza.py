@@ -8,6 +8,7 @@ que el comparador va a mirar después.
 
 from __future__ import annotations
 
+import math
 import re
 from pathlib import Path
 
@@ -119,7 +120,9 @@ def test_la_hoja_acota_todo_lo_que_la_ficha_declara():
         # Una cota circular vale dibujada en cualquiera de sus dos formas: la
         # leyenda pone la que pide el campo, no la que diga la ficha.
         faltan = {
-            c for c in esperadas if not ({c, f"{c}_radio", c.removesuffix("_radio")} & dibujadas)
+            c
+            for c in esperadas
+            if not ({c, f"{c}_radio", f"{c}_diametro", c.removesuffix("_radio")} & dibujadas)
         }
         assert not faltan, f"{pieza}: en la tabla pero sin acotar en el dibujo: {sorted(faltan)}"
 
@@ -194,3 +197,104 @@ def test_dos_rotulos_de_la_banda_de_arriba_no_se_tapan():
             for tb, bx0, by0, bx1, by1 in cajas[i + 1 :]:
                 solapa = ax0 < bx1 and bx0 < ax1 and ay0 < by1 and by0 < ay1
                 assert not solapa, f"{pieza}: «{ta}» se tapa con «{tb}»"
+
+
+def _por_pieza() -> tuple[dict[str, set[str]], set[str]]:
+    """Para cada cota de la FICHA, en qué piezas es círculo entero y en cuáles arco.
+
+    Las cotas salen de `FICHAS[pieza].radios` y no de barrer el contrato
+    buscando el número. Barrerlo es la trampa documentada —con ochenta cotas
+    cualquier número redondo encuentra una que lo explique— y aquí lo
+    enseñó sola: `brazo_espesor` vale 3, igual que el radio del agujero del
+    perno, y salía acusado de ser un radio mal rotulado.
+
+    Hacen falta los dos conjuntos porque **el mismo rasgo es las dos cosas
+    según la pieza**: el Ø10 es un agujero redondo en el tambor y una
+    sección con cara plana en el eje de pivote, donde el radio es correcto.
+    """
+    from emit.plataforma import Arco
+
+    c = contrato_mm()
+    cotas = cotas_en_mm()
+    enteros: dict[str, set[str]] = {}
+    arcos: set[str] = set()
+    for pieza, forma in PERFIL_DE.items():
+        declaradas = FICHAS[pieza].radios
+        for e in forma(c):
+            if not isinstance(e, Arco):
+                continue
+            entero = abs(e.hasta - e.desde - 2 * math.pi) <= 1e-9
+            for nombre in declaradas:
+                if abs(cotas[nombre] - e.radio) > 1e-6:
+                    continue
+                if entero:
+                    enteros.setdefault(nombre, set()).add(pieza)
+                else:
+                    arcos.add(nombre)
+    return enteros, arcos
+
+
+def test_un_circulo_entero_se_teclea_en_diametro_y_nadie_rotula_su_radio():
+    """**De aquí salieron el sector y el tambor a la mitad, el mismo día.**
+
+    La herramienta de círculo de Onshape acota el DIÁMETRO. El contrato
+    guarda los dos cantos del cabestrante como radio —47,975 y 7,975— y la
+    hoja del cabestrante los rotulaba así: metidos en el campo, las dos
+    piezas salieron exactamente a la mitad, sin un solo aviso.
+
+    Los gemelos ya existían y no sirvieron de nada, porque lo que se teclea
+    es lo que la hoja pone, no lo que el CSV ofrece. Así que la regla no es
+    «que exista el gemelo», es **que ninguna hoja rotule el radio de un
+    círculo entero**.
+
+    Una pieza sin perfil no entra aquí, y eso es justo lo que les pasaba a
+    estas dos: estaban fuera del bucle, así que nada las miraba.
+    """
+    from scripts import dibujar_plano_brazos, dibujar_plano_cabestrante
+
+    enteros, arcos = _por_pieza()
+    assert "amplificador_sector_radio_mecanizado" in enteros, "el canto del sector"
+    assert "amplificador_tambor_radio_mecanizado" in enteros, "el canto del tambor"
+
+    def reclama(donde: str, texto: str, prohibidas: set[str]) -> None:
+        for nombre in re.findall(r"#cota\.([a-z0-9_]+)", texto):
+            assert nombre not in prohibidas, (
+                f"{donde}: rotula #cota.{nombre}, que es el RADIO de un círculo entero. "
+                f"En el campo de diámetro sale la mitad: pon «{nombre}_diametro» si "
+                f"existe, o el nombre que ya está en diámetro."
+            )
+
+    # La hoja de cada pieza se mira contra SU perfil, que es lo preciso.
+    for pieza in PERFIL_DE:
+        reclama(f"hoja de {pieza}", hoja([pieza]), {n for n, p in enteros.items() if pieza in p})
+
+    # Los dos planos a mano dibujan varias piezas, así que solo se les exige
+    # lo que es círculo entero en alguna y arco en ninguna.
+    siempre = set(enteros) - arcos
+    for donde, texto in (
+        ("plano_cabestrante", dibujar_plano_cabestrante.hoja()),
+        ("plano_brazos", dibujar_plano_brazos.hoja()),
+    ):
+        reclama(donde, texto, siempre)
+
+    for pieza, ficha in LISTADO.items():
+        prohibidas = {n for n, p in enteros.items() if pieza in p}
+        for v in ficha.variables:
+            if v.mapa == "cota" and v.en_el_perfil:
+                assert v.nombre not in prohibidas, f"{pieza}: el listado manda teclear un radio"
+
+
+def test_el_alzado_de_una_barra_solo_dibuja_la_cara_plana_si_la_pieza_la_tiene():
+    """El alzado de barra daba por hecho que toda barra lleva cara plana.
+
+    La llevaba la única que había —el eje de pivote— y al entrar el tambor,
+    que es una barra torneada sin ningún fresado, su hoja salió con una línea
+    y el rótulo «cara plana». Dibujar un rasgo que la pieza no tiene es peor
+    que no dibujarlo: se mecaniza."""
+    for pieza, ficha in FICHAS.items():
+        if pieza not in PERFIL_DE:
+            continue
+        tiene = "cara plana" in hoja([pieza])
+        assert tiene == bool(ficha.cara_plana), (
+            f"{pieza}: la hoja {'la' if tiene else 'no la'} dibuja"
+        )

@@ -29,7 +29,17 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from emit.plataforma import LISTADO, Arco, Perfil, Segmento, contrato_mm, eje_pivote, mordaza
+from emit.plataforma import (
+    LISTADO,
+    Arco,
+    Perfil,
+    Segmento,
+    contrato_mm,
+    eje_pivote,
+    mordaza,
+    sector,
+    tambor,
+)
 from emit.plataforma import brazo as brazo_de
 from scripts.acotar import ESTILO, FLECHA, auxiliar, cota_h, cota_v, radial
 from scripts.comparar_dxf import FICHAS, cotas_en_mm
@@ -43,9 +53,15 @@ PERFIL_DE = {
     "palanca_lapiz": lambda c: brazo_de("palanca_lapiz", c),
     "mordaza": mordaza,
     "eje_pivote": eje_pivote,
+    "sector": sector,
+    "tambor": tambor,
 }
-"""De dónde sale la forma de cada pieza. El sector y el tambor no están porque
-son discos y su hoja es `dibujar_plano_cabestrante.py`, que lleva secciones."""
+"""De dónde sale la forma de cada pieza.
+
+El sector y el tambor estuvieron fuera «porque son discos y su hoja es
+`dibujar_plano_cabestrante.py`». Fuera del bucle salieron las dos a la mitad:
+esa hoja rotulaba el canto como radio y el campo del CAD pide diámetro, y sin
+ficha en el generador nadie emparejaba las dos cosas."""
 
 
 def caja(perfil: Perfil) -> tuple[float, float, float, float]:
@@ -168,6 +184,19 @@ def alto_de_leyenda(nombre: str, c: dict[str, float]) -> float:
     return 7.0 * len(vistos - {""}) + 14.0 if vistos - {""} else 0.0
 
 
+def alto_de_vista(nombre: str, c: dict[str, float], ancho: float = 230.0) -> float:
+    """Lo que la planta necesita de alto para salir a la escala que da el ancho.
+
+    **El alto del panel lo decidía solo la pila de cotas**, y una pieza con
+    pocas cotas y mucha superficie se quedaba sin sitio: el sector, que es un
+    disco de 96 mm, salía a 0,21:1 —veinte píxeles— porque sus cuatro cotas no
+    pedían panel. Una vista a esa escala no sirve para dibujar nada.
+    """
+    x0, y0, x1, y1 = caja(PERFIL_DE[nombre](c))
+    k = min(ancho * 0.46 / max(x1 - x0, 1e-6), 7.0)
+    return (y1 - y0) * k
+
+
 def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, alto: float):
     """La vista de frente, con TODAS las cotas que la ficha declara.
 
@@ -247,8 +276,22 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
 
     leyenda = y + CABECERA - 4
     for cota, texto in puestos.items():
-        matriz = cota.removesuffix("_radio")
-        nombre = matriz if texto.startswith("Ø") and matriz in cotas else cota
+        # Para un círculo entero se rotula la cota que VALE el diámetro, y se
+        # busca por el valor y no por el nombre. Quitar «_radio» funcionaba
+        # mientras el gemelo se llamara así; `amplificador_sector_radio_
+        # mecanizado` no lo lleva al final, se quedaba con el radio y el
+        # sector salió a la mitad.
+        nombre = cota
+        if texto.startswith("Ø"):
+            doble = 2.0 * cotas[cota]
+            nombre = next(
+                (
+                    n
+                    for n in (cota.removesuffix("_radio"), f"{cota}_diametro")
+                    if n != cota and abs(cotas.get(n, 0.0) - doble) <= 1e-6
+                ),
+                cota,
+            )
         d.append(
             f'<text class="cotavar" x="{x + 10:.1f}" y="{leyenda:.1f}">'
             f"{texto} → #cota.{nombre}</text>"
@@ -358,6 +401,8 @@ def segunda_vista(nombre: str, c: dict[str, float], x: float, y: float, ancho: f
             "se extruye el contorno: el espesor no está en el DXF"
             if clase == "plancha"
             else "barra de stock cortada a medida, la cara plana recorre todo el largo"
+            if FICHAS[nombre].cara_plana
+            else "barra de stock cortada a medida, el canto se tornea"
         )
         + "</text>",
     ]
@@ -366,8 +411,10 @@ def segunda_vista(nombre: str, c: dict[str, float], x: float, y: float, ancho: f
         f'<rect class="corte" x="{cx - w / 2:.2f}" y="{cy - h / 2:.2f}" '
         f'width="{w:.2f}" height="{h:.2f}"/>'
     )
-    if clase == "barra":
-        # La cara plana, que recorre el largo entero.
+    if clase == "barra" and FICHAS[nombre].cara_plana:
+        # La cara plana, que recorre el largo entero. **Solo si la pieza la
+        # tiene**: el tambor es una barra sin cara plana, y el alzado le
+        # dibujaba una con su rótulo, que es una pieza distinta.
         plano = cy - c["brazo_chaveta"] * k
         d.append(
             f'<line class="contorno" x1="{cx - w / 2:.2f}" y1="{plano:.2f}" '
@@ -433,7 +480,11 @@ def hoja(piezas: list[str] | None = None) -> str:
     # Alto por pieza: la que más cotas lleva manda, para que todos los paneles
     # de una hoja midan lo mismo y no bailen.
     alto = (
-        PIE + 30 + CABECERA + 40 + max(alto_de_pila(n, c) + alto_de_leyenda(n, c) for n in piezas)
+        PIE
+        + 30
+        + CABECERA
+        + 40
+        + max(alto_de_pila(n, c) + alto_de_leyenda(n, c) + alto_de_vista(n, c) for n in piezas)
     )
     ancho = 2 * vista_ancho
     filas = len(piezas)

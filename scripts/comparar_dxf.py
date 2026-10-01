@@ -568,6 +568,17 @@ def comparar(ruta: Path, pieza: str, tol: float = TOLERANCIA) -> Informe:
                 "datum en el origen y el siguiente centro sobre +X: "
                 "dos coincidentes y queda totalmente definida"
             )
+        elif not otros and not segmentos:
+            # Un disco con el agujero concéntrico no tiene giro que quitar: un
+            # CÍRCULO no tiene grado de libertad de rotación, así que centro y
+            # radios lo definen entero. Y es lo mismo que dice el contrato del
+            # sector —«un disco con un agujero no tiene orientación»—, solo que
+            # aquí hay que decirlo o el informe pide una cota angular que no
+            # existe.
+            inf.datum = (
+                "todos los rasgos concéntricos en el origen: un círculo no tiene "
+                "giro, así que con una coincidente queda totalmente definida"
+            )
         elif not otros and ficha.cara_plana:
             # Una pieza de un solo centro —la sección de un eje— no tiene un
             # «centro siguiente». Lo que la orienta es la cara plana, y con

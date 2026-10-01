@@ -18,15 +18,24 @@ from scripts.listado_piezas import METODOLOGIA, con_listado
 
 pytestmark = pytest.mark.core
 
+_CONTRATO = json.loads((METODOLOGIA.parent / "contratos.json").read_text(encoding="utf-8"))
+
 
 def _matriz(nombre: str) -> str:
     """El nombre sin el sufijo del gemelo. `brazo_eje_diametro_radio` y
-    `brazo_eje_diametro` son la misma cota escrita para dos campos."""
+    `brazo_eje_diametro` son la misma cota escrita para dos campos.
+
+    Un gemelo es base + sufijo **donde la base está en el contrato**, y eso
+    se mira, no se adivina. Antes se exigía que la base terminara también en
+    «_radio» o «_diametro», y entonces `amplificador_sector_radio_mecanizado_
+    diametro` no reducía a nada: el gemelo del canto del sector quedaba fuera
+    de los dos cruces que dependen de esto.
+    """
+    del_contrato = {v["nombre"] for g in _CONTRATO["contratos"] for v in g["valores"]}
     for sufijo in ("_radio", "_diametro"):
-        if nombre.endswith(sufijo) and nombre.removesuffix(sufijo).endswith(
-            ("_radio", "_diametro")
-        ):
-            return nombre.removesuffix(sufijo)
+        base = nombre.removesuffix(sufijo)
+        if base != nombre and base in del_contrato:
+            return base
     return nombre
 
 
@@ -105,5 +114,6 @@ def test_la_tabla_sale_con_coma_decimal():
     separador que cambia de sitio invita a leer 47.975 como cuarenta y siete
     mil."""
     tabla = tabla_markdown()
-    assert "47,975" in tabla
+    assert "95,95" in tabla
+    assert "53,968" in tabla
     assert "47.975" not in tabla
