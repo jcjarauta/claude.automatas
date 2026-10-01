@@ -154,6 +154,20 @@ def alto_de_pila(nombre: str, c: dict[str, float]) -> float:
     return 16 + 15 * cuantas + (10 if ficha.ranura else 0) + (12 if ficha.simetrico else 0)
 
 
+def alto_de_leyenda(nombre: str, c: dict[str, float]) -> float:
+    """Lo que hay que reservar ENCIMA de la planta, y que empuja el dibujo abajo.
+
+    Son dos cosas y no una: la leyenda que empareja cada Ø con su variable, y
+    la banda libre donde aterrizan los rótulos de radio. Si se reserva solo la
+    primera los rótulos caen sobre ella —el «R5» del brazo acababa escrito
+    encima del nombre de la variable de al lado— y dos rótulos superpuestos
+    mienten sin avisar, que es de donde salió un Ø4 dibujado en el datum.
+    """
+    ficha, cotas, perfil = FICHAS[nombre], cotas_en_mm(), PERFIL_DE[nombre](c)
+    vistos = {_nombre_del_radio(ficha, cotas, e.radio) for e in perfil if isinstance(e, Arco)}
+    return 7.0 * len(vistos - {""}) + 14.0 if vistos - {""} else 0.0
+
+
 def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, alto: float):
     """La vista de frente, con TODAS las cotas que la ficha declara.
 
@@ -167,14 +181,14 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
     x0, y0, x1, y1 = caja(perfil)
     hueco = alto - CABECERA
 
-    pila = alto_de_pila(nombre, c)
+    pila, leyenda_alto = alto_de_pila(nombre, c), alto_de_leyenda(nombre, c)
     k = min(
         ancho * 0.46 / max(x1 - x0, 1e-6),
-        max(hueco - pila - 24, 20.0) / max(y1 - y0, 1e-6),
+        max(hueco - pila - leyenda_alto - 24, 20.0) / max(y1 - y0, 1e-6),
         7.0,
     )
     ox = x + ancho / 2 - ((x0 + x1) / 2) * k
-    oy = y + CABECERA + 16 + (y1 - (y0 + y1) / 2) * k
+    oy = y + CABECERA + 16 + leyenda_alto + (y1 - (y0 + y1) / 2) * k
     abajo, derecha = oy + (y1 - (y0 + y1) / 2) * k, ox + (x1 - (x0 + x1) / 2) * k
 
     d = [
@@ -198,20 +212,38 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
     # Y el nombre es el que pide el campo: **diámetro** si es un círculo
     # entero, que es como Onshape acota un agujero, y radio si es un arco de
     # contorno.
+    #
+    # Y el rótulo sale FUERA de la silueta, a una banda por ENCIMA de la
+    # planta. Con la directriz de largo fijo el R2 de la ranura aterrizaba a
+    # 18 px del Ø3 del datum, y más cerca del agujero que NO describe que del
+    # que sí: así se dibujó un Ø4 donde va el Ø3. Arriba porque abajo está la
+    # pila de cotas horizontales, y un rótulo de radio cruzándola se lee como
+    # parte de ella.
+    techo = min(oy - y1 * k, oy - 17.0) - 10.0
     puestos: dict[str, str] = {}
-    angulos = (210.0, 150.0, -35.0, 35.0, 115.0, -115.0)
+    rotulos: list[tuple[float, float]] = []
+    inclinaciones = (-90.0, -68.0, -112.0, -78.0, -102.0, -60.0)
     for e in perfil:
         if not isinstance(e, Arco):
             continue
         cota = _nombre_del_radio(ficha, cotas, e.radio)
         if not cota or cota in puestos:
             continue
-        ang = math.radians(angulos[len(puestos) % len(angulos)])
+        ang = math.radians(inclinaciones[len(puestos) % len(inclinaciones)])
         cx, cy = ox + e.centro[0] * k, oy - e.centro[1] * k
+        meta = techo
+        while True:
+            xk = cx + ((meta - cy) / math.sin(ang)) * math.cos(ang)
+            if all(abs(xk - px) > 22.0 for px, py in rotulos if abs(py - meta) < 1.0):
+                break
+            meta -= 8.0
         lleno = abs(e.hasta - e.desde - 2 * math.pi) < 1e-9
         texto = f"Ø{2 * e.radio:g}" if lleno else f"R{e.radio:g}"
-        d += radial(cx, cy, e.radio * k, ang, texto)
+        d += radial(
+            cx, cy, e.radio * k, ang, texto, largo=(meta - cy) / math.sin(ang) - e.radio * k
+        )
         puestos[cota] = texto
+        rotulos.append((xk, meta))
 
     leyenda = y + CABECERA - 4
     for cota, texto in puestos.items():
@@ -400,7 +432,9 @@ def hoja(piezas: list[str] | None = None) -> str:
     vista_ancho, borde = 230.0, 12.0
     # Alto por pieza: la que más cotas lleva manda, para que todos los paneles
     # de una hoja midan lo mismo y no bailen.
-    alto = PIE + 30 + CABECERA + 40 + max(alto_de_pila(n, c) for n in piezas)
+    alto = (
+        PIE + 30 + CABECERA + 40 + max(alto_de_pila(n, c) + alto_de_leyenda(n, c) for n in piezas)
+    )
     ancho = 2 * vista_ancho
     filas = len(piezas)
     w = borde * 2 + ancho

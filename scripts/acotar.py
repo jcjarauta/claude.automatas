@@ -88,24 +88,45 @@ def auxiliar(x0: float, y0: float, x1: float, y1: float) -> str:
     return f'<line class="aux" x1="{x0:.2f}" y1="{y0:.2f}" x2="{x1:.2f}" y2="{y1:.2f}"/>'
 
 
-def radial(cx: float, cy: float, r: float, ang: float, texto: str, variable: str = "") -> list[str]:
-    """Cota de radio: una flecha desde el centro hasta el arco.
+def radial(
+    cx: float,
+    cy: float,
+    r: float,
+    ang: float,
+    texto: str,
+    variable: str = "",
+    largo: float = 9.0,
+) -> list[str]:
+    """Cota de radio: flecha del centro al arco y el número al final de la directriz.
 
     `variable` va debajo del número porque una cota circular sin el nombre al
     lado invita a teclear el radio en un campo de diámetro, que es el error
     documentado en CLAUDE.md: la mitad, y sin un solo aviso.
+
+    `largo` es lo que la directriz se prolonga más allá del arco, y **no puede
+    ser un valor fijo**. Con 9 px, el R2 de la ranura de la mordaza aterrizaba
+    más cerca del Ø3 del datum que del agujero que describe: el rótulo decía la
+    verdad y se leía al revés, y así se dibujó el Ø4 en el datum. Quien llama
+    reparte los rótulos fuera de la silueta y pasa aquí la distancia.
     """
-    x1, y1 = cx + r * math.cos(ang), cy + r * math.sin(ang)
-    xt, yt = cx + (r + 9) * math.cos(ang), cy + (r + 9) * math.sin(ang)
+    ux, uy = math.cos(ang), math.sin(ang)
+    x1, y1 = cx + r * ux, cy + r * uy
+    xk, yk = cx + (r + largo) * ux, cy + (r + largo) * uy
     d = [
         f'<line class="cotaln" marker-end="url(#f)" x1="{cx:.2f}" y1="{cy:.2f}" '
-        f'x2="{x1:.2f}" y2="{y1:.2f}"/>',
-        f'<text class="cotatx" x="{xt:.2f}" y="{yt:.2f}">{texto}</text>',
+        f'x2="{x1:.2f}" y2="{y1:.2f}"/>'
     ]
+    if largo > 1.0:
+        d.append(f'<line class="cotaln" x1="{x1:.2f}" y1="{y1:.2f}" x2="{xk:.2f}" y2="{yk:.2f}"/>')
+    ancla = "end" if ux < -0.2 else "start" if ux > 0.2 else "middle"
+    xt = xk + (-2.0 if ancla == "end" else 2.0 if ancla == "start" else 0.0)
+    # Con la directriz vertical el número va ENCIMA del final, no sobre la línea.
+    yt = (yk - 2.4 if uy < 0 else yk + 5.6) if ancla == "middle" else yk + 1.9
+    d.append(f'<text class="cotatx" text-anchor="{ancla}" x="{xt:.2f}" y="{yt:.2f}">{texto}</text>')
     if variable:
         d.append(
             f'<text class="cotavar" x="{xt:.2f}" y="{yt + 5.4:.2f}" '
-            f'text-anchor="middle">{variable}</text>'
+            f'text-anchor="{ancla}">{variable}</text>'
         )
     return d
 

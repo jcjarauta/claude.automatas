@@ -143,3 +143,54 @@ def test_cada_radio_dice_su_variable_en_la_leyenda():
     texto = hoja(["mordaza"])
     assert "Ø3 → #cota.mordaza_tornillo_diametro" in texto
     assert "R2 → #cota.mordaza_fijacion_diametro_radio" in texto
+
+
+# Ancho de carácter de cada clase, en px: Helvetica a 5.4 y monospace a 4.8.
+_ANCHO = {"cotatx": 2.90, "cotavar": 2.88, "var": 2.88}
+
+
+def _rotulos(svg: str) -> list[tuple[str, float, float, float, float]]:
+    """Las cajas de los rótulos que viven en la banda de encima de la planta.
+
+    Son los que pueden taparse entre sí: el número de cada radio, la leyenda
+    que lo empareja con su variable, y la marca DATUM. Las cotas de la pila de
+    abajo van una por nivel y no compiten por el sitio.
+    """
+    cajas = []
+    patron = r'<text class="(cotatx|cotavar|var)"([^>]*)>([^<]*)</text>'
+    for clase, atributos, texto in re.findall(patron, svg):
+        if "rotate" in atributos:
+            continue
+        interesa = (clase == "cotatx" and texto[:1] in "ØR") or (
+            clase == "cotavar" and "→" in texto
+        )
+        if not (interesa or texto == "DATUM"):
+            continue
+        x = float(re.search(r' x="([-\d.]+)"', atributos).group(1))
+        y = float(re.search(r' y="([-\d.]+)"', atributos).group(1))
+        ancla = (re.search(r'text-anchor="(\w+)"', atributos) or [None, None])[1]
+        if ancla is None:
+            ancla = "start" if clase == "cotavar" else "middle"
+        ancho = len(texto) * _ANCHO[clase]
+        alto = 5.4 if clase == "cotatx" else 4.8
+        x0 = x if ancla == "start" else x - ancho / 2 if ancla == "middle" else x - ancho
+        cajas.append((texto, x0, y - 0.78 * alto, x0 + ancho, y + 0.22 * alto))
+    return cajas
+
+
+def test_dos_rotulos_de_la_banda_de_arriba_no_se_tapan():
+    """**Un rótulo encima de otro miente sin avisar.** El «R2» de la ranura de
+    la mordaza aterrizaba a 18 px del «Ø3» del datum y más cerca del agujero
+    que NO describe que del que sí, y de ahí salió un Ø4 dibujado en el datum:
+    la hoja decía la verdad y se leía al revés.
+
+    Mirar el dibujo no lo caza —los dos rótulos estaban, y cada uno con su
+    flecha—; hay que medir dónde cae cada caja. Por eso esto se comprueba y no
+    se revisa."""
+    for pieza in PERFIL_DE:
+        cajas = _rotulos(hoja([pieza]))
+        assert len(cajas) >= 2, f"{pieza}: la banda de arriba está vacía"
+        for i, (ta, ax0, ay0, ax1, ay1) in enumerate(cajas):
+            for tb, bx0, by0, bx1, by1 in cajas[i + 1 :]:
+                solapa = ax0 < bx1 and bx0 < ax1 and ay0 < by1 and by0 < ay1
+                assert not solapa, f"{pieza}: «{ta}» se tapa con «{tb}»"
