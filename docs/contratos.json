@@ -232,14 +232,14 @@
           "nombre": "amplificador_sector_radio",
           "valor": 0.048,
           "unidad": "m",
-          "descripcion": "Cabestrante 6:1: radio del sector que va en el poste del seguidor",
+          "descripcion": "Cabestrante 6:1: radio de FIBRA NEUTRA del sector, en el poste del seguidor",
           "tolerancia": ""
         },
         {
           "nombre": "amplificador_tambor_radio",
           "valor": 0.008,
           "unidad": "m",
-          "descripcion": "Cabestrante 6:1: radio del tambor que va en el eje del brazo. R/r = 6 exacto",
+          "descripcion": "Cabestrante 6:1: radio de FIBRA NEUTRA del tambor, en el eje del brazo. R/r = 6 exacto",
           "tolerancia": ""
         },
         {
@@ -275,6 +275,55 @@
           "valor": 2.617993878,
           "unidad": "rad",
           "descripcion": "Giro del marco del cinco barras respecto del de la leva: 150 grados",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "cinta_espesor",
+          "valor": 5e-05,
+          "unidad": "m",
+          "descripcion": "Espesor del fleje. Lo limita la flexión al arrollar el tambor: r/t >= 100",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "cinta_ancho",
+          "valor": 0.01,
+          "unidad": "m",
+          "descripcion": "Ancho del fleje, igual al canto del sector: dos planchas de POM de 5",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "amplificador_sector_radio_mecanizado",
+          "valor": 0.047975000000000004,
+          "unidad": "m",
+          "descripcion": "Radio MECANIZADO del sector: fibra neutra menos medio espesor de cinta",
+          "tolerancia": "+0/-0,02"
+        },
+        {
+          "nombre": "amplificador_tambor_radio_mecanizado",
+          "valor": 0.007975,
+          "unidad": "m",
+          "descripcion": "Radio MECANIZADO del tambor: fibra neutra menos medio espesor de cinta",
+          "tolerancia": "+0/-0,02"
+        },
+        {
+          "nombre": "amplificador_sector_semiarco",
+          "valor": 2.443460952792061,
+          "unidad": "rad",
+          "descripcion": "Medio arco útil del sector: tangencia 126,03 mas medio barrido y anclaje",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "amplificador_tambor_abrazado",
+          "valor": 3.2288591161895095,
+          "unidad": "rad",
+          "descripcion": "Lo que la cinta abraza al tambor: 107,94 de correa abierta, 33 de barrido y dos anclajes",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "amplificador_tangencia",
+          "valor": 2.1996712522899484,
+          "unidad": "rad",
+          "descripcion": "Donde la cinta deja el sector, desde la direccion al tambor: 90 + asin((R-r)/a)",
           "tolerancia": ""
         }
       ]

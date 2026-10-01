@@ -310,10 +310,10 @@
     },
     {
       "concepto": "Cinta del amplificador 6:1",
-      "referencia": "Fleje 1.4310 (AISI 301) 0,1 x 20 mm, 1 m para los tres canales",
+      "referencia": "Fleje 1.4310 (AISI 301) 0,05 x 20 mm, 1 m, hendido a 10 para los tres canales",
       "proveedor": "Evek",
       "cantidad": 1,
-      "precio": 18.89,
+      "precio": 15.11,
       "escalado": "1 m",
       "iva_incluido": false,
       "verificado": true,

@@ -144,6 +144,71 @@ def test_el_amplificador_tiene_la_relacion_que_usa_el_compilador():
     assert sector / tambor == pytest.approx(contrato("relacion_varillaje"))
 
 
+def test_el_canto_mecanizado_sale_de_la_fibra_neutra_y_no_al_reves():
+    """**La trampa del cabestrante, y cuesta un cuarto de milímetro.**
+
+    La relación la da el cociente de los radios por los que pasa la FIBRA
+    NEUTRA de la cinta, no el de los cantos torneados. Como la cinta va por
+    fuera de los dos, los dos cantos miden medio espesor menos — y restar lo
+    mismo a dos números no conserva su cociente. Mecanizar 48 y 8 con una
+    cinta de 0,05 da 5,9844 en vez de 6: un 0,26 % de escala de menos en todo lo que
+    escriba la máquina, sistemático y sin un solo aviso.
+    """
+    espesor = contrato("cinta_espesor")
+    for pieza_ in ("sector", "tambor"):
+        neutra = contrato(f"amplificador_{pieza_}_radio")
+        canto = contrato(f"amplificador_{pieza_}_radio_mecanizado")
+        assert canto == pytest.approx(neutra - espesor / 2.0)
+    # Y el cociente que importa es el de las fibras, que vale 6 exacto...
+    fibras = contrato("amplificador_sector_radio") / contrato("amplificador_tambor_radio")
+    assert fibras == pytest.approx(Escribiente().relacion)
+    # ...mientras que el de los cantos NO, y por eso no se mecaniza a 48 y 8.
+    cantos = contrato("amplificador_sector_radio_mecanizado") / contrato(
+        "amplificador_tambor_radio_mecanizado"
+    )
+    assert cantos != pytest.approx(fibras, rel=1e-4)
+
+
+def test_la_cinta_no_se_pasa_de_flexion_al_arrollar_el_tambor():
+    """Una cinta que se dobla millones de veces quiere r/t >= 100. Con el
+    fleje de 0,1 que se eligió primero y un tambor de R 8 salían 80, y
+    1206 MPa de flexión; con 0,05, 160 y 603 MPa."""
+    espesor = contrato("cinta_espesor")
+    radio = contrato("amplificador_tambor_radio")
+    assert radio / espesor >= 100.0
+    assert 193e9 * espesor / (2.0 * radio) < 800e6
+
+
+def test_la_cinta_cabe_en_el_canto_del_sector():
+    """El sector son dos planchas de POM apiladas y la cinta corre por su
+    canto: más ancha que el canto, se sale."""
+    assert contrato("cinta_ancho") <= 2.0 * cota("plancha_pom", "espesor")
+
+
+def test_la_tangencia_de_la_cinta_cae_detras_del_centro_del_sector():
+    """**Donde la cinta deja el sector, y por qué no es donde parece.**
+
+    El radio al punto de tangencia es perpendicular a la cinta, así que cae
+    a 90 grados mas gamma de la linea de centros, con sin(gamma) = (R-r)/a: a 126 grados, es decir
+    DETRÁS del sector, no por delante. Dibujarlo delante —confundir el seno
+    con el coseno— hace parecer que basta un sector de mas/menos 25 grados, y el sector
+    saldría sin material donde la cinta lo toca.
+
+    El semiarco tiene que cubrir la tangencia más medio barrido más el
+    anclaje, y el abrazado del tambor, los 180 menos dos gammas de una correa abierta
+    más el barrido entero y sus dos anclajes.
+    """
+    sector = contrato("amplificador_sector_radio")
+    tambor = contrato("amplificador_tambor_radio")
+    entre = contrato("amplificador_entre_ejes")
+    gamma = math.asin((sector - tambor) / entre)
+    assert contrato("amplificador_tangencia") == pytest.approx(math.pi / 2 + gamma)
+    assert contrato("amplificador_sector_semiarco") > contrato("amplificador_tangencia")
+    assert contrato("amplificador_tambor_abrazado") > math.pi - 2.0 * gamma
+    # El vano libre es el cateto, y sale igual por los dos caminos.
+    assert contrato("amplificador_vano_libre") == pytest.approx(entre * math.cos(gamma))
+
+
 def test_la_cinta_no_toca_ni_las_levas_vecinas_ni_el_sector_de_al_lado():
     """Dos holguras de conjunto que ninguna envolvente de C3 mira.
 

@@ -55,6 +55,7 @@ uv run --group cad python scripts/exportar_para_cad.py demo/hola.json --out buil
 uv run python scripts/dibujar_perfiles.py     # lámina de perfiles para revisar
 uv run python scripts/dibujar_maquina.py      # el dibujo conceptual, generado desde el modelo
 uv run python scripts/dibujar_piezas.py       # sección y cotas de cada pieza comercial, para dibujarla en el CAD
+uv run python scripts/dibujar_amplificador.py # el cabestrante 6:1, acotado desde el contrato
 uv run python scripts/plantillas_demo.py      # plantillas 1:1 de muestra
 uv run python scripts/regenerar_golden.py     # SOLO si el cambio es intencionado
 
@@ -642,7 +643,14 @@ falla si el esquema versionado se queda atrás.
   parece: un par de engranajes de calidad 8d llevaba el peor caso de 2,84 a
   **6,74 mm** y el coste de 119 a 309 €. Por eso es un cabestrante de cinta:
   una cinta anclada por los dos extremos no tiene juego, solo elasticidad, y
-  son 0,0115 mm.
+  son 0,046 mm.
+- **El punto de tangencia de una correa cae detrás del centro, no delante.**
+  El radio al punto donde la cinta deja el sector es **perpendicular** a la
+  cinta, así que está a 90° + γ de la línea de centros, con sin γ = (R−r)/a:
+  en el cabestrante, a **126°**. Confundir el seno con el coseno lo pone a
+  54°, por delante, y entonces parece que basta un sector de ±25° — cuando
+  hace falta de ±140°, y el sector saldría sin material justo donde la cinta
+  lo toca. Lo cazó la hoja de bocetos al dibujarlo, que es para lo que está.
 - **Fase.** Un cartucho montado desfasado escribe basura. La marca física y la
   verificación van en el dossier, no solo en el código.
 

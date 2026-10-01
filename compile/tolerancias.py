@@ -27,7 +27,7 @@ piñón de 7 mm de radio, daba 1,98 mm en la punta y se convertía en el términ
 dominante de toda la cadena —el peor caso pasaba de 2,8 a 6,7 mm—.
 
 Por eso el amplificador es un **cabestrante de cinta** y no engranajes. Una
-cinta anclada por los dos extremos no tiene juego, solo elasticidad: 0,0115
+cinta anclada por los dos extremos no tiene juego, solo elasticidad: 0,046
 mm en la punta, dos órdenes de magnitud menos, y el corte vuelve a ser el
 término dominante. El dato y su cuenta están en `bench/transmision.json`.
 
@@ -80,8 +80,8 @@ def juego_del_amplificador(ruta: Path = RUTA_DE_LA_TRANSMISION) -> Radianes:
     **Depende del mecanismo, y por eso es un dato y no una constante.** Un
     par de engranajes de calidad 8d daba 1,1 × 10⁻² rad —1,98 mm en la
     punta, el término dominante de toda la cadena—. Una cinta anclada por
-    los dos extremos no tiene juego, solo elasticidad, y da 6 × 10⁻⁵:
-    0,011 mm. Son dos órdenes de magnitud y es lo que decidió el mecanismo.
+    los dos extremos no tiene juego, solo elasticidad, y da 2,7 × 10⁻⁴:
+    0,046 mm. Son dos órdenes de magnitud y es lo que decidió el mecanismo.
 
     Vive en `bench/transmision.json` con la cuenta de la que sale. Si el
     archivo no está, devuelve cero —una máquina de transmisión directa no

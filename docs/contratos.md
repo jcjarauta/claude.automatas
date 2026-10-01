@@ -148,9 +148,24 @@ banco diga que el modelo predice:
   límite de conjunto que decide qué frases caben.
 - Caja de escritura: 80 × 30 mm, centrada a 100 mm sobre la línea de pivotes.
 - **El amplificador 6:1 es un cabestrante de cinta**: sector de R 48 en el
-  poste del seguidor, tambor de R 8 en el eje del brazo, cinta de acero
-  anclada por los dos extremos. La relación es el cociente de radios y es
-  exacta; una cinta anclada no desliza.
+  poste del seguidor, tambor de R 8 en el eje del brazo, fleje de 1.4310 de
+  0,05 × 10 anclado por los dos extremos. La relación es el cociente de
+  radios y es exacta; una cinta anclada no desliza.
+
+  **Los radios del contrato son los de la FIBRA NEUTRA, y los mecanizados
+  valen medio espesor menos.** Restar lo mismo a dos números no conserva su
+  cociente: tornear 48 y 8 daría 5,9844 en vez de 6, un 0,26 % de escala de
+  menos en todo lo que escriba la máquina, sistemático y sin aviso.
+
+  **Espesor 0,05 y no 0,1**: arrollada en el tambor de R 8, la de 0,1 trabaja
+  a 1206 MPa con una relación r/t de 80, por debajo del 100 que se respeta en
+  una cinta que va a doblarse millones de veces. **Ancho 10** porque el
+  sector son dos planchas de POM de 5, el mismo material y el mismo corte que
+  las levas.
+
+  **La cinta deja el sector a ±126° de la línea de centros**, no por delante:
+  el radio a la tangencia es perpendicular a la cinta. De ahí el semiarco de
+  140° y no el de 25 que parecía bastar.
 - **Dónde está el cinco barras respecto de las levas.** Hasta ahora eran dos
   sistemas de coordenadas sin transformación entre ellos: las levas con el
   árbol en el origen y el cinco barras con sus pivotes en ±60. El marco del
