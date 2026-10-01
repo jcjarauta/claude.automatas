@@ -97,6 +97,13 @@ class Ficha:
     ella el bloque se puede dibujar centrado entre los tornillos —que es lo
     natural y lo que estaba mal— y la ranura se sale por el extremo.
     """
+    simetrico: bool = False
+    """El contorno es simétrico respecto del eje X.
+
+    Es lo que sitúa la pieza a lo alto, y no hay cota que lo diga: una
+    simetría no es un número. Declararla deja que el comparador la mire y
+    que la hoja la dibuje, en vez de que el que acota tenga que deducirla.
+    """
     cara_plana: str = ""
     """La cota del desplazamiento del eje al plano de la cara, **con signo**.
 
@@ -172,6 +179,7 @@ FICHAS: dict[str, Ficha] = {
         },
         segmentos={"mordaza_largo": 2, "mordaza_ancho": 2},
         voladizo="mordaza_voladizo",
+        simetrico=True,
         ranura=("mordaza_recorrido", "mordaza_fijacion_diametro_radio"),
         entre_centros=("mordaza_entre_tornillos",),
         datum="mordaza_tornillo_diametro_radio",
@@ -358,6 +366,21 @@ def comparar(ruta: Path, pieza: str, tol: float = TOLERANCIA) -> Informe:
                     "falta",
                     f"#cota.{ficha.voladizo} pide el borde a {-esperado:+g} del datum "
                     f"y está a {min(bordes):+g}: el contorno no está donde dice el contrato",
+                )
+            )
+
+    # --- simetría respecto del eje X ---
+    if ficha.simetrico:
+        altos = [p[1] for a, b in segmentos for p in (a, b)]
+        altos += [c[1] + s * r for c, r in circulares for s in (-1, 1)]
+        if altos and abs(max(altos) + min(altos)) <= tol:
+            inf.bien.append("contorno simétrico respecto del eje X")
+        else:
+            inf.hallazgos.append(
+                Hallazgo(
+                    "falta",
+                    f"la pieza debería ser simétrica respecto del eje X y va de "
+                    f"{min(altos):+g} a {max(altos):+g}",
                 )
             )
 

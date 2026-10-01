@@ -46,6 +46,7 @@ text{font-family:Helvetica,Arial,sans-serif;fill:#1b1b1b}
 .cotatxi{font-size:5.4px;fill:#b03030}
 .var{font-size:4.8px;fill:#1b5fb0;font-family:monospace;text-anchor:middle}
 .varl{font-size:4.8px;fill:#1b5fb0;font-family:monospace}
+.cotavar{font-size:4.8px;fill:#1b5fb0;font-family:monospace}
 """
 
 FLECHA = (

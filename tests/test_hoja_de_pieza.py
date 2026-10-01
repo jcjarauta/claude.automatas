@@ -93,7 +93,14 @@ def test_la_hoja_dibuja_las_dos_vistas():
 
 def test_la_hoja_acota_todo_lo_que_la_ficha_declara():
     """No las principales: **todas**. Lo que no aparece dibujado se teclea de
-    la tabla sin saber a qué rasgo corresponde."""
+    la tabla sin saber a qué rasgo corresponde.
+
+    **Y tiene que estar DIBUJADA, no solo en la tabla.** La primera versión
+    de este test buscaba el nombre en cualquier parte de la hoja, y la tabla
+    se lo daba: `mordaza_voladizo` pasaba sin que ninguna línea de cota la
+    señalara, que es justo lo que había que cazar. Por eso los rótulos que
+    cuelgan de una cota llevan su propia clase.
+    """
     for pieza in PERFIL_DE:
         texto, f = hoja([pieza]), FICHAS[pieza]
         esperadas = set(f.segmentos) | set(f.entre_centros)
@@ -104,5 +111,13 @@ def test_la_hoja_acota_todo_lo_que_la_ficha_declara():
         if f.voladizo:
             esperadas.add(f.voladizo)
         esperadas.add(LISTADO[pieza].solido[1])
-        for cota in esperadas:
-            assert f"#cota.{cota}" in texto, f"{pieza}: {cota} no está acotada en el boceto"
+        dibujadas = set(re.findall(r'class="cotavar"[^>]*>#cota\.([a-z0-9_]+)<', texto))
+        faltan = esperadas - dibujadas
+        assert not faltan, f"{pieza}: en la tabla pero sin acotar en el dibujo: {sorted(faltan)}"
+
+
+def test_una_pieza_simetrica_lo_dice_en_el_dibujo():
+    """A lo alto no hay cota que sitúe el contorno, hay una simetría. Si no
+    se dibuja, el que acota tiene que deducirla, y deducir es de donde salen
+    los errores que este bucle evita."""
+    assert "simétrico respecto de este eje" in hoja(["mordaza"])

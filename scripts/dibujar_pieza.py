@@ -146,11 +146,25 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
     ficha, cotas = FICHAS[nombre], cotas_en_mm()
     x0, y0, x1, y1 = caja(perfil)
     hueco = alto - CABECERA
-    # La pila de cotas horizontales come 15 px por cota, así que el dibujo
-    # no puede ocupar más de un tercio del hueco o se come el porqué.
-    k = min(ancho * 0.46 / max(x1 - x0, 1e-6), hueco * 0.30 / max(y1 - y0, 1e-6), 7.0)
+
+    # **El hueco del dibujo sale del número de cotas, no al revés.** Cada cota
+    # horizontal come 15 px bajo la pieza; con una proporción fija, la quinta
+    # se metía en el porqué. Se cuentan antes y se reparte lo que quede.
+    cuantas = (
+        bool(ficha.voladizo)
+        + len(ficha.entre_centros)
+        + bool(ficha.ranura)
+        + bool(ficha.cara_plana)
+        + sum(1 for cota in ficha.segmentos if _horizontales(perfil, cotas[cota]))
+    )
+    pila = 16 + 15 * cuantas
+    k = min(
+        ancho * 0.46 / max(x1 - x0, 1e-6),
+        max(hueco - pila - 24, 20.0) / max(y1 - y0, 1e-6),
+        7.0,
+    )
     ox = x + ancho / 2 - ((x0 + x1) / 2) * k
-    oy = y + CABECERA + hueco * 0.22 + ((y0 + y1) / 2) * k
+    oy = y + CABECERA + 14 + (y1 - (y0 + y1) / 2) * k
     abajo, derecha = oy + (y1 - (y0 + y1) / 2) * k, ox + (x1 - (x0 + x1) / 2) * k
 
     d = [
@@ -187,9 +201,15 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
         a, b = ox + xa * k, ox + xb * k
         d.extend([auxiliar(a, oy, a, nivel + 3), auxiliar(b, oy, b, nivel + 3)])
         d.extend(cota_h(a, b, nivel, f"{cotas[cota]:g}"))
-        d.append(f'<text class="varl" x="{min(a, b):.2f}" y="{nivel + 9:.2f}">#cota.{cota}</text>')
+        d.append(
+            f'<text class="cotavar" x="{min(a, b):.2f}" y="{nivel + 9:.2f}">#cota.{cota}</text>'
+        )
         nivel += 15
 
+    if ficha.voladizo:
+        # Del datum al borde: es lo único que sitúa el contorno, y sin ella
+        # el que dibuja tiene que deducir dónde empieza el bloque.
+        horizontal(-cotas[ficha.voladizo], 0.0, ficha.voladizo)
     for cota in ficha.entre_centros:
         if len(centros) >= 2:
             horizontal(centros[0], centros[-1], cota)
@@ -208,6 +228,17 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
             e = iguales[0]
             horizontal(min(e.a[0], e.b[0]), max(e.a[0], e.b[0]), cota)
 
+    if ficha.simetrico:
+        # La otra mitad de situar el contorno: a lo alto no hay cota, hay una
+        # simetría. Dibujarla y decirlo es más barato que una cota derivada.
+        d += [
+            f'<line class="eje" x1="{ox + (x0 - 2) * k:.2f}" y1="{oy:.2f}" '
+            f'x2="{ox + (x1 + 2) * k:.2f}" y2="{oy:.2f}"/>',
+            f'<text class="cotavar" x="{ox + x0 * k:.2f}" '
+            f'y="{oy - (y1 - (y0 + y1) / 2) * k - 14:.2f}">'
+            "simétrico respecto de este eje · el DATUM está sobre él</text>",
+        ]
+
     # Y las verticales, a la derecha.
     lado = derecha + 22
     for cota, _ in ficha.segmentos.items():
@@ -224,7 +255,7 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
         )
         d.extend(cota_v(min(ya, yb), max(ya, yb), lado, f"{cotas[cota]:g}"))
         d.append(
-            f'<text class="varl" x="{lado + 5:.2f}" y="{(ya + yb) / 2:.2f}" '
+            f'<text class="cotavar" x="{lado + 5:.2f}" y="{(ya + yb) / 2:.2f}" '
             f'transform="rotate(-90 {lado + 5:.2f} {(ya + yb) / 2:.2f})">#cota.{cota}</text>'
         )
         lado += 22
@@ -277,7 +308,7 @@ def segunda_vista(nombre: str, c: dict[str, float], x: float, y: float, ancho: f
     if clase == "plancha":
         d += cota_v(cy - h / 2, cy + h / 2, borde + 14, f"{grueso:g}")
         d.append(
-            f'<text class="varl" x="{borde + 19:.2f}" y="{cy:.2f}" '
+            f'<text class="cotavar" x="{borde + 19:.2f}" y="{cy:.2f}" '
             f'transform="rotate(-90 {borde + 19:.2f} {cy:.2f})">#cota.{cota}</text>'
         )
     else:
@@ -285,7 +316,8 @@ def segunda_vista(nombre: str, c: dict[str, float], x: float, y: float, ancho: f
         d.append(auxiliar(cx + w / 2, cy + h / 2, cx + w / 2, cy + h / 2 + 18))
         d += cota_h(cx - w / 2, cx + w / 2, cy + h / 2 + 14, f"{grueso:g}")
         d.append(
-            f'<text class="varl" x="{cx - w / 2:.2f}" y="{cy + h / 2 + 23:.2f}">#cota.{cota}</text>'
+            f'<text class="cotavar" x="{cx - w / 2:.2f}" '
+            f'y="{cy + h / 2 + 23:.2f}">#cota.{cota}</text>'
         )
     return d
 
@@ -325,7 +357,7 @@ def hoja(piezas: list[str] | None = None) -> str:
     c = contrato_mm()
     # Un panel por pieza y a lo ancho: lleva dos vistas, su porqué y su
     # tabla, y partido en dos columnas no cabe ninguna de las tres.
-    vista_ancho, alto, borde = 230.0, 300.0, 12.0
+    vista_ancho, alto, borde = 230.0, 330.0, 12.0
     ancho = 2 * vista_ancho
     filas = len(piezas)
     w = borde * 2 + ancho
@@ -368,8 +400,11 @@ def hoja(piezas: list[str] | None = None) -> str:
         ]
         # +30 y no +14: el rótulo de la vista caía sobre el subtítulo de la
         # pieza, que es texto largo y no se puede recortar.
-        partes += planta(nombre, c, px, py + 30, vista_ancho, alto - PIE)
-        partes += segunda_vista(nombre, c, px + vista_ancho, py + 30, vista_ancho, alto - PIE)
+        # El alto que se les pasa descuenta el desplazamiento: si no, la vista
+        # cree que llega hasta py+alto-PIE y en realidad empieza 30 más abajo,
+        # así que la última cota se metía en el porqué.
+        partes += planta(nombre, c, px, py + 30, vista_ancho, alto - PIE - 30)
+        partes += segunda_vista(nombre, c, px + vista_ancho, py + 30, vista_ancho, alto - PIE - 30)
         partes += pie(nombre, c, px, py + alto - PIE + 8, ancho)
     partes.append("</svg>")
     h = cabecera + filas * alto + borde
