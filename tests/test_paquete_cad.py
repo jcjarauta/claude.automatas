@@ -13,6 +13,7 @@ from pathlib import Path
 
 import pytest
 
+from emit.catalogo import cargar as cargar_piezas
 from scripts.exportar_para_cad import MAPAS, main
 
 
@@ -161,6 +162,41 @@ def test_la_hoja_de_ruta_dice_que_archivo_va_a_que_variable_y_con_que_factor(
         assert f"`#{variable}`" in texto
         assert (paquete / f"{archivo}.csv").exists(), archivo
         assert f"`{factor}`" in texto
+
+
+def test_toda_variable_que_la_hoja_de_bocetos_rotula_existe_en_el_csv(paquete: Path):
+    """**El test que cierra la familia de fallos.**
+
+    La hoja de bocetos es lo que alguien tiene al lado mientras teclea en el
+    CAD. Ya ha mandado tres veces a escribir algo que no existía: los
+    dientes que no salían, los dientes en el mapa equivocado, y
+    `#pieza.tornilleria_longitud`, que el perfil dibuja con un valor por
+    defecto y la ficha no declara. Cada una se arregló sola y la siguiente
+    apareció por otro lado.
+
+    Esto cruza los dos artefactos de una vez: cada `#mapa.variable` de la
+    hoja tiene que estar en el CSV de ese mapa. Si no está, no hace falta
+    saber por qué: no se puede teclear.
+    """
+    import csv as _csv
+
+    from scripts.dibujar_piezas import filas_de
+
+    existentes: dict[str, set[str]] = {}
+    for archivo, (variable, _) in MAPAS.items():
+        ruta = paquete / f"{archivo}.csv"
+        if not ruta.exists():
+            continue
+        filas = _csv.reader(ruta.read_text(encoding="utf-8").splitlines())
+        existentes.setdefault(variable, set()).update(f[0] for f in filas if f)
+
+    for pieza in cargar_piezas():
+        for etiqueta, _ in filas_de(pieza):
+            if not etiqueta.startswith("#"):
+                continue  # un hueco rotulado, que a propósito no es variable
+            mapa, _, nombre = etiqueta[1:].partition(".")
+            assert mapa in existentes, f"{etiqueta}: no hay CSV para el mapa «{mapa}»"
+            assert nombre in existentes[mapa], f"{etiqueta} no está en {mapa}"
 
 
 def test_la_hoja_de_ruta_avisa_de_no_importar_los_que_llevan_cabecera(paquete: Path):

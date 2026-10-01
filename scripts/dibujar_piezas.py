@@ -133,6 +133,11 @@ def filas_de(pieza: PiezaComercial) -> list[tuple[str, str]]:
     milímetros de dientes. El reparto lo declara `MAPAS`, y esta hoja lo lee
     de ahí para no poder contradecirlo.
 
+    **Y una cota que la ficha no trae no se rotula como variable.** La
+    tornillería no declara `longitud`: el perfil la dibuja con un valor por
+    defecto para que la sección tenga forma, pero no hay fila en el CSV y
+    `#pieza.tornilleria_longitud` no existe. Se rotula el hueco.
+
     No son solo las cotas que dibuja el perfil. El número de dientes **no
     está en la ficha** —la ficha guarda el diámetro exterior, que es lo que
     se mide— y en cambio es exactamente lo que pide el FeatureScript de
@@ -147,7 +152,17 @@ def filas_de(pieza: PiezaComercial) -> list[tuple[str, str]]:
     # FeatureScript. Lo mismo la mina del portaminas.
     nombres = usadas + [c.nombre for c in pieza.criticas if c.nombre not in usadas]
     longitudes = mapa_de("piezas_cota")
-    filas = [(f"#{longitudes}.{pieza.nombre}_{n}", f"{_mm(pieza, n, 0.0):g}") for n in nombres]
+    filas = []
+    for n in nombres:
+        if _tiene(pieza, n):
+            filas.append((f"#{longitudes}.{pieza.nombre}_{n}", f"{_mm(pieza, n, 0.0):g}"))
+            continue
+        # El perfil la dibuja con un valor por defecto, pero en la ficha no
+        # está y por tanto tampoco en el CSV: **esa variable no existe**.
+        # Imprimir su nombre manda a teclear algo que el CAD no reconoce, y
+        # es el mismo fallo que los dientes con otra cara. Se rotula el
+        # hueco, con el valor que el dibujo usa marcado con asterisco.
+        filas.append((f"{n}: falta en la ficha", f"{_mm(pieza, n, POR_DEFECTO):g}*"))
     if pieza.dientes is not None:
         recuentos = mapa_de("piezas_num")
         filas.append((f"#{recuentos}.{pieza.nombre}_dientes", str(pieza.dientes)))

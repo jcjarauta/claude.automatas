@@ -466,6 +466,18 @@ falla si el esquema versionado se queda atrás.
   y el test del catálogo la leen de ahí. La regla general: **en la hoja va lo
   que se teclea, no lo que se mide**, y cuando no coinciden, el derivado sale
   también.
+- **Rotular una variable que no existe.** Es la misma familia, y ha salido
+  **tres veces**: los dientes que no estaban en la hoja, los dientes puestos
+  en el mapa de milímetros, y `#pieza.tornilleria_longitud`, que el perfil
+  dibuja con un valor por defecto porque la ficha no la declara —y por tanto
+  tampoco está en el CSV—. Cada una se arregló sola y la siguiente apareció
+  por otro lado.
+
+  Lo cierra `test_toda_variable_que_la_hoja_de_bocetos_rotula_existe_en_el_csv`,
+  que cruza los dos artefactos: cada `#mapa.variable` de la hoja tiene que
+  estar en el CSV de ese mapa. Si no está, no hace falta saber por qué —no
+  se puede teclear—. Lo que el perfil dibuja con un valor por defecto se
+  rotula como hueco, con asterisco, y no como variable.
 - **Un factor de conversión por archivo, así que un mapa por unidad.** Una
   importación de Onshape crea **una** variable de tipo mapa y aplica su
   factor a **todas** las filas. Por eso el paquete saca cinco CSV y no uno:
