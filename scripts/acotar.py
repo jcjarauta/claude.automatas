@@ -103,7 +103,10 @@ def radial(cx: float, cy: float, r: float, ang: float, texto: str, variable: str
         f'<text class="cotatx" x="{xt:.2f}" y="{yt:.2f}">{texto}</text>',
     ]
     if variable:
-        d.append(f'<text class="var" x="{xt:.2f}" y="{yt + 5.4:.2f}">{variable}</text>')
+        d.append(
+            f'<text class="cotavar" x="{xt:.2f}" y="{yt + 5.4:.2f}" '
+            f'text-anchor="middle">{variable}</text>'
+        )
     return d
 
 

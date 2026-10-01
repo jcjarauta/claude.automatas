@@ -157,14 +157,14 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
         + bool(ficha.cara_plana)
         + sum(1 for cota in ficha.segmentos if _horizontales(perfil, cotas[cota]))
     )
-    pila = 16 + 15 * cuantas
+    pila = 16 + 15 * cuantas + (10 if ficha.ranura else 0) + (12 if ficha.simetrico else 0)
     k = min(
         ancho * 0.46 / max(x1 - x0, 1e-6),
         max(hueco - pila - 24, 20.0) / max(y1 - y0, 1e-6),
         7.0,
     )
     ox = x + ancho / 2 - ((x0 + x1) / 2) * k
-    oy = y + CABECERA + 14 + (y1 - (y0 + y1) / 2) * k
+    oy = y + CABECERA + 16 + (y1 - (y0 + y1) / 2) * k
     abajo, derecha = oy + (y1 - (y0 + y1) / 2) * k, ox + (x1 - (x0 + x1) / 2) * k
 
     d = [
@@ -178,7 +178,17 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
         f'<text class="var" x="{ox:.2f}" y="{oy - 17:.2f}">DATUM</text>',
     ]
 
-    puestos: set[str] = set()
+    # Los radios: la flecha lleva el número y la LEYENDA el nombre.
+    #
+    # Juntos no caben —un nombre de variable es más ancho que la pieza— y
+    # separados hay que emparejarlos de cabeza, que es como se dibujó un Ø4
+    # donde iba el Ø3: la tabla tiene dos diámetros y el dibujo solo decía
+    # «Ø3». La leyenda los empareja sin que nada se monte.
+    #
+    # Y el nombre es el que pide el campo: **diámetro** si es un círculo
+    # entero, que es como Onshape acota un agujero, y radio si es un arco de
+    # contorno.
+    puestos: dict[str, str] = {}
     angulos = (210.0, 150.0, -35.0, 35.0, 115.0, -115.0)
     for e in perfil:
         if not isinstance(e, Arco):
@@ -189,8 +199,19 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
         ang = math.radians(angulos[len(puestos) % len(angulos)])
         cx, cy = ox + e.centro[0] * k, oy - e.centro[1] * k
         lleno = abs(e.hasta - e.desde - 2 * math.pi) < 1e-9
-        d += radial(cx, cy, e.radio * k, ang, f"Ø{2 * e.radio:g}" if lleno else f"R{e.radio:g}")
-        puestos.add(cota)
+        texto = f"Ø{2 * e.radio:g}" if lleno else f"R{e.radio:g}"
+        d += radial(cx, cy, e.radio * k, ang, texto)
+        puestos[cota] = texto
+
+    leyenda = y + CABECERA - 4
+    for cota, texto in puestos.items():
+        matriz = cota.removesuffix("_radio")
+        nombre = matriz if texto.startswith("Ø") and matriz in cotas else cota
+        d.append(
+            f'<text class="cotavar" x="{x + 10:.1f}" y="{leyenda:.1f}">'
+            f"{texto} → #cota.{nombre}</text>"
+        )
+        leyenda += 7
 
     # Cotas horizontales, apiladas hacia abajo para que no se monten.
     nivel = abajo + 16
@@ -220,6 +241,13 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
         )
         if len(extremos) >= 2:
             horizontal(extremos[0], extremos[-1], ficha.ranura[0])
+            medio = (extremos[0] + extremos[-1]) / 2
+            d.append(
+                f'<text class="cotavar" x="{ox + medio * k:.2f}" y="{nivel - 2:.2f}" '
+                f'text-anchor="middle">CENTRADA en ese punto, '
+                f"{(extremos[-1] - extremos[0]) / 2:g} a cada lado</text>"
+            )
+            nivel += 10
     if ficha.cara_plana:
         horizontal(0.0, cotas[ficha.cara_plana], ficha.cara_plana)
     for cota, _ in ficha.segmentos.items():
@@ -229,15 +257,15 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
             horizontal(min(e.a[0], e.b[0]), max(e.a[0], e.b[0]), cota)
 
     if ficha.simetrico:
-        # La otra mitad de situar el contorno: a lo alto no hay cota, hay una
-        # simetría. Dibujarla y decirlo es más barato que una cota derivada.
+        # Al final de la pila: arriba choca con la leyenda, y es lo último que
+        # se mira porque no es una cota, es una restricción.
         d += [
-            f'<line class="eje" x1="{ox + (x0 - 2) * k:.2f}" y1="{oy:.2f}" '
-            f'x2="{ox + (x1 + 2) * k:.2f}" y2="{oy:.2f}"/>',
-            f'<text class="cotavar" x="{ox + x0 * k:.2f}" '
-            f'y="{oy - (y1 - (y0 + y1) / 2) * k - 14:.2f}">'
-            "simétrico respecto de este eje · el DATUM está sobre él</text>",
+            f'<line class="eje" x1="{ox + (x0 - 3) * k:.2f}" y1="{oy:.2f}" '
+            f'x2="{ox + (x1 + 3) * k:.2f}" y2="{oy:.2f}"/>',
+            f'<text class="cotavar" x="{ox + x0 * k:.2f}" y="{nivel:.2f}">'
+            "simétrico respecto del eje · el DATUM está sobre él</text>",
         ]
+        nivel += 12
 
     # Y las verticales, a la derecha.
     lado = derecha + 22
