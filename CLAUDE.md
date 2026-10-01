@@ -723,6 +723,26 @@ falla si el esquema versionado se queda atrás.
   pieza**, que declara qué rasgos tiene y con qué recuento —el distal tiene DOS
   cubos de 6, y uno solo sería otra pieza—. Así un rasgo que falta y uno que
   sobra son fallos distintos.
+- **El calaje vive en la mordaza de la cinta, no mecanizado en el eje.** La
+  cinta entra al tambor por R8 y el brazo mueve la punta con 172,5 de palanca:
+  **1 mm de error en la longitud libre son 21,6 mm en la punta**, y un fleje
+  anclado a mano no tiene esa longitud a la décima. Mecanizado, ese error sería
+  invisible y permanente; en una ranura es visible y se corrige, y lo verifica
+  la hoja de trazo patrón, que ya existía para eso.
+
+  Consecuencia: el eje de pivote es una barra Ø10 h6 con una cara plana, igual
+  en los tres sitios. Decidido en `docs/contratos.md`.
+- **Una cinta no se arrolla a menos de cien veces su espesor**, así que con un
+  fleje de 0,05 el radio mínimo son 5 mm. Eso descarta el pasador de arrastre
+  pequeño que sería lo natural en un anclaje —tendría que ser de Ø10— y obliga
+  a que la mordaza agarre por **rozamiento**. No es una pérdida: un M3 a
+  0,3 N·m da 188 N contra una carga de unos pocos newton.
+- **Un tensor de tornillo no puede tensar una cinta de acero.** Estirarla a 5 N
+  son **5,8 µm**, y calar el brazo ±10° pide **1,4 mm** de recorrido: 241 a 1.
+  Una vuelta de un M3 son 500 µm, o sea pasar de nada a 430 N. Y meter un
+  muelle en serie devuelve la flexibilidad por la que se descartaron los
+  engranajes. Lo que sí sirve es separar las dos cosas: la **ranura** da los
+  milímetros, el **apriete** da las micras.
 - **Fase.** Un cartucho montado desfasado escribe basura. La marca física y la
   verificación van en el dossier, no solo en el código.
 

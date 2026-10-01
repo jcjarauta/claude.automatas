@@ -15,12 +15,14 @@ import pytest
 
 from emit.plataforma import (
     BRAZOS,
+    PERFILES,
     Arco,
     Segmento,
     agujero_en_d,
     barra,
     brazo,
     contrato_mm,
+    eje_pivote,
     escribir_dxf,
 )
 from scripts.comparar_dxf import comparar
@@ -115,3 +117,83 @@ def test_la_hoja_dibuja_el_mismo_contorno_que_escribe_el_dxf():
     camino = obround(0.0, 0.0, 90.0, 9.0, 6.0, 1.0)
     assert camino.count("A ") == 2
     assert camino.rstrip().endswith("Z")
+
+
+def test_nada_arrolla_la_cinta_por_debajo_de_su_radio_minimo():
+    """**La condición que decide cómo agarra la mordaza.**
+
+    Un fleje de 0,05 no se puede arrollar a menos de cien veces su espesor
+    sin pasarse de flexión, o sea 5 mm de radio. Eso descarta el pasador de
+    arrastre pequeño que sería lo natural en un anclaje —tendría que ser de
+    Ø10— y obliga a que la mordaza agarre por rozamiento.
+
+    El tambor sí pasa, con holgura: R8 son 160 espesores.
+    """
+    c = contrato_mm()
+    assert c["cinta_radio_minimo"] == pytest.approx(100.0 * c["cinta_espesor"])
+    assert c["amplificador_tambor_radio_mecanizado"] >= c["cinta_radio_minimo"]
+    for cota in ("mordaza_tornillo_diametro", "mordaza_fijacion_diametro"):
+        assert c[cota] / 2 < c["cinta_radio_minimo"], (
+            f"{cota} es más grande que el radio mínimo: si la cinta lo rodeara "
+            "valdría como arrastre, y entonces la mordaza no es solo rozamiento"
+        )
+
+
+def test_los_dos_tornillos_de_la_mordaza_no_son_iguales():
+    """Uno aprieta la cinta y el otro fija el bloque al sector. Siendo de
+    distinto diámetro no se pueden cambiar de agujero al montar, que es el
+    patrón del pasador de índice: no hacer el error improbable, hacerlo
+    imposible. De paso, es lo que deja al comparador distinguirlos."""
+    c = contrato_mm()
+    assert c["mordaza_tornillo_diametro"] != c["mordaza_fijacion_diametro"]
+
+
+def test_la_ranura_cala_mas_de_lo_que_hace_falta():
+    """El recorrido de la mordaza es lo que cala el brazo, y tiene que cubrir
+    de sobra lo que la máquina se mueve entre frases —3,3 grados— más lo que
+    se desvíe una cinta cortada a mano."""
+    c = contrato_mm()
+    calaje = math.degrees(c["mordaza_recorrido"] / 2 / c["amplificador_tambor_radio"])
+    assert calaje > 10.0, f"solo {calaje:.1f} grados de calaje a cada lado"
+
+
+def test_la_mordaza_tapa_sus_dos_agujeros():
+    """Un bloque más corto que la distancia entre tornillos deja la ranura
+    fuera del material."""
+    c = contrato_mm()
+    assert c["mordaza_largo"] > c["mordaza_entre_tornillos"] + c["mordaza_recorrido"]
+    assert c["mordaza_ancho"] > c["cinta_ancho"]
+
+
+def test_el_eje_no_lleva_ningun_angulo():
+    """**Lo que gana la decisión de la mordaza.** Mientras el calaje se
+    mecanizaba en el eje, esta pieza llevaba un ángulo de cuatro decimales y
+    había una por lado. Con el calaje en la mordaza es una barra de stock con
+    un fresado, igual en los tres sitios, y su sección no tiene más cotas que
+    el diámetro y la cara plana."""
+    perfil = eje_pivote()
+    assert len(perfil) == 2
+    c = contrato_mm()
+    arco = next(e for e in perfil if isinstance(e, Arco))
+    assert arco.radio == pytest.approx(c["brazo_eje_diametro"] / 2)
+
+
+def test_la_cara_del_eje_y_la_del_brazo_son_la_misma():
+    """Si no coincidieran, el brazo no entraría o bailaría. Van juntas porque
+    salen de las mismas dos cotas, y esto lo deja escrito."""
+    c = contrato_mm()
+    seg_eje = next(e for e in eje_pivote() if isinstance(e, Segmento))
+    seg_brazo = next(
+        e
+        for e in agujero_en_d((0.0, 0.0), c["brazo_eje_diametro"] / 2, c["brazo_chaveta"])
+        if isinstance(e, Segmento)
+    )
+    assert math.dist(seg_eje.a, seg_eje.b) == pytest.approx(math.dist(seg_brazo.a, seg_brazo.b))
+    assert seg_eje.a[0] == pytest.approx(seg_brazo.a[0])
+
+
+@pytest.mark.parametrize("cual", sorted(PERFILES))
+def test_cada_perfil_nuevo_lo_aprueba_el_comparador(cual: str, tmp_path: Path):
+    inf = comparar(escribir_dxf(PERFILES[cual](None), tmp_path / f"{cual}.dxf"), cual)
+    assert inf.cuadra, [h.texto for h in inf.hallazgos]
+    assert "totalmente definida" in inf.datum

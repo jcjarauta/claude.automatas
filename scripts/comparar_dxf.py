@@ -80,8 +80,15 @@ class Ficha:
     que_es: str
     radios: dict[str, int]
     entre_centros: tuple[str, ...] = ()
-    segmentos: tuple[str, ...] = ()
+    segmentos: dict[str, int] = field(default_factory=dict)
     tangentes: int = 0
+    ranura: tuple[str, str] = ()
+    """(cota del recorrido, cota del radio) de una ranura recta.
+
+    Una ranura tiene **dos** centros de arco que no son dos rasgos: son los
+    extremos de un rasgo. Sin declararla, el barrido de distancias entre
+    centros saca tres huérfanas de una pieza que solo tiene dos agujeros.
+    """
     cara_plana: str = ""
     """La cota del desplazamiento del eje al plano de la cara, **con signo**.
 
@@ -123,7 +130,7 @@ FICHAS: dict[str, Ficha] = {
             "brazo_perno_diametro_radio": 1,
         },
         entre_centros=("brazo_proximal",),
-        segmentos=("brazo_chaveta_cuerda",),
+        segmentos={"brazo_chaveta_cuerda": 1},
         tangentes=4,
         cara_plana="brazo_chaveta",
         datum="brazo_eje_diametro_radio",
@@ -144,8 +151,26 @@ FICHAS: dict[str, Ficha] = {
             "brazo_perno_diametro_radio": 1,
         },
         entre_centros=("brazo_palanca",),
-        segmentos=("brazo_chaveta_cuerda",),
+        segmentos={"brazo_chaveta_cuerda": 1},
         tangentes=4,
+        cara_plana="brazo_chaveta",
+        datum="brazo_eje_diametro_radio",
+    ),
+    "mordaza": Ficha(
+        "bloque, tornillo de apriete y ranura: el calaje vive aquí",
+        {
+            "mordaza_tornillo_diametro_radio": 1,
+            "mordaza_fijacion_diametro_radio": 2,
+        },
+        segmentos={"mordaza_largo": 2, "mordaza_ancho": 2},
+        ranura=("mordaza_recorrido", "mordaza_fijacion_diametro_radio"),
+        entre_centros=("mordaza_entre_tornillos",),
+        datum="mordaza_tornillo_diametro_radio",
+    ),
+    "eje_pivote": Ficha(
+        "sección del eje: Ø10 con una cara plana, sin ningún ángulo mecanizado",
+        {"brazo_eje_diametro_radio": 1},
+        segmentos={"brazo_chaveta_cuerda": 1},
         cara_plana="brazo_chaveta",
         datum="brazo_eje_diametro_radio",
     ),
@@ -308,8 +333,35 @@ def comparar(ruta: Path, pieza: str, tol: float = TOLERANCIA) -> Informe:
             )
         )
 
+    # --- la ranura: dos arcos que son UN rasgo ---
+    circulares_sueltos = list(circulares)
+    if ficha.ranura:
+        recorrido, radio_cota = cotas[ficha.ranura[0]], cotas[ficha.ranura[1]]
+        extremos = [c for c in circulares_sueltos if abs(c[1] - radio_cota) <= tol]
+        par = [
+            (a, b)
+            for i, a in enumerate(extremos)
+            for b in extremos[i + 1 :]
+            if abs(math.dist(a[0], b[0]) - recorrido) <= tol
+        ]
+        if par:
+            a, b = par[0]
+            circulares_sueltos.remove(a)
+            circulares_sueltos.remove(b)
+            medio = ((a[0][0] + b[0][0]) / 2, (a[0][1] + b[0][1]) / 2)
+            circulares_sueltos.append((medio, radio_cota))
+            inf.bien.append(f"ranura de {recorrido:g} de recorrido   #cota.{ficha.ranura[0]}")
+        else:
+            inf.hallazgos.append(
+                Hallazgo(
+                    "falta",
+                    f"#cota.{ficha.ranura[0]}: no hay dos arcos de R{radio_cota:g} "
+                    f"separados {recorrido:g}",
+                )
+            )
+
     # --- distancias entre centros ---
-    centros = sorted({c for c, _ in circulares})
+    centros = sorted({c for c, _ in circulares_sueltos})
     distancias = [
         math.dist(a, b)
         for i, a in enumerate(centros)
@@ -343,16 +395,19 @@ def comparar(ruta: Path, pieza: str, tol: float = TOLERANCIA) -> Informe:
             cosenos += toca
         else:
             sueltos.append(math.dist(a, b))
-    for nombre in ficha.segmentos:
+    for nombre, cuantos in ficha.segmentos.items():
         esperado = cotas[nombre]
         casan = [x for x in sueltos if abs(x - esperado) <= tol]
         for x in casan:
             sueltos.remove(x)
-        if casan:
-            inf.bien.append(f"segmento {esperado:g}   #cota.{nombre}")
+        if len(casan) == cuantos:
+            inf.bien.append(f"segmento {esperado:g} ×{cuantos}   #cota.{nombre}")
         else:
             inf.hallazgos.append(
-                Hallazgo("falta", f"#cota.{nombre} pide un segmento de {esperado:g} y no está")
+                Hallazgo(
+                    "falta" if len(casan) < cuantos else "sobra",
+                    f"#cota.{nombre} pide {cuantos} segmento(s) de {esperado:g} y hay {len(casan)}",
+                )
             )
     for x in sueltos:
         inf.hallazgos.append(Hallazgo("huerfano", f"segmento de {x:.4f} sin cota ni tangencia"))
@@ -360,7 +415,7 @@ def comparar(ruta: Path, pieza: str, tol: float = TOLERANCIA) -> Informe:
     # --- la cara plana, con signo ---
     if ficha.cara_plana:
         esperado = cotas[ficha.cara_plana]
-        cuerda = cotas[ficha.segmentos[0]] if ficha.segmentos else 0.0
+        cuerda = cotas[next(iter(ficha.segmentos))] if ficha.segmentos else 0.0
         datum = min(
             (c for c, r in circulares if abs(r - cotas[ficha.datum]) <= tol),
             key=lambda c: math.hypot(*c),
@@ -399,6 +454,14 @@ def comparar(ruta: Path, pieza: str, tol: float = TOLERANCIA) -> Informe:
         elif otros and any(abs(c[1]) <= tol and c[0] > tol for c in otros):
             inf.datum = (
                 "datum en el origen y el siguiente centro sobre +X: "
+                "dos coincidentes y queda totalmente definida"
+            )
+        elif not otros and ficha.cara_plana:
+            # Una pieza de un solo centro —la sección de un eje— no tiene un
+            # «centro siguiente». Lo que la orienta es la cara plana, y con
+            # su normal en +X el anclaje sigue siendo dos coincidentes.
+            inf.datum = (
+                "datum en el origen y la cara plana sobre +X: "
                 "dos coincidentes y queda totalmente definida"
             )
         else:

@@ -41,7 +41,7 @@ from core.solido import DENSIDADES
 from core.units import mm
 from emit.catalogo import cargar as cargar_piezas
 from emit.dxf import escribir_dxf
-from emit.plataforma import BRAZOS
+from emit.plataforma import BRAZOS, PERFILES
 from emit.plataforma import brazo as brazo_de
 from emit.plataforma import escribir_dxf as escribir_perfil
 from scripts.exportar_variables import csv, featurescript
@@ -417,6 +417,8 @@ def main(argv: list[str] | None = None) -> int:
     plataforma = destino / "plataforma"
     for cual in BRAZOS:
         escribir_perfil(brazo_de(cual), plataforma / f"{cual}.dxf")
+    for cual, hacer in PERFILES.items():
+        escribir_perfil(hacer(None), plataforma / f"{cual}.dxf")
 
     # 4 · el sólido, si hay kernel y si el perfil lo admite
     #

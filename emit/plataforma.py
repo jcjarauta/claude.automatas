@@ -114,6 +114,85 @@ def circulo(centro: Punto, radio: float) -> Perfil:
     return [Arco(centro, radio, 0.0, 2 * math.pi)]
 
 
+def ranura(centro: Punto, largo: float, radio: float) -> Perfil:
+    """Una ranura recta: dos semicírculos y sus dos tangentes, horizontal.
+
+    `largo` es el recorrido entre los dos centros, no el largo total. Es lo
+    que desliza el tornillo dentro, que es lo que hay que acotar.
+    """
+    x0, x1 = centro[0] - largo / 2, centro[0] + largo / 2
+    y = centro[1]
+    return [
+        Arco((x0, y), radio, math.pi / 2, 3 * math.pi / 2),
+        Segmento((x0, y - radio), (x1, y - radio)),
+        Arco((x1, y), radio, -math.pi / 2, math.pi / 2),
+        Segmento((x1, y + radio), (x0, y + radio)),
+    ]
+
+
+def rectangulo(centro: Punto, largo: float, ancho: float) -> Perfil:
+    x0, x1 = centro[0] - largo / 2, centro[0] + largo / 2
+    y0, y1 = centro[1] - ancho / 2, centro[1] + ancho / 2
+    esquinas = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+    return [Segmento(a, b) for a, b in zip(esquinas, esquinas[1:] + esquinas[:1], strict=True)]
+
+
+def mordaza(c: dict[str, float] | None = None) -> Perfil:
+    """El anclaje de la cinta: un bloque, un tornillo que aprieta y una ranura.
+
+    **Agarra por rozamiento y no por arrastre**, y eso no es una simplificación:
+    la cinta no se puede arrollar a menos de `cinta_radio_minimo` —cien veces
+    su espesor, o sea 5 mm de radio— así que un pasador de arrastre tendría que
+    ser de Ø10 y no cabe en una mordaza. Con un M3 a 0,3 N·m el rozamiento da
+    188 N contra una carga de trabajo de unos pocos newton.
+
+    La **ranura** es la que cala la máquina. Se desliza con el cartucho en fase
+    cero y el brazo en su calaje, se aprieta, y se comprueba con la hoja de
+    trazo patrón. Por eso ni el eje ni el tambor llevan ya ningún ángulo
+    mecanizado: el calaje vive aquí, donde se puede corregir.
+
+    Datum: el tornillo de apriete en el origen, la ranura sobre +X.
+    """
+    c = contrato_mm() if c is None else c
+    largo, ancho = c["mordaza_largo"], c["mordaza_ancho"]
+    apriete = c["mordaza_tornillo_diametro"] / 2
+    fijacion = c["mordaza_fijacion_diametro"] / 2
+    entre = c["mordaza_entre_tornillos"]
+    # El bloque se centra entre los dos agujeros, que es como se corta.
+    return (
+        rectangulo((entre / 2, 0.0), largo, ancho)
+        + circulo((0.0, 0.0), apriete)
+        + ranura((entre, 0.0), c["mordaza_recorrido"], fijacion)
+    )
+
+
+def eje_pivote(c: dict[str, float] | None = None) -> Perfil:
+    """La sección del eje: un Ø10 con una cara plana, y nada más.
+
+    **Aquí es donde se nota la decisión de la mordaza.** Mientras el calaje se
+    mecanizaba en el eje, esta pieza llevaba un ángulo de cuatro decimales y
+    había que hacer una por lado. Con el calaje en la mordaza es una barra de
+    stock con un fresado, igual en los tres sitios.
+
+    La cara plana es la misma que la del agujero del brazo, al mismo
+    desplazamiento, para que encajen.
+    """
+    c = contrato_mm() if c is None else c
+    radio = c["brazo_eje_diametro"] / 2
+    t = math.acos(c["brazo_chaveta"] / radio)
+    x = c["brazo_chaveta"]
+    return [
+        Arco((0.0, 0.0), radio, t, 2 * math.pi - t),
+        Segmento((x, -radio * math.sin(t)), (x, radio * math.sin(t))),
+    ]
+
+
+PERFILES = {
+    "mordaza": lambda c: mordaza(c),
+    "eje_pivote": lambda c: eje_pivote(c),
+}
+"""Las piezas prismáticas que no son barras. El resto sale de `BRAZOS`."""
+
 BRAZOS = {
     "brazo_proximal": ("brazo_proximal", True),
     "brazo_distal": ("brazo_distal", False),
@@ -200,6 +279,30 @@ LISTADO: dict[str, Ficha] = {
         ),
     ),
     "palanca_lapiz": _barra_calada("brazo_palanca", "entre centros", "calaje_elevador"),
+    "mordaza": Ficha(
+        "bloque con un tornillo que aprieta y una ranura que cala",
+        6,
+        (
+            Variable("cota", "mordaza_largo", "largo"),
+            Variable("cota", "mordaza_ancho", "ancho"),
+            Variable("cota", "mordaza_espesor", "espesor", en_el_perfil=False),
+            Variable("cota", "mordaza_tornillo_diametro", "Ø aprieta la cinta", "M3"),
+            Variable("cota", "mordaza_fijacion_diametro", "Ø fija al sector", "M4"),
+            Variable("cota", "mordaza_entre_tornillos", "entre los dos"),
+            Variable("cota", "mordaza_recorrido", "recorrido de la ranura"),
+            Variable("cota", "cinta_radio_minimo", "radio mínimo de la cinta", en_el_perfil=False),
+        ),
+    ),
+    "eje_pivote": Ficha(
+        "barra Ø10 h6 con una cara plana, cortada a medida",
+        3,
+        (
+            Variable("cota", "brazo_eje_diametro", "Ø", "h6"),
+            Variable("cota", "eje_pivote_largo", "largo", "PENDIENTE", en_el_perfil=False),
+            Variable("cota", "brazo_chaveta", "cara plana a"),
+            Variable("cota", "brazo_chaveta_cuerda", "cuerda"),
+        ),
+    ),
     "sector": Ficha(
         "disco entero de POM, sin muesca",
         3,

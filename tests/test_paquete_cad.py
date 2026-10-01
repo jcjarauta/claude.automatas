@@ -335,7 +335,11 @@ def test_cada_cota_circular_tiene_sus_dos_formas(paquete: Path):
             if nombre.endswith(sufijo) and base in filas:
                 assert valor == pytest.approx(factor * filas[base]), nombre
                 gemelos += 1
-    # Dieciséis. Que el número esté escrito a mano es a propósito: añadir una
+    # Diecinueve: las dieciséis de antes, los dos tornillos de la mordaza y
+    # `cinta_radio_minimo`, que lleva «radio» en el nombre y por eso saca gemelo
+    # aunque no sea una cota que se acote. No molesta —son dos filas— y el día
+    # que alguien dibuje el radio de arrollado, está.
+    # Que el número esté escrito a mano es a propósito: añadir una
     # cota circular sin enterarse de que le sale un gemelo es exactamente lo
     # que este test cuenta.
     #
@@ -344,7 +348,7 @@ def test_cada_cota_circular_tiene_sus_dos_formas(paquete: Path):
     # lo decía, así que el exportador no les sacaba gemelo y no había radio que
     # teclear. Son la misma familia que los dientes del piñón: el nombre decide
     # si la cota existe en la forma en que se usa.
-    assert gemelos == 16, f"esperaba 16 cotas circulares con gemelo, hay {gemelos}"
+    assert gemelos == 19, f"esperaba 19 cotas circulares con gemelo, hay {gemelos}"
 
 
 def test_el_gemelo_dice_que_es_derivado(paquete: Path):

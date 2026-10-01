@@ -409,6 +409,69 @@
           "unidad": "m",
           "descripcion": "Espesor del sector: una plancha de POM de 5. Coincide hoy con el ancho de la cinta y NO es el mismo numero",
           "tolerancia": ""
+        },
+        {
+          "nombre": "cinta_radio_minimo",
+          "valor": 0.005,
+          "unidad": "m",
+          "descripcion": "Radio minimo al que se puede arrollar la cinta sin pasarse de flexion: 100 veces su espesor. Es lo que prohibe un pasador de arrastre pequeno en la mordaza y obliga a que agarre por rozamiento",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "mordaza_largo",
+          "valor": 0.016,
+          "unidad": "m",
+          "descripcion": "Largo del bloque de la mordaza, en la direccion de la cinta",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "mordaza_ancho",
+          "valor": 0.01,
+          "unidad": "m",
+          "descripcion": "Ancho del bloque: el de la cinta mas dos milimetros y medio a cada lado",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "mordaza_espesor",
+          "valor": 0.006,
+          "unidad": "m",
+          "descripcion": "Espesor del bloque de la mordaza",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "mordaza_tornillo_diametro",
+          "valor": 0.003,
+          "unidad": "m",
+          "descripcion": "M3 que aprieta la cinta contra el bloque. A 0,3 N·m da 188 N de agarre por rozamiento, contra una carga de trabajo de unos pocos newton",
+          "tolerancia": "M3"
+        },
+        {
+          "nombre": "mordaza_fijacion_diametro",
+          "valor": 0.004,
+          "unidad": "m",
+          "descripcion": "M4 que fija la mordaza al sector a traves de la ranura. Es M4 y no M3 a proposito: distinto del de apriete, asi no se pueden cambiar de agujero",
+          "tolerancia": "M4"
+        },
+        {
+          "nombre": "mordaza_recorrido",
+          "valor": 0.006,
+          "unidad": "m",
+          "descripcion": "Recorrido TOTAL de la ranura, entre los centros de sus dos arcos: +-3 mm. Es lo que cala el brazo, y 3 mm sobre un tambor de 8 son +-21,5 grados, holgado frente a los 3,3 de recorrido entre frases",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "eje_pivote_largo",
+          "valor": 0.045,
+          "unidad": "m",
+          "descripcion": "Largo del eje de pivote. PENDIENTE de la pila definitiva: lo fija cuantas piezas se apilan, que es cosa del montaje",
+          "tolerancia": "PENDIENTE"
+        },
+        {
+          "nombre": "mordaza_entre_tornillos",
+          "valor": 0.008,
+          "unidad": "m",
+          "descripcion": "Del tornillo de apriete al centro de la ranura de fijacion",
+          "tolerancia": ""
         }
       ]
     }

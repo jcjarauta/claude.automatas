@@ -207,6 +207,88 @@ un solo compromiso, y todavía falta el dato que lo cierra.
 
 ---
 
+## Dónde vive el calaje · DECIDIDO 2026-10-01
+
+El calaje del brazo —el ángulo al que se monta sobre su eje— **no se mecaniza
+en ninguna pieza**. Lo da la mordaza de la cinta, deslizando antes de apretar.
+
+### Por qué no puede estar mecanizado
+
+La cinta entra al tambor por un radio de 8 mm y el brazo mueve la punta con una
+palanca efectiva de 172,5. Así que:
+
+> **1 mm de error en la longitud libre de la cinta son 21,6 mm en la punta.**
+
+Un fleje cortado y anclado a mano no tiene esa longitud a la décima, y a la
+décima ya son 2,2 mm. Con anclajes en agujeros fijos la máquina saldría calada
+donde cayera, y el error sería **invisible y permanente**: nadie puede medir una
+longitud de cinta montada, y no hay forma de corregirla sin rehacer la pieza.
+
+Con el ajuste en el anclaje el error sigue existiendo, pero es **visible y
+corregible**: se afloja, se desliza y se vuelve a apretar.
+
+### Cómo se cala, y cómo se sabe que está bien
+
+1. Cartucho en fase cero, que lo garantiza el pasador de índice.
+2. Brazo sujeto a su calaje.
+3. Se tensa la cinta tirando, se desliza la mordaza y se aprieta.
+4. **Se comprueba con la hoja de trazo patrón** (`emit/patron.py`): se pone
+   debajo, se gira la manivela y se mira si el lápiz cae sobre la línea.
+
+El paso 4 no es un extra. Es lo que convierte un ajuste en una verificación, y
+ya existía: su lista de lo que caza empieza por «un brazo con el calaje
+equivocado». Sin él esto sería cambiar un error imposible por uno ajustable;
+con él es cambiarlo por uno que se ve.
+
+Sí va contra el patrón del pasador de índice —no hacer el error improbable,
+hacerlo imposible—. La diferencia es que aquí lo imposible no estaba
+disponible: la alternativa no era un error imposible, era uno invisible.
+
+### La mordaza agarra por rozamiento, y eso lo decide la cinta
+
+Lo natural en un anclaje de fleje es darle media vuelta a un pasador para que
+agarre por arrastre y no solo por fricción. **No se puede**: un fleje de 0,05 no
+se arrolla a menos de cien veces su espesor sin pasarse de flexión, o sea 5 mm
+de radio, y un pasador de Ø10 no cabe en una mordaza.
+
+No hace falta. Un M3 a 0,3 N·m da unos 188 N de agarre por rozamiento entre dos
+caras, contra una carga de trabajo de unos pocos newton.
+
+### Y el tensor no puede llevar muelle
+
+| | |
+| --- | --- |
+| Estirar la cinta a 5 N | **5,8 µm** |
+| Recorrido para calar el brazo ±10° | **1,4 mm** |
+
+Son 241 a 1. El anclaje tiene que moverse milímetros para calar y luego sujetar
+a micras para tensar, y **un tornillo tensor no hace las dos cosas**: a paso 0,5,
+una vuelta son 500 µm, es decir pasar de nada a 430 N.
+
+Meter un muelle en serie daría la compliancia que falta, y reintroduciría
+exactamente la flexibilidad por la que se eligió la cinta en lugar de los
+engranajes. Por eso el recorrido lo da el **deslizamiento** de la mordaza y la
+tensión la da el **tirón** antes de apretar: la ranura resuelve los milímetros y
+el apriete resuelve las micras.
+
+### Lo que esto simplifica
+
+El **eje de pivote** deja de llevar ángulo. Era la pieza que iba a traer el
+calaje mecanizado a cuatro decimales, con una por lado; ahora es una barra Ø10 h6
+con una cara plana a 4 del eje, igual en los tres sitios y cortada a medida. El
+**tambor** se aprieta donde caiga.
+
+### Qué queda abierto
+
+**Dónde se ancla el segundo extremo.** Los números del contrato soportan dos
+arreglos —las dos mordazas en el sector con la cinta rodeando el tambor, o una
+en cada pieza— y el reparto de los 185° de abrazado al tambor sugiere lo
+segundo, pero no está resuelto y no se decide sobre el dibujo. La mordaza es la
+misma pieza en los dos casos, así que no bloquea nada: se cierra con el fleje en
+la mano.
+
+---
+
 ## Registro de cambios
 
 | Fecha | Contrato | Cambio | Motivo |
@@ -227,3 +309,6 @@ un solo compromiso, y todavía falta el dato que lo cierra.
 | 2026-10-01 | Bastidor | **Cinta de 10 a 5 mm de ancho**, y añadidas las cotas de contorno del sector y del tambor | Con 5 el sector es una plancha de POM en vez de dos laminadas: una operación de montaje menos por canal, a cambio de 0,046 mm de elasticidad |
 | 2026-10-01 | Bastidor | **El sector pasa a disco entero y desaparecen las pestañas del tambor**; en su lugar, una tolerancia de coplanaridad | La muesca no daba holgura a nada y le ponía orientación a una pieza que no la necesita. Las pestañas no sujetan una cinta anclada por los dos extremos: lo que la sujeta es que los dos asientos sean coplanarios |
 | 2026-10-01 | Bastidor | **Añadido el contorno de los brazos**: ancho, espesor, cubo, perno y cara plana del calaje | Sin contorno no hay plano que copiar. Las interfaces siguen saliendo de la cinemática; el contorno es una propuesta |
+| 2026-10-01 | Bastidor | **El calaje pasa a vivir en la mordaza de la cinta**, no mecanizado en el eje | 1 mm de error en la longitud de la cinta son 21,6 mm en la punta, y un fleje anclado a mano no tiene esa longitud a la décima. Mecanizado el error sería invisible y permanente; ajustable es visible y se comprueba con la hoja de trazo patrón |
+| 2026-10-01 | Bastidor | **Añadida la mordaza**: bloque, M3 de apriete, M4 de fijación y ranura de 6 de recorrido | Agarra por rozamiento y no por arrastre porque la cinta no se arrolla a menos de 5 mm de radio. El recorrido lo da el deslizamiento y la tensión el tirón: un tornillo tensor no hace las dos cosas, son 241 a 1 entre lo que hay que mover y lo que hay que sujetar |
+| 2026-10-01 | Bastidor | **El eje de pivote se queda sin ángulo**: barra Ø10 h6 con una cara plana, igual en los tres | Consecuencia de lo anterior. No es una decisión, es lo que sobra |
