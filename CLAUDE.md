@@ -474,6 +474,24 @@ falla si el esquema versionado se queda atrás.
   y el test del catálogo la leen de ahí. La regla general: **en la hoja va lo
   que se teclea, no lo que se mide**, y cuando no coinciden, el derivado sale
   también.
+- **El gemelo no sirve de nada si la hoja rotula el otro.** Los dos gemelos
+  del cabestrante existían desde hacía días, y aun así el sector y el tambor
+  se dibujaron **los dos a la mitad el mismo día**: la hoja ponía
+  `#cota.amplificador_sector_radio_mecanizado`, que vale 47,975 y es un radio,
+  y la herramienta de círculo acota el diámetro. Lo que se teclea es lo que la
+  hoja pone, no lo que el CSV ofrece.
+
+  Así que la regla no es «que exista el gemelo», es **que ninguna hoja rotule
+  el radio de un círculo entero**, y eso se comprueba cruzando cada hoja
+  contra el perfil de su pieza, no leyéndola. Y una pieza **sin perfil no se
+  cruza con nada**: estas dos estaban fuera del bucle «porque son discos», y
+  ese fue el agujero por el que entró todo lo demás.
+
+  Al escribir ese test volvió a salir la trampa de más abajo: la primera
+  versión emparejaba cota y rasgo **por valor contra todo el contrato** y
+  acusó a `brazo_espesor` —que vale 3, igual que el radio del agujero del
+  perno— de ser un radio mal rotulado. Va contra la ficha de la pieza.
+
 - **Un rótulo correcto puesto en el sitio equivocado miente, y el dibujo se
   ve bien.** La hoja de la mordaza sacaba el «R2» de la ranura con la
   directriz de largo fijo, 9 px, y lo dejaba a 18 px del «Ø3» del datum:
