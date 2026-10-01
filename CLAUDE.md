@@ -744,6 +744,16 @@ falla si el esquema versionado se queda atrás.
   muelle en serie devuelve la flexibilidad por la que se descartaron los
   engranajes. Lo que sí sirve es separar las dos cosas: la **ranura** da los
   milímetros, el **apriete** da las micras.
+- **Comprobar cada rasgo contra el contorno no dice nada de los rasgos entre
+  ellos.** La mordaza tenía un test que medía la pared de cada agujero contra
+  los bordes del bloque, y ninguno que los mirara **entre sí**: entre el
+  agujero de apriete y el principio de la ranura quedaban **1,5 mm** donde el
+  propio contrato pide 3. El dibujo lo enseñaba acotado y nada protestaba.
+
+  Lo encontró quien estaba dibujando la pieza, no el repo. Hacen falta las dos
+  comprobaciones, y la de rasgos entre sí se escribe a mano: la ranura son dos
+  arcos que no se tocan, y lo que hay entre ellos es la ranura y no una pared,
+  así que deducir los tramos del perfil se equivoca.
 - **Fase.** Un cartucho montado desfasado escribe basura. La marca física y la
   verificación van en el dossier, no solo en el código.
 

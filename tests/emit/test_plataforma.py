@@ -8,6 +8,7 @@ justo— son las condiciones que se escribieron mal alguna vez.
 
 from __future__ import annotations
 
+import itertools
 import math
 from pathlib import Path
 
@@ -260,3 +261,43 @@ def test_los_dos_centros_de_la_ranura_salen_de_las_otras_dos_cotas():
     assert c["mordaza_ranura_cerca"] > c["mordaza_tornillo_diametro"] / 2, (
         "la ranura empieza dentro del agujero de apriete"
     )
+
+
+def test_los_agujeros_de_la_mordaza_no_se_comen_la_pared_entre_ellos():
+    """**El fallo que yo no vi y encontró quien dibujaba.**
+
+    Había un test que comprobaba la pared de cada agujero contra los BORDES
+    del bloque, y ninguno que mirara los agujeros **entre sí**: con el centro
+    de la ranura a 8, entre el agujero de apriete y el principio de la ranura
+    quedaban 1,5 mm donde el propio contrato pide 3. La mitad, y el dibujo lo
+    enseñaba sin que nada protestara.
+
+    La lección se repite: una comprobación que mira cada rasgo contra el
+    contorno no dice nada de los rasgos entre ellos. Hacen falta las dos.
+
+    Los tramos se escriben a mano y no se deducen del perfil a propósito: la
+    ranura son dos arcos que NO se tocan, y lo que hay entre ellos es la
+    ranura, no una pared. Deducirlo lo confundía.
+    """
+    c = contrato_mm()
+    pared = c["mordaza_pared"]
+    apriete = c["mordaza_tornillo_diametro"] / 2
+    ranura = c["mordaza_fijacion_diametro"] / 2
+    tramos = [
+        ("borde izquierdo", -c["mordaza_voladizo"], -c["mordaza_voladizo"]),
+        ("agujero de apriete", -apriete, apriete),
+        ("ranura", c["mordaza_ranura_cerca"] - ranura, c["mordaza_ranura_lejos"] + ranura),
+        ("borde derecho", *(2 * (c["mordaza_largo"] - c["mordaza_voladizo"],))),
+    ]
+    for (que, _, fin), (siguiente, ini, _) in itertools.pairwise(tramos):
+        assert ini - fin >= pared - 1e-9, (
+            f"solo {ini - fin:.2f} mm entre {que} y {siguiente}, "
+            f"y #cota.mordaza_pared pide {pared:g}"
+        )
+
+
+def test_la_mordaza_tampoco_se_queda_sin_pared_a_lo_ancho():
+    """El mismo criterio en la otra dirección, donde manda la ranura."""
+    c = contrato_mm()
+    for agujero in ("mordaza_tornillo_diametro", "mordaza_fijacion_diametro"):
+        assert c["mordaza_ancho"] / 2 - c[agujero] / 2 >= c["mordaza_pared"] - 1e-9, agujero

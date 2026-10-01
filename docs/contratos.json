@@ -419,7 +419,7 @@
         },
         {
           "nombre": "mordaza_largo",
-          "valor": 0.022,
+          "valor": 0.024,
           "unidad": "m",
           "descripcion": "Largo del bloque en la direccion de la cinta. Lo fija el final de la ranura mas la pared: con 16 la ranura se salia del bloque",
           "tolerancia": ""
@@ -468,14 +468,14 @@
         },
         {
           "nombre": "mordaza_ranura_cerca",
-          "valor": 0.005,
+          "valor": 0.007,
           "unidad": "m",
           "descripcion": "Del tornillo de apriete al centro CERCANO de la ranura. Derivada de mordaza_entre_tornillos y mordaza_recorrido. Esta porque la herramienta de ranura pide sus dos centros, y restar la mitad de cabeza se falla",
           "tolerancia": ""
         },
         {
           "nombre": "mordaza_ranura_lejos",
-          "valor": 0.011,
+          "valor": 0.013,
           "unidad": "m",
           "descripcion": "Del tornillo de apriete al centro LEJANO de la ranura. Derivada de mordaza_entre_tornillos y mordaza_recorrido",
           "tolerancia": ""
@@ -489,9 +489,9 @@
         },
         {
           "nombre": "mordaza_entre_tornillos",
-          "valor": 0.008,
+          "valor": 0.01,
           "unidad": "m",
-          "descripcion": "Del tornillo de apriete al centro de la ranura de fijacion",
+          "descripcion": "Del tornillo de apriete al centro de la ranura de fijacion. Lo fija la pared entre los dos: con 8 quedaban 1,5 mm entre el agujero de apriete y el principio de la ranura, la mitad de lo que pide mordaza_pared",
           "tolerancia": ""
         },
         {
