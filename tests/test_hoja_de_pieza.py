@@ -70,3 +70,37 @@ def test_se_escribe_donde_se_le_pide(tmp_path: Path):
     assert texto.startswith("<?xml")
     assert "mordaza" in texto
     assert "eje_pivote" not in texto, "se pidió una pieza y han salido dos"
+
+
+def test_cada_pieza_declara_por_donde_se_extruye():
+    """**Un perfil 2D no es una pieza.** Sin la tercera dimensión la hoja
+    enseña un contorno y el espesor se queda en la tabla, que es donde menos
+    se mira; y un espesor que no se ve en el dibujo se extruye al que tenga
+    puesto el CAD por defecto."""
+    cotas = contrato_mm()
+    for pieza, ficha in LISTADO.items():
+        clase, cota = ficha.solido
+        assert clase in ("plancha", "barra"), f"{pieza}: sólido «{clase}»"
+        assert cota in cotas, f"{pieza}: {cota} no está en el contrato"
+
+
+def test_la_hoja_dibuja_las_dos_vistas():
+    texto = hoja()
+    assert "planta" in texto
+    assert "sección A-A" in texto, "falta la sección de las planchas"
+    assert "alzado" in texto, "falta el alzado de las barras"
+
+
+def test_la_hoja_acota_todo_lo_que_la_ficha_declara():
+    """No las principales: **todas**. Lo que no aparece dibujado se teclea de
+    la tabla sin saber a qué rasgo corresponde."""
+    for pieza in PERFIL_DE:
+        texto, f = hoja([pieza]), FICHAS[pieza]
+        esperadas = set(f.segmentos) | set(f.entre_centros)
+        if f.cara_plana:
+            esperadas.add(f.cara_plana)
+        if f.ranura:
+            esperadas.add(f.ranura[0])
+        esperadas.add(LISTADO[pieza].solido[1])
+        for cota in esperadas:
+            assert f"#cota.{cota}" in texto, f"{pieza}: {cota} no está acotada en el boceto"

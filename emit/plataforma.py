@@ -242,6 +242,15 @@ class Ficha:
     forma: str
     cantidad: int
     variables: tuple[Variable, ...]
+    solido: tuple[str, str] = ("plancha", "")
+    """(clase, cota de la tercera dimensión).
+
+    Un perfil 2D no es una pieza: le falta por dónde se extruye. `plancha` se
+    extruye en espesor y su segunda vista es una **sección**; `barra` se
+    extruye a lo largo y la suya es un **alzado**. Sin esto la hoja enseña un
+    contorno y el espesor se queda solo en la tabla, que es donde menos se
+    mira.
+    """
     porque: str = ""
     """Por qué la pieza es así, en dos frases, para la hoja.
 
@@ -270,6 +279,7 @@ def _barra_calada(entre_centros: str, etiqueta: str, calaje: str, porque: str) -
             Variable("angulo", "brazo_chaveta_angulo", "girada"),
             Variable("angulo", calaje, "calaje del EJE", en_el_perfil=False),
         ),
+        ("plancha", "brazo_espesor"),
         porque,
     )
 
@@ -292,6 +302,7 @@ LISTADO: dict[str, Ficha] = {
             Variable("cota", "brazo_perno_diametro", "Ø los dos", "H7"),
             Variable("cota", "brazo_extremo_diametro_radio", "R los dos"),
         ),
+        ("plancha", "brazo_espesor"),
         "Es una biela: gira libre en los dos pernos y no cala nada. Que los dos extremos "
         "salgan iguales es la consecuencia, no una elección; si dejaran de serlo sería "
         "que alguien le ha puesto un calaje que no necesita.",
@@ -317,6 +328,7 @@ LISTADO: dict[str, Ficha] = {
             Variable("cota", "mordaza_recorrido", "recorrido de la ranura"),
             Variable("cota", "cinta_radio_minimo", "radio mínimo de la cinta", en_el_perfil=False),
         ),
+        ("plancha", "mordaza_espesor"),
         "Aquí vive el calaje de la máquina. La ranura desliza con el cartucho en fase "
         "cero y el brazo en su ángulo, se aprieta, y se comprueba con la hoja de trazo "
         "patrón. Agarra por ROZAMIENTO y no por arrastre: la cinta no se arrolla a menos "
@@ -332,6 +344,7 @@ LISTADO: dict[str, Ficha] = {
             Variable("cota", "brazo_chaveta", "cara plana a"),
             Variable("cota", "brazo_chaveta_cuerda", "cuerda"),
         ),
+        ("barra", "eje_pivote_largo"),
         "Una barra de stock con un fresado, igual en los tres sitios. NO lleva ningún "
         "ángulo: mientras el calaje se mecanizaba aquí, esta pieza traía cuatro "
         "decimales y había una por lado. La cara plana es la misma que la del agujero "
@@ -346,6 +359,7 @@ LISTADO: dict[str, Ficha] = {
             Variable("cota", "amplificador_sector_agujero_diametro", "Ø de paso"),
             Variable("angulo", "amplificador_tangencia", "la cinta entra a", en_el_perfil=False),
         ),
+        ("plancha", "amplificador_sector_espesor"),
         "Disco entero, sin muesca: la cinta abraza el lado OPUESTO al tambor, así que "
         "en el lado libre no hay nada que librar, y una muesca le pondría orientación a "
         "una pieza que siendo un disco con un agujero no la tiene.",
@@ -359,6 +373,7 @@ LISTADO: dict[str, Ficha] = {
             Variable("cota", "brazo_eje_diametro", "Ø agujero", "H7"),
             Variable("angulo", "amplificador_tambor_abrazado", "abrazado", en_el_perfil=False),
         ),
+        ("barra", "amplificador_tambor_ancho"),
         "Cilindro liso, sin pestañas. Lo que mantiene la cinta en su sitio no son las "
         "pestañas sino que los dos asientos sean coplanarios, y eso es una tolerancia y "
         "no un resalte. R8 son 160 espesores de cinta: pasa de sobra el radio mínimo.",

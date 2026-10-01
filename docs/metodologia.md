@@ -345,6 +345,38 @@ ancho del tambor, el abrazado, el calaje: no son geometría del croquis, así
 que el DXF no las trae. El archivo no sustituye a la tabla de variables, la
 adelgaza.
 
+#### Qué lleva el boceto, y por qué dos vistas y no una
+
+El boceto lo genera `scripts/dibujar_pieza.py` desde el mismo perfil que
+escribe el DXF. No se escribe a mano: había tres hojas escritas así y con la
+cuarta ya empezaban a divergir, y un contorno dibujado que no es el que se
+corta es la forma más cara de descubrir una cota.
+
+Lleva, por pieza:
+
+| | |
+| --- | --- |
+| **Planta** | El contorno, el DATUM marcado, y **todas** las cotas que la ficha declara: radios, distancias entre centros, recorrido de ranura, cara plana y segmentos |
+| **Segunda vista** | La tercera dimensión: **sección** si es plancha, **alzado** si es barra |
+| **El porqué** | Dos frases de por qué la pieza es así |
+| **La tabla** | Lo que se teclea, con el valor y lo que marca lo que no está en el DXF |
+
+**Un perfil 2D no es una pieza: le falta por dónde se extruye.** Por eso cada
+pieza declara su sólido en `LISTADO` —`("plancha", "mordaza_espesor")`,
+`("barra", "eje_pivote_largo")`— y de ahí sale la segunda vista. Sin ella el
+espesor vive solo en la tabla, que es donde menos se mira, y un espesor que no
+se ve en el dibujo se extruye al que tenga puesto el CAD por defecto.
+
+**Y se acotan todas, no las principales.** Acotar solo algunas fue el agujero
+de la primera versión: lo que no aparece dibujado se teclea leyéndolo de la
+tabla sin saber a qué rasgo corresponde, y entonces la hoja no sirve para
+dibujar, solo para recordar.
+
+Las cotas que dibuja salen de `FICHAS`, que es lo que el comparador va a mirar
+después. Esa procedencia es la que hace útil la hoja: **enseña exactamente lo
+que se va a verificar**, así que una cota que nadie vigile tampoco aparece, y
+se ve que falta antes de cortar nada.
+
 #### Qué comprueba el comparador y qué no
 
 Comprueba **la forma**: cada radio con su cota y su recuento, la distancia

@@ -33,6 +33,7 @@ text{font-family:Helvetica,Arial,sans-serif;fill:#1b1b1b}
 .sub{font-size:5.8px;fill:#555}
 .vista{font-size:7px;font-weight:bold;text-anchor:middle}
 .nota{font-size:5.2px;fill:#555;text-anchor:middle}
+.notal{font-size:5.2px;fill:#555}
 .aviso{font-size:5.2px;fill:#8a4a00}
 .marco{fill:none;stroke:#ddd;stroke-width:0.6}
 .corte{fill:#dde5ee;stroke:#1b1b1b;stroke-width:0.9}

@@ -31,7 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from emit.plataforma import LISTADO, Arco, Perfil, Segmento, contrato_mm, eje_pivote, mordaza
 from emit.plataforma import brazo as brazo_de
-from scripts.acotar import ESTILO, FLECHA, auxiliar, cota_h, radial
+from scripts.acotar import ESTILO, FLECHA, auxiliar, cota_h, cota_v, radial
 from scripts.comparar_dxf import FICHAS, cotas_en_mm
 from scripts.listado_piezas import tabla_markdown  # noqa: F401  (se usa en el test)
 
@@ -107,34 +107,65 @@ def _nombre_del_radio(ficha, cotas: dict[str, float], radio: float, tol: float =
     return ""
 
 
-def vista(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, alto: float):
+def _horizontales(perfil: Perfil, largo: float, tol: float = 1e-6):
+    """Segmentos horizontales de esa longitud, de abajo arriba."""
+    return sorted(
+        (
+            e
+            for e in perfil
+            if isinstance(e, Segmento)
+            and abs(e.a[1] - e.b[1]) <= tol
+            and abs(abs(e.a[0] - e.b[0]) - largo) <= tol
+        ),
+        key=lambda e: e.a[1],
+    )
+
+
+def _verticales(perfil: Perfil, largo: float, tol: float = 1e-6):
+    return sorted(
+        (
+            e
+            for e in perfil
+            if isinstance(e, Segmento)
+            and abs(e.a[0] - e.b[0]) <= tol
+            and abs(abs(e.a[1] - e.b[1]) - largo) <= tol
+        ),
+        key=lambda e: e.a[0],
+    )
+
+
+def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, alto: float):
+    """La vista de frente, con TODAS las cotas que la ficha declara.
+
+    Acotar solo algunas era el agujero de la primera versión: lo que no
+    aparece dibujado se teclea leyéndolo de la tabla sin saber a qué rasgo
+    corresponde, y entonces la hoja no sirve para dibujar, solo para
+    recordar.
+    """
     perfil = PERFIL_DE[nombre](c)
-    ficha, lista, cotas = FICHAS[nombre], LISTADO[nombre], cotas_en_mm()
+    ficha, cotas = FICHAS[nombre], cotas_en_mm()
     x0, y0, x1, y1 = caja(perfil)
-    hueco_alto = alto - CABECERA - PIE
-    # Se deja sitio abajo para la línea de cota entre centros.
-    k = min(ancho * 0.60 / max(x1 - x0, 1e-6), hueco_alto * 0.62 / max(y1 - y0, 1e-6), 7.0)
+    hueco = alto - CABECERA
+    # La pila de cotas horizontales come 15 px por cota, así que el dibujo
+    # no puede ocupar más de un tercio del hueco o se come el porqué.
+    k = min(ancho * 0.46 / max(x1 - x0, 1e-6), hueco * 0.30 / max(y1 - y0, 1e-6), 7.0)
     ox = x + ancho / 2 - ((x0 + x1) / 2) * k
-    oy = y + CABECERA + hueco_alto * 0.42 + ((y0 + y1) / 2) * k
+    oy = y + CABECERA + hueco * 0.22 + ((y0 + y1) / 2) * k
+    abajo, derecha = oy + (y1 - (y0 + y1) / 2) * k, ox + (x1 - (x0 + x1) / 2) * k
 
     d = [
-        f'<text class="vista" x="{x + ancho / 2:.1f}" y="{y + 14:.1f}">'
-        f"{nombre} · x{lista.cantidad}</text>",
-        f'<text class="nota" x="{x + ancho / 2:.1f}" y="{y + 23:.1f}">{lista.forma}</text>',
-        f'<text class="nota" x="{x + ancho / 2:.1f}" y="{y + 31:.1f}">escala {k:.2f}:1</text>',
+        f'<text class="vista" x="{x + ancho / 2:.1f}" y="{y + 12:.1f}">'
+        f"planta · escala {k:.2f}:1</text>"
     ]
     d += camino(perfil, k, ox, oy)
-
-    # El datum, que es lo que hay que anclar.
     d += [
-        f'<line class="eje" x1="{ox - 14:.2f}" y1="{oy:.2f}" x2="{ox + 14:.2f}" y2="{oy:.2f}"/>',
-        f'<line class="eje" x1="{ox:.2f}" y1="{oy - 14:.2f}" x2="{ox:.2f}" y2="{oy + 14:.2f}"/>',
-        f'<text class="var" x="{ox:.2f}" y="{oy + 22:.2f}">DATUM · al origen</text>',
+        f'<line class="eje" x1="{ox - 13:.2f}" y1="{oy:.2f}" x2="{ox + 13:.2f}" y2="{oy:.2f}"/>',
+        f'<line class="eje" x1="{ox:.2f}" y1="{oy - 13:.2f}" x2="{ox:.2f}" y2="{oy + 13:.2f}"/>',
+        f'<text class="var" x="{ox:.2f}" y="{oy - 17:.2f}">DATUM</text>',
     ]
 
-    # Un radio por cada rasgo circular declarado en la ficha, y solo esos.
     puestos: set[str] = set()
-    angulos = (210.0, 150.0, -30.0, 30.0, 110.0, -110.0)
+    angulos = (210.0, 150.0, -35.0, 35.0, 115.0, -115.0)
     for e in perfil:
         if not isinstance(e, Arco):
             continue
@@ -144,24 +175,118 @@ def vista(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, al
         ang = math.radians(angulos[len(puestos) % len(angulos)])
         cx, cy = ox + e.centro[0] * k, oy - e.centro[1] * k
         lleno = abs(e.hasta - e.desde - 2 * math.pi) < 1e-9
-        texto = f"Ø{2 * e.radio:g}" if lleno else f"R{e.radio:g}"
-        d += radial(cx, cy, e.radio * k, ang, texto)
+        d += radial(cx, cy, e.radio * k, ang, f"Ø{2 * e.radio:g}" if lleno else f"R{e.radio:g}")
         puestos.add(cota)
 
-    # La distancia entre centros, que es lo que fija la pieza.
-    for cota in ficha.entre_centros:
-        largo = cotas[cota]
-        centros = sorted({e.centro[0] for e in perfil if isinstance(e, Arco)})
-        if len(centros) < 2:
-            continue
-        a, b = ox + centros[0] * k, ox + centros[-1] * k
-        # Dentro del hueco de dibujo: más abajo se monta sobre el porqué, que
-        # es texto largo y no se puede recortar.
-        base = y + CABECERA + hueco_alto - 4
-        d += [auxiliar(a, oy, a, base + 3), auxiliar(b, oy, b, base + 3)]
-        d += cota_h(a, b, base, f"{largo:g}")
+    # Cotas horizontales, apiladas hacia abajo para que no se monten.
+    nivel = abajo + 16
+    centros = sorted({e.centro[0] for e in perfil if isinstance(e, Arco)})
 
-    d += pie(nombre, c, x, y + alto - PIE + 8, ancho)
+    def horizontal(xa: float, xb: float, cota: str):
+        nonlocal nivel
+        a, b = ox + xa * k, ox + xb * k
+        d.extend([auxiliar(a, oy, a, nivel + 3), auxiliar(b, oy, b, nivel + 3)])
+        d.extend(cota_h(a, b, nivel, f"{cotas[cota]:g}"))
+        d.append(f'<text class="varl" x="{min(a, b):.2f}" y="{nivel + 9:.2f}">#cota.{cota}</text>')
+        nivel += 15
+
+    for cota in ficha.entre_centros:
+        if len(centros) >= 2:
+            horizontal(centros[0], centros[-1], cota)
+    if ficha.ranura:
+        radio = cotas[ficha.ranura[1]]
+        extremos = sorted(
+            e.centro[0] for e in perfil if isinstance(e, Arco) and abs(e.radio - radio) < 1e-6
+        )
+        if len(extremos) >= 2:
+            horizontal(extremos[0], extremos[-1], ficha.ranura[0])
+    if ficha.cara_plana:
+        horizontal(0.0, cotas[ficha.cara_plana], ficha.cara_plana)
+    for cota, _ in ficha.segmentos.items():
+        iguales = _horizontales(perfil, cotas[cota])
+        if iguales:
+            e = iguales[0]
+            horizontal(min(e.a[0], e.b[0]), max(e.a[0], e.b[0]), cota)
+
+    # Y las verticales, a la derecha.
+    lado = derecha + 22
+    for cota, _ in ficha.segmentos.items():
+        iguales = _verticales(perfil, cotas[cota])
+        if not iguales:
+            continue
+        e = iguales[-1]
+        ya, yb = oy - e.a[1] * k, oy - e.b[1] * k
+        d.extend(
+            [
+                auxiliar(ox + e.a[0] * k, ya, lado + 3, ya),
+                auxiliar(ox + e.a[0] * k, yb, lado + 3, yb),
+            ]
+        )
+        d.extend(cota_v(min(ya, yb), max(ya, yb), lado, f"{cotas[cota]:g}"))
+        d.append(
+            f'<text class="varl" x="{lado + 5:.2f}" y="{(ya + yb) / 2:.2f}" '
+            f'transform="rotate(-90 {lado + 5:.2f} {(ya + yb) / 2:.2f})">#cota.{cota}</text>'
+        )
+        lado += 22
+    return d
+
+
+def segunda_vista(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, alto: float):
+    """La tercera dimensión: sección si es plancha, alzado si es barra.
+
+    Es lo que convierte un contorno en una pieza. Sin ella el espesor vive
+    solo en la tabla, y un espesor que no se ve en el dibujo se extruye al
+    que tenga puesto el CAD por defecto.
+    """
+    clase, cota = LISTADO[nombre].solido
+    perfil = PERFIL_DE[nombre](c)
+    x0, _, x1, y1 = caja(perfil)
+    grueso = c[cota]
+    largo = (x1 - x0) if clase == "plancha" else grueso
+    altura = grueso if clase == "plancha" else 2 * y1
+    k = min(ancho * 0.52 / max(largo, 1e-6), (alto - CABECERA) * 0.30 / max(altura, 1e-6), 7.0)
+    cx, cy = x + ancho / 2, y + CABECERA + (alto - CABECERA) * 0.20
+
+    titulo = "sección A-A" if clase == "plancha" else "alzado"
+    d = [
+        f'<text class="vista" x="{cx:.1f}" y="{y + 12:.1f}">{titulo} · escala {k:.2f}:1</text>',
+        f'<text class="nota" x="{cx:.1f}" y="{y + 21:.1f}">'
+        + (
+            "se extruye el contorno: el espesor no está en el DXF"
+            if clase == "plancha"
+            else "barra de stock cortada a medida, la cara plana recorre todo el largo"
+        )
+        + "</text>",
+    ]
+    w, h = largo * k, altura * k
+    d.append(
+        f'<rect class="corte" x="{cx - w / 2:.2f}" y="{cy - h / 2:.2f}" '
+        f'width="{w:.2f}" height="{h:.2f}"/>'
+    )
+    if clase == "barra":
+        # La cara plana, que recorre el largo entero.
+        plano = cy - c["brazo_chaveta"] * k
+        d.append(
+            f'<line class="contorno" x1="{cx - w / 2:.2f}" y1="{plano:.2f}" '
+            f'x2="{cx + w / 2:.2f}" y2="{plano:.2f}"/>'
+        )
+        d.append(f'<text class="cotatx" x="{cx:.2f}" y="{plano - 3:.2f}">cara plana</text>')
+    borde = cx + w / 2
+    d.append(auxiliar(borde, cy - h / 2, borde + 18, cy - h / 2))
+    d.append(auxiliar(borde, cy + h / 2, borde + 18, cy + h / 2))
+    if clase == "plancha":
+        d += cota_v(cy - h / 2, cy + h / 2, borde + 14, f"{grueso:g}")
+        d.append(
+            f'<text class="varl" x="{borde + 19:.2f}" y="{cy:.2f}" '
+            f'transform="rotate(-90 {borde + 19:.2f} {cy:.2f})">#cota.{cota}</text>'
+        )
+    else:
+        d.append(auxiliar(cx - w / 2, cy + h / 2, cx - w / 2, cy + h / 2 + 18))
+        d.append(auxiliar(cx + w / 2, cy + h / 2, cx + w / 2, cy + h / 2 + 18))
+        d += cota_h(cx - w / 2, cx + w / 2, cy + h / 2 + 14, f"{grueso:g}")
+        d.append(
+            f'<text class="varl" x="{cx - w / 2:.2f}" y="{cy + h / 2 + 23:.2f}">#cota.{cota}</text>'
+        )
     return d
 
 
@@ -198,9 +323,12 @@ def pie(nombre: str, c: dict[str, float], x: float, y: float, ancho: float):
 def hoja(piezas: list[str] | None = None) -> str:
     piezas = list(PERFIL_DE) if piezas is None else piezas
     c = contrato_mm()
-    ancho, alto, borde = 250.0, 250.0, 12.0
-    filas = (len(piezas) + 1) // 2
-    w = borde * 2 + min(len(piezas), 2) * ancho
+    # Un panel por pieza y a lo ancho: lleva dos vistas, su porqué y su
+    # tabla, y partido en dos columnas no cabe ninguna de las tres.
+    vista_ancho, alto, borde = 230.0, 300.0, 12.0
+    ancho = 2 * vista_ancho
+    filas = len(piezas)
+    w = borde * 2 + ancho
     h = 0.0  # se calcula tras envolver el encabezado
     partes = [
         '<?xml version="1.0" encoding="UTF-8"?>',
@@ -222,19 +350,27 @@ def hoja(piezas: list[str] | None = None) -> str:
         "scripts/comparar_dxf.py. Si algo no cuadra se toca el CONTRATO y se regenera, "
         "nunca el croquis a mano."
     )
-    anchura = int((w - 2 * borde) / 2.45)
+    anchura = int((w - 2 * borde) / 2.65)
     lineas = textwrap.wrap(encabezado, anchura)
     for i, linea in enumerate(lineas):
         partes.append(f'<text class="sub" x="{borde}" y="{30 + 8 * i}">{linea}</text>')
     cabecera = 30 + 8 * len(lineas) + 6
 
     for i, nombre in enumerate(piezas):
-        px, py = borde + (i % 2) * ancho, cabecera + (i // 2) * alto
-        partes.append(
+        px, py = borde, cabecera + i * alto
+        lista = LISTADO[nombre]
+        partes += [
             f'<rect class="marco" x="{px:.1f}" y="{py:.1f}" '
-            f'width="{ancho:.1f}" height="{alto:.1f}" rx="3"/>'
-        )
-        partes += vista(nombre, c, px, py, ancho, alto)
+            f'width="{ancho:.1f}" height="{alto:.1f}" rx="3"/>',
+            f'<text class="h1" x="{px + 8:.1f}" y="{py + 16:.1f}">'
+            f"{nombre} · x{lista.cantidad}</text>",
+            f'<text class="notal" x="{px + 8:.1f}" y="{py + 25:.1f}">{lista.forma}</text>',
+        ]
+        # +30 y no +14: el rótulo de la vista caía sobre el subtítulo de la
+        # pieza, que es texto largo y no se puede recortar.
+        partes += planta(nombre, c, px, py + 30, vista_ancho, alto - PIE)
+        partes += segunda_vista(nombre, c, px + vista_ancho, py + 30, vista_ancho, alto - PIE)
+        partes += pie(nombre, c, px, py + alto - PIE + 8, ancho)
     partes.append("</svg>")
     h = cabecera + filas * alto + borde
     partes[1] = (
