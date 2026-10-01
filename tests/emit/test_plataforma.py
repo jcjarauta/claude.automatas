@@ -243,3 +243,20 @@ def test_el_contorno_de_la_mordaza_contiene_todo_lo_demas():
         assert e.centro[0] + e.radio <= max(xs), "se sale por la derecha"
         assert min(ys) <= e.centro[1] - e.radio, "se sale por abajo"
         assert e.centro[1] + e.radio <= max(ys), "se sale por arriba"
+
+
+def test_los_dos_centros_de_la_ranura_salen_de_las_otras_dos_cotas():
+    """**Una cota derivada es segura si un test la ata.**
+
+    La herramienta de ranura pide sus dos centros, no el par (centro,
+    recorrido), así que restar la mitad quedaba de cuenta de cabeza. Están
+    en el contrato para no hacerla, y aquí se comprueba que siguen saliendo
+    de donde dicen: es el mismo trato que `brazo_chaveta_cuerda`.
+    """
+    c = contrato_mm()
+    entre, recorrido = c["mordaza_entre_tornillos"], c["mordaza_recorrido"]
+    assert c["mordaza_ranura_cerca"] == pytest.approx(entre - recorrido / 2)
+    assert c["mordaza_ranura_lejos"] == pytest.approx(entre + recorrido / 2)
+    assert c["mordaza_ranura_cerca"] > c["mordaza_tornillo_diametro"] / 2, (
+        "la ranura empieza dentro del agujero de apriete"
+    )

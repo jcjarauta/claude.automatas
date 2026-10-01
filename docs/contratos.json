@@ -467,6 +467,20 @@
           "tolerancia": ""
         },
         {
+          "nombre": "mordaza_ranura_cerca",
+          "valor": 0.005,
+          "unidad": "m",
+          "descripcion": "Del tornillo de apriete al centro CERCANO de la ranura. Derivada de mordaza_entre_tornillos y mordaza_recorrido. Esta porque la herramienta de ranura pide sus dos centros, y restar la mitad de cabeza se falla",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "mordaza_ranura_lejos",
+          "valor": 0.011,
+          "unidad": "m",
+          "descripcion": "Del tornillo de apriete al centro LEJANO de la ranura. Derivada de mordaza_entre_tornillos y mordaza_recorrido",
+          "tolerancia": ""
+        },
+        {
           "nombre": "eje_pivote_largo",
           "valor": 0.045,
           "unidad": "m",

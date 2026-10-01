@@ -329,6 +329,8 @@ LISTADO: dict[str, Ficha] = {
             Variable("cota", "mordaza_fijacion_diametro", "Ø fija al sector", "M4"),
             Variable("cota", "mordaza_entre_tornillos", "entre los dos"),
             Variable("cota", "mordaza_recorrido", "recorrido de la ranura"),
+            Variable("cota", "mordaza_ranura_cerca", "datum al centro cercano"),
+            Variable("cota", "mordaza_ranura_lejos", "datum al centro lejano"),
             Variable("cota", "cinta_radio_minimo", "radio mínimo de la cinta", en_el_perfil=False),
         ),
         ("plancha", "mordaza_espesor"),

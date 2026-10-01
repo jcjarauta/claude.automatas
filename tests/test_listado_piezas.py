@@ -88,6 +88,7 @@ def test_toda_cota_que_el_perfil_resuelve_la_comprueba_el_comparador():
             comprobadas.add(f.ranura[0])
         if f.voladizo:
             comprobadas.add(f.voladizo)
+        comprobadas |= set(f.desde_datum)
         for v in ficha.variables:
             if not (v.en_el_perfil and v.mapa == "cota"):
                 continue

@@ -134,6 +134,26 @@ def _verticales(perfil: Perfil, largo: float, tol: float = 1e-6):
     )
 
 
+def alto_de_pila(nombre: str, c: dict[str, float]) -> float:
+    """Lo que ocupan las cotas horizontales bajo la pieza.
+
+    **El panel sale de aquí, no al revés.** Cada cota come 15 px, y una pieza
+    con siete —la mordaza— no cabe en el alto que le sobraba a una con tres.
+    Con el alto fijo, las últimas se metían en el porqué, que es texto largo y
+    no se puede recortar.
+    """
+    ficha, cotas, perfil = FICHAS[nombre], cotas_en_mm(), PERFIL_DE[nombre](c)
+    cuantas = (
+        bool(ficha.voladizo)
+        + len(ficha.entre_centros)
+        + len(ficha.desde_datum)
+        + bool(ficha.ranura)
+        + bool(ficha.cara_plana)
+        + sum(1 for cota in ficha.segmentos if _horizontales(perfil, cotas[cota]))
+    )
+    return 16 + 15 * cuantas + (10 if ficha.ranura else 0) + (12 if ficha.simetrico else 0)
+
+
 def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, alto: float):
     """La vista de frente, con TODAS las cotas que la ficha declara.
 
@@ -147,17 +167,7 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
     x0, y0, x1, y1 = caja(perfil)
     hueco = alto - CABECERA
 
-    # **El hueco del dibujo sale del número de cotas, no al revés.** Cada cota
-    # horizontal come 15 px bajo la pieza; con una proporción fija, la quinta
-    # se metía en el porqué. Se cuentan antes y se reparte lo que quede.
-    cuantas = (
-        bool(ficha.voladizo)
-        + len(ficha.entre_centros)
-        + bool(ficha.ranura)
-        + bool(ficha.cara_plana)
-        + sum(1 for cota in ficha.segmentos if _horizontales(perfil, cotas[cota]))
-    )
-    pila = 16 + 15 * cuantas + (10 if ficha.ranura else 0) + (12 if ficha.simetrico else 0)
+    pila = alto_de_pila(nombre, c)
     k = min(
         ancho * 0.46 / max(x1 - x0, 1e-6),
         max(hueco - pila - 24, 20.0) / max(y1 - y0, 1e-6),
@@ -234,6 +244,8 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
     for cota in ficha.entre_centros:
         if len(centros) >= 2:
             horizontal(centros[0], centros[-1], cota)
+    for cota in ficha.desde_datum:
+        horizontal(0.0, cotas[cota], cota)
     if ficha.ranura:
         radio = cotas[ficha.ranura[1]]
         extremos = sorted(
@@ -385,7 +397,10 @@ def hoja(piezas: list[str] | None = None) -> str:
     c = contrato_mm()
     # Un panel por pieza y a lo ancho: lleva dos vistas, su porqué y su
     # tabla, y partido en dos columnas no cabe ninguna de las tres.
-    vista_ancho, alto, borde = 230.0, 330.0, 12.0
+    vista_ancho, borde = 230.0, 12.0
+    # Alto por pieza: la que más cotas lleva manda, para que todos los paneles
+    # de una hoja midan lo mismo y no bailen.
+    alto = PIE + 30 + CABECERA + 40 + max(alto_de_pila(n, c) for n in piezas)
     ancho = 2 * vista_ancho
     filas = len(piezas)
     w = borde * 2 + ancho

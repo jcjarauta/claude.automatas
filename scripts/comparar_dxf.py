@@ -89,6 +89,13 @@ class Ficha:
     extremos de un rasgo. Sin declararla, el barrido de distancias entre
     centros saca tres huérfanas de una pieza que solo tiene dos agujeros.
     """
+    desde_datum: tuple[str, ...] = ()
+    """Cotas del datum al centro de un rasgo, sobre +X.
+
+    Son **derivadas** y existen porque la herramienta que dibuja el rasgo pide
+    esos puntos y no el par (centro, recorrido): restar la mitad de cabeza se
+    falla. Mismo caso que la cuerda de la cara plana.
+    """
     voladizo: str = ""
     """Del datum al borde más cercano del contorno, hacia -X.
 
@@ -178,6 +185,7 @@ FICHAS: dict[str, Ficha] = {
             "mordaza_fijacion_diametro_radio": 2,
         },
         segmentos={"mordaza_largo": 2, "mordaza_ancho": 2},
+        desde_datum=("mordaza_ranura_cerca", "mordaza_ranura_lejos"),
         voladizo="mordaza_voladizo",
         simetrico=True,
         ranura=("mordaza_recorrido", "mordaza_fijacion_diametro_radio"),
@@ -349,6 +357,16 @@ def comparar(ruta: Path, pieza: str, tol: float = TOLERANCIA) -> Informe:
                 "ninguna cota de esta pieza",
             )
         )
+
+    # --- del datum al centro de un rasgo ---
+    for nombre in ficha.desde_datum:
+        esperado = cotas[nombre]
+        if any(abs(c[0] - esperado) <= tol and abs(c[1]) <= tol for c, _ in circulares):
+            inf.bien.append(f"centro a {esperado:g} del datum   #cota.{nombre}")
+        else:
+            inf.hallazgos.append(
+                Hallazgo("falta", f"#cota.{nombre} pide un centro a {esperado:g} del datum")
+            )
 
     # --- dónde empieza el contorno respecto del datum ---
     if ficha.voladizo:

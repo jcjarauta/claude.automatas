@@ -110,6 +110,7 @@ def test_la_hoja_acota_todo_lo_que_la_ficha_declara():
             esperadas.add(f.ranura[0])
         if f.voladizo:
             esperadas.add(f.voladizo)
+        esperadas |= set(f.desde_datum)
         esperadas.add(LISTADO[pieza].solido[1])
         # Los radios van en la leyenda, con el nombre que pide el campo:
         # diámetro si es un agujero, radio si es un arco de contorno.
