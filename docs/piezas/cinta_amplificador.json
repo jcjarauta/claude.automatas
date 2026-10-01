@@ -1,7 +1,7 @@
 {
   "nombre": "cinta_amplificador",
   "familia": "material",
-  "designacion": "Fleje 1.4310 (AISI 301) 0,05 × 10 mm, 1 m (de 20 hendido a 10)",
+  "designacion": "Fleje 1.4310 (AISI 301) 0,05 × 5 mm, 1 m (de 20 hendido a 5)",
   "cantidad": 1,
   "material": "acero inoxidable de muelle 1.4310 (AISI 301)",
   "fuente": {
@@ -20,7 +20,7 @@
     },
     {
       "nombre": "ancho",
-      "valor": 0.01,
+      "valor": 0.005,
       "tolerancia": "",
       "critica": true
     },
@@ -31,8 +31,8 @@
       "critica": false
     }
   ],
-  "nota": "El amplificador 6:1, en un cabestrante: la cinta va anclada por los dos extremos entre un sector de fibra neutra R 48 en el poste del seguidor y un tambor de R 8 en el eje del brazo, con los dos ramales pretensados para que transmita en los dos sentidos. Anclada y no por rozamiento, así que la relación es exacta y no desliza. LO QUE LA ELIGIÓ NO ES EL PRECIO, ES EL JUEGO: una cinta no lo tiene, solo elasticidad, y son 0,046 mm en la punta contra los 1,98 que costaba un par de engranajes de calidad 8d. ESPESOR 0,05 Y NO 0,1: arrollada en un tambor de R 8, la de 0,1 trabaja a 1206 MPa de flexión con una relación r/t de 80, por debajo del 100 que se respeta en una cinta que va a doblarse millones de veces; la de 0,05 queda en 603 MPa y r/t 160. ANCHO 10 Y NO 20: el sector son dos planchas de POM de 5 apiladas, el mismo material y el mismo corte que las levas. Segunda ventaja, menos obvia: en una cinta el entre-ejes es libre —no lo fija ninguna relación de diámetros—, así que el plano del cinco barras se coloca donde convenga empaquetar y la separación de 120 mm entre pivotes se queda como está.",
-  "pedir": "Que lo sirvan HENDIDO a 10 mm: el catálogo lo da en 20 y el sector tiene 10 de canto. Y el módulo elástico real, que los 193 GPa con los que está calculado el estiramiento son de manual.",
+  "nota": "El amplificador 6:1, en un cabestrante: la cinta va anclada por los dos extremos entre un sector de fibra neutra R 48 en el poste del seguidor y un tambor de R 8 en el eje del brazo, con los dos ramales pretensados para que transmita en los dos sentidos. Anclada y no por rozamiento, así que la relación es exacta y no desliza. LO QUE LA ELIGIÓ NO ES EL PRECIO, ES EL JUEGO: una cinta no lo tiene, solo elasticidad, y son 0,092 mm en la punta contra los 1,98 que costaba un par de engranajes de calidad 8d. ESPESOR 0,05 Y NO 0,1: arrollada en un tambor de R 8, la de 0,1 trabaja a 1206 MPa de flexión con una relación r/t de 80, por debajo del 100 que se respeta en una cinta que va a doblarse millones de veces; la de 0,05 queda en 603 MPa y r/t 160. ANCHO 5 Y NO 20: asi el sector es UNA plancha de POM de 5, el mismo material y el mismo corte que las levas. Con 10 harian falta dos laminadas, una operacion de montaje mas en cada uno de los tres canales, y solo se ganaban 0,046 mm. Segunda ventaja, menos obvia: en una cinta el entre-ejes es libre —no lo fija ninguna relación de diámetros—, así que el plano del cinco barras se coloca donde convenga empaquetar y la separación de 120 mm entre pivotes se queda como está.",
+  "pedir": "Que lo sirvan HENDIDO a 5 mm: el catálogo lo da en 20 y el sector tiene 5 de canto. Y el módulo elástico real, que los 193 GPa con los que está calculado el estiramiento son de manual.",
   "sustitutos": [
     "cable de acero de Ø0,45 con terminales prensados: más fácil de anclar y más barato, pero un cable trenzado asienta y su radio efectivo depende del arrollamiento"
   ]

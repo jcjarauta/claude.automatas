@@ -282,12 +282,12 @@ def test_cada_cota_circular_tiene_sus_dos_formas(paquete: Path):
             if nombre.endswith(sufijo) and base in filas:
                 assert valor == pytest.approx(factor * filas[base]), nombre
                 gemelos += 1
-    # Doce: las siete del contrato original, el sector y el tambor del
-    # cabestrante, los radios MECANIZADOS de los dos, y el eje del pivote del
-    # cinco barras. Que el número esté escrito a mano es a propósito: añadir
-    # una cota circular sin enterarse de que le sale un gemelo es exactamente
-    # lo que este test cuenta.
-    assert gemelos == 12, f"esperaba 12 cotas circulares con gemelo, hay {gemelos}"
+    # Trece: las siete del contrato original, el sector y el tambor del
+    # cabestrante, los radios MECANIZADOS de los dos, el eje del pivote del
+    # cinco barras y la pestaña del tambor. Que el número esté escrito a mano
+    # es a propósito: añadir una cota circular sin enterarse de que le sale un
+    # gemelo es exactamente lo que este test cuenta.
+    assert gemelos == 13, f"esperaba 13 cotas circulares con gemelo, hay {gemelos}"
 
 
 def test_el_gemelo_dice_que_es_derivado(paquete: Path):

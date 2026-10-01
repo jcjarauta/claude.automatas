@@ -158,7 +158,7 @@ banco diga que el modelo predice:
   debajo** de la línea de pivotes.
 - **El amplificador 6:1 es un cabestrante de cinta**: sector de R 48 en el
   poste del seguidor, tambor de R 8 en el eje del brazo, fleje de 1.4310 de
-  0,05 × 10 anclado por los dos extremos. La relación es el cociente de
+  0,05 × 5 anclado por los dos extremos. La relación es el cociente de
   radios y es exacta; una cinta anclada no desliza.
 
   **Los radios del contrato son los de la FIBRA NEUTRA, y los mecanizados
@@ -172,9 +172,10 @@ banco diga que el modelo predice:
   sector son dos planchas de POM de 5, el mismo material y el mismo corte que
   las levas.
 
-  **La cinta deja el sector a ±126° de la línea de centros**, no por delante:
-  el radio a la tangencia es perpendicular a la cinta. De ahí el semiarco de
-  140° y no el de 25 que parecía bastar.
+  **La cinta deja el sector a ±54° de la línea de centros** —`cos t = (R−r)/a`,
+  porque el radio a la tangencia es perpendicular a la cinta— y **abraza los
+  252° del lado opuesto al tambor**. De ahí el semiarco de 140° medido desde
+  la dirección contraria, con una muesca de 80° mirando al tambor.
 - **Dónde está el cinco barras respecto de las levas.** Hasta ahora eran dos
   sistemas de coordenadas sin transformación entre ellos: las levas con el
   árbol en el origen y el cinco barras con sus pivotes en ±60. El marco del
@@ -213,3 +214,5 @@ un solo compromiso, y todavía falta el dato que lo cierra.
 | 2026-10-01 | Bastidor | **Añadida la transformación** entre el marco de la leva y el del cinco barras: origen (−16,225, −28,103), 150° | Eran dos sistemas de coordenadas sin relación. Con cinta el entre-ejes es libre, así que es una elección de empaquetado y `brazo_separacion` no se toca |
 | 2026-10-01 | Bastidor | **Añadidas las cotas del cabestrante**: fibra neutra y canto mecanizado del sector y del tambor, cinta, tangencia y arcos | La relación la fija la fibra neutra y no el canto; la tangencia cae a 126° y no a 54, así que el sector necesita 140° de semiarco y no 25 |
 | 2026-10-01 | Bastidor | **Añadidos `brazo_palanca` y `brazo_eje_diametro`** | El primero faltaba: la palanca del lápiz es una longitud de máquina que el compilador usa y el CAD necesita. El segundo estaba conflado con `eje_diametro`, que es el árbol de levas: son el mismo stock Ø10 y dos ejes distintos |
+| 2026-10-01 | Bastidor | **Corregida la tangencia**: 53,968° y no 126, y la cinta abraza el arco OPUESTO al tambor | Se escribió mal dos veces: primero con el seno en vez del coseno, después poniendo el material en el lado libre. Lo cazó el plano al dibujarlo |
+| 2026-10-01 | Bastidor | **Cinta de 10 a 5 mm de ancho**, y añadidas las cotas de contorno del sector y del tambor | Con 5 el sector es una plancha de POM en vez de dos laminadas: una operación de montaje menos por canal, a cambio de 0,046 mm de elasticidad |

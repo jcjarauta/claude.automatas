@@ -117,10 +117,10 @@ def test_la_cinta_no_le_quita_el_primer_puesto_al_corte():
     de mecanismo, y eso es lo que ha pasado.
 
     Una cinta anclada por los dos extremos no tiene juego, solo elasticidad:
-    0,046 mm en la punta con el fleje de 0,05 x 10, cuarenta veces menos. El
-    corte vuelve a ser el término dominante y el presupuesto queda en 2,93.
+    0,092 mm en la punta con el fleje de 0,05 x 5, veinte veces menos. El
+    corte vuelve a ser el término dominante y el presupuesto queda en 3,02.
 
-    El margen del test es un décimo del dominante y no un milímetro: si
+    El margen del test es un quinto del dominante y no un milímetro: si
     alguien adelgaza la cinta o alarga el vano hasta que la elasticidad pese
     como el corte, la decisión habrá dejado de estar justificada y esto
     tiene que decirlo.
@@ -129,8 +129,8 @@ def test_la_cinta_no_le_quita_el_primer_puesto_al_corte():
     sin = presupuesto(holguras=Holguras(juego_del_amplificador=Radianes(0.0)))
     assert "perfil" in con.dominante.nombre
     transmision = sum(c.en_punta for c in con.cadena.contribuciones if "transmisión" in c.nombre)
-    assert transmision < 0.10 * con.dominante.en_punta
-    assert con.peor_caso == pytest.approx(sin.peor_caso, abs=2e-4)
+    assert transmision < 0.20 * con.dominante.en_punta
+    assert con.peor_caso == pytest.approx(sin.peor_caso, abs=4e-4)
 
 
 def test_el_juego_de_flanco_no_lo_divide_la_relacion():

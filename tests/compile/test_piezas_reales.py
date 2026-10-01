@@ -214,27 +214,38 @@ def test_la_cinta_cabe_en_el_canto_del_sector():
     assert contrato("cinta_ancho") <= 2.0 * cota("plancha_pom", "espesor")
 
 
-def test_la_tangencia_de_la_cinta_cae_detras_del_centro_del_sector():
-    """**Donde la cinta deja el sector, y por qué no es donde parece.**
+def test_la_cinta_abraza_el_lado_opuesto_al_tambor():
+    """**Donde la cinta toca el sector, medido y no razonado.**
 
-    El radio al punto de tangencia es perpendicular a la cinta, así que cae
-    a 90 grados mas gamma de la linea de centros, con sin(gamma) = (R-r)/a: a 126 grados, es decir
-    DETRÁS del sector, no por delante. Dibujarlo delante —confundir el seno
-    con el coseno— hace parecer que basta un sector de mas/menos 25 grados, y el sector
-    saldría sin material donde la cinta lo toca.
+    El punto de tangencia es aquel cuyo radio es perpendicular a la cinta.
+    Imponiendo esa perpendicularidad sale cos(t) = (R-r)/a, o sea 53,97
+    grados desde la direccion al tambor; y de los dos arcos que separan los
+    dos puntos de tangencia, el que la cinta abraza es el de 252 grados, que
+    pasa por el lado OPUESTO al tambor. Lo confirma la formula de correa
+    abierta, pi + 2*gamma con sin(gamma) = (R-r)/a.
 
-    El semiarco tiene que cubrir la tangencia más medio barrido más el
-    anclaje, y el abrazado del tambor, los 180 menos dos gammas de una correa abierta
-    más el barrido entero y sus dos anclajes.
+    Asi que el sector lleva material a 126 grados a cada lado de la
+    direccion contraria al tambor, y lo que le falta es una muesca de 80
+    grados mirando al tambor.
+
+    Este test existe porque se escribio dos veces mal: primero con el seno en
+    vez del coseno, que ponia la tangencia a 126 grados, y despues con el
+    material en el lado libre. Las dos veces por razonar en vez de medir.
     """
     sector = contrato("amplificador_sector_radio")
     tambor = contrato("amplificador_tambor_radio")
     entre = contrato("amplificador_entre_ejes")
+    tang = contrato("amplificador_tangencia")
+    assert tang == pytest.approx(math.acos((sector - tambor) / entre))
+    assert math.degrees(tang) < 90.0, "la tangencia cae del lado del tambor"
+    abrazado = 2.0 * (math.pi - tang)
     gamma = math.asin((sector - tambor) / entre)
-    assert contrato("amplificador_tangencia") == pytest.approx(math.pi / 2 + gamma)
-    assert contrato("amplificador_sector_semiarco") > contrato("amplificador_tangencia")
-    assert contrato("amplificador_tambor_abrazado") > math.pi - 2.0 * gamma
+    assert abrazado == pytest.approx(math.pi + 2.0 * gamma)
+    # El semiarco se mide desde la direccion CONTRARIA, y tiene que cubrir
+    # medio abrazado mas lo que pida el anclaje.
+    assert contrato("amplificador_sector_semiarco") > abrazado / 2.0
     # El vano libre es el cateto, y sale igual por los dos caminos.
+    assert contrato("amplificador_vano_libre") == pytest.approx(entre * math.sin(tang))
     assert contrato("amplificador_vano_libre") == pytest.approx(entre * math.cos(gamma))
 
 

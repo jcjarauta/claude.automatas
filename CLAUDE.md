@@ -57,6 +57,7 @@ uv run python scripts/dibujar_maquina.py      # el dibujo conceptual, generado d
 uv run python scripts/dibujar_piezas.py       # sección y cotas de cada pieza comercial, para dibujarla en el CAD
 uv run python scripts/dibujar_amplificador.py # el cabestrante 6:1, acotado desde el contrato
 uv run python scripts/dibujar_cinco_barras.py # el varillaje y la palanca, acotados desde el contrato
+uv run python scripts/dibujar_plano_cabestrante.py  # plano con vistas y cotas del sector y del tambor
 uv run python scripts/plantillas_demo.py      # plantillas 1:1 de muestra
 uv run python scripts/regenerar_golden.py     # SOLO si el cambio es intencionado
 
@@ -644,14 +645,27 @@ falla si el esquema versionado se queda atrás.
   parece: un par de engranajes de calidad 8d llevaba el peor caso de 2,84 a
   **6,74 mm** y el coste de 119 a 309 €. Por eso es un cabestrante de cinta:
   una cinta anclada por los dos extremos no tiene juego, solo elasticidad, y
-  son 0,046 mm.
-- **El punto de tangencia de una correa cae detrás del centro, no delante.**
-  El radio al punto donde la cinta deja el sector es **perpendicular** a la
-  cinta, así que está a 90° + γ de la línea de centros, con sin γ = (R−r)/a:
-  en el cabestrante, a **126°**. Confundir el seno con el coseno lo pone a
-  54°, por delante, y entonces parece que basta un sector de ±25° — cuando
-  hace falta de ±140°, y el sector saldría sin material justo donde la cinta
-  lo toca. Lo cazó la hoja de bocetos al dibujarlo, que es para lo que está.
+  son 0,092 mm.
+- **La correa sale por donde el radio es perpendicular a ella, y abraza el
+  lado de enfrente.** Dos cosas distintas que se confunden:
+
+  El punto de tangencia cumple `cos t = (R−r)/a`, así que en el cabestrante
+  cae a **54°** de la línea de centros, del lado del tambor. Y de los dos
+  arcos que separan los dos puntos de tangencia, el que la cinta abraza es
+  el de **252°**, que pasa por el lado **opuesto**. Lo confirma la fórmula
+  de correa abierta, `π + 2γ` con `sin γ = (R−r)/a`.
+
+  Así que el sector lleva material a 126° a cada lado de la dirección
+  **contraria** al tambor, con una muesca de 80° mirando al tambor.
+
+  **Esto se escribió mal dos veces seguidas.** Primero con el seno en vez
+  del coseno, que ponía la tangencia a 126°; después se «corrigió» poniendo
+  el material en el lado libre, que es donde la cinta no toca. Las dos veces
+  razonando sobre el dibujo en vez de imponer la perpendicularidad y
+  resolver. La segunda llegó a entrar en este archivo como trampa, con el
+  número equivocado. Lo caza ahora
+  `test_la_cinta_abraza_el_lado_opuesto_al_tambor`, que comprueba las dos
+  cosas por caminos distintos.
 - **Fase.** Un cartucho montado desfasado escribe basura. La marca física y la
   verificación van en el dossier, no solo en el código.
 

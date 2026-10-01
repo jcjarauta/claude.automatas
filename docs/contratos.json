@@ -286,9 +286,9 @@
         },
         {
           "nombre": "cinta_ancho",
-          "valor": 0.01,
+          "valor": 0.005,
           "unidad": "m",
-          "descripcion": "Ancho del fleje, igual al canto del sector: dos planchas de POM de 5",
+          "descripcion": "Ancho del fleje, igual al canto del sector: UNA plancha de POM de 5",
           "tolerancia": ""
         },
         {
@@ -309,7 +309,7 @@
           "nombre": "amplificador_sector_semiarco",
           "valor": 2.443460952792061,
           "unidad": "rad",
-          "descripcion": "Medio arco útil del sector: tangencia 126,03 mas medio barrido y anclaje",
+          "descripcion": "Medio arco util del sector, a cada lado de la direccion CONTRARIA al tambor: 126 de abrazado mas anclaje",
           "tolerancia": ""
         },
         {
@@ -321,9 +321,9 @@
         },
         {
           "nombre": "amplificador_tangencia",
-          "valor": 2.1996712522899484,
+          "valor": 0.9419214012998448,
           "unidad": "rad",
-          "descripcion": "Donde la cinta deja el sector, desde la direccion al tambor: 90 + asin((R-r)/a)",
+          "descripcion": "Donde la cinta deja el sector, desde la direccion al tambor: acos((R-r)/a). La cinta abraza el arco OPUESTO",
           "tolerancia": ""
         },
         {
@@ -339,6 +339,27 @@
           "unidad": "m",
           "descripcion": "Eje del pivote anclado del cinco barras, que tambien lleva el tambor. Mismo stock W10H6 que el arbol, OTRO eje",
           "tolerancia": "h6"
+        },
+        {
+          "nombre": "amplificador_sector_agujero",
+          "valor": 0.016,
+          "unidad": "m",
+          "descripcion": "Agujero de paso del sector: libra la valona de Ø15 del casquillo",
+          "tolerancia": "+0,3/0"
+        },
+        {
+          "nombre": "amplificador_tambor_pestana_radio",
+          "valor": 0.01,
+          "unidad": "m",
+          "descripcion": "Pestana que retiene la cinta en el tambor, a cada lado",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "amplificador_tambor_ancho",
+          "valor": 0.008,
+          "unidad": "m",
+          "descripcion": "Ancho total del tambor: 5 de canto util y 1,5 de pestana a cada lado",
+          "tolerancia": ""
         }
       ]
     }
