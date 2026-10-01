@@ -227,6 +227,55 @@
           "unidad": "m",
           "descripcion": "Lo que tiene que sobrar entre dos piezas que no se tocan",
           "tolerancia": ""
+        },
+        {
+          "nombre": "amplificador_sector_radio",
+          "valor": 0.048,
+          "unidad": "m",
+          "descripcion": "Cabestrante 6:1: radio del sector que va en el poste del seguidor",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "amplificador_tambor_radio",
+          "valor": 0.008,
+          "unidad": "m",
+          "descripcion": "Cabestrante 6:1: radio del tambor que va en el eje del brazo. R/r = 6 exacto",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "amplificador_entre_ejes",
+          "valor": 0.068,
+          "unidad": "m",
+          "descripcion": "Del poste del seguidor al pivote del brazo. LIBRE: una cinta no lo fija",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "amplificador_vano_libre",
+          "valor": 0.054990908,
+          "unidad": "m",
+          "descripcion": "Tramo recto de cinta entre sector y tambor: sqrt(entre_ejes^2 - (R-r)^2)",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "brazo_origen_x",
+          "valor": -0.016225412,
+          "unidad": "m",
+          "descripcion": "Origen del marco del cinco barras en el marco de la leva",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "brazo_origen_y",
+          "valor": -0.028103237,
+          "unidad": "m",
+          "descripcion": "Origen del marco del cinco barras en el marco de la leva",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "brazo_orientacion",
+          "valor": 2.617993878,
+          "unidad": "rad",
+          "descripcion": "Giro del marco del cinco barras respecto del de la leva: 150 grados",
+          "tolerancia": ""
         }
       ]
     }

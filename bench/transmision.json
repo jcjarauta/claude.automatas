@@ -1,0 +1,14 @@
+{
+  "mecanismo": "cinta de acero (cabrestante), relación 6:1",
+  "medido": false,
+  "juego_rad": 6.7e-05,
+  "nota": "Lo que la transmisión pierde entre el seguidor y el brazo, en radianes de brazo. Una cinta anclada por los dos extremos NO tiene juego: lo que tiene es elasticidad, y es un orden de magnitud menor. La cuenta: par en el seguidor 60 mN·m (cota alta, incluye el muelle que en realidad reacciona la leva), dividido por 6 son 10 mN·m en el brazo; sobre un tambor de 8 mm de radio, 1,25 N de cambio de tensión; una cinta de 0,1 x 20 de 1.4310 (A = 2 mm2, E = 193 GPa) con 55 mm de vano libre se estira 0,18 um; dividido por el radio del tambor, 22 urad. El valor guardado lleva un factor 3 por el asiento de los anclajes y la cinta arrollada al tambor, que no están calculados. En la punta son 0,0115 mm. SIN MEDIR: ni la E del fleje viene del proveedor ni el factor 3 de ningún sitio. Lo que importa de este numero no es su valor sino su orden: con engranajes de calidad 8d el mismo termino daba 1,98 mm.",
+  "derivado_de": {
+    "par_en_el_brazo_nm": 0.01,
+    "radio_del_tambor_mm": 8.0,
+    "vano_libre_mm": 55.0,
+    "seccion_de_la_cinta_mm2": 2.0,
+    "modulo_elastico_gpa": 193.0,
+    "factor_por_anclajes": 3.0
+  }
+}

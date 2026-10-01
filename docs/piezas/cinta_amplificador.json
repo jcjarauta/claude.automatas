@@ -1,0 +1,39 @@
+{
+  "nombre": "cinta_amplificador",
+  "familia": "material",
+  "designacion": "Fleje 1.4310 (AISI 301) 0,1 × 20 mm, 1 m",
+  "cantidad": 1,
+  "material": "acero inoxidable de muelle 1.4310 (AISI 301)",
+  "fuente": {
+    "proveedor": "Evek",
+    "referencia": "3280",
+    "url": "https://evek.red/acero-inoxidable/3280-fleje-de-resorte-de-acero-inoxidable-005x10mm-04x200mm-14310-301-l%C3%A1mina-fleje-de-chapa-de-acero-inoxidable.html",
+    "fecha": "2026-10-01",
+    "verificado": true
+  },
+  "cotas": [
+    {
+      "nombre": "espesor",
+      "valor": 0.0001,
+      "tolerancia": "",
+      "critica": true
+    },
+    {
+      "nombre": "ancho",
+      "valor": 0.02,
+      "tolerancia": "",
+      "critica": true
+    },
+    {
+      "nombre": "largo",
+      "valor": 1.0,
+      "tolerancia": "",
+      "critica": false
+    }
+  ],
+  "nota": "El amplificador 6:1, en un cabestrante: la cinta va anclada por los dos extremos entre un sector de R 48 en el poste del seguidor y un tambor de R 8 en el eje del brazo. Anclada y no por rozamiento, así que la relación es exacta y no desliza. LO QUE LA ELIGIÓ NO ES EL PRECIO, ES EL JUEGO: una cinta no lo tiene, solo elasticidad, y son 0,011 mm en la punta contra los 1,98 que costaba un par de engranajes de calidad 8d. Segunda ventaja, menos obvia: en una cinta el entre-ejes es libre —no lo fija ninguna relación de diámetros—, así que el plano del cinco barras se coloca donde convenga empaquetar y la separación de 120 mm entre pivotes se queda como está. Y el sector solo ocupa el arco que la cinta abraza, hacia fuera, así que no se mete bajo las levas. Se compran 1000 mm para tres canales: unos 250 por canal con los dos ramales y los arrollamientos.",
+  "pedir": "El módulo elástico real del fleje: los 193 GPa con los que está calculado el estiramiento son de manual, no del proveedor. Y si lo sirven cortado a 10 mm de ancho, que es lo que pide un tambor de Ø16; a 20 mm sobra cinta y el tambor tiene que ser más largo de lo necesario.",
+  "sustitutos": [
+    "cable de acero de Ø0,45 con terminales prensados: más fácil de anclar y más barato, pero un cable trenzado asienta y su radio efectivo depende del arrollamiento"
+  ]
+}

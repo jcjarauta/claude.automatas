@@ -15,6 +15,7 @@ cazado el primer día.
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 import pytest
@@ -35,6 +36,19 @@ def pieza(nombre: str) -> PiezaComercial:
 
 def cota(nombre_pieza: str, nombre_cota: str) -> float:
     return float(pieza(nombre_pieza).cota(nombre_cota).valor)
+
+
+CONTRATOS = Path(__file__).resolve().parents[2] / "docs" / "contratos.json"
+
+
+def contrato(nombre: str) -> float:
+    """Un valor de `docs/contratos.json` por su nombre, sea del grupo que sea."""
+    datos = json.loads(CONTRATOS.read_text(encoding="utf-8"))
+    for grupo in datos["contratos"]:
+        for valor in grupo["valores"]:
+            if valor["nombre"] == nombre:
+                return float(valor["valor"])
+    raise KeyError(f"el contrato no declara '{nombre}'")
 
 
 # ---------------------------------------------------------------------------
@@ -109,12 +123,40 @@ def test_los_dientes_salen_del_diametro_exterior_y_dan_la_relacion():
     assert dientes_rueda / dientes_pinon == pytest.approx(3.0)
 
 
-def test_el_entre_ejes_del_reductor_sale_de_las_cotas():
-    """m·(Z1+Z2)/2. Es la cota que el bastidor tiene que respetar, y hoy no
-    está en ningún contrato: sale de aquí."""
+def test_el_entre_ejes_del_reductor_sale_de_las_cotas_y_cuadra_con_el_contrato():
+    """m·(Z1+Z2)/2. Es la cota que el bastidor tiene que respetar, y está en
+    `docs/contratos.json`: esto cruza las dos, que es lo que impide que el
+    contrato siga diciendo 28 cuando alguien cambie de engranaje."""
     modulo = cota("rueda_reductor", "modulo")
     entre_ejes = modulo * (60 + 20) / 2.0
     assert entre_ejes == pytest.approx(0.028)
+    assert entre_ejes == pytest.approx(contrato("reductor_entre_ejes"))
+
+
+def test_el_amplificador_tiene_la_relacion_que_usa_el_compilador():
+    """El cabestrante da la relación por el cociente de radios, y el
+    compilador la usa como escalar. Si el contrato y `Escribiente` dejaran de
+    coincidir, la leva se sintetizaría para una amplificación que la máquina
+    no hace."""
+    sector = contrato("amplificador_sector_radio")
+    tambor = contrato("amplificador_tambor_radio")
+    assert sector / tambor == pytest.approx(Escribiente().relacion)
+    assert sector / tambor == pytest.approx(contrato("relacion_varillaje"))
+
+
+def test_la_cinta_no_toca_ni_las_levas_vecinas_ni_el_sector_de_al_lado():
+    """Dos holguras de conjunto que ninguna envolvente de C3 mira.
+
+    Los sectores van en los postes, a 123,085 mm entre vecinos, así que dos
+    de radio 48 dejan 27 mm. Y el entre-ejes tiene que superar la suma de
+    radios o el sector y el tambor se tocarían en vez de tangentear."""
+    sector = contrato("amplificador_sector_radio")
+    tambor = contrato("amplificador_tambor_radio")
+    entre_ejes = contrato("amplificador_entre_ejes")
+    radio_poste = contrato("poste_radio_al_arbol")
+    entre_postes = 2.0 * radio_poste * math.sin(contrato("poste_reparto") / 2.0)
+    assert entre_postes - 2.0 * sector > contrato("holgura_minima")
+    assert entre_ejes - (sector + tambor) > contrato("holgura_minima")
 
 
 def test_la_pila_del_cartucho_sale_de_las_piezas_reales():

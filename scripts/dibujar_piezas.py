@@ -42,8 +42,6 @@ SIN_MASA_FIABLE = {
     "rodillo_seguidor": "anillo macizo, sin bolas ni pistas",
     "pinon_reductor": "disco sin dientes",
     "rueda_reductor": "disco sin dientes",
-    "pinon_amplificador": "disco sin dientes",
-    "rueda_amplificador": "disco sin dientes",
     "portaminas": "compuesto: se pesa, no se calcula",
     "anillo_lapiz": "sin la ranura ni el prisionero",
 }

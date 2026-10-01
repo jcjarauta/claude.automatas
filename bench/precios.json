@@ -237,28 +237,6 @@
       "url": "https://www.maedler.de/article/26202000"
     },
     {
-      "concepto": "Rueda del amplificador 6:1",
-      "referencia": "Mädler 26212000, m0,7 Z120 latón, Ø ext 85,4",
-      "proveedor": "Mädler",
-      "cantidad": 3,
-      "precio": 43.45,
-      "escalado": "50 ud",
-      "iva_incluido": false,
-      "verificado": true,
-      "url": "https://www.maedler.de/article/26212000"
-    },
-    {
-      "concepto": "Piñón del amplificador 6:1",
-      "referencia": "Mädler 26202000, m0,7 Z20 latón, Ø ext 15,4",
-      "proveedor": "Mädler",
-      "cantidad": 3,
-      "precio": 8.89,
-      "escalado": "50 ud",
-      "iva_incluido": false,
-      "verificado": true,
-      "url": "https://www.maedler.de/article/26202000"
-    },
-    {
       "concepto": "Anillo de apriete del lápiz",
       "referencia": "Mädler 62311000GA",
       "proveedor": "Mädler",
@@ -329,6 +307,17 @@
       "iva_incluido": true,
       "verificado": true,
       "url": "https://www.ferreteriacampollano.com/tornilleria-y-fijaciones/tornillos-allen/din-912.html"
+    },
+    {
+      "concepto": "Cinta del amplificador 6:1",
+      "referencia": "Fleje 1.4310 (AISI 301) 0,1 x 20 mm, 1 m para los tres canales",
+      "proveedor": "Evek",
+      "cantidad": 1,
+      "precio": 18.89,
+      "escalado": "1 m",
+      "iva_incluido": false,
+      "verificado": true,
+      "url": "https://evek.red/acero-inoxidable/3280-fleje-de-resorte-de-acero-inoxidable-005x10mm-04x200mm-14310-301-l%C3%A1mina-fleje-de-chapa-de-acero-inoxidable.html"
     }
   ],
   "corte_por_bloque": {

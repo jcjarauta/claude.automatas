@@ -630,6 +630,19 @@ falla si el esquema versionado se queda atrás.
   **y los números de cabecera**: un golden que solo dice «ha cambiado»
   obliga a reconstruir el porqué a mano, y con los números el fallo dice
   «error_trazo_mm pasa de 0,0676 a 0,0675».
+- **El error de la transmisión no lo divide la relación, y el del canto sí.**
+  El error de perfil nace en la leva, antes del amplificador, así que lo
+  atraviesa; el juego del amplificador nace dentro y ya está medido en el
+  lado del brazo. Meterlo por el mismo sitio lo equivoca por el factor
+  entero, que aquí son **seis veces**. Lo pinchan dos tests, uno en `core` y
+  otro en `compile`.
+
+  Y ahí la palanca a la punta son **172,5 mm**, no los 90 del brazo
+  proximal, así que el mecanismo del amplificador decide más de lo que
+  parece: un par de engranajes de calidad 8d llevaba el peor caso de 2,84 a
+  **6,74 mm** y el coste de 119 a 309 €. Por eso es un cabestrante de cinta:
+  una cinta anclada por los dos extremos no tiene juego, solo elasticidad, y
+  son 0,0115 mm.
 - **Fase.** Un cartucho montado desfasado escribe basura. La marca física y la
   verificación van en el dossier, no solo en el código.
 

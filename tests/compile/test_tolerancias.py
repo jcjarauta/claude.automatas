@@ -108,23 +108,24 @@ def test_el_hardware_domina_sobre_el_modelo():
     assert p.dominante.en_punta > 5.0 * modelo.en_punta
 
 
-def test_con_engranajes_el_juego_de_flanco_domina_sobre_el_corte():
-    """**El precio de elegir engranajes para el amplificador**, pinchado.
+def test_la_cinta_no_le_quita_el_primer_puesto_al_corte():
+    """**El motivo por el que el amplificador es una cinta y no engranajes.**
 
-    El juego de flanco nace en el lado del brazo, donde la palanca a la
-    punta es de 172,5 mm, y entra sin dividir por la relación. Con la
-    estimación de catálogo supera al corte, que era el término dominante, y
-    lleva el peor caso de 2,8 a 6,7 mm.
+    Aquí vivía el test contrario, que pinchaba que el juego de flanco de un
+    par de calidad 8d —1,98 mm en la punta— desbancaba al corte y llevaba el
+    peor caso de 2,8 a 6,7 mm. Decía que había que borrarlo si se cambiaba
+    de mecanismo, y eso es lo que ha pasado.
 
-    Si alguien precarga el engrane con un muelle, o cambia a transmisión por
-    cable, este test deja de tener sentido y hay que borrarlo: eso es lo que
-    significa que esté aquí.
+    Una cinta anclada por los dos extremos no tiene juego, solo elasticidad:
+    0,0115 mm en la punta, dos órdenes de magnitud por debajo. El corte
+    vuelve a ser el término dominante y el presupuesto queda en 2,86.
     """
     con = presupuesto()
     sin = presupuesto(holguras=Holguras(juego_del_amplificador=Radianes(0.0)))
-    assert "juego de la transmisión" in con.dominante.nombre
-    assert "perfil" in sin.dominante.nombre
-    assert con.peor_caso > 2.0 * sin.peor_caso
+    assert "perfil" in con.dominante.nombre
+    transmision = sum(c.en_punta for c in con.cadena.contribuciones if "transmisión" in c.nombre)
+    assert transmision < 0.05 * con.dominante.en_punta
+    assert con.peor_caso == pytest.approx(sin.peor_caso, abs=5e-5)
 
 
 def test_el_juego_de_flanco_no_lo_divide_la_relacion():

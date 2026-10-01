@@ -18,18 +18,18 @@ taller son 0,6 mm en el papel: casi seis veces el error del modelo. **La
 precisión de este producto no la decide el compilador**, y eso no se veía
 hasta poner los dos números en la misma tabla.
 
-**Y desde que el amplificador 6:1 es un par de engranajes, tampoco la decide
-quien corta.** El juego de flanco entra por un sitio distinto: nace dentro de
-la transmisión, así que está medido en el lado del brazo y **no lo divide la
-relación**, a diferencia del error de canto. Con la estimación de catálogo
-—0,08 mm en el primitivo, sobre un piñón de 7 mm de radio— son 0,65° de brazo
-y 1,98 mm en la punta: más que el corte, y el término dominante de toda la
-cadena. El peor caso pasa de 2,8 a 6,7 mm.
+**Y el amplificador 6:1 entra por un sitio distinto.** Su error nace dentro
+de la transmisión, así que está medido en el lado del brazo y **no lo divide
+la relación**, a diferencia del error de canto. Ahí la palanca a la punta son
+172,5 mm, y eso hace que el mecanismo importe mucho más de lo que parece: un
+par de engranajes de calidad 8d, con 0,08 mm de juego de flanco sobre un
+piñón de 7 mm de radio, daba 1,98 mm en la punta y se convertía en el término
+dominante de toda la cadena —el peor caso pasaba de 2,8 a 6,7 mm—.
 
-Ese número **no es una fatalidad del engranaje, es del engrane descargado**:
-el juego solo se abre cuando el par cambia de signo. Un muelle que mantenga
-el brazo apoyado siempre contra el mismo flanco lo cierra. No está diseñado,
-y mientras no lo esté el presupuesto lo cuenta entero.
+Por eso el amplificador es un **cabestrante de cinta** y no engranajes. Una
+cinta anclada por los dos extremos no tiene juego, solo elasticidad: 0,0115
+mm en la punta, dos órdenes de magnitud menos, y el corte vuelve a ser el
+término dominante. El dato y su cuenta están en `bench/transmision.json`.
 
 **Dos totales, y sirven para cosas distintas.** El peor caso suma todo como
 si conspirara en el mismo sentido, y es lo que hay que usar para prometerle
@@ -40,9 +40,9 @@ es una formalidad.
 
 **Aviso sobre lo que hay debajo.** De las contribuciones, **tres no están
 medidas**: el error de perfil es la tolerancia que pedimos, no la que nos
-dan; la holgura de pivote es una estimación de catálogo; y el juego de flanco
-es una estimación de orden, porque Mädler publica la calidad del dentado
-—8d DIN 58405— y no la desviación de espesor de diente. Las mide E4.
+dan; la holgura de pivote es una estimación de catálogo; y el de la transmisión
+es una cuenta de elasticidad con un módulo elástico de manual y un factor 3
+por el asiento de los anclajes que no sale de ningún sitio. Las mide E4.
 Hasta entonces esto sirve para decidir arquitectura —si la relación 6:1 es
 demasiado, si hace falta apretar al taller— y no para prometer una cota.
 """
@@ -57,13 +57,11 @@ import numpy as np
 from pydantic import BaseModel, ConfigDict, Field
 
 from compile.escribiente import SEGUIDORES, Compilacion, Escribiente
-from core.comercial import PiezaComercial
 from core.tolerance import CadenaTolerancias, Contribucion, cadena
 from core.units import Longitud, LongitudConCero, Radianes, mm
 
 RAIZ = Path(__file__).resolve().parents[1]
-RUTA_DEL_JUEGO = RAIZ / "bench" / "juego_de_flanco.json"
-FICHA_DEL_PINON = RAIZ / "docs" / "piezas" / "pinon_amplificador.json"
+RUTA_DE_LA_TRANSMISION = RAIZ / "bench" / "transmision.json"
 
 MUESTRAS_DE_LA_CADENA = 36
 """En cuántas posiciones del ciclo se monta la cadena. La amplificación
@@ -71,36 +69,28 @@ cambia con la postura del varillaje —cerca de la singularidad se dispara— as
 que se recorre el ciclo y se toma la peor, no una posición cualquiera."""
 
 
-def juego_del_amplificador(
-    ruta: Path = RUTA_DEL_JUEGO,
-    ficha: Path = FICHA_DEL_PINON,
-) -> Radianes:
-    """Juego angular del brazo por el juego de flanco del amplificador.
+def juego_del_amplificador(ruta: Path = RUTA_DE_LA_TRANSMISION) -> Radianes:
+    """Lo que la transmisión 6:1 pierde entre el seguidor y el brazo.
 
-    El juego de un par de engranajes se declara como **holgura
-    circunferencial en el primitivo**, en milímetros. Lo que le llega al
-    brazo es un ángulo, y la conversión es dividir por el radio primitivo
-    del piñón, que es el que va en el eje del brazo:
+    En radianes **de brazo**, que es donde se mide: la transmisión está en
+    medio, así que su error ya sale por el lado rápido y no lo divide la
+    relación. Es el error de un factor seis que `core/tolerance.py` tiene
+    pinchado con un test.
 
-        δψ = j / r_primitivo
+    **Depende del mecanismo, y por eso es un dato y no una constante.** Un
+    par de engranajes de calidad 8d daba 1,1 × 10⁻² rad —1,98 mm en la
+    punta, el término dominante de toda la cadena—. Una cinta anclada por
+    los dos extremos no tiene juego, solo elasticidad, y da 6 × 10⁻⁵:
+    0,011 mm. Son dos órdenes de magnitud y es lo que decidió el mecanismo.
 
-    **Por eso el piñón pequeño sale caro.** Con el Z20 de m0,7 el radio son
-    7 mm, así que cada centésima de juego son 1,4 miliradianes de brazo; con
-    un Z28 serían 1,0. El piñón no se elige solo por el entre-ejes.
-
-    El dato vive en `bench/`, no aquí: es una medida, aunque hoy sea una
-    estimación declarada como tal. Si el archivo no está, devuelve cero —
-    una máquina sin amplificador no tiene este término— y no inventa uno.
+    Vive en `bench/transmision.json` con la cuenta de la que sale. Si el
+    archivo no está, devuelve cero —una máquina de transmisión directa no
+    tiene este término— y no inventa uno.
     """
-    if not ruta.exists() or not ficha.exists():
+    if not ruta.exists():
         return Radianes(0.0)
     datos = json.loads(ruta.read_text(encoding="utf-8"))
-    pinon = PiezaComercial.model_validate(json.loads(ficha.read_text(encoding="utf-8")))
-    dientes = pinon.dientes
-    if dientes is None:  # pragma: no cover - la ficha es de un engranaje
-        return Radianes(0.0)
-    radio_primitivo = float(pinon.cota("modulo").valor) * dientes / 2.0
-    return Radianes(float(datos.get("por_defecto_mm", 0.0)) / 1000.0 / radio_primitivo)
+    return Radianes(float(datos.get("juego_rad", 0.0)))
 
 
 class Holguras(BaseModel):
@@ -258,7 +248,7 @@ def amplificacion_del_canto(maquina: Escribiente) -> float:
 
 __all__ = [
     "MUESTRAS_DE_LA_CADENA",
-    "RUTA_DEL_JUEGO",
+    "RUTA_DE_LA_TRANSMISION",
     "Holguras",
     "Presupuesto",
     "amplificacion_del_canto",

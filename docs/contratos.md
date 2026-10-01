@@ -147,6 +147,25 @@ banco diga que el modelo predice:
   cuando la frase crece —8,9 mm con un barrido de toda la caja— y es el
   límite de conjunto que decide qué frases caben.
 - Caja de escritura: 80 × 30 mm, centrada a 100 mm sobre la línea de pivotes.
+- **El amplificador 6:1 es un cabestrante de cinta**: sector de R 48 en el
+  poste del seguidor, tambor de R 8 en el eje del brazo, cinta de acero
+  anclada por los dos extremos. La relación es el cociente de radios y es
+  exacta; una cinta anclada no desliza.
+- **Dónde está el cinco barras respecto de las levas.** Hasta ahora eran dos
+  sistemas de coordenadas sin transformación entre ellos: las levas con el
+  árbol en el origen y el cinco barras con sus pivotes en ±60. El marco del
+  brazo queda en (−16,225, −28,103) y girado 150°, que lleva los pivotes
+  junto a sus postes y el centro del papel a 132,5 mm del árbol.
+
+  **Es una elección de empaquetado, no una consecuencia.** Con engranajes el
+  entre-ejes lo habría fijado la relación de diámetros; con cinta es libre,
+  así que la separación de 120 mm entre pivotes se queda como estaba y el
+  marco se coloca donde conviene. Mover estos tres números no cambia ningún
+  número que calcule el compilador.
+- **El amplificador va en su propio plano.** Con cualquier radio de sector
+  que dé la relación 6, el arco se acerca a unos 53 mm del árbol y la leva
+  tiene 55 de radio base. No es cosa de la cinta: con engranajes pasaba
+  igual.
 
 No se congelan porque el radio base puede moverse cuando E4 mida el juego
 real: la relación del varillaje, el radio base y el diámetro de la leva son
@@ -166,3 +185,5 @@ un solo compromiso, y todavía falta el dato que lo cierra.
 | 2026-09-30 | **Calaje** | Congelado. El calaje pasa de ser la media de los ángulos de la frase a ser el ángulo del brazo en el centro de la caja | Con la media, el calaje se movía 3,3° entre frases y el brazo dejaba de ser pieza de stock. Cuesta décimas de milímetro de leva |
 | 2026-09-30 | Bastidor | Hueco al poste de 9,5 a **9,7 mm** con «hola» | Consecuencia de fijar el calaje. No es una decisión, es el número que sale |
 | 2026-09-30 | Fase | Pasador de índice de Ø3 × 16 a **Ø3 × 24** | Con 16 no llegaba a la tercera leva de una pila de 19 mm, que es justo lo que el contrato promete calar. Lo encontró un test que cruza la ficha del pasador con la de la plancha y la del separador |
+| 2026-10-01 | Bastidor | **Añadido el amplificador 6:1**: cabestrante de cinta, sector R 48 y tambor R 8 | Era un escalar en el código sin mecanismo. Se eligió frente a engranajes por el juego: un par de calidad 8d daba 1,98 mm en la punta y llevaba el peor caso de 2,84 a 6,74; la cinta da 0,0115 |
+| 2026-10-01 | Bastidor | **Añadida la transformación** entre el marco de la leva y el del cinco barras: origen (−16,225, −28,103), 150° | Eran dos sistemas de coordenadas sin relación. Con cinta el entre-ejes es libre, así que es una elección de empaquetado y `brazo_separacion` no se toca |
