@@ -93,9 +93,10 @@ def sector_corte(c: dict[str, float], x: float, y: float, ancho: float, alto: fl
     radio = c["amplificador_sector_radio_mecanizado"] * MM
     neutra = c["amplificador_sector_radio"] * MM
     agujero = c["amplificador_sector_agujero"] * MM / 2.0
+    espesor = c["amplificador_sector_espesor"] * MM
     w = c["cinta_ancho"] * MM
     k = min(ancho * 0.74 / (2 * radio), 2.4)
-    cx, base = x + ancho / 2, y + 50.0 + (alto - 116.0) / 2 + w * k
+    cx, base = x + ancho / 2, y + 50.0 + (alto - 116.0) / 2 + espesor * k
 
     d = [
         f'<text class="vista" x="{cx:.1f}" y="{y + 14:.1f}">sector · sección A-A</text>',
@@ -107,15 +108,15 @@ def sector_corte(c: dict[str, float], x: float, y: float, ancho: float, alto: fl
         x0, x1 = cx + signo * agujero * k, cx + signo * radio * k
         d.append(
             f'<polygon class="corte" points="{x0:.2f},{base:.2f} {x1:.2f},{base:.2f} '
-            f'{x1:.2f},{base - w * k:.2f} {x0:.2f},{base - w * k:.2f}"/>'
+            f'{x1:.2f},{base - espesor * k:.2f} {x0:.2f},{base - espesor * k:.2f}"/>'
         )
         xc = cx + signo * neutra * k
         d.append(
             f'<line class="cinta" x1="{xc:.2f}" y1="{base:.2f}" '
-            f'x2="{xc:.2f}" y2="{base - w * k:.2f}"/>'
+            f'x2="{xc:.2f}" y2="{base - espesor * k:.2f}"/>'
         )
     d.append(
-        f'<line class="eje" x1="{cx:.2f}" y1="{base - w * k - 9:.2f}" '
+        f'<line class="eje" x1="{cx:.2f}" y1="{base - espesor * k - 9:.2f}" '
         f'x2="{cx:.2f}" y2="{base + 9:.2f}"/>'
     )
     for lado in (-1, 1):
@@ -123,12 +124,13 @@ def sector_corte(c: dict[str, float], x: float, y: float, ancho: float, alto: fl
         d.append(auxiliar(cx + lado * agujero * k, base, cx + lado * agujero * k, base + 13))
     d += cota_h(cx - radio * k, cx + radio * k, base + 20, f"Ø{2 * radio:g}")
     d += cota_h(cx - agujero * k, cx + agujero * k, base + 11, f"Ø{2 * agujero:g}")
-    d.append(auxiliar(cx + radio * k, base - w * k, cx + radio * k + 16, base - w * k))
+    d.append(auxiliar(cx + radio * k, base - espesor * k, cx + radio * k + 16, base - espesor * k))
     d.append(auxiliar(cx + radio * k, base, cx + radio * k + 16, base))
-    d += cota_v(base - w * k, base, cx + radio * k + 13, f"{w:g}")
+    d += cota_v(base - espesor * k, base, cx + radio * k + 13, f"{espesor:g}")
     d += [
         f'<text class="var" x="{cx:.1f}" y="{y + alto - 34:.1f}">'
-        f"#cota.cinta_ancho · la cinta va a R{neutra:g} de fibra neutra</text>",
+        f"#cota.amplificador_sector_espesor · la cinta, de {w:g}, va a "
+        f"R{neutra:g} de fibra neutra</text>",
     ]
     return d
 

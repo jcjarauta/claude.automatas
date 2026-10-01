@@ -241,9 +241,12 @@ def test_la_cinta_no_se_pasa_de_flexion_al_arrollar_el_tambor():
 
 
 def test_la_cinta_cabe_en_el_canto_del_sector():
-    """El sector son dos planchas de POM apiladas y la cinta corre por su
-    canto: más ancha que el canto, se sale."""
-    assert contrato("cinta_ancho") <= 2.0 * cota("plancha_pom", "espesor")
+    """La cinta corre por el canto del sector: más ancha que el canto, se
+    sale. Hoy los dos valen 5, y por eso son dos cotas y no una: si alguien
+    estrechara la cinta, el sector NO tiene que adelgazarse con ella."""
+    assert contrato("cinta_ancho") <= contrato("amplificador_sector_espesor")
+    # Y el espesor del sector es el de la plancha que se compra, de una pieza.
+    assert contrato("amplificador_sector_espesor") == pytest.approx(cota("plancha_pom", "espesor"))
 
 
 def test_la_cinta_abraza_el_lado_opuesto_al_tambor():

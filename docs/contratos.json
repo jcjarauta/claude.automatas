@@ -388,6 +388,13 @@
           "unidad": "m",
           "descripcion": "Lo que pueden desalinearse los dos asientos de la cinta. Es lo que sustituye a las pestanas: sin ellas, lo que mantiene la cinta en su sitio es que los dos planos coincidan",
           "tolerancia": ""
+        },
+        {
+          "nombre": "amplificador_sector_espesor",
+          "valor": 0.005,
+          "unidad": "m",
+          "descripcion": "Espesor del sector: una plancha de POM de 5. Coincide hoy con el ancho de la cinta y NO es el mismo numero",
+          "tolerancia": ""
         }
       ]
     }
