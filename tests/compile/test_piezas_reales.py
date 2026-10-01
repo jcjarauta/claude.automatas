@@ -283,6 +283,41 @@ def test_la_cinta_abraza_el_lado_opuesto_al_tambor():
     assert contrato("amplificador_vano_libre") == pytest.approx(entre * math.cos(gamma))
 
 
+def test_una_mordaza_en_cada_pieza_y_no_las_dos_en_el_sector():
+    """**El arreglo del anclaje no estaba abierto: lo cerraban estos numeros.**
+
+    `docs/contratos.md` dio por abiertos dos arreglos, las dos mordazas en el
+    sector con la cinta rodeando el tambor o una en cada pieza. Solo cabe el
+    segundo: dos en el sector obligan a que uno de los dos ramales cruce, y un
+    ramal cruzado tiene otro vano y otro abrazado.
+
+    El contrato trae los de la correa ABIERTA, a seis decimales y por dos
+    caminos que no se hablan: el vano y el arco del sector. Los de la cruzada
+    no aparecen por ningun lado.
+
+    La leccion es la de siempre aqui: antes de declarar algo abierto, mirar si
+    los numeros que ya estan escritos lo deciden.
+    """
+    sector = contrato("amplificador_sector_radio")
+    tambor = contrato("amplificador_tambor_radio")
+    entre = contrato("amplificador_entre_ejes")
+    abierta = math.sqrt(entre**2 - (sector - tambor) ** 2)
+    cruzada = math.sqrt(entre**2 - (sector + tambor) ** 2)
+    assert contrato("amplificador_vano_libre") == pytest.approx(abierta)
+    assert contrato("amplificador_vano_libre") != pytest.approx(cruzada, abs=1e-3)
+
+    gamma = math.asin((sector - tambor) / entre)
+    gamma_cruzada = math.asin((sector + tambor) / entre)
+    abraza = 2.0 * (math.pi - contrato("amplificador_tangencia"))
+    assert abraza == pytest.approx(math.pi + 2.0 * gamma)
+    assert abraza != pytest.approx(math.pi + 2.0 * gamma_cruzada, abs=1e-3)
+
+    # Y el tambor abraza mas que la correa abierta: ese sobrante es lo que
+    # paga el barrido del brazo y el anclaje, y es lo unico que queda por
+    # repartir cuando se dibuje el tambor.
+    assert contrato("amplificador_tambor_abrazado") > math.pi - 2.0 * gamma
+
+
 def test_la_cinta_no_toca_ni_las_levas_vecinas_ni_el_sector_de_al_lado():
     """Dos holguras de conjunto que ninguna envolvente de C3 mira.
 

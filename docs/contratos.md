@@ -168,9 +168,10 @@ banco diga que el modelo predice:
 
   **Espesor 0,05 y no 0,1**: arrollada en el tambor de R 8, la de 0,1 trabaja
   a 1206 MPa con una relación r/t de 80, por debajo del 100 que se respeta en
-  una cinta que va a doblarse millones de veces. **Ancho 10** porque el
-  sector son dos planchas de POM de 5, el mismo material y el mismo corte que
-  las levas.
+  una cinta que va a doblarse millones de veces. **Ancho 5** porque el sector
+  es una plancha de POM de 5, el mismo material y el mismo corte que las
+  levas: con 10 hacían falta dos laminadas, una operación de montaje más por
+  canal, a cambio de 0,046 mm de elasticidad.
 
   **La cinta deja el sector a ±54° de la línea de centros** —`cos t = (R−r)/a`,
   porque el radio a la tangencia es perpendicular a la cinta— y **abraza los
@@ -280,12 +281,27 @@ con una cara plana a 4 del eje, igual en los tres sitios y cortada a medida. El
 
 ### Qué queda abierto
 
-**Dónde se ancla el segundo extremo.** Los números del contrato soportan dos
-arreglos —las dos mordazas en el sector con la cinta rodeando el tambor, o una
-en cada pieza— y el reparto de los 185° de abrazado al tambor sugiere lo
-segundo, pero no está resuelto y no se decide sobre el dibujo. La mordaza es la
-misma pieza en los dos casos, así que no bloquea nada: se cierra con el fleje en
-la mano.
+**Dónde se ancla el segundo extremo — ya no está abierto: lo cerraron los
+números que ya estaban escritos.** Se dijo que el contrato soportaba dos
+arreglos, las dos mordazas en el sector con la cinta rodeando el tambor o una
+en cada pieza. No los soporta: **una mordaza en cada pieza**, porque dos en el
+sector obligan a que uno de los dos ramales cruce.
+
+| | Una en cada pieza (correa abierta) | Las dos en el sector (un ramal cruzado) |
+| --- | --- | --- |
+| Vano recto | `sqrt(a²−(R−r)²)` = **54,990908** | `sqrt(a²−(R+r)²)` = 38,574603 |
+| Abrazado al sector | **252,064°** | 290,879° |
+
+`amplificador_vano_libre` vale 54,990908 y el abrazado al sector 252,06°, con
+test. Son los dos números de la correa abierta, a seis decimales y por dos
+caminos distintos. El otro arreglo no aparece por ningún lado.
+
+Lo que sí queda por cerrar es **dónde cae la mordaza en el tambor**, y con
+cuánto margen. Los 185° de `amplificador_tambor_abrazado` son 107,94 de correa
+abierta más 33 de barrido más **44 repartidos en «dos anclajes»**, y en el
+tambor hay uno solo: o el margen es generoso a propósito, o el número se
+calculó con el arreglo que los números descartan. Se vuelve a derivar al
+dibujar el tambor, que es la pieza a la que afecta.
 
 ---
 
