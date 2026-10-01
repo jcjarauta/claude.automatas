@@ -44,7 +44,7 @@ def sector_frente(c: dict[str, float], x: float, y: float, ancho: float, alto: f
     """
     radio = c["amplificador_sector_radio_mecanizado"] * MM
     neutra = c["amplificador_sector_radio"] * MM
-    agujero = c["amplificador_sector_agujero"] * MM / 2.0
+    agujero = c["amplificador_sector_agujero_diametro"] * MM / 2.0
     tang = c["amplificador_tangencia"]
     k = min(ancho * 0.66 / (2 * radio), (alto - 92.0) / (2 * radio))
     cx, cy = x + ancho / 2, y + 50.0 + (alto - 92.0) / 2
@@ -81,7 +81,8 @@ def sector_frente(c: dict[str, float], x: float, y: float, ancho: float, alto: f
         )
     d += [
         f'<text class="var" x="{x + ancho / 2:.1f}" y="{y + alto - 41:.1f}">'
-        "#cota.amplificador_sector_radio_mecanizado · #cota.amplificador_sector_agujero</text>",
+        "#cota.amplificador_sector_radio_mecanizado · "
+        "#cota.amplificador_sector_agujero_diametro</text>",
         f'<text class="var" x="{x + ancho / 2:.1f}" y="{y + alto - 34:.1f}">'
         "#angulo.amplificador_tangencia</text>",
     ]
@@ -92,7 +93,7 @@ def sector_corte(c: dict[str, float], x: float, y: float, ancho: float, alto: fl
     """La sección por el eje: lo que da el espesor y dónde corre la cinta."""
     radio = c["amplificador_sector_radio_mecanizado"] * MM
     neutra = c["amplificador_sector_radio"] * MM
-    agujero = c["amplificador_sector_agujero"] * MM / 2.0
+    agujero = c["amplificador_sector_agujero_diametro"] * MM / 2.0
     espesor = c["amplificador_sector_espesor"] * MM
     w = c["cinta_ancho"] * MM
     k = min(ancho * 0.74 / (2 * radio), 2.4)

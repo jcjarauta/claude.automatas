@@ -334,10 +334,10 @@
           "tolerancia": "h6"
         },
         {
-          "nombre": "amplificador_sector_agujero",
+          "nombre": "amplificador_sector_agujero_diametro",
           "valor": 0.016,
           "unidad": "m",
-          "descripcion": "Agujero de paso del sector: libra la valona de Ø15 del casquillo",
+          "descripcion": "Agujero de paso del sector: libra la valona de Ø15 del casquillo. Se llama diametro porque es lo que el CAD acota, y asi el exportador saca el gemelo en radio",
           "tolerancia": "+0,3/0"
         },
         {

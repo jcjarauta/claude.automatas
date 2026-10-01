@@ -62,6 +62,8 @@ uv run python scripts/dibujar_plano_brazos.py       # plano con vistas y cotas d
 uv run python scripts/plantillas_demo.py      # plantillas 1:1 de muestra
 uv run python scripts/regenerar_golden.py     # SOLO si el cambio es intencionado
 
+uv run python scripts/comparar_dxf.py pieza.dxf  # cruzar un DXF contra el contrato
+
 uv run python -m compile.cli demo/hola.json --out build/   # compilar un pedido
 uv run python -m compile.cli demo/hola.json --corte 28      # con un presupuesto real del taller
 uv run uvicorn api.main:app --reload                       # API en local
@@ -477,6 +479,13 @@ falla si el esquema versionado se queda atrás.
   tampoco está en el CSV—. Cada una se arregló sola y la siguiente apareció
   por otro lado.
 
+  **Y una quinta por otro lado: un nombre que no dice que la cota es
+  circular.** `brazo_ancho` y `amplificador_sector_agujero` miden un diámetro,
+  pero sin «radio» ni «diametro» dentro el exportador no les sacaba gemelo, así
+  que no había radio que teclear donde el CAD pide radio. Las dos se llaman
+  ahora `…_diametro`. El nombre decide si la cota existe en la forma en que se
+  usa.
+
   Lo cierra `test_toda_variable_que_la_hoja_de_bocetos_rotula_existe_en_el_csv`,
   que cruza los dos artefactos: cada `#mapa.variable` de la hoja tiene que
   estar en el CSV de ese mapa. Si no está, no hace falta saber por qué —no
@@ -681,6 +690,27 @@ falla si el esquema versionado se queda atrás.
   número equivocado. Lo caza ahora
   `test_la_cinta_abraza_el_lado_opuesto_al_tambor`, que comprueba las dos
   cosas por caminos distintos.
+- **Un croquis importado llega exacto y suelto, y eso se ve bien.** Un DXF no
+  lleva restricciones, y las cotas de la pieza no quitan los tres grados de
+  libertad del plano: una barra acotada de 90 puede estar en cualquier sitio y
+  a cualquier ángulo. Lo que el archivo sí puede aportar es el **sitio**: el
+  rasgo datum en el origen y el centro siguiente sobre +X dejan el anclaje en
+  dos coincidentes, los dos enganchados a geometría que ya está dibujada. El
+  datum es un agujero y no el centro de la pieza porque un punto medio hay que
+  construirlo, y lo que hay que construir se olvida. `FICHAS` en
+  `scripts/comparar_dxf.py` lo declara por pieza; el bucle entero está en
+  `docs/metodologia.md` §2d.
+
+  **El comparador no lo caza**: un croquis exacto y suelto lo pasa entero. Ese
+  paso es de la persona, mirando que Onshape diga «totalmente definida», y el
+  informe lo recuerda cada vez.
+- **Comparar contra el contrato entero no comprueba nada.** Con ochenta cotas,
+  cualquier número redondo encuentra una que lo explique: la primera versión de
+  `comparar_dxf.py` daba por bueno un radio de 6 en un brazo citando el ancho
+  del tambor del cabestrante. Por eso se compara contra la **ficha de la
+  pieza**, que declara qué rasgos tiene y con qué recuento —el distal tiene DOS
+  cubos de 6, y uno solo sería otra pieza—. Así un rasgo que falta y uno que
+  sobra son fallos distintos.
 - **Fase.** Un cartucho montado desfasado escribe basura. La marca física y la
   verificación van en el dossier, no solo en el código.
 

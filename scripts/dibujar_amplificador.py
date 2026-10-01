@@ -183,8 +183,8 @@ def filas(c: dict[str, float], cual: str) -> list[tuple[str, str]]:
                 f"{math.degrees(c['amplificador_tangencia']):g}",
             ),
             (
-                f"#{cota}.amplificador_sector_agujero",
-                f"{c['amplificador_sector_agujero'] * MM:g}",
+                f"#{cota}.amplificador_sector_agujero_diametro",
+                f"{c['amplificador_sector_agujero_diametro'] * MM:g}",
             ),
         ]
     return [

@@ -226,6 +226,89 @@ unas pocas veces al año.
 paramétrica con tres configuraciones congeladas, en vez de tres documentos
 que se desincronizan.
 
+### 2d. El bucle de una pieza: generador · acotado · comparador
+
+El reparto de arriba dice **quién** hace cada cosa. Esto dice **en qué orden**,
+y es lo que convierte dibujar una pieza en un procedimiento en vez de en una
+conversación.
+
+Nace de un fallo concreto. Para el `brazo_proximal` el camino fue: una tabla
+de variables, una hoja de bocetos, teclear ocho cotas en Onshape y comprobarlo
+a ojo. La pieza salió bien, pero la comprobación a ojo **dio un diagnóstico
+falso** —tres defectos que no existían— y costó más que el dibujo. Lo que
+faltaba no era cuidado, era un paso mecánico al final.
+
+El bucle, por pieza:
+
+| | Quién | Qué sale |
+| --- | --- | --- |
+| 1. Generar | el compilador | `pieza.dxf` en el datum, el listado de variables y el boceto acotado |
+| 2. Dibujar | la persona, en Onshape | importa el DXF, ancla, acota con `#cota.…` |
+| 3. Comprobar | la persona | que Onshape diga **totalmente definida** |
+| 4. Comparar | `scripts/comparar_dxf.py` | exporta el DXF y lo cruza contra el contrato |
+
+El DXF entra como **andamio, no como vínculo**. Trae la forma resuelta —la
+tangente exterior entre dos círculos desiguales, el agujero en D— que es lo
+caro de construir a mano y donde están los errores. El vínculo con el contrato
+lo sigue poniendo la persona al acotar, y por eso la pieza sigue siendo
+paramétrica. **Acotar sobre geometría que ya está bien es, además, la propia
+comprobación**: se escribe `#cota.brazo_proximal` y si el croquis no se mueve,
+coincidía.
+
+#### El datum, que es lo único que el archivo puede aportar al anclaje
+
+Un croquis importado llega con la forma y **sin una sola restricción**: exacto
+y suelto, que es el peor estado porque se ve bien y se mueve en cuanto alguien
+lo roza. Y las cotas de la pieza no lo arreglan: una barra acotada de 90 sigue
+pudiendo estar en cualquier punto del plano y a cualquier ángulo. Son tres
+grados de libertad que ninguna cota del contrato menciona.
+
+Ningún DXF lleva restricciones. Pero sí lleva **el sitio**, y con el sitio bien
+elegido el anclaje son dos clics:
+
+1. El **rasgo datum** —un agujero, siempre— se emite en el origen.
+2. El centro siguiente se emite sobre **+X**.
+3. En Onshape: coincidente(centro datum, origen) y coincidente(centro
+   siguiente, eje X). Fuera los tres grados.
+
+El datum es un agujero y no el centro de la pieza porque un agujero **ya está
+dibujado y se engancha solo**; un punto medio hay que construirlo, y lo que hay
+que construir se olvida. Cada pieza declara el suyo en `FICHAS`, y el
+comparador informa de si el archivo lo respeta.
+
+**La pieza se dibuja en su propio marco, no en el de la máquina.** Tentador
+sería emitir el brazo donde de verdad va —el contrato tiene la transformada:
+`brazo_origen_x`, `brazo_origen_y`, `brazo_orientacion`— pero entonces se
+dibuja girado −3,749°, que es miserable de acotar, y además el mismo brazo
+ocupa **dos** posiciones distintas en la máquina. No hay una posición. El marco
+de la máquina viaja como ángulos en el CSV y se aplica en el ensamblaje.
+
+No hay tercer grado de libertad escondido en el volteo: la cara plana del
+agujero está a `brazo_chaveta_angulo` = 0, así que la pieza espejada es la
+misma. La propiedad que ahorra el brazo derecho del despiece ahorra también
+una restricción.
+
+#### Qué comprueba el comparador y qué no
+
+Comprueba **la forma**: cada radio con su cota y su recuento, la distancia
+entre centros, la cuerda de la cara plana, y que las tangentes sean tangentes
+de verdad —perpendicularidad impuesta, no mirada: es el error que este repo ya
+cometió dos veces con la cinta del cabestrante—. Un rasgo que falta y uno que
+sobra son fallos distintos y los dos se ven.
+
+Lo hace contra la **ficha de la pieza**, no contra el contrato entero. Buscar
+«alguna cota que valga 6» no comprueba nada: con ochenta cotas, cualquier
+número redondo encuentra una. La primera versión daba por bueno un radio de 6
+citando el ancho del tambor del cabestrante, que no pinta nada en un brazo.
+
+**No comprueba las restricciones.** No viajan en un DXF. Un croquis exacto y
+suelto pasa el comparador entero, y por eso el paso 3 es de la persona y el
+informe lo recuerda cada vez.
+
+**No comprueba el espesor, el material, la tolerancia ni el calaje**, que no
+son geometría del perfil. Esos siguen en el CSV y en la hoja: el DXF no
+sustituye a la tabla de variables, la adelgaza.
+
 ---
 
 ## 3. Cómo se prueba antes de pedir las piezas
