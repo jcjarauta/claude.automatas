@@ -24,8 +24,10 @@ from core.reloj.escape import (
     barrido_del_arco,
     brazo_paleta,
     caras_de_impulso,
+    cuerda,
     cuerda_de_impulso,
     distancia_entre_centros,
+    largo_del_flanco,
     par_con_rendimiento,
     par_minimo_teorico,
 )
@@ -1362,22 +1364,90 @@ def test_el_diente_se_define_con_tres_angulos(reloj: Contratos):
 
 
 def test_la_punta_del_diente_no_es_un_filo(reloj: Contratos):
-    """Medio grado de espesor a radio 45 son 0,39 mm de material, y es justo
-    donde apoya la paleta. Dibujar la punta afilada promete un filo que el
-    contrachapado no da."""
+    """El umbral NO es geométrico: lo pone la madera. El contrachapado de
+    abedul tiene chapas de 1,3 mm, y una punta más fina que media chapa se
+    desportilla al primer golpe — y la punta recibe uno cada dos segundos.
+
+    Estuvo en 0,3 mm, que dejaba pasar los 0,39 que salían de medio grado y
+    que no existen en madera. El 2026-10-02 subió a 0,8 y el espesor de punta
+    con él.
+    """
     r = reloj.contrato("rueda_escape")
-    radio = r.valor("rueda_escape_diametro").en_mm / 2.0
-    assert radio * r.valor("rueda_escape_espesor_punta").valor >= 0.3
+    assert r.valor("rueda_escape_punta_cuerda").en_mm >= 0.8
+
+
+def test_la_punta_se_mide_en_milimetros_y_no_en_grados(reloj: Contratos):
+    """El ángulo de punta es lo que se teclea; la cuerda es lo que decide si
+    la pieza existe. Tenerlas las dos declaradas es lo que impide volver a
+    juzgar un filo mirando medio grado y encontrándolo razonable."""
+    r = reloj.contrato("rueda_escape")
+    assert r.valor("rueda_escape_punta_cuerda").en_mm == pytest.approx(
+        cuerda(
+            r.valor("rueda_escape_diametro").en_mm / 2.0,
+            r.valor("rueda_escape_espesor_punta").valor,
+        ),
+        abs=0.001,
+    )
+
+
+def test_los_dos_flancos_son_mas_largos_que_la_altura(reloj: Contratos):
+    """Lo que se le da al compás es el FLANCO, no la altura. Darle 7 deja el
+    diente corto y el pie fuera del círculo de fondo."""
+    r = reloj.contrato("rueda_escape")
+    altura = r.valor("rueda_escape_altura_diente").en_mm
+    for flanco, inclinacion in (
+        ("rueda_escape_dorso_largo", "rueda_escape_dorso_inclinacion"),
+        ("rueda_escape_cara_largo", "rueda_escape_socavado"),
+    ):
+        assert r.valor(flanco).en_mm > altura
+        assert r.valor(flanco).en_mm == pytest.approx(
+            largo_del_flanco(
+                r.valor("rueda_escape_diametro").en_mm / 2.0,
+                r.valor("rueda_escape_diametro_fondo").en_mm / 2.0,
+                r.valor(inclinacion).valor,
+            ),
+            abs=0.001,
+        ), flanco
+
+
+def test_el_dorso_es_mas_largo_que_la_cara(reloj: Contratos):
+    """Porque va más tumbado. Si se invirtiera, el dibujo estaría del revés y
+    el diente miraría al otro lado."""
+    r = reloj.contrato("rueda_escape")
+    assert r.valor("rueda_escape_dorso_largo").en_mm > r.valor("rueda_escape_cara_largo").en_mm
+
+
+def test_por_el_hueco_del_fondo_entra_una_segueta(reloj: Contratos):
+    """Lo que entra es una hoja RECTA, así que lo que manda es la cuerda y no
+    el arco. La hoja de una segueta de marquetería anda por 1,3 mm y necesita
+    sitio para girar: tres milímetros es el suelo."""
+    r = reloj.contrato("rueda_escape")
+    assert r.valor("rueda_escape_hueco_cuerda").en_mm == pytest.approx(
+        cuerda(
+            r.valor("rueda_escape_diametro_fondo").en_mm / 2.0,
+            r.valor("rueda_escape_hueco_angular").valor,
+        ),
+        abs=0.001,
+    )
+    assert r.valor("rueda_escape_hueco_cuerda").en_mm >= 3.0
+    assert (
+        r.valor("rueda_escape_hueco_cuerda").en_mm
+        < (r.valor("rueda_escape_diametro_fondo").en_mm / 2.0)
+        * r.valor("rueda_escape_hueco_angular").valor
+    )
 
 
 def test_los_tres_angulos_del_diente_caben_en_el_paso(reloj: Contratos):
     """Socavado y espesor de punta se reparten el paso angular con el hueco
     por donde entra la segueta. Si se lo comen entero, no hay hueco."""
     r = reloj.contrato("rueda_escape")
-    gastado = r.valor("rueda_escape_espesor_punta").valor + math.atan(
-        r.valor("rueda_escape_altura_diente").en_mm
-        * math.tan(r.valor("rueda_escape_socavado").valor)
-        / (r.valor("rueda_escape_diametro").en_mm / 2.0)
+    # Con la conversion buena, no con atan(altura x tan a / radio): ese
+    # resto de la formula vieja seguia aqui y daba el diente mas estrecho de
+    # lo que es, que es justo el error que este test tendria que cazar.
+    gastado = r.valor("rueda_escape_espesor_punta").valor + angulo_de_centro(
+        r.valor("rueda_escape_diametro").en_mm / 2.0,
+        r.valor("rueda_escape_diametro_fondo").en_mm / 2.0,
+        r.valor("rueda_escape_socavado").valor,
     )
     assert gastado < r.valor("rueda_escape_paso_angular").valor / 2.0
 

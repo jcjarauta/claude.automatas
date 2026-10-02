@@ -492,9 +492,9 @@
         },
         {
           "nombre": "rueda_escape_espesor_punta",
-          "valor": 0.008726646259971648,
+          "valor": 0.026179938779914945,
           "unidad": "rad",
-          "descripcion": "Espesor de la punta, como angulo central. LA PUNTA NO ES UN FILO: medio grado a radio 45 son 0,39 mm de material, y es justo donde apoya la paleta. Dibujarla afilada promete un filo que el contrachapado no da",
+          "descripcion": "Ancho de la punta, en angulo de centro. A radio 45 son 1,18 mm de material, que es donde apoya la paleta. SUBIDO DE 0,5 A 1,5 el 2026-10-02: medio grado daba 0,39 mm, un filo que el contrachapado de abedul no da -sus chapas miden 1,3- y que se desportilla al primer golpe. Cuesta hueco entre dientes, que es de donde sale",
           "tolerancia": "+/-0,2 grados"
         },
         {
@@ -534,7 +534,7 @@
         },
         {
           "nombre": "rueda_escape_hueco_angular",
-          "valor": 0.12506304125478407,
+          "valor": 0.10760974873484076,
           "unidad": "rad",
           "descripcion": "DERIVADO: paso_angular - adelanto - espesor_punta - retraso. EL HUECO ENTRE DIENTES, y es la envolvente de fabricacion que faltaba: el dorso NO llega al fondo del diente siguiente. Si llegase, el perfil seria una onda y no habria por donde meter la segueta",
           "tolerancia": "derivado · minimo para la sierra"
@@ -559,6 +559,34 @@
           "unidad": "m",
           "descripcion": "DERIVADO: la cuerda saltando CINCO dientes. Cinco pasos son 60 grados exactos y la cuerda de 60 grados vale el radio: 45,000 mm clavados. Es LA medida de verificacion de la rueda, porque el error de lectura del pie de rey se reparte entre cinco dientes en vez de caer sobre uno: 0,11 % en vez de 0,5",
           "tolerancia": "+/-0,2 · VERIFICACION"
+        },
+        {
+          "nombre": "rueda_escape_dorso_largo",
+          "valor": 0.007295531134453005,
+          "unidad": "m",
+          "descripcion": "DERIVADO: el largo del FLANCO del dorso, de A a B. ES LA COTA CON LA QUE SE TRAZA A COMPAS: puestos los dos circulos, se pincha en el pie y se corta el circulo de punta a esta distancia. No vale 7: esos son la altura radial, que es el cateto",
+          "tolerancia": "derivado"
+        },
+        {
+          "nombre": "rueda_escape_cara_largo",
+          "valor": 0.007081702007362592,
+          "unidad": "m",
+          "descripcion": "DERIVADO: el largo del FLANCO de la cara de ataque, de C a D. Mas corto que el dorso porque va menos tumbado",
+          "tolerancia": "derivado"
+        },
+        {
+          "nombre": "rueda_escape_punta_cuerda",
+          "valor": 0.0011780636014209996,
+          "unidad": "m",
+          "descripcion": "DERIVADO: lo que mide la punta EN MILIMETROS, que es como se juzga si existe en madera. El minimo no es geometrico: es lo que aguanta una chapa de abedul de 1,3 sin desportillarse",
+          "tolerancia": "+/-0,2 · minimo 0,8"
+        },
+        {
+          "nombre": "rueda_escape_hueco_cuerda",
+          "valor": 0.004087197736939918,
+          "unidad": "m",
+          "descripcion": "DERIVADO: la CUERDA del hueco en el fondo, no su arco. Es lo que mide la hoja de la segueta al entrar, porque una hoja es recta",
+          "tolerancia": "derivado · minimo 3"
         }
       ]
     },

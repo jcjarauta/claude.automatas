@@ -211,3 +211,39 @@ def angulo_de_centro(radio_punta: float, radio_fondo: float, inclinacion: float)
         )
     largo = radio_punta * coseno - math.sqrt(discriminante)
     return math.atan2(largo * math.sin(inclinacion), radio_punta - largo * coseno)
+
+
+def largo_del_flanco(radio_punta: float, radio_fondo: float, inclinacion: float) -> float:
+    """Largo del flanco recto que va de la punta al fondo.
+
+    Es la raiz corta de la misma ecuacion que resuelve `angulo_de_centro`, y
+    se devuelve aparte porque **es la cota con la que se traza con compas**:
+    puestos los dos circulos y el radio de referencia, se pincha en el pie y
+    se corta el circulo de punta a esta distancia. Un ancho de compas no se
+    equivoca; cuatro angulos acumulados con un transportador, si.
+
+    Con punta 45 y fondo 38, el dorso a 15 grados mide 7,296 y la cara a 8
+    mide 7,082. Ninguno de los dos vale 7: esa es la altura radial, que es el
+    cateto, no el flanco.
+    """
+    if inclinacion == 0.0:
+        return radio_punta - radio_fondo
+    coseno = math.cos(inclinacion)
+    discriminante = radio_punta**2 * coseno**2 - (radio_punta**2 - radio_fondo**2)
+    if discriminante <= 0.0:
+        raise ValueError(
+            f"un flanco a {math.degrees(inclinacion):.1f} grados no llega al fondo: "
+            "sale tangente al circulo de fondo y el diente no se cierra"
+        )
+    return radio_punta * coseno - math.sqrt(discriminante)
+
+
+def cuerda(radio: float, angulo_central: float) -> float:
+    """Cuerda que subtiende un angulo central sobre un circulo.
+
+    Trivial, y esta aqui porque el proyecto ya se ha tropezado dos veces con
+    la diferencia entre el arco y la cuerda: el compilador calcula arcos y
+    cualquier herramienta de taller -compas, pie de rey, regla- mide cuerdas.
+    Tenerla con nombre obliga a elegir cual se esta pidiendo.
+    """
+    return 2.0 * radio * math.sin(angulo_central / 2.0)

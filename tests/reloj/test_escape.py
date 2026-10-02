@@ -304,3 +304,37 @@ def test_una_inclinacion_que_no_llega_al_fondo_se_rechaza() -> None:
     de fondo: el diente no se cierra y el perfil no existe."""
     with pytest.raises(ValueError, match="no llega al fondo"):
         escape.angulo_de_centro(0.045, 0.038, math.radians(60.0))
+
+
+def test_el_flanco_es_mas_largo_que_la_altura_radial() -> None:
+    """La altura del diente es el cateto; el flanco es la hipotenusa. Darle
+    7 al compas deja el diente corto, que es el error que esta cota evita."""
+    altura = 0.045 - 0.038
+    for grados in (8.0, 15.0):
+        flanco = escape.largo_del_flanco(0.045, 0.038, math.radians(grados))
+        assert flanco > altura
+
+
+def test_un_flanco_radial_mide_la_altura() -> None:
+    assert escape.largo_del_flanco(0.045, 0.038, 0.0) == pytest.approx(0.007)
+
+
+def test_el_flanco_cierra_el_triangulo_con_su_angulo_de_centro() -> None:
+    """El flanco, el angulo de centro y los dos radios son el mismo triangulo
+    resuelto por dos caminos: el pie tiene que caer en el circulo de fondo."""
+    for grados in (4.0, 8.0, 15.0, 22.0):
+        inclinacion = math.radians(grados)
+        largo = escape.largo_del_flanco(0.045, 0.038, inclinacion)
+        centro = escape.angulo_de_centro(0.045, 0.038, inclinacion)
+        pie = (
+            largo * math.sin(inclinacion),
+            0.045 - largo * math.cos(inclinacion),
+        )
+        assert math.hypot(*pie) == pytest.approx(0.038, abs=1e-9)
+        assert math.atan2(pie[0], pie[1]) == pytest.approx(centro, abs=1e-9)
+
+
+def test_la_cuerda_siempre_es_menor_que_el_arco() -> None:
+    for grados in (0.5, 7.2, 12.0, 60.0):
+        angulo = math.radians(grados)
+        assert escape.cuerda(0.045, angulo) < 0.045 * angulo

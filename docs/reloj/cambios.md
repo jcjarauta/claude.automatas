@@ -746,3 +746,68 @@ y una vez cada uno**: suplementario 1,75 + reposo 1,50 + impulso 2,00 + caída
 Y `revisar_cad.py` seguía pidiendo `rueda_escape_inclinacion_diente`, una cota
 que dejó de existir cuando se partió en tres el 30 de septiembre: el revisor de
 la rueda habría reventado al primer STEP. Ahora lee `rueda_escape_socavado`.
+
+## 2026-10-02 · Revisar las cotas para trazar: faltaban cuatro y sobraba un filo
+
+Al mirar la hoja 2.1-D con la pregunta correcta —**¿se puede trazar el diente
+con lo que hay aquí?**— salen tres cosas.
+
+### Faltaban las cotas con las que se traza
+
+La hoja daba las cuatro separaciones perpendiculares y la tabla de los cinco
+puntos. Las dos cosas sirven para un CAD, donde se teclean coordenadas. Para
+un lápiz y un compás, no: **lo que se le da a un compás es el flanco**, y el
+flanco no estaba.
+
+| Cota nueva | Vale | Qué es |
+| --- | --- | --- |
+| `rueda_escape_dorso_largo` | 7,296 | El flanco A→B |
+| `rueda_escape_cara_largo` | 7,082 | El flanco C→D |
+| `rueda_escape_punta_cuerda` | 1,178 | El ancho de la punta, B–C |
+| `rueda_escape_hueco_cuerda` | 4,087 | El hueco en el fondo, D–A′ |
+
+Ninguno de los dos flancos vale 7. Esos son la **altura radial**, que es el
+cateto; el flanco es la hipotenusa, y va más largo cuanto más tumbado. Darle 7
+al compás deja el pie fuera del círculo de fondo.
+
+Con esas cuatro, el trazado son seis pasos **sin un solo ángulo**, y la hoja
+los lleva escritos. A 34:1 el centro de la rueda cae a metro y medio de la
+hoja, así que no hay dónde poner el vértice de un ángulo: el único trazado que
+vale es el que no usa ninguno.
+
+De paso se acotan `R45` y `R38` en el dibujo, que estaban solo en la tabla.
+
+### La punta era un filo: 0,5° → 1,5°
+
+Medio grado a radio 45 son **0,39 mm**. El contrachapado de abedul tiene chapas
+de 1,3 mm; una punta de cuatro décimas no es una pieza, es una astilla
+esperando el primer golpe — y la punta recibe uno cada dos segundos, que son
+43.200 al día.
+
+> El test que lo vigilaba pedía ≥0,3 mm. Su propio docstring decía que 0,39 era
+> «un filo que el contrachapado no da», y el umbral lo dejaba pasar. **Un
+> umbral que no sostiene lo que dice su motivo no vigila nada.**
+
+Sube a 1,5°, que son 1,178 mm, y el umbral a 0,8. Lo paga el hueco, que es de
+donde sale: 7,166° → 6,166°, o 4,75 → 4,09 mm de cuerda en el fondo. Sigue muy
+por encima de los 3 que pide la segueta.
+
+Y el umbral ya no se escribe en grados sino en milímetros, contra
+`punta_cuerda`. Es la misma lección que la cuerda de verificación: **medio
+grado suena razonable y cuatro décimas de milímetro no**, y la unidad en que
+se juzga una cota decide si el juicio es posible.
+
+### Y la fórmula vieja seguía viva en un segundo sitio
+
+`test_los_tres_angulos_del_diente_caben_en_el_paso` calculaba el ángulo de
+centro con `atan(altura × tan(socavado) / radio)`, el resto del error de esta
+mañana. Daba el diente más estrecho de lo que es, que es justo lo que ese test
+tendría que cazar. Ahora llama a `escape.angulo_de_centro`.
+
+**Cuando se corrige una fórmula hay que buscarla, no acordarse de dónde
+estaba.** Un `grep` del patrón habría encontrado los dos sitios a la primera.
+
+Al núcleo van `largo_del_flanco` —la raíz corta de la misma ecuación— y
+`cuerda`, que es trivial y existe porque el proyecto ya se ha tropezado tres
+veces con la diferencia entre el arco y la cuerda: tenerla con nombre obliga a
+elegir cuál se está pidiendo.

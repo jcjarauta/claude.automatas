@@ -1815,6 +1815,10 @@ def diente(c: Contratos) -> str:
     incluido = r.valor("rueda_escape_angulo_incluido").valor
     cuerda = r.valor("rueda_escape_cuerda_diente").en_mm
     cuerda5 = r.valor("rueda_escape_cuerda_cinco").en_mm
+    dorso_largo = r.valor("rueda_escape_dorso_largo").en_mm
+    cara_largo = r.valor("rueda_escape_cara_largo").en_mm
+    punta_cuerda = r.valor("rueda_escape_punta_cuerda").en_mm
+    hueco_cuerda = r.valor("rueda_escape_hueco_cuerda").en_mm
     dientes = int(c.valor("escape", "dientes_escape").valor)
 
     # Los cinco puntos del perfil, acumulando desde el pie del dorso. El
@@ -1918,7 +1922,7 @@ def diente(c: Contratos) -> str:
     p.append(_texto(*xy(5.6, rf - 2.4), "hueco de la sierra", 8, AUX, "middle"))
     # Las separaciones perpendiculares: ES LO QUE SE MIDE.
     for i, (marca, _, _, _, xx, _) in enumerate(puntos[1:], start=0):
-        base = 612.0 + i * 34.0
+        base = 600.0 + i * 28.0
         p.append(
             _cota_h(
                 xy(0.0, 0.0)[0],
@@ -1941,27 +1945,65 @@ def diente(c: Contratos) -> str:
         )
     )
     p.append(_texto(139, 392, "#cota.rueda_escape_altura_diente", 7, AUX, "start"))
+    # Los dos radios, acotados con directriz. Estaban solo en la tabla, y un
+    # circulo sin su radio en el dibujo es un circulo que hay que ir a buscar.
+    for radio, etiqueta, clave, subir in (
+        (rp, f"R{rp:.0f}", "#cota.rueda_escape_diametro / 2", -34.0),
+        (rf, f"R{rf:.0f}", "#cota.rueda_escape_diametro_fondo / 2", 30.0),
+    ):
+        ax_, ay_ = xy(8.6, math.sqrt(max(radio**2 - 8.6**2, 0.0)))
+        p.append(
+            f'<path d="M{ax_:.1f} {ay_:.1f}l24 {subir:.0f}h30" stroke="{COTA}" '
+            f'stroke-width="1" fill="none" marker-start="url(#f)"/>'
+        )
+        p.append(_texto(ax_ + 58, ay_ + subir + 3, etiqueta, 10, COTA, "start", "bold"))
+        p.append(_texto(ax_ + 58, ay_ + subir + 13, clave, 7, AUX, "start"))
+    # Los dos flancos y las dos cuerdas: LO QUE SE LE DA A UN COMPAS. Van
+    # rotulados sobre el propio tramo, que es donde se miden.
+    for (i0, i1), etiqueta, clave, desp, baja in (
+        ((0, 1), f"{dorso_largo:.2f}", "#cota.rueda_escape_dorso_largo", -62.0, 62.0),
+        ((2, 3), f"{cara_largo:.2f}", "#cota.rueda_escape_cara_largo", 74.0, 0.0),
+        ((1, 2), f"{punta_cuerda:.2f}", "#cota.rueda_escape_punta_cuerda", 0.0, 0.0),
+        ((3, 4), f"{hueco_cuerda:.2f}", "#cota.rueda_escape_hueco_cuerda", 0.0, 0.0),
+    ):
+        x0, y0 = xy(puntos[i0][4], puntos[i0][5])
+        x1, y1 = xy(puntos[i1][4], puntos[i1][5])
+        mx, my = (x0 + x1) / 2.0, (y0 + y1) / 2.0
+        if desp:
+            fx, fy_ = mx + desp, my + baja
+            ancla = "end" if desp < 0 else "start"
+            tx_ = fx + (-6 if desp < 0 else 6)
+        else:
+            fx, fy_ = mx, my - 44.0
+            ancla, tx_ = "middle", mx
+        p.append(
+            f'<path d="M{mx:.1f} {my:.1f}L{fx:.1f} {fy_:.1f}" stroke="{COTA}" '
+            f'stroke-width="0.9" fill="none" marker-start="url(#f)"/>'
+        )
+        p.append(_texto(tx_, fy_ - 2, etiqueta, 9.5, COTA, ancla, "bold"))
+        p.append(_texto(tx_, fy_ + 8, clave, 7, AUX, ancla))
+    p.append(_texto(130, 724, "TRAZARLO A COMPÁS, SIN TRANSPORTADOR", 9, TINTA, "start", "bold"))
+    for i, linea in enumerate(
+        [
+            f"1 · Los dos círculos, R{rf:.0f} y R{rp:.0f}, y un radio cualquiera: ese es A.",
+            f"2 · Pinchando en A, cortar el círculo de punta a {dorso_largo:.2f} → B.",
+            f"3 · Desde B, sobre el círculo de punta, {punta_cuerda:.2f} → C.",
+            f"4 · Pinchando en C, cortar el círculo de fondo a {cara_largo:.2f} → D.",
+            f"5 · Desde D, sobre el de fondo, {hueco_cuerda:.2f} → el A del siguiente.",
+            f"6 · Unir A-B-C-D con rectas, el fondo con el arco, y repetir {dientes}.",
+        ]
+    ):
+        p.append(_texto(130, 742 + i * 13, linea, 8.5, TINTA, "start"))
     p.append(
         _texto(
             130,
-            770,
-            "Las cuatro separaciones se miden del radio por A, perpendicular a él.",
-            8.5,
-            TINTA,
+            821,
+            "Ni un ángulo en los seis pasos: a esta escala el centro cae a 1,5 m de la hoja.",
+            8,
+            AUX,
             "start",
         )
     )
-    p.append(
-        _texto(
-            130,
-            784,
-            "A esta escala el centro de la rueda cae a 1,5 m de la hoja: no hay",
-            8.5,
-            TINTA,
-            "start",
-        )
-    )
-    p.append(_texto(130, 798, "dónde poner el vértice de un ángulo.", 8.5, TINTA, "start"))
 
     # ---- la tabla de los cinco puntos ------------------------------------
     tx = 660.0
