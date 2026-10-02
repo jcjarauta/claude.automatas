@@ -262,6 +262,28 @@ el boceto se dibuja sin entender la pieza; faltando la tabla se teclean números
 leídos del dibujo, que es de donde vienen los errores que este documento existe
 para evitar.
 
+#### Una cota entra con su pieza, no suelta
+
+El bucle de arriba es **por pieza**, y por eso tiene un agujero: se puede
+añadir una cota al contrato sin que haya ninguna pieza abierta, y entonces
+nada obliga a los cuatro artefactos. Pasó con las del bastidor: entraron al
+contrato y salieron por CSV sin tabla y sin boceto, que es exactamente lo que
+este documento dice que no se hace.
+
+La regla: **una cota se añade dentro del bucle de la pieza que la usa.** Si la
+pieza todavía no se puede dibujar, la cota puede entrar igual —el contrato es
+el sitio donde viven los números— pero se entrega **diciendo a qué pieza
+pertenece y por qué su bucle no se ha abierto**, y no se manda el CSV como si
+fuera un paso terminado.
+
+Y antes de abrir el bucle de una pieza hay que poder contestar a una pregunta:
+**¿es una pieza?** El «bastidor» no lo era: el despiece dice «bastidor y
+soportes», en plural, y el eje del reductor cae a 28 mm del árbol, dentro de
+una leva de radio base 55. O sea que no está en el plano de las levas, y el
+bastidor es **varias planchas en varios planos** que nadie ha repartido. Abrir
+su bucle antes de ese reparto habría dado una pieza con la mitad de los
+agujeros, que es el error del sector repetido.
+
 #### Qué CSV hay que reimportar
 
 Lo escribe `scripts/csv_pendientes.py` en `REIMPORTAR.md`, dentro del paquete.
