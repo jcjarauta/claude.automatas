@@ -30,9 +30,12 @@ def _matriz(nombre: str) -> str:
     «_radio» o «_diametro», y entonces `amplificador_sector_radio_mecanizado_
     diametro` no reducía a nada: el gemelo del canto del sector quedaba fuera
     de los dos cruces que dependen de esto.
+
+    `_positivo` es el tercero: el gemelo de un ángulo negativo, que existe
+    porque el campo de ángulo del CAD no acepta el signo.
     """
     del_contrato = {v["nombre"] for g in _CONTRATO["contratos"] for v in g["valores"]}
-    for sufijo in ("_radio", "_diametro"):
+    for sufijo in ("_radio", "_diametro", "_positivo"):
         base = nombre.removesuffix(sufijo)
         if base != nombre and base in del_contrato:
             return base
@@ -114,7 +117,12 @@ def test_toda_cota_que_el_perfil_resuelve_la_comprueba_el_comparador():
             if not v.en_el_perfil:
                 continue
             if v.mapa == "angulo":
-                assert v.nombre in angulos, f"{pieza}: {v.nombre} se dibuja y no se comprueba"
+                # Por la matriz, como las longitudes: el listado nombra el
+                # gemelo en positivo —que es lo que se teclea— y el
+                # comparador mide el ángulo con su signo.
+                assert _matriz(v.nombre) in {_matriz(a) for a in angulos}, (
+                    f"{pieza}: {v.nombre} se dibuja y no se comprueba"
+                )
                 continue
             if v.mapa != "cota":
                 continue

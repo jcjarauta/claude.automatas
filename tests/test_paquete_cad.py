@@ -153,6 +153,45 @@ def test_las_variables_van_partidas_por_unidad(paquete: Path):
     assert "radio_base" not in angulo
 
 
+def test_ninguna_hoja_rotula_un_angulo_negativo(paquete: Path):
+    """**El campo de ángulo no acepta el signo.** La herramienta de ángulo
+    mide una magnitud: metido con el menos, el campo se pone en rojo, y
+    quitándoselo a mano se acaba poniendo el rasgo al otro lado, que es la
+    pieza espejada y se ve igual de bien.
+
+    Es el mismo fallo que el radio de un círculo entero, con otra cara: la
+    hoja ofrecía `#angulo.platina_pivote_angulo_izquierdo`, que vale
+    -58,407. Para eso está el gemelo en positivo, y para eso se comprueba
+    que es el que la hoja pone.
+
+    **Vale para lo que va al croquis y no para lo demás.** Un calaje es
+    negativo y se queda así: no se acota en un croquis, se monta, y el campo
+    de ángulo de un emparejamiento sí acepta el signo. Darle la magnitud y
+    una nota en prosa sería peor que darle el número. La línea es la misma
+    que usa el cruce con el comparador: lo que el perfil resuelve.
+    """
+    import csv as _csv
+
+    from emit.plataforma import LISTADO
+    from scripts.dibujar_pieza import PERFIL_DE, hoja
+
+    filas = _csv.reader((paquete / "variables_angulo.csv").read_text(encoding="utf-8").splitlines())
+    grados = {f[0]: float(f[1]) for f in filas if f}
+    fuera_del_croquis = {
+        v.nombre for f in LISTADO.values() for v in f.variables if not v.en_el_perfil
+    }
+    for pieza in PERFIL_DE:
+        for nombre in set(re.findall(r"#angulo\.([a-z0-9_]+)", hoja([pieza]))):
+            assert nombre in grados, f"{pieza}: #angulo.{nombre} no está en el CSV"
+            if nombre in fuera_del_croquis:
+                continue
+            assert grados[nombre] >= 0.0, (
+                f"hoja de {pieza}: rotula #angulo.{nombre}, que vale "
+                f"{grados[nombre]:g}. El campo no acepta el signo: pon "
+                f"«{nombre}_positivo» y di de qué lado cae el rasgo"
+            )
+
+
 def test_toda_hoja_que_se_copia_rotula_variables_que_existen_en_los_csv(paquete: Path):
     """**El mismo cruce de la hoja de piezas, extendido a las otras cuatro.**
 

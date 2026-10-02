@@ -393,7 +393,14 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
     #
     # El número va en el rayo y el nombre en la leyenda, igual que los radios.
     for cota_r, cota_a, centros in _polares(ficha, c):
-        grados = math.degrees(c[cota_a])
+        # **Lo que se rotula es lo que se teclea.** El campo de ángulo mide
+        # una magnitud y no acepta el signo, así que un ángulo negativo se
+        # escribe en positivo y el lado lo decide dónde cae el rasgo. El
+        # gemelo trae ese número; aquí solo se elige cuál de los dos poner.
+        teclea, grados = cota_a, math.degrees(c[cota_a])
+        lado = ""
+        if grados < 0.0:
+            teclea, grados, lado = f"{cota_a}_positivo", -grados, " bajo +X"
         cuantos = len(centros)
         for cx_, cy_ in centros:
             d.append(
@@ -415,12 +422,12 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
         d.append(
             f'<text class="cotatx" x="{ox + math.cos(ang_r) * fuera:.2f}" '
             f'y="{oy - math.sin(ang_r) * fuera + 2:.2f}" style="text-anchor:{ancla}">'
-            f"{numero(c[cota_r])} · {marca}{numero(grados)}°</text>"
+            f"{numero(c[cota_r])} · {marca}{numero(grados)}°{lado}</text>"
         )
         d.append(
             f'<text class="cotavar" x="{x + 10:.1f}" y="{leyenda:.1f}">'
-            f"{numero(c[cota_r])} · {marca}{numero(grados)}° → "
-            f"#cota.{cota_r} · #angulo.{cota_a}</text>"
+            f"{numero(c[cota_r])} · {marca}{numero(grados)}°{lado} → "
+            f"#cota.{cota_r} · #angulo.{teclea}</text>"
         )
         leyenda += 7
 

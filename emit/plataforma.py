@@ -60,13 +60,27 @@ Perfil = list[Arco | Segmento]
 
 
 def contrato_mm() -> dict[str, float]:
-    """Las longitudes del contrato en mm y los ángulos en radianes."""
+    """Las longitudes del contrato en mm y los ángulos en radianes.
+
+    Con el **gemelo en positivo de cada ángulo negativo**: la herramienta de
+    ángulo del CAD mide una magnitud y no acepta un signo, así que teclear
+    -58,407 en ese campo no da el ángulo de enfrente, da un campo en rojo.
+    Lo que se teclea es 58,407 y el lado lo decide dónde cae el rasgo, igual
+    que la cara plana de la chaveta: el número no lo dice, lo dice el sitio.
+
+    Es el patrón del gemelo de diámetro con otra cara, y por el mismo
+    motivo: no hacer el error improbable, hacerlo imposible.
+    """
     datos = json.loads(CONTRATOS.read_text(encoding="utf-8"))
-    return {
-        v["nombre"]: float(v["valor"]) * (MM if v["unidad"] == "m" else 1.0)
-        for g in datos["contratos"]
-        for v in g["valores"]
-    }
+    salida: dict[str, float] = {}
+    for g in datos["contratos"]:
+        for v in g["valores"]:
+            nombre = v["nombre"]
+            valor = float(v["valor"]) * (MM if v["unidad"] == "m" else 1.0)
+            salida[nombre] = valor
+            if v["unidad"] == "rad" and -math.pi < valor < 0.0:
+                salida[f"{nombre}_positivo"] = -valor
+    return salida
 
 
 def barra(largo: float, r0: float, r1: float) -> Perfil:
@@ -506,7 +520,11 @@ LISTADO: dict[str, Ficha] = {
             Variable("angulo", "poste_reparto", "entre postes"),
             Variable("cota", "brazo_eje_diametro", "Ø de cada pivote"),
             Variable("cota", "platina_pivote_al_arbol", "del árbol a los pivotes"),
-            Variable("angulo", "platina_pivote_angulo_izquierdo", "pivote izquierdo a"),
+            Variable(
+                "angulo",
+                "platina_pivote_angulo_izquierdo_positivo",
+                "pivote izquierdo a, bajo +X",
+            ),
             Variable("angulo", "platina_pivote_angulo_derecho", "pivote derecho a"),
         ),
         ("plancha", "platina_espesor"),

@@ -141,6 +141,20 @@ def con_gemelos(filas: list[list[str]]) -> list[list[str]]:
     for fila in filas:
         salida.append(fila)
         nombre, valor = fila[0], fila[1]
+        # **Un ángulo negativo no se puede teclear.** La herramienta de
+        # ángulo mide una magnitud: metido con el signo, el campo se pone en
+        # rojo, y quitándoselo a mano se acaba poniendo el rasgo al otro
+        # lado. El gemelo trae la magnitud y la descripción dice el lado.
+        if fila[2] == "deg" and -180.0 < float(valor) < 0.0:
+            derivada = list(fila)
+            derivada[0] = f"{nombre}_positivo"
+            derivada[1] = f"{abs(float(valor)):.4f}"
+            derivada[-1] = (
+                f"derivada de {nombre}: el campo de angulo no acepta el signo. "
+                f"Teclea esta y pon el rasgo por DEBAJO de +X — {fila[-1]}"
+            )
+            salida.append(derivada)
+            continue
         if "radio" in nombre:
             gemelo, factor = f"{nombre}_diametro", 2.0
         elif "diametro" in nombre:

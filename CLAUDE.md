@@ -525,6 +525,22 @@ falla si el esquema versionado se queda atrás.
   `alto_de_leyenda` reservando el sitio: abajo está la pila de cotas
   horizontales y un radio que la cruza se lee como parte de ella.
 
+- **Un ángulo negativo no se puede teclear.** La herramienta de ángulo mide
+  una magnitud: `#angulo.platina_pivote_angulo_izquierdo` vale -58,407 y el
+  campo se pone en rojo. Quitarle el signo a mano sí entra, y entonces el
+  agujero se va al otro lado del eje X —la pieza espejada, que se ve igual
+  de bien—.
+
+  Es el gemelo del diámetro con otra cara, y se resuelve igual: cada ángulo
+  negativo saca un `…_positivo` con la magnitud, y la hoja rotula ese y dice
+  el lado («bajo +X»). Lo cierra
+  `test_ninguna_hoja_rotula_un_angulo_negativo`.
+
+  **Solo para lo que va al croquis.** Un calaje es negativo y se queda así:
+  no se acota, se monta, y el campo de ángulo de un emparejamiento sí acepta
+  el signo. Darle la magnitud y una nota en prosa sería peor que darle el
+  número.
+
 - **El test medía las cajas de los rótulos donde el dibujo no las pone.** La
   hoja de estilo le gana a un atributo de presentación, así que
   `.cotatx{text-anchor:middle}` se comía el `text-anchor="end"` que `radial`
