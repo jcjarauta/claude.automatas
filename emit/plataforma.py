@@ -222,6 +222,12 @@ def platina_levas(c: dict[str, float] | None = None) -> Perfil:
             c["platina_pivote_al_arbol"] * math.sin(t),
         )
         perfil += circulo(centro, c["brazo_eje_diametro"] / 2)
+    # El séptimo: el rodamiento del eje de la manivela, a 28 del árbol. En el
+    # plato de abajo no sujeta nada —es una ventana más al mecanismo— y a
+    # cambio los TRES platos son la misma pieza.
+    t = c["platina_manivela_angulo"]
+    centro = (c["reductor_entre_ejes"] * math.cos(t), c["reductor_entre_ejes"] * math.sin(t))
+    perfil += circulo(centro, c["rodamiento_arbol_alojamiento_diametro"] / 2)
     return perfil
 
 
@@ -591,8 +597,8 @@ LISTADO: dict[str, Ficha] = {
         "prisionero: un taladro radial no sale de una plancha cortada.",
     ),
     "platina_levas": Ficha(
-        "disco de contrachapado con los seis agujeros del mecanismo",
-        2,
+        "disco de contrachapado con los siete agujeros del mecanismo",
+        3,
         (
             Variable("cota", "platina_diametro", "Ø del disco"),
             Variable("cota", "platina_espesor", "espesor", en_el_perfil=False),
@@ -608,13 +614,22 @@ LISTADO: dict[str, Ficha] = {
                 "pivote izquierdo a, bajo +X",
             ),
             Variable("angulo", "platina_pivote_angulo_derecho", "pivote derecho a"),
+            Variable("cota", "reductor_entre_ejes", "del árbol a la manivela"),
+            Variable(
+                "angulo",
+                "platina_manivela_angulo_positivo",
+                "eje de la manivela a, bajo +X",
+            ),
         ),
         ("plancha", "platina_espesor"),
-        "Un disco y no un rectángulo: los seis agujeros caben dentro de 71,063 —los "
-        "postes son los de más afuera— así que el contorno se dice con una sola cota. "
-        "Van DOS, y los tres postes de Ø8 hacen de pilares entre ellas: ya medían 70 "
-        "para atravesar los tres planos de leva, y la pila ocupa 56. El segundo plato "
-        "no es por rigidez —un poste en voladizo flecta 0,0135 mm con 5 N, contra un "
+        "Un disco y no un rectángulo: los agujeros caben dentro de 71,063 —los postes "
+        "son los de más afuera— así que el contorno se dice con una sola cota. Van "
+        "TRES, en los mismos postes de Ø8, que por eso pasan de 70 a 105. El tercero "
+        "cierra la bahía del reductor y da el SEGUNDO apoyo del eje de la manivela: "
+        "con un solo rodamiento el eje queda en voladizo cargando 294 g de volante y "
+        "los 40 N de la mano. El séptimo agujero no sujeta nada en el plato de abajo, "
+        "y a cambio los tres platos son LA MISMA PIEZA. Que haya más de un plato no es "
+        "por rigidez —un poste en voladizo flecta 0,0135 mm con 5 N, contra un "
         "presupuesto de error de 2,79— sino porque deja el mecanismo a la vista, que "
         "es el argumento del producto.",
     ),

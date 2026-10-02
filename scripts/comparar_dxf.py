@@ -266,10 +266,11 @@ FICHAS: dict[str, Ficha] = {
         datum="brazo_eje_diametro_radio",
     ),
     "platina_levas": Ficha(
-        "disco de contrachapado con los seis agujeros del mecanismo",
+        "disco de contrachapado con los siete agujeros del mecanismo",
         {
             "platina_diametro_radio": 1,
-            "rodamiento_arbol_alojamiento_diametro_radio": 1,
+            # DOS: el del árbol, en el centro, y el del eje de la manivela a 28.
+            "rodamiento_arbol_alojamiento_diametro_radio": 2,
             "poste_eje_diametro_radio": 3,
             "brazo_eje_diametro_radio": 2,
         },
@@ -277,6 +278,7 @@ FICHAS: dict[str, Ficha] = {
             ("poste_radio_al_arbol", "poste_reparto", 3),
             ("platina_pivote_al_arbol", "platina_pivote_angulo_izquierdo", 1),
             ("platina_pivote_al_arbol", "platina_pivote_angulo_derecho", 1),
+            ("reductor_entre_ejes", "platina_manivela_angulo", 1),
         ),
         datum="rodamiento_arbol_alojamiento_diametro_radio",
     ),

@@ -1018,6 +1018,36 @@ las dos velocidades**: la mano gira deprisa —que es lo que baja el volante—
 y el árbol despacio, que es lo que deja ver cómo se escribe la frase. Con
 3:1 y 90 rpm, el árbol va a 30 y la frase tarda dos segundos.
 
+### Dónde se apoya el eje de la manivela
+
+El reductor **no puede ir entre los platos**: el entre-ejes son 28 y la leva
+tiene radio base 55, así que el eje de la manivela caería dentro del disco de
+leva. Y **tampoco debajo**, que es donde están los brazos y el lápiz bajando
+al papel. Va arriba, y eso de paso pone la manivela donde se gira cómodo,
+como un molinillo, con el volante a la vista.
+
+Un eje necesita **dos apoyos**: con uno solo queda en voladizo cargando los
+294 g del volante y los 40 N de la mano. Los dan el plato 2 y un **tercer
+plato**, y entre los dos caben el piñón y el volante —las dos masas entre
+rodamientos, y fuera solo la manivela—.
+
+**Ese tercer plato es la misma pieza.** Con un séptimo agujero en la platina
+—otro Ø19 H7 a 28 del árbol, a -90°, detrás— los tres platos son idénticos.
+En el plato de abajo ese agujero no sujeta nada: es una ventana más. El coste
+es un poste más largo (70 → 105) y dos rodamientos; piezas nuevas, ninguna.
+
+Dos números que salieron al dibujarlo y que ahora vigila un test:
+
+- **El volante gira dentro de la silueta.** Centrado a 28 y con Ø104 llega a
+  80 del árbol, contra los 85 de radio del plato. No fue buscado, pero es la
+  diferencia entre una máquina y un aparato con cosas colgando.
+- **Las patas no pueden ir delante.** El papel empieza a 85 del árbol y el
+  plato llega a 85: una pata bajo el borde delantero aterriza encima del
+  papel. Van detrás y a los lados.
+
+Y el ángulo es **-90°** y no 270 porque un campo de ángulo no acepta ni el
+signo ni más de media vuelta: se teclea el gemelo en positivo, 90 bajo +X.
+
 ### El volante que hay, y lo que no es el engranaje grande
 
 **Ø104 × 6 en latón, aligerado con seis agujeros de Ø24 a 30 del centro:

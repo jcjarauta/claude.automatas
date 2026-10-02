@@ -202,7 +202,7 @@ def test_el_step_se_puede_volver_a_leer(tmp_path: Path):
 # ---------------------------------------------------------------------------
 
 MASAS_VERIFICADAS = {
-    "poste_pivote": 27.445,
+    "poste_pivote": 41.167,  # pendiente de rehacer en Onshape: el poste pasó de 70 a 105
     "arbol_de_levas": 73.985,
     "pasador_indice": 1.332,
     "separador_pila": 0.344,
@@ -216,6 +216,12 @@ por eso no están aquí: el muelle sale como el cilindro que ocupa y pesaría
 32 g en vez de cuatro, un rodamiento sale como un anillo macizo sin bolas ni
 pistas, y un engranaje como un disco sin dientes. Para saber si caben eso
 basta y sobra; para pesarlos no sirve, y su masa buena es la del proveedor.
+
+**El poste está a dos caminos, no a tres, desde el 2026-10-02**: al añadir el
+tercer plato pasó de 70 a 105 mm y su masa de 27,445 a 41,167 g. Los dos
+caminos de aquí —el polígono y OCCT— siguen coincidiendo; el de Onshape hay
+que rehacerlo regenerando la pieza con la variable nueva y volviendo a pesar.
+Hasta entonces este número vale lo que valen dos caminos, no tres.
 
 El contraste vale porque son **tres caminos que no comparten una línea de
 código**: el polígono de `core/solido.py`, el kernel OCCT de build123d y el de

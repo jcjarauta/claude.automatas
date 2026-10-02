@@ -587,9 +587,9 @@
         },
         {
           "nombre": "poste_largo",
-          "valor": 0.07,
+          "valor": 0.105,
           "unidad": "m",
-          "descripcion": "Largo del poste. Atraviesa los tres planos de leva, que es por lo que su casquillo es el obstaculo del hueco de conjunto",
+          "descripcion": "Largo del poste. Atraviesa los tres planos de leva —que es por lo que su casquillo es el obstaculo que mide el hueco— y ahora tambien el tercer plato: 70 de antes + 9 de plato + 20 de bahia del reductor = 99, redondeado a 105 por el margen de montaje",
           "tolerancia": ""
         },
         {
@@ -717,6 +717,20 @@
           "valor": 0.1,
           "unidad": "m",
           "descripcion": "Del eje de la manivela al centro del pomo —lo que la literatura llama radio de manivela—. NO se llama «radio» a proposito: no es el radio de ningun circulo que se dibuje, y con ese nombre el exportador le sacaria un gemelo de Ø200 que no mide nada. No es una eleccion de dibujo: es el numero que hace que los 4 N*m de par_maximo de C9 signifiquen 40 N en la mano, que es lo que empuja un adulto sin esforzarse. Vivia en un docstring de core/energy/humano.py y por eso no lo comprobaba nadie. La manivela es, por lo demas, UN BRAZO MAS: misma pletina de laton de 3, mismo cubo, mismo agujero en D y mismo perno de 6 en el extremo",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "reductor_bahia",
+          "valor": 0.02,
+          "unidad": "m",
+          "descripcion": "Hueco libre entre el plato 2 y el plato 3, donde vive el reductor. Suma lo que se apila: 4 de ancho de engranaje + 6 de volante + tres holguras de 2 = 16, redondeado a 20 por el collar de retencion y el montaje. El piñon y el volante quedan ENTRE los dos rodamientos; fuera solo la manivela",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "platina_manivela_angulo",
+          "valor": -1.5707963267948966,
+          "unidad": "rad",
+          "descripcion": "Donde cae el eje de la manivela alrededor del arbol, a reductor_entre_ejes (28). DETRAS del todo, en el sentido contrario al papel: el accionamiento entero se queda fuera de la zona de escritura y la manivela es igual de comoda para diestros y zurdos, que en un taller ocupacional importa. Es ademas el sector libre mas ancho, entre el poste de 240 y el pivote de 301,6. Negativo, asi que se teclea su gemelo en positivo y el agujero va bajo +X",
           "tolerancia": ""
         }
       ]

@@ -78,6 +78,14 @@ def platina(tmp_path: Path, **kw) -> Path:
     for cota in ("platina_pivote_angulo_izquierdo", "platina_pivote_angulo_derecho"):
         t, r = c[cota], c["platina_pivote_al_arbol"]
         agujeros.append((r * math.cos(t), r * math.sin(t), c["brazo_eje_diametro"] / 2))
+    t, r = c["platina_manivela_angulo"], c["reductor_entre_ejes"]
+    agujeros.append(
+        (
+            r * math.cos(t),
+            r * math.sin(t),
+            c["rodamiento_arbol_alojamiento_diametro"] / 2,
+        )
+    )
     return _step(tmp_path / "platina.step", agujeros, **kw)
 
 
@@ -120,11 +128,11 @@ def test_un_step_que_no_declara_su_unidad_se_para(tmp_path: Path):
 
 
 def test_un_solido_trae_cada_rasgo_dos_veces_y_se_compara_una_cara(tmp_path: Path):
-    """Seis agujeros y un contorno son siete círculos, no catorce. Contar las
-    dos caras invita a buscar el error donde no está."""
+    """Siete agujeros y un contorno son ocho círculos, no dieciséis. Contar
+    las dos caras invita a buscar el error donde no está."""
     entidades, circulares, _, _ = leer_step(platina(tmp_path))
-    assert entidades == {"CIRCLE": 7}
-    assert len(circulares) == 7
+    assert entidades == {"CIRCLE": 8}
+    assert len(circulares) == 8
 
 
 def test_el_que_volvio_de_onshape_con_los_dos_agujeros_cambiados():

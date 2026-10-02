@@ -10,7 +10,9 @@ antes.
 
 from __future__ import annotations
 
+import json
 import math
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -19,8 +21,12 @@ from pydantic import ValidationError
 from compile.conjunto import Cartucho
 from compile.contratos import Contrato, Contratos, Estado, Valor, cargar
 from compile.escribiente import Escribiente
+from core.comercial import PiezaComercial
 from core.escritura import Capacidad
+from emit.plataforma import contrato_mm
 from scripts.exportar_variables import csv, featurescript
+
+PIEZAS = Path(__file__).resolve().parents[2] / "docs" / "piezas"
 
 pytestmark = pytest.mark.core
 
@@ -319,3 +325,66 @@ def test_los_tres_rodillos_cuelgan_a_un_paso_de_pila_cada_uno(contratos: Contrat
     assert d[0] - d[1] == pytest.approx(paso, abs=1e-9)
     assert d[1] - d[2] == pytest.approx(paso, abs=1e-9)
     assert d[2] == pytest.approx(paso, abs=1e-9)
+
+
+def test_el_septimo_agujero_de_la_platina_deja_pared_a_todos_los_demas():
+    """**El apoyo del eje de la manivela no puede comerse otro agujero.**
+
+    La platina pasó de seis agujeros a siete, y el nuevo —el rodamiento de
+    la manivela, a 28 del árbol— cae cerca del alojamiento central: entre
+    los dos Ø19 quedan 9 mm de pared. Es el caso crítico, y es el que este
+    test vigila: comprobar un rasgo contra el contorno no dice nada de los
+    rasgos entre sí, que es la trampa que destapó la mordaza.
+    """
+    c = contrato_mm()
+    minima = c["holgura_minima"]
+    t = c["platina_manivela_angulo"]
+    mx, my = c["reductor_entre_ejes"] * math.cos(t), c["reductor_entre_ejes"] * math.sin(t)
+    radio_manivela = c["rodamiento_arbol_alojamiento_diametro"] / 2
+
+    # Contra el alojamiento del árbol, que está en el centro.
+    pared = c["reductor_entre_ejes"] - 2 * radio_manivela
+    assert pared >= minima, f"entre los dos Ø19 quedan {pared:.2f} mm"
+
+    vecinos = [
+        (c["poste_radio_al_arbol"], c["poste_reparto"] * i, c["poste_eje_diametro"])
+        for i in range(3)
+    ] + [
+        (c["platina_pivote_al_arbol"], c[f"platina_pivote_angulo_{lado}"], c["brazo_eje_diametro"])
+        for lado in ("izquierdo", "derecho")
+    ]
+    for radio, angulo, diametro in vecinos:
+        x, y = radio * math.cos(angulo), radio * math.sin(angulo)
+        pared = math.hypot(x - mx, y - my) - radio_manivela - diametro / 2
+        assert pared >= minima, f"el agujero a ({x:.1f}, {y:.1f}) deja {pared:.2f} mm"
+
+
+def test_el_volante_gira_dentro_de_la_silueta_del_plato():
+    """No es estética sola: un volante que sobresale es un disco de latón de
+    294 g girando al alcance de una manga. Centrado a 28 y con Ø104 llega a
+    80 del árbol, y el plato mide 85 de radio."""
+    c = contrato_mm()
+    llega = c["reductor_entre_ejes"] + c["volante_diametro"] / 2
+    assert llega <= c["platina_diametro"] / 2
+
+
+def test_la_bahia_del_reductor_cabe_lo_que_se_apila_dentro():
+    """La bahía la fija lo que lleva dentro, no un número redondo: el ancho
+    del piñón, el espesor del volante y las holguras. Si alguien engorda el
+    volante sin tocar la bahía, el plato 3 se apoya encima de él."""
+    c = contrato_mm()
+    ficha = PiezaComercial.model_validate(
+        json.loads((PIEZAS / "pinon_reductor.json").read_text(encoding="utf-8"))
+    )
+    ancho = float(ficha.cota("ancho").valor) * 1000.0
+    apilado = ancho + c["volante_espesor"] + 3 * 2.0
+    assert c["reductor_bahia"] >= apilado, (
+        f"la bahía mide {c['reductor_bahia']:g} y dentro se apilan {apilado:g}"
+    )
+
+
+def test_el_poste_llega_a_los_tres_platos():
+    """Pasó de 70 a 105 al añadir el tercer plato. El número no es libre: es
+    lo que medía antes más un plato más la bahía."""
+    c = contrato_mm()
+    assert c["poste_largo"] >= 70.0 + c["platina_espesor"] + c["reductor_bahia"]
