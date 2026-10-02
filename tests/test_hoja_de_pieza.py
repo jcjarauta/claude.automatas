@@ -305,3 +305,22 @@ def test_el_alzado_de_una_barra_solo_dibuja_la_cara_plana_si_la_pieza_la_tiene()
         assert tiene == bool(ficha.cara_plana), (
             f"{pieza}: la hoja {'la' if tiene else 'no la'} dibuja"
         )
+
+
+def test_un_rasgo_repetido_dice_cuantos_hay_en_la_flecha():
+    """**La directriz señala uno, y los otros se quedan sin acotar.**
+
+    El seguidor tiene tres Ø3,2 —el eje del rodillo y los dos tornillos al
+    sector— y un solo rótulo: quien lo dibujó acotó ese y dejó los otros dos
+    sueltos, con un «Ø?» escrito al lado en la captura. La leyenda decía los
+    nombres pero no cuántos eran.
+
+    «3× Ø3,2» es además como se rotula un repetido en cualquier plano, y la
+    leyenda reparte el recuento entre las cotas que comparten el valor.
+    """
+    texto = hoja(["seguidor"])
+    assert "3× Ø3.2" in texto
+    assert "#cota.union_sector_seguidor_diametro ×2" in texto
+    assert "#cota.seguidor_rodillo_diametro ×1" in texto
+    # Y lo que solo aparece una vez no lleva recuento, que seria ruido.
+    assert "1× " not in texto

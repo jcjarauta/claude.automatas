@@ -283,7 +283,19 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
         ang = math.radians(inclinaciones[len(puestos) % len(inclinaciones)])
         cx, cy = ox + e.centro[0] * k, oy - e.centro[1] * k
         lleno = abs(e.hasta - e.desde - 2 * math.pi) < 1e-9
-        texto = f"Ø{2 * e.radio:g}" if lleno else f"R{e.radio:g}"
+        # **Cuántos hay, en la propia flecha.** El seguidor tiene tres Ø3,2 y
+        # la directriz solo señala uno: quien dibujaba acotaba ese y dejaba
+        # los otros dos sueltos, que es lo que preguntó con un «Ø?» al lado.
+        # Decir «3×» es además como se rotula un repetido en cualquier plano.
+        cuantos = sum(
+            1
+            for o in perfil
+            if isinstance(o, Arco)
+            and abs(o.radio - e.radio) <= 1e-6
+            and (abs(o.hasta - o.desde - 2 * math.pi) < 1e-9) == lleno
+        )
+        marca = f"{cuantos}× " if cuantos > 1 else ""
+        texto = marca + (f"Ø{2 * e.radio:g}" if lleno else f"R{e.radio:g}")
         # La separación que hace falta la deciden los DOS textos, no un número
         # fijo: con 22 px valía para «R8» y no para «Ø95.95», que ya mide 20.
         meta = techo
@@ -312,7 +324,9 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
         mecanizado` no lo lleva al final, se quedaba con el radio y el sector
         salió a la mitad.
         """
-        if not texto.startswith("Ø"):
+        # El texto puede venir con el recuento delante —«3× Ø3.2»—, así que
+        # lo que decide es el símbolo, no el primer carácter.
+        if "Ø" not in texto:
             return cota
         doble = 2.0 * cotas[cota]
         return next(
@@ -334,7 +348,11 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
     leyenda = y + CABECERA - 4
     for radio, texto in puestos.items():
         cuales = [n for n in ficha.radios if abs(cotas[n] - radio) <= 1e-6]
-        nombres = " · ".join(f"#cota.{_como_se_teclea(c, texto)}" for c in cuales)
+        nombres = " · ".join(
+            f"#cota.{_como_se_teclea(c, texto)}"
+            + (f" ×{ficha.radios[c]}" if len(cuales) > 1 else "")
+            for c in cuales
+        )
         d.append(
             f'<text class="cotavar" x="{x + 10:.1f}" y="{leyenda:.1f}">{texto} → {nombres}</text>'
         )
