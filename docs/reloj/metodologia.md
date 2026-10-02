@@ -192,7 +192,7 @@ paramétrico se vuelva ingobernable. En el reloj hay tres clases:
 | --- | --- | --- |
 | `periodo_pendulo` | 2,0 s | La longitud del péndulo y la altura de la caja |
 | `dientes_escape` | 30 | Si hay aguja de segundos y qué relación pide el tren |
-| `autonomia_horas` | 30 | Vueltas de tambor, y si hace falta una rueda más |
+| `autonomia` | 30 | Vueltas de tambor, y si hace falta una rueda más |
 | `caida_disponible` | 1,0 m | La polea y la longitud de la cuerda |
 | `diametro_esfera` | 180 mm | Solo el aspecto. No toca el movimiento |
 

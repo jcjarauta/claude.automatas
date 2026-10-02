@@ -18,8 +18,16 @@ from pathlib import Path
 
 import pytest
 
-from compile.contratos import Contratos, Estado, cargar
-from scripts.exportar_variables import csv
+from compile.contratos import Contratos, Estado, Valor, cargar
+from scripts.exportar_variables import (
+    UNIDADES,
+    Tipo,
+    conversion_de,
+    convertir,
+    csv,
+    csv_por_tipo,
+    featurescript,
+)
 
 RELOJ = Path("docs/reloj/contratos.json")
 
@@ -135,9 +143,9 @@ def test_el_ancora_abarca_un_medio_diente_impar(reloj: Contratos):
 
 
 def test_las_vueltas_del_tambor_salen_de_la_autonomia(reloj: Contratos):
-    horas = reloj.valor("energia", "autonomia_horas").valor
-    por_vuelta = reloj.valor("energia", "horas_por_vuelta_rueda_grande").valor
-    assert reloj.valor("energia", "vueltas_tambor").valor == pytest.approx(horas / por_vuelta)
+    autonomia = reloj.valor("energia", "autonomia").valor
+    por_vuelta = reloj.valor("energia", "periodo_rueda_grande").valor
+    assert reloj.valor("energia", "vueltas_tambor").valor == pytest.approx(autonomia / por_vuelta)
 
 
 def test_la_cuerda_sale_de_la_caida_y_de_la_polea(reloj: Contratos):
@@ -204,4 +212,124 @@ def test_una_tolerancia_con_coma_no_parte_la_fila(reloj: Contratos, escribiente:
     for contratos in (reloj, escribiente):
         filas = list(modulo_csv.reader(csv(contratos).strip().split("\n")))
         anchos = {len(f) for f in filas}
-        assert anchos == {7}, f"filas con un número de columnas distinto: {sorted(anchos)}"
+        assert anchos == {10}, f"filas con un número de columnas distinto: {sorted(anchos)}"
+
+
+# ---------------------------------------------------------------------------
+# Unidades y tipos: que ninguna magnitud nueva salga como número pelado
+# ---------------------------------------------------------------------------
+
+
+def test_todas_las_unidades_del_reloj_saben_convertirse(reloj: Contratos):
+    """El reloj trajo `s`, `kg` y `N`, que el escribiente no tenía.
+
+    Antes de la tabla de conversión los tres salían como un número sin
+    unidad, indistinguibles de un número de dientes. Esto es lo que impide
+    que vuelva a pasar con la siguiente magnitud que aparezca.
+    """
+    for contrato in reloj.contratos:
+        for valor in contrato.valores:
+            assert valor.unidad in UNIDADES, (
+                f"'{valor.nombre}' usa '{valor.unidad}', que el exportador no convierte"
+            )
+
+
+def test_una_unidad_desconocida_revienta_en_vez_de_colarse():
+    """Pasar por adimensional sin avisar es peor que fallar: el número llega
+    al CAD con pinta de cota buena."""
+    inventada = Valor(nombre="x", valor=1.0, unidad="furlong", descripcion="una")
+    with pytest.raises(ValueError, match=r"no sabe convertir|furlong"):
+        conversion_de(inventada)
+
+
+def test_cada_magnitud_cae_en_el_tipo_que_le_toca(reloj: Contratos):
+    esperado = {
+        "longitud_pendulo_nominal": Tipo.LENGTH,
+        "eje_diametro": Tipo.LENGTH,
+        "amplitud_nominal": Tipo.ANGLE,
+        "dientes_escape": Tipo.NUMBER,
+        "vueltas_tambor": Tipo.NUMBER,
+        "periodo_pendulo": Tipo.REFERENCIA,
+        "masa_pesa": Tipo.REFERENCIA,
+        "tension_cuerda_techo": Tipo.REFERENCIA,
+    }
+    por_nombre = {v.nombre: v for c in reloj.contratos for v in c.valores}
+    for nombre, tipo in esperado.items():
+        assert conversion_de(por_nombre[nombre]).tipo is tipo, f"'{nombre}' no es {tipo}"
+
+
+def test_el_factor_convierte_de_verdad(reloj: Contratos):
+    """La columna `factor` está para poder auditar la conversión: el valor
+    del contrato por el factor tiene que dar el valor de la tabla."""
+    for contrato in reloj.contratos:
+        for valor in contrato.valores:
+            cifra, conversion = convertir(valor)
+            assert float(cifra) == pytest.approx(valor.valor * conversion.factor, rel=1e-6)
+
+
+def test_el_metro_sale_en_milimetros_y_el_radian_en_grados(reloj: Contratos):
+    assert UNIDADES["m"].factor == pytest.approx(1000.0)
+    assert UNIDADES["m"].simbolo == "mm"
+    assert UNIDADES["rad"].factor == pytest.approx(180.0 / math.pi)
+    assert UNIDADES["rad"].simbolo == "deg"
+
+
+def test_una_autonomia_larga_se_lee_en_horas_y_un_periodo_corto_en_segundos(reloj: Contratos):
+    """108.000 s es correcto y no lo lee nadie. La elección de unidad legible
+    es presentación, así que vive en la frontera y no en el contrato, que
+    guarda SI."""
+    autonomia = reloj.valor("energia", "autonomia")
+    cifra, conversion = convertir(autonomia)
+    assert conversion.simbolo == "h"
+    assert float(cifra) == pytest.approx(30.0)
+
+    periodo = reloj.valor("oscilador", "periodo_pendulo")
+    cifra, conversion = convertir(periodo)
+    assert conversion.simbolo == "s"
+    assert float(cifra) == pytest.approx(2.0)
+
+
+# ---------------------------------------------------------------------------
+# Que lo que no dimensiona no pueda dimensionar
+# ---------------------------------------------------------------------------
+
+
+def test_una_masa_no_entra_como_cota_en_el_featurescript(reloj: Contratos):
+    """Acotar un boceto con `#masa_pesa` no da ningún error en Onshape, y esa
+    es justo la razón de que las magnitudes de referencia salgan como
+    comentario y no como `export const`."""
+    texto = featurescript(reloj, maquina="el reloj", fuente=str(RELOJ))
+    for contrato in reloj.contratos:
+        for valor in contrato.valores:
+            declarada = f"export const {valor.nombre} =" in texto
+            assert declarada is conversion_de(valor).tipo.dimensiona, (
+                f"'{valor.nombre}' está del lado equivocado del FeatureScript"
+            )
+    assert "NO DIMENSIONA NADA" in texto
+    assert "// masa_pesa = 3.5 kg" in texto
+
+
+def test_lo_que_dimensiona_sigue_estando_entero(reloj: Contratos):
+    texto = featurescript(reloj, maquina="el reloj", fuente=str(RELOJ))
+    cotas = [
+        v.nombre for c in reloj.contratos for v in c.valores if conversion_de(v).tipo.dimensiona
+    ]
+    assert cotas, "el reloj no tiene ni una cota, algo va mal"
+    for nombre in cotas:
+        assert f"export const {nombre} =" in texto
+
+
+def test_hay_un_csv_por_tipo_y_suman_el_total(reloj: Contratos):
+    """Con un fichero por tipo no hay desplegable de Onshape que equivocar."""
+    tablas = csv_por_tipo(reloj)
+    assert Tipo.REFERENCIA in tablas, "las magnitudes de producto van en su propio fichero"
+    total = sum(len(texto.strip().split("\n")) - 1 for texto in tablas.values())
+    assert total == len(reloj.variables())
+
+
+def test_el_fichero_de_referencia_no_lleva_ninguna_cota(reloj: Contratos):
+    import csv as modulo_csv
+
+    filas = list(modulo_csv.reader(csv_por_tipo(reloj)[Tipo.REFERENCIA].strip().split("\n")))
+    for fila in filas[1:]:
+        assert fila[3] == Tipo.REFERENCIA.value

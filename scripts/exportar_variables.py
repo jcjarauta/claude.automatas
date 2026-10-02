@@ -2,7 +2,7 @@
 
     uv run python scripts/exportar_variables.py                    # escribiente, a la pantalla
     uv run python scripts/exportar_variables.py --out build/
-    uv run python scripts/exportar_variables.py --csv \
+    uv run python scripts/exportar_variables.py --csv --por-tipo \
         --contratos docs/reloj/contratos.json --out build/
 
 **Una tabla por maquina, y por tanto un documento de Onshape por maquina.**
@@ -28,15 +28,37 @@ se editan las variables dentro de Onshape: lo que se edite allí se pierde en
 la siguiente regeneración y, peor, deja de coincidir con lo que calcula el
 compilador sin que nadie se entere.
 
-**Unidades.** El compilador trabaja en metros y radianes; Onshape en
-milímetros y grados. La conversión ocurre aquí, que es la frontera, y no a
-medias por el camino.
+**Unidades y tipos.** El compilador trabaja en SI; Onshape en milímetros y
+grados. La conversión ocurre aquí, que es la frontera, y no a medias por el
+camino. Cada unidad declara su factor y **de qué tipo es la variable en
+Onshape**, porque no todas valen para lo mismo:
+
+| Tipo | Qué es | Qué se puede hacer con ella |
+| --- | --- | --- |
+| `LENGTH` | m -> mm | Acotar un boceto |
+| `ANGLE` | rad -> grados | Acotar un ángulo, un patrón circular |
+| `NUMBER` | adimensional | Contar dientes, pernos, repeticiones |
+| `REFERENCIA` | s, kg, N | **Nada.** No dimensiona geometría |
+
+Las de `REFERENCIA` existen porque el reloj trae magnitudes que el escribiente
+no tenía -un periodo, una masa, una tensión- y son decisiones de producto que
+hay que tener delante al dibujar. Pero **no son cotas**, y si entran en el
+Variable Studio como números pelados, antes o después alguien acota con
+`#masa_pesa` y nadie se entera hasta que la pieza está cortada. Por eso salen
+como comentario en el FeatureScript y en su propio fichero en el CSV.
+
+**Una unidad que esta tabla no conozca revienta en vez de pasar por
+adimensional.** Era el fallo de antes: el reloj metió `s`, `kg` y `N`, y los
+tres salían como un número sin unidad, indistinguibles de un número de
+dientes.
 
 Dos formatos:
 
 - **FeatureScript**, para pegar en una Feature Studio y llamarla desde el
   Variable Studio. Es el que conserva los comentarios.
-- **CSV**, por si se prefiere la tabla de variables importada.
+- **CSV**, por si se prefiere la tabla de variables importada. Con `--por-tipo`
+  sale un fichero por tipo, que es lo cómodo cuando el Variable Studio pide
+  elegir el tipo en un desplegable.
 """
 
 from __future__ import annotations
@@ -46,6 +68,8 @@ import csv as modulo_csv
 import io
 import math
 import sys
+from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
 
 from compile.contratos import RUTA, Contratos, Estado, Valor, cargar
@@ -55,14 +79,77 @@ CABECERA = """// Variables de {maquina}, generadas desde {fuente}
 // Version del contrato: {version}   Fecha: {fecha}
 """
 
+HORA = 3600.0
+"""Segundos. Una autonomía de 108.000 s es correcta y no la lee nadie."""
 
-def _valor_para_onshape(valor: Valor) -> tuple[str, str]:
-    """Devuelve (expresión, comentario) ya en unidades de Onshape."""
-    if valor.unidad == "m":
-        return f"{valor.en_mm:.4f} * millimeter", valor.descripcion
-    if valor.unidad == "rad":
-        return f"{math.degrees(valor.valor):.4f} * degree", valor.descripcion
-    return f"{valor.valor:.6g}", valor.descripcion
+
+class Tipo(StrEnum):
+    """Qué puede hacer Onshape con la variable."""
+
+    LENGTH = "LENGTH"
+    ANGLE = "ANGLE"
+    NUMBER = "NUMBER"
+    REFERENCIA = "REFERENCIA"
+
+    @property
+    def dimensiona(self) -> bool:
+        """Si vale para acotar algo. `REFERENCIA` no."""
+        return self is not Tipo.REFERENCIA
+
+
+@dataclass(frozen=True)
+class Conversion:
+    """Cómo pasa una magnitud del contrato a la frontera con el CAD."""
+
+    factor: float
+    simbolo: str
+    tipo: Tipo
+    sufijo: str
+    """Lo que se escribe detrás del número en FeatureScript."""
+    decimales: int
+
+
+UNIDADES: dict[str, Conversion] = {
+    "m": Conversion(1000.0, "mm", Tipo.LENGTH, " * millimeter", 4),
+    "rad": Conversion(180.0 / math.pi, "deg", Tipo.ANGLE, " * degree", 4),
+    "adimensional": Conversion(1.0, "", Tipo.NUMBER, "", 6),
+    "s": Conversion(1.0, "s", Tipo.REFERENCIA, "", 6),
+    "kg": Conversion(1.0, "kg", Tipo.REFERENCIA, "", 6),
+    "N": Conversion(1.0, "N", Tipo.REFERENCIA, "", 6),
+}
+
+
+def conversion_de(valor: Valor) -> Conversion:
+    """La conversión que le toca, o se rompe.
+
+    Un `KeyError` silencioso aquí sería una variable con unidad desconocida
+    saliendo como número pelado, que es exactamente como `masa_pesa` acabó
+    pareciéndose a un número de dientes.
+
+    El tiempo es el único caso con dos presentaciones: los periodos cortos se
+    leen en segundos y las autonomías en horas. La decisión es de presentación
+    y por eso vive aquí, en la frontera, y no en el contrato, que guarda SI.
+    """
+    if valor.unidad not in UNIDADES:
+        conocidas = ", ".join(sorted(UNIDADES))
+        raise ValueError(
+            f"'{valor.nombre}' usa la unidad '{valor.unidad}', que esta tabla no sabe "
+            f"convertir. Conocidas: {conocidas}. Añádela antes de exportar: sin esto "
+            "saldría como un número sin unidad y nadie podría distinguirla de una cuenta."
+        )
+    base = UNIDADES[valor.unidad]
+    if valor.unidad == "s" and abs(valor.valor) >= 2.0 * HORA:
+        return Conversion(1.0 / HORA, "h", base.tipo, base.sufijo, base.decimales)
+    return base
+
+
+def convertir(valor: Valor) -> tuple[str, Conversion]:
+    """El número ya en unidades de salida, y con qué se convirtió."""
+    conversion = conversion_de(valor)
+    cifra = f"{valor.valor * conversion.factor:.{conversion.decimales}f}"
+    if conversion.decimales > 4:
+        cifra = f"{valor.valor * conversion.factor:.6g}"
+    return cifra, conversion
 
 
 def featurescript(
@@ -70,61 +157,123 @@ def featurescript(
     maquina: str = "el escribiente",
     fuente: str = "docs/contratos.json",
 ) -> str:
-    """El bloque para pegar en una Feature Studio de Onshape."""
+    """El bloque para pegar en una Feature Studio de Onshape.
+
+    Lo que dimensiona sale como `export const`. Lo que no -masas, tiempos,
+    fuerzas- sale al final como comentario, para que esté delante de quien
+    dibuja sin que pueda acotar con ello.
+    """
     lineas = [
         CABECERA.format(
             maquina=maquina, fuente=fuente, version=contratos.version, fecha=contratos.fecha
         )
     ]
+    referencia: list[str] = []
     for contrato in contratos.contratos:
         estado = contrato.estado.value.upper()
+        cotas: list[str] = []
+        for valor in contrato.valores:
+            cifra, conversion = convertir(valor)
+            tolerancia = f"  [{valor.tolerancia}]" if valor.tolerancia else ""
+            if conversion.tipo.dimensiona:
+                cotas.append(
+                    f"export const {valor.nombre} = {cifra}{conversion.sufijo};"
+                    f"  // {conversion.tipo.value} · {valor.descripcion}{tolerancia}"
+                )
+            else:
+                referencia.append(
+                    f"// {valor.nombre} = {cifra} {conversion.simbolo}"
+                    f"  // {valor.descripcion}{tolerancia}"
+                )
+        if not cotas:
+            continue
         lineas.append(f"// ---- {contrato.nombre.upper()} · {estado} ----")
         lineas.append(f"// {contrato.porque}")
         if contrato.estado is Estado.PENDIENTE:
             lineas.append("// OJO: pendiente de medir. Se puede dibujar, no se puede prometer.")
-        for valor in contrato.valores:
-            expresion, comentario = _valor_para_onshape(valor)
-            tolerancia = f"  [{valor.tolerancia}]" if valor.tolerancia else ""
-            lineas.append(
-                f"export const {valor.nombre} = {expresion};  // {comentario}{tolerancia}"
-            )
+        lineas.extend(cotas)
+        lineas.append("")
+    if referencia:
+        lineas.append("// ---- REFERENCIA · NO DIMENSIONA NADA ----")
+        lineas.append("// Magnitudes de producto, no cotas. Van como comentario a proposito:")
+        lineas.append("// acotar un boceto con una masa o con un periodo no da ningun error.")
+        lineas.extend(referencia)
         lineas.append("")
     return "\n".join(lineas)
 
 
-def csv(contratos: Contratos) -> str:
-    """La tabla, por si se importa en vez de pegarse.
+CABECERA_CSV = [
+    "nombre",
+    "valor",
+    "unidad",
+    "tipo",
+    "factor",
+    "unidad_contrato",
+    "contrato",
+    "estado",
+    "tolerancia",
+    "descripcion",
+]
 
-    Se escribe con el modulo `csv` y no a mano porque una tolerancia o una
-    descripcion pueden llevar coma -`m6 en el plato metalico, deslizante en
-    el POM` la lleva- y a mano eso parte la fila en dos columnas de mas sin
-    que nada avise.
+
+def filas(contratos: Contratos) -> list[list[str]]:
+    """Una fila por variable, ya convertida, con el factor a la vista.
+
+    El factor va en su columna para que la conversión sea auditable: la regla
+    3 dice que nunca se convierte a medias, y la forma de comprobarlo es poder
+    multiplicar el valor del contrato y que salga el de la tabla.
     """
-    buffer = io.StringIO()
-    escritor = modulo_csv.writer(buffer, lineterminator="\n")
-    escritor.writerow(
-        ["nombre", "valor", "unidad", "contrato", "estado", "tolerancia", "descripcion"]
-    )
+    salida: list[list[str]] = []
     for contrato in contratos.contratos:
         for valor in contrato.valores:
-            if valor.unidad == "m":
-                cifra, unidad = f"{valor.en_mm:.4f}", "mm"
-            elif valor.unidad == "rad":
-                cifra, unidad = f"{math.degrees(valor.valor):.4f}", "deg"
-            else:
-                cifra, unidad = f"{valor.valor:.6g}", valor.unidad.replace("adimensional", "")
-            escritor.writerow(
+            cifra, conversion = convertir(valor)
+            salida.append(
                 [
                     valor.nombre,
                     cifra,
-                    unidad,
+                    conversion.simbolo,
+                    conversion.tipo.value,
+                    f"{conversion.factor:.10g}",
+                    valor.unidad,
                     contrato.nombre,
                     contrato.estado.value,
                     valor.tolerancia,
                     valor.descripcion,
                 ]
             )
+    return salida
+
+
+def _escribir_csv(cabecera: list[str], cuerpo: list[list[str]]) -> str:
+    buffer = io.StringIO()
+    escritor = modulo_csv.writer(buffer, lineterminator="\n")
+    escritor.writerow(cabecera)
+    escritor.writerows(cuerpo)
     return buffer.getvalue()
+
+
+def csv(contratos: Contratos) -> str:
+    """La tabla entera, por si se importa en vez de pegarse.
+
+    Se escribe con el modulo `csv` y no a mano porque una tolerancia o una
+    descripcion pueden llevar coma -`m6 en el plato metalico, deslizante en
+    el POM` la lleva- y a mano eso parte la fila en dos columnas de mas sin
+    que nada avise.
+    """
+    return _escribir_csv(CABECERA_CSV, filas(contratos))
+
+
+def csv_por_tipo(contratos: Contratos) -> dict[Tipo, str]:
+    """Una tabla por tipo de variable de Onshape.
+
+    El Variable Studio pide el tipo en un desplegable al crear cada variable.
+    Con un fichero por tipo no hay desplegable que equivocar, y las de
+    `REFERENCIA` quedan en un fichero aparte que nadie va a importar.
+    """
+    reparto: dict[Tipo, list[list[str]]] = {}
+    for fila in filas(contratos):
+        reparto.setdefault(Tipo(fila[3]), []).append(fila)
+    return {tipo: _escribir_csv(CABECERA_CSV, cuerpo) for tipo, cuerpo in reparto.items()}
 
 
 def _maquina_de(fuente: Path) -> str:
@@ -142,6 +291,11 @@ def main(argv: list[str] | None = None) -> int:
     partes.add_argument("--out", type=Path, default=None, help="carpeta donde escribir")
     partes.add_argument("--csv", action="store_true", help="CSV en vez de FeatureScript")
     partes.add_argument(
+        "--por-tipo",
+        action="store_true",
+        help="un CSV por tipo de variable de Onshape, en vez de uno solo",
+    )
+    partes.add_argument(
         "--contratos",
         type=Path,
         default=None,
@@ -157,21 +311,37 @@ def main(argv: list[str] | None = None) -> int:
     fuente = opciones.contratos if opciones.contratos is not None else RUTA
     maquina = opciones.maquina or _maquina_de(fuente)
     contratos = cargar(fuente)
-    texto = (
-        csv(contratos)
-        if opciones.csv
-        else featurescript(contratos, maquina=f"el {maquina}", fuente=str(fuente))
-    )
+
+    if opciones.por_tipo and not opciones.csv:
+        print("--por-tipo solo tiene sentido con --csv", file=sys.stderr)
+        return 2
+
+    if opciones.por_tipo:
+        tablas = {
+            f"variables-{maquina}-{tipo.value.lower()}.csv": texto
+            for tipo, texto in csv_por_tipo(contratos).items()
+        }
+    else:
+        nombre = f"variables-{maquina}.{'csv' if opciones.csv else 'fs'}"
+        texto = (
+            csv(contratos)
+            if opciones.csv
+            else featurescript(contratos, maquina=f"el {maquina}", fuente=str(fuente))
+        )
+        tablas = {nombre: texto}
 
     if opciones.out is None:
-        print(texto)
+        for nombre, texto in tablas.items():
+            if len(tablas) > 1:
+                print(f"==== {nombre} ====")
+            print(texto)
         return 0
 
     opciones.out.mkdir(parents=True, exist_ok=True)
-    nombre = f"variables-{maquina}.{'csv' if opciones.csv else 'fs'}"
-    ruta = opciones.out / nombre
-    ruta.write_text(texto, encoding="utf-8")
-    print(f"escrito {ruta}")
+    for nombre, texto in tablas.items():
+        ruta = opciones.out / nombre
+        ruta.write_text(texto, encoding="utf-8")
+        print(f"escrito {ruta}")
     return 0
 
 

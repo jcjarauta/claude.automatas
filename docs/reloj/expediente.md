@@ -84,7 +84,7 @@ que cualquier otro módulo del catálogo.
     {"nombre": "programa","vueltas_por_hora": 0.0417,"par_sobrante": 0.0310, "sentido": "horario"}
   ],
   "contrato_eje": "eje_v1",
-  "autonomia_horas": 30
+  "autonomia_horas": 30,  // en la ficha de tiempo sigue en horas, que es lo util fuera
 }
 ```
 

@@ -124,10 +124,10 @@
       "porque": "La masa de la pesa NO se calcula: sale del par minimo medido en el banco de escape (R2)",
       "valores": [
         {
-          "nombre": "autonomia_horas",
-          "valor": 30.0,
-          "unidad": "h",
-          "descripcion": "Primera generacion. Ocho dias piden una rueda mas y un tambor mayor",
+          "nombre": "autonomia",
+          "valor": 108000.0,
+          "unidad": "s",
+          "descripcion": "Primera generacion, 30 h. Ocho dias piden una rueda mas y un tambor mayor",
           "tolerancia": ""
         },
         {
@@ -145,17 +145,17 @@
           "tolerancia": ""
         },
         {
-          "nombre": "horas_por_vuelta_rueda_grande",
-          "valor": 4.0,
-          "unidad": "h",
-          "descripcion": "Con la rueda grande de 64 dientes moviendo la linterna de 16 de la central",
+          "nombre": "periodo_rueda_grande",
+          "valor": 14400.0,
+          "unidad": "s",
+          "descripcion": "4 h, con la rueda grande de 64 dientes moviendo la linterna de 16 de la central",
           "tolerancia": "sale del tren"
         },
         {
           "nombre": "vueltas_tambor",
           "valor": 7.5,
           "unidad": "adimensional",
-          "descripcion": "autonomia_horas / horas_por_vuelta_rueda_grande. Son las gargantas que lleva el tambor",
+          "descripcion": "autonomia / periodo_rueda_grande. Son las gargantas que lleva el tambor",
           "tolerancia": "derivada"
         },
         {

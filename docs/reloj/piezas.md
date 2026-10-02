@@ -48,7 +48,7 @@ Solo las de **nivel 0** se teclean.
 | --- | --- | --- | --- |
 | `periodo_pendulo` | s | 2,0 | Longitud del péndulo, altura de la caja, vuelta de la rueda de escape |
 | `dientes_escape` | — | 30 | Aguja de segundos, relación que pide el tren |
-| `autonomia_horas` | h | 30 | Vueltas del tambor, nº de ruedas del tren |
+| `autonomia` | h | 30 | Vueltas del tambor, nº de ruedas del tren |
 | `caida_disponible` | m | 1,0 | Polea, longitud de cuerda, diámetro del tambor |
 | `diametro_esfera` | mm | 180 | Solo esfera, agujas y caja. **No toca el movimiento** |
 
@@ -59,7 +59,7 @@ Solo las de **nivel 0** se teclean.
 | `longitud_pendulo` | `g·T²/4π²`, corregido por inercia real | 994 mm |
 | `vuelta_rueda_escape` | `dientes_escape × periodo_pendulo` | 60 s |
 | `relacion_tren` | `3600 / vuelta_rueda_escape` | 60:1 |
-| `vueltas_tambor` | `autonomia_horas / horas_por_vuelta_rueda_grande` | 7,5 |
+| `vueltas_tambor` | `autonomia / periodo_rueda_grande` | 7,5 |
 | `longitud_cuerda` | `caida_disponible × ramales_polea` | 2,0 m |
 | `diametro_tambor` | `longitud_cuerda / (π · vueltas_tambor)` | 85 mm |
 
