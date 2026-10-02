@@ -10,6 +10,7 @@ Fecha de este estado: **2026-10-02**. Rama: `reloj`.
 | Si buscas | Ve a |
 | --- | --- |
 | Cómo se diseña, se prueba y se documenta | `docs/reloj/metodologia.md` |
+| El recorrido de diseño, de la primera pieza al bastidor | `docs/reloj/plan-de-diseno.md` |
 | Qué piezas hay, en qué orden se hacen y de qué parámetro sale cada una | `docs/reloj/piezas.md` |
 | Los números que no se tocan | `docs/reloj/contratos.json` |
 | Las etapas y sus puertas | `docs/reloj/ROADMAP.md` |

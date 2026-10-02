@@ -4,6 +4,8 @@ Cómo se diseña un reloj de pared de péndulo, cómo se prueba antes de gastar
 dinero, y qué sale por la puerta con cada unidad.
 
 - El **expediente** (`docs/reloj/expediente.md`) dice qué es y en qué punto está.
+- El **plan de diseño** (`plan-de-diseno.md`) recorre esto pieza a pieza, de la
+  primera al bastidor.
 - Las **piezas** (`docs/reloj/piezas.md`) dicen qué se fabrica, en qué orden y
   de qué parámetro sale cada una.
 - Los **contratos** (`docs/reloj/contratos.json`) dicen qué números no se tocan.
