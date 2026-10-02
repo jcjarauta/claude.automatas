@@ -37,13 +37,14 @@ TINTA = "#1a1a1a"
 COTA = "#0b63c5"
 AUX = "#9aa0a6"
 
-CABEZA = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 {alto}"
+CABEZA = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {ancho} {alto}"
  font-family="Helvetica, Arial, sans-serif">
 <defs><marker id="f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7"
  orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="{cota}"/></marker></defs>
-<rect x="0" y="0" width="760" height="{alto}" fill="#ffffff"/>"""
-"""El alto es de cada hoja: el ancho de 760 no, porque lo fija el rotulo de
-variable mas largo y ese es el mismo en todas."""
+<rect x="0" y="0" width="{ancho}" height="{alto}" fill="#ffffff"/>"""
+"""Cada hoja declara su tamano. Lo que lo fija no es la pieza -el soporte cabe
+en una tarjeta- sino cuantas vistas hay y lo largo que es el rotulo de
+variable mas largo, que ronda los ciento veinte pixeles."""
 
 
 def _texto(
@@ -61,17 +62,26 @@ def _texto(
     )
 
 
-def _cota_h(x0: float, x1: float, y: float, etiqueta: str, variable: str) -> str:
-    """Cota horizontal con sus lineas de referencia."""
-    medio = (x0 + x1) / 2
+def _cota_h(
+    x0: float, x1: float, y: float, etiqueta: str, variable: str, fuera: bool = False
+) -> str:
+    """Cota horizontal con sus lineas de referencia.
+
+    `fuera` saca el bloque de texto por la izquierda, para una cota corta: el
+    rotulo de la variable mide mas de cien pixeles y una cota de seis
+    milimetros no tiene donde ponerlo entre sus dos flechas."""
+    if fuera:
+        tx, ancla = x0 - 6, "end"
+    else:
+        tx, ancla = (x0 + x1) / 2, "middle"
     return "".join(
         [
             f'<path d="M{x0:.1f} {y - 22:.1f}V{y + 4:.1f}" stroke="{AUX}" stroke-width="0.6"/>',
             f'<path d="M{x1:.1f} {y - 22:.1f}V{y + 4:.1f}" stroke="{AUX}" stroke-width="0.6"/>',
             f'<path d="M{x0:.1f} {y:.1f}H{x1:.1f}" stroke="{COTA}" stroke-width="1" '
             f'marker-start="url(#f)" marker-end="url(#f)"/>',
-            _texto(medio, y - 5, etiqueta, 10, COTA, peso="bold"),
-            _texto(medio, y + 13, variable, 7.5, AUX),
+            _texto(tx, y - 5, etiqueta, 10, COTA, ancla=ancla, peso="bold"),
+            _texto(tx, y + 13, variable, 7.5, AUX, ancla=ancla),
         ]
     )
 
@@ -131,7 +141,7 @@ def varilla(c: Contratos) -> str:
     # de la lenteja. Es la cadena entera y tiene que cerrar en el rotulo.
     al_centro = nominal - flexion - largo
 
-    p: list[str] = [CABEZA.format(cota=COTA, alto=560)]
+    p: list[str] = [CABEZA.format(cota=COTA, ancho=760, alto=560)]
     p.append(_texto(34, 34, "1.1 · VARILLA DEL PÉNDULO", 15, TINTA, "start", "bold"))
     p.append(
         _texto(
@@ -333,7 +343,7 @@ def lenteja(c: Contratos) -> str:
     masa = c.valor("lenteja", "lenteja_masa").valor
     centro = c.valor("lenteja", "lenteja_centro_bajo_varilla").en_mm
 
-    p: list[str] = [CABEZA.format(cota=COTA, alto=560)]
+    p: list[str] = [CABEZA.format(cota=COTA, ancho=760, alto=560)]
     p.append(_texto(34, 34, "1.2 \u00b7 LENTEJA", 15, TINTA, "start", "bold"))
     p.append(
         _texto(
@@ -503,21 +513,28 @@ def soporte(c: Contratos) -> str:
     Su canto de abajo es el datum del pendulo entero: de ahi empieza a contar
     el tramo libre del muelle, y a la mitad de ese tramo esta el punto de
     flexion del que cuelgan los 994 mm.
+
+    Tres vistas y no dos: el bloque, la placa de apriete -que es otra pieza,
+    aunque se taladre con el- y el montaje. La placa en la vista frontal del
+    bloque no se ve, y era justo donde faltaban cotas.
     """
     anc = c.valor("suspension", "soporte_ancho").en_mm
     alt = c.valor("suspension", "soporte_alto").en_mm
     esp = c.valor("suspension", "soporte_espesor").en_mm
     placa = c.valor("suspension", "soporte_placa_espesor").en_mm
+    placa_anc = c.valor("suspension", "soporte_placa_ancho").en_mm
+    placa_alt = c.valor("suspension", "soporte_placa_alto").en_mm
     tor = c.valor("suspension", "soporte_tornillo_diametro").en_mm
     sep = c.valor("suspension", "soporte_tornillo_separacion").en_mm
     canto = c.valor("suspension", "soporte_tornillo_al_canto").en_mm
+    lado = c.valor("suspension", "soporte_tornillo_al_lado").en_mm
     libre = c.valor("suspension", "muelle_largo_libre").en_mm
     flexion = c.valor("suspension", "muelle_flexion_a_varilla").en_mm
     mu_anc = c.valor("suspension", "muelle_ancho").en_mm
     va_esp = c.valor("pendulo", "varilla_espesor").en_mm
 
     e = 2.0
-    p: list[str] = [CABEZA.format(cota=COTA, alto=560)]
+    p: list[str] = [CABEZA.format(cota=COTA, ancho=1020, alto=570)]
     p.append(_texto(34, 34, "1.4 \u00b7 SOPORTE DE SUSPENSI\u00d3N", 15, TINTA, "start", "bold"))
     p.append(
         _texto(
@@ -530,30 +547,39 @@ def soporte(c: Contratos) -> str:
         )
     )
 
-    # ---- vista frontal ---------------------------------------------------
-    # Los rotulos de variable son largos (#cota.soporte_tornillo_separacion
-    # son 33 caracteres) y mandan sobre la colocacion mas que la pieza.
+    def taladros(cx: float, y: float) -> list[str]:
+        return [
+            f'<circle cx="{cx + dx:.1f}" cy="{y:.1f}" r="{tor * e / 2:.2f}" fill="none" '
+            f'stroke="{TINTA}" stroke-width="1.2"/>'
+            for dx in (-sep * e / 2, sep * e / 2)
+        ]
+
+    # ---- vista 1, el bloque ---------------------------------------------
+    # El muelle no se dibuja aqui: en la frontal queda detras y lo unico que
+    # hacia era tapar el sitio donde van las cotas de los taladros.
     x0, y0 = 150.0, 140.0
     w, h = anc * e, alt * e
-    p.append(_texto(x0 - 56, 92, "VISTA FRONTAL \u00b7 escala 2:1", 9, TINTA, "start"))
-    cxm = x0 + w / 2
-    yt = y0 + h - canto * e
+    cxm, yt = x0 + w / 2, y0 + h - canto * e
     p.append(
-        f'<rect x="{cxm - mu_anc * e / 2:.1f}" y="{y0 + 12:.1f}" width="{mu_anc * e:.1f}" '
-        f'height="{h - 12 + 16:.1f}" fill="{COTA}" fill-opacity="0.12" stroke="{COTA}" '
-        f'stroke-width="0.9" stroke-dasharray="4 2"/>'
+        _texto(x0 - 56, 92, "EL BLOQUE \u00b7 vista frontal \u00b7 escala 2:1", 9, TINTA, "start")
+    )
+    # La razon de que la separacion sea 24 con un fleje de 12 no se ve en el
+    # dibujo, porque el fleje queda detras: va escrita.
+    p.append(
+        _texto(
+            x0 - 56,
+            105,
+            f"el fleje de {mu_anc:.0f} pasa entre los dos tornillos",
+            8,
+            AUX,
+            "start",
+        )
     )
     p.append(
         f'<rect x="{x0}" y="{y0}" width="{w:.1f}" height="{h:.1f}" fill="none" '
         f'stroke="{TINTA}" stroke-width="1.4"/>'
     )
-    for dx in (-sep * e / 2, sep * e / 2):
-        p.append(
-            f'<circle cx="{cxm + dx:.1f}" cy="{yt:.1f}" r="{tor * e / 2:.2f}" fill="none" '
-            f'stroke="{TINTA}" stroke-width="1.2"/>'
-        )
-    p.append(_texto(cxm, y0 + h + 32, "el muelle, detr\u00e1s", 8, COTA))
-    p.append(_cota_h(x0, x0 + w, y0 + h + 62, f"{anc:.0f}", "#cota.soporte_ancho"))
+    p += taladros(cxm, yt)
     p.append(
         _cota_h(
             cxm - sep * e / 2,
@@ -563,6 +589,17 @@ def soporte(c: Contratos) -> str:
             "#cota.soporte_tornillo_separacion",
         )
     )
+    p.append(
+        _cota_h(
+            x0,
+            cxm - sep * e / 2,
+            y0 + h + 30,
+            f"{lado:.0f}",
+            "#cota.soporte_tornillo_al_lado",
+            fuera=True,
+        )
+    )
+    p.append(_cota_h(x0, x0 + w, y0 + h + 62, f"{anc:.0f}", "#cota.soporte_ancho"))
     p.append(_cota_v(y0, y0 + h, x0 - 30, f"{alt:.0f}", "#cota.soporte_alto", desde=x0))
     p.append(
         _cota_v(
@@ -582,10 +619,34 @@ def soporte(c: Contratos) -> str:
     p.append(_texto(xd + 44, yd - 48, f"2 \u00d7 \u00d8{tor:.1f}", 9.5, COTA, "start", "bold"))
     p.append(_texto(xd + 44, yd - 38, "#cota.soporte_tornillo_diametro", 7.5, AUX, "start"))
 
-    # ---- vista lateral, el montaje --------------------------------------
-    sx = 470.0
+    # ---- vista 2, la placa de apriete ------------------------------------
+    px, pw, ph = 400.0, placa_anc * e, placa_alt * e
+    py = y0 + h - ph  # al ras del canto de apriete, que es el datum
+    pcx = px + pw / 2
+    p.append(_texto(px, 92, "LA PLACA \u00b7 escala 2:1", 9, TINTA, "start"))
+    p.append(_texto(px, 105, "se taladra con el bloque", 8, AUX, "start"))
     p.append(
-        _texto(sx - 90, 92, "VISTA LATERAL \u00b7 el montaje \u00b7 escala 2:1", 9, TINTA, "start")
+        f'<rect x="{px}" y="{py:.1f}" width="{pw:.1f}" height="{ph:.1f}" fill="{AUX}" '
+        f'fill-opacity="0.12" stroke="{TINTA}" stroke-width="1.4"/>'
+    )
+    p += taladros(pcx, y0 + h - canto * e)
+    p.append(_cota_h(px, px + pw, y0 + h + 62, f"{placa_anc:.0f}", "#cota.soporte_placa_ancho"))
+    p.append(
+        _cota_v(
+            py,
+            y0 + h,
+            px + pw + 26,
+            f"{placa_alt:.0f}",
+            "#cota.soporte_placa_alto",
+            desde=px + pw,
+            lado="der",
+        )
+    )
+
+    # ---- vista 3, el montaje --------------------------------------------
+    sx = 700.0
+    p.append(
+        _texto(sx - 60, 92, "EL MONTAJE \u00b7 vista lateral \u00b7 escala 2:1", 9, TINTA, "start")
     )
     p.append(
         f'<rect x="{sx}" y="{y0}" width="{esp * e:.1f}" height="{h:.1f}" fill="{AUX}" '
@@ -593,11 +654,20 @@ def soporte(c: Contratos) -> str:
     )
     xm = sx + esp * e
     p.append(
-        f'<rect x="{xm + 2:.1f}" y="{y0}" width="{placa * e:.1f}" height="{h:.1f}" fill="{AUX}" '
-        f'fill-opacity="0.18" stroke="{TINTA}" stroke-width="1.4"/>'
+        f'<rect x="{xm + 2:.1f}" y="{py:.1f}" width="{placa * e:.1f}" height="{ph:.1f}" '
+        f'fill="{AUX}" fill-opacity="0.18" stroke="{TINTA}" stroke-width="1.4"/>'
     )
-    p.append(_texto(sx - 8, y0 + 14, "bloque", 8, AUX, "end"))
-    p.append(_texto(xm + placa * e + 14, y0 + 12, "placa", 8, AUX, "start"))
+    p.append(_texto(sx - 8, y0 + 16, "bloque", 8, AUX, "end"))
+    p.append(_texto(xm + placa * e + 14, py + 14, "placa", 8, AUX, "start"))
+    p.append(
+        _cota_h(
+            sx,
+            xm + 2 + placa * e,
+            y0 - 22,
+            f"{esp:.0f} + {placa:.0f}",
+            "#cota.soporte_espesor",
+        )
+    )
     yc_canto = y0 + h
     yf = yc_canto + flexion * e
     ylib = yc_canto + libre * e
@@ -627,39 +697,37 @@ def soporte(c: Contratos) -> str:
         )
     )
     p.append(
-        _cota_v(yc_canto, yf, sx - 42, f"{flexion:.0f}", "#cota.muelle_flexion_a_varilla", desde=sx)
+        _cota_v(
+            yc_canto,
+            yf,
+            xm + 50,
+            f"{flexion:.0f}",
+            "#cota.muelle_flexion_a_varilla",
+            desde=xm,
+            lado="der",
+        )
     )
     p.append(
         _cota_v(
             yc_canto,
             ylib,
-            xm + 50,
+            xm + 150,
             f"{libre:.0f}",
             "#cota.muelle_largo_libre",
             desde=xm,
             lado="der",
         )
     )
-    # El espesor se ve a lo ancho en esta vista: acotarlo en vertical era
-    # medir el alto del bloque por segunda vez y con el numero equivocado.
-    p.append(
-        _cota_h(
-            sx,
-            xm + 2 + placa * e,
-            y0 - 22,
-            f"{esp:.0f} + {placa:.0f}",
-            "#cota.soporte_espesor",
-        )
-    )
 
+    ancho_hoja = 1020 - 68
     p.append(
-        '<rect x="34" y="384" width="692" height="30" rx="4" fill="#fff4e5" '
+        f'<rect x="34" y="390" width="{ancho_hoja}" height="30" rx="4" fill="#fff4e5" '
         'stroke="#d98324" stroke-width="1"/>'
     )
     p.append(
         _texto(
             46,
-            403,
+            409,
             "EL CANTO DE ABAJO DEL BLOQUE ES EL DATUM DEL P\u00c9NDULO. Si se monta "
             "1 mm m\u00e1s arriba, el reloj atrasa 43 s al d\u00eda.",
             9.5,
@@ -669,7 +737,7 @@ def soporte(c: Contratos) -> str:
         )
     )
     p.append(
-        f'<rect x="34" y="432" width="692" height="104" fill="none" stroke="{TINTA}" '
+        f'<rect x="34" y="438" width="{ancho_hoja}" height="104" fill="none" stroke="{TINTA}" '
         'stroke-width="1.2"/>'
     )
     campos = [
@@ -682,11 +750,13 @@ def soporte(c: Contratos) -> str:
         ("Conjunto", "P\u00e9ndulo \u00b7 tanda 1"),
         ("Estado", "PENDIENTE \u00b7 sin anclaje"),
     ]
+    celda = ancho_hoja / 4
     for i, (k, v) in enumerate(campos):
-        bx = 34 + (i % 4) * 173
-        by = 432 + (i // 4) * 52
+        bx = 34 + (i % 4) * celda
+        by = 438 + (i // 4) * 52
         p.append(
-            f'<path d="M{bx} {by}h173v52h-173z" fill="none" stroke="{AUX}" stroke-width="0.6"/>'
+            f'<path d="M{bx:.1f} {by}h{celda:.1f}v52h-{celda:.1f}z" fill="none" '
+            f'stroke="{AUX}" stroke-width="0.6"/>'
         )
         p.append(_texto(bx + 10, by + 18, k.upper(), 7.5, AUX, "start"))
         p.append(_texto(bx + 10, by + 37, v, 11, TINTA, "start", "bold"))

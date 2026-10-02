@@ -681,3 +681,37 @@ def test_el_recorrido_de_la_tuerca_cubre_el_error_de_montaje(reloj: Contratos):
     recorrido = (saliente - espesor) / 2.0
     segundos_por_dia = 0.5 * recorrido / nominal * 86400.0
     assert segundos_por_dia >= 300.0, f"solo {segundos_por_dia:.0f} s/dia de margen"
+
+
+def test_la_posicion_lateral_de_los_taladros_es_derivada(reloj: Contratos):
+    """«Centrado» no es una cota: en el taller se marca desde el canto con un
+    lápiz, y hace falta el número. Sale del ancho y la separación, así que si
+    alguno de los dos se mueve y este no, el boceto miente."""
+    ancho = reloj.valor("suspension", "soporte_ancho").en_mm
+    sep = reloj.valor("suspension", "soporte_tornillo_separacion").en_mm
+    lado = reloj.valor("suspension", "soporte_tornillo_al_lado").en_mm
+    assert lado == pytest.approx((ancho - sep) / 2.0, abs=0.01)
+
+
+def test_la_placa_de_apriete_mide_lo_mismo_de_ancho_que_el_bloque(reloj: Contratos):
+    """Se taladran juntos. Si no coinciden de ancho, los taladros tampoco."""
+    assert reloj.valor("suspension", "soporte_placa_ancho").en_mm == pytest.approx(
+        reloj.valor("suspension", "soporte_ancho").en_mm, abs=0.01
+    )
+
+
+def test_la_placa_pasa_de_los_tornillos(reloj: Contratos):
+    """Si la placa se queda por debajo de la línea de tornillos, el fleje
+    empieza a flexar donde la placa acaba y no donde dice el contrato: el
+    datum del péndulo se mueve sin que nadie lo vea."""
+    alto = reloj.valor("suspension", "soporte_placa_alto").en_mm
+    canto = reloj.valor("suspension", "soporte_tornillo_al_canto").en_mm
+    tornillo = reloj.valor("suspension", "soporte_tornillo_diametro").en_mm
+    assert alto - canto - tornillo / 2.0 >= 3.0
+
+
+def test_la_placa_no_sobresale_del_bloque(reloj: Contratos):
+    assert (
+        reloj.valor("suspension", "soporte_placa_alto").en_mm
+        <= reloj.valor("suspension", "soporte_alto").en_mm
+    )

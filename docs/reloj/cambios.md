@@ -70,5 +70,25 @@ libre, depende de la carga. Lo mide R1 en el banco. Si sale distinto, se
 corrige ahí y `varilla_largo` se recalcula sola — que es precisamente para lo
 que se derivó en vez de elegirse.
 
+### Tres cotas que faltaban, y por qué faltaban
+
+Salieron de mirar el boceto, no de calcular: las tres son cosas que el dibujo
+daba por supuestas y que con un lápiz no se pueden marcar.
+
+| Cota | Valor | Qué se daba por supuesto |
+| --- | --- | --- |
+| `soporte_tornillo_al_lado` | **6 mm** (derivada) | Que los taladros van «centrados». Centrado es una restricción del CAD; en el banco se marca desde el canto, y hacía falta el número |
+| `soporte_placa_ancho` | **36 mm** (derivada) | Que la placa mide lo mismo que el bloque. Se taladran juntos: si no coinciden, los taladros tampoco |
+| `soporte_placa_alto` | **24 mm** | Que la placa «cubre». Si se queda por debajo de la línea de tornillos, el fleje flexa desde donde la placa acaba y el datum se mueve sin que nadie lo vea |
+
+Las tres dejan margen holgado y hay un test por cada una: 3,9 mm de pared al
+canto lateral, 3,9 mm del tornillo al borde del fleje y 11,9 mm de placa por
+encima de los tornillos.
+
+El boceto pasa a **tres vistas** —el bloque, la placa y el montaje— porque la
+placa no se ve en la frontal del bloque, y era justo donde faltaban cotas. El
+fleje desaparece de la vista frontal: quedaba detrás y lo único que hacía era
+tapar el sitio donde van las cotas de los taladros.
+
 **Queda PENDIENTE el anclaje al bastidor**, que es la pieza 1.5 y la primera
 cota del reloj que toca algo que todavía no existe.
