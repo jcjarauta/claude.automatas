@@ -174,8 +174,113 @@ def _medidas_varilla(c: Contratos, ruta: Path) -> list[Medida]:
     return medidas
 
 
+def _caja_y_cilindros(
+    ruta: Path,
+) -> tuple[tuple[float, float, float], list[tuple[float, list[float]]]]:
+    """La caja envolvente en mm y los cilindros, con su diametro y su centro.
+
+    Lo comparte todo lo que es una plancha con agujeros pasantes, que es casi
+    todo el reloj. La varilla no lo usa porque ademas tiene un taladro ciego
+    y hay que medir su fondo."""
+    ent = _entidades(ruta)
+    puntos = [
+        p for p in (_numeros(a) for t, a in ent.values() if t == "CARTESIAN_POINT") if len(p) == 3
+    ]
+    ejes = {
+        n: _numeros(ent[a.split(",")[1].strip().lstrip("#")][1])
+        for n, (t, a) in ent.items()
+        if t == "AXIS2_PLACEMENT_3D" and a.split(",")[1].strip().lstrip("#") in ent
+    }
+    mm = 1000.0
+    caja = tuple((max(p[i] for p in puntos) - min(p[i] for p in puntos)) * mm for i in range(3))
+    cilindros: list[tuple[float, list[float]]] = []
+    for t, a in ent.values():
+        if t != "CYLINDRICAL_SURFACE":
+            continue
+        trozos = [x.strip() for x in a.split(",")]
+        centro = ejes.get(trozos[-2].lstrip("#"), [0.0, 0.0, 0.0])
+        cilindros.append((float(trozos[-1]) * 2.0 * mm, [x * mm for x in centro]))
+    # El origen del solido no es el canto: lo que importa es la posicion
+    # relativa a la caja, asi que se referencia al minimo de cada eje.
+    base = [min(p[i] for p in puntos) * mm for i in range(3)]
+    cilindros = [(d, [c0[i] - base[i] for i in range(3)]) for d, c0 in cilindros]
+    return caja, cilindros  # type: ignore[return-value]
+
+
+def _medidas_dos_taladros(
+    c: Contratos,
+    ruta: Path,
+    rotulo: str,
+    clave_ancho: str,
+    clave_alto: str,
+    clave_espesor: str,
+) -> list[Medida]:
+    """Una plancha rectangular con los dos tornillos del muelle.
+
+    El bloque y la placa son la misma comprobacion con otras tres cotas: se
+    taladran juntos, asi que si no dan lo mismo es que no se taladraron
+    juntos. La unica diferencia es el alto y el espesor.
+    """
+    v = c.contrato("suspension")
+    (ancho, alto, espesor), cilindros = _caja_y_cilindros(ruta)
+    medidas = [
+        Medida(f"ancho de {rotulo}", v.valor(clave_ancho).en_mm, ancho),
+        Medida(f"alto de {rotulo}", v.valor(clave_alto).en_mm, alto),
+        Medida(f"espesor de {rotulo}", v.valor(clave_espesor).en_mm, espesor),
+    ]
+
+    tornillo = v.valor("soporte_tornillo_diametro").en_mm
+    agujeros = sorted(
+        (c0 for d, c0 in cilindros if abs(d - tornillo) <= HOLGURA), key=lambda c0: c0[0]
+    )
+    medidas.append(Medida("taladros del muelle, cuantos", 2.0, float(len(agujeros))))
+    medidas.append(Medida("taladro, diametro", tornillo, tornillo if agujeros else None))
+    if len(agujeros) != 2:
+        return medidas
+
+    izq, der = agujeros
+    medidas.append(
+        Medida(
+            "separacion entre taladros",
+            v.valor("soporte_tornillo_separacion").en_mm,
+            der[0] - izq[0],
+        )
+    )
+    # Se mide a los dos cantos: con uno solo, un par de taladros descentrado
+    # pero bien separado pasaria. Y es justo el error que deja la placa sin
+    # coincidir con el bloque.
+    al_lado = v.valor("soporte_tornillo_al_lado").en_mm
+    medidas.append(Medida("del canto izquierdo al taladro", al_lado, izq[0]))
+    medidas.append(Medida("del canto derecho al taladro", al_lado, ancho - der[0]))
+    # El canto de apriete es el de abajo, y es el datum del pendulo entero.
+    al_canto = v.valor("soporte_tornillo_al_canto").en_mm
+    medidas.append(Medida("del canto de apriete al taladro", al_canto, min(izq[1], alto - izq[1])))
+    return medidas
+
+
+def _medidas_soporte_step(c: Contratos, ruta: Path) -> list[Medida]:
+    return _medidas_dos_taladros(
+        c, ruta, "el bloque", "soporte_ancho", "soporte_alto", "soporte_espesor"
+    )
+
+
+def _medidas_placa_step(c: Contratos, ruta: Path) -> list[Medida]:
+    return _medidas_dos_taladros(
+        c,
+        ruta,
+        "la placa",
+        "soporte_placa_ancho",
+        "soporte_placa_alto",
+        "soporte_placa_espesor",
+    )
+
+
 REVISORES = {"varilla": _medidas_varilla}
-REVISORES_STEP = {"varilla": _medidas_varilla_step}
+REVISORES_STEP = {
+    "varilla": _medidas_varilla_step,
+    "soporte": _medidas_soporte_step,
+    "placa": _medidas_placa_step,
+}
 
 
 def informe(medidas: list[Medida]) -> tuple[str, bool]:
@@ -209,12 +314,18 @@ def informe(medidas: list[Medida]) -> tuple[str, bool]:
 def main(argv: list[str] | None = None) -> int:
     partes = argparse.ArgumentParser(prog="revisar_cad", description=__doc__)
     partes.add_argument("fichero", type=Path)
-    partes.add_argument("--pieza", default="varilla", choices=sorted(REVISORES))
+    partes.add_argument(
+        "--pieza", default="varilla", choices=sorted(set(REVISORES) | set(REVISORES_STEP))
+    )
     partes.add_argument("--contratos", type=Path, default=RELOJ)
     opciones = partes.parse_args(argv)
 
     es_step = opciones.fichero.suffix.lower() in (".step", ".stp")
     tabla = REVISORES_STEP if es_step else REVISORES
+    if opciones.pieza not in tabla:
+        clase = "STEP" if es_step else "DXF"
+        print(f"no se revisa el {clase} de '{opciones.pieza}' todavia", file=sys.stderr)
+        return 2
     medidas = tabla[opciones.pieza](cargar(opciones.contratos), opciones.fichero)
     texto, todo = informe(medidas)
     print(texto)
