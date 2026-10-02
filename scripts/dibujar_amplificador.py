@@ -124,7 +124,8 @@ def seccion(
     neutra = c[f"amplificador_{cual}_radio"] * MM
     canto = c[f"amplificador_{cual}_radio_mecanizado"] * MM
     w = c["cinta_ancho"] * MM
-    agujero = (c["poste_diametro"] if es_sector else c["brazo_eje_diametro"]) * MM / 2.0
+    cota_agujero = "amplificador_sector_agujero_diametro" if es_sector else "brazo_eje_diametro"
+    agujero = c[cota_agujero] * MM / 2.0
     arriba = y + CABECERA
     hueco = alto - CABECERA - PIE_SIN_LISTA - 9.0 * len(filas(c, cual))
     k = min(ancho * 0.42 / neutra, hueco / w, 8.0)

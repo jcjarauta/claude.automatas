@@ -131,10 +131,10 @@
           "tolerancia": ""
         },
         {
-          "nombre": "poste_diametro",
+          "nombre": "poste_obstaculo_diametro",
           "valor": 0.015,
           "unidad": "m",
-          "descripcion": "Diámetro del OBSTÁCULO que ve la leva: la valona del casquillo, no el poste",
+          "descripcion": "Diametro del OBSTACULO que ve la leva al girar bajo el poste de otro seguidor: la valona del casquillo, NO el poste. Se llamaba «poste_diametro», y con ese nombre el bastidor habria llevado un agujero de 15 donde va un eje de 8",
           "tolerancia": ""
         },
         {
@@ -540,8 +540,8 @@
           "nombre": "seguidor_muelle_radio",
           "valor": 0.012,
           "unidad": "m",
-          "descripcion": "Del pivote al anclaje del muelle. Corto a proposito: la fuerza va con 1/r y el recorrido con r, asi que la VARIACION del par va con r cuadrado. A 12 el muelle hace 4,17 N y varia un 9,6 % en todo el barrido; a 30 variaria un 60 %",
-          "tolerancia": ""
+          "descripcion": "Del pivote al anclaje del muelle. PENDIENTE de la precarga, que nadie ha medido: lo elegi con los 50 mN·m que `core/energy/budget.py` trae POR DEFECTO, y midiendo la inercia real del conjunto sector+seguidor —6,1e-5 kg·m², seis veces la que supone C6— el par de inercia a 30 rpm es de 2,4 mN·m, veinte veces menos. Lo que decide el radio es la variacion del par, que va con r cuadrado: a 12 es del 9,6 % en todo el barrido y a 30 seria del 60 %",
+          "tolerancia": "PENDIENTE"
         },
         {
           "nombre": "seguidor_muelle_diametro",
@@ -570,6 +570,34 @@
           "unidad": "m",
           "descripcion": "Paso de los dos M3 que unen sector y seguidor, el mismo en las dos piezas",
           "tolerancia": ""
+        },
+        {
+          "nombre": "brazo_origen_giro",
+          "valor": 2.6179938779914944,
+          "unidad": "rad",
+          "descripcion": "Giro del marco del cinco barras respecto del de las levas. Estaban su x y su y y faltaba el giro, que es el que convierte dos numeros en una posicion",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "poste_eje_diametro",
+          "valor": 0.008,
+          "unidad": "m",
+          "descripcion": "El POSTE de verdad: eje inox X46Cr13 rectificado sobre el que pivota el seguidor a traves del casquillo GFM-0810-06. Es el agujero que lleva el bastidor",
+          "tolerancia": "h6"
+        },
+        {
+          "nombre": "poste_largo",
+          "valor": 0.07,
+          "unidad": "m",
+          "descripcion": "Largo del poste. Atraviesa los tres planos de leva, que es por lo que su casquillo es el obstaculo del hueco de conjunto",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "rodamiento_arbol_alojamiento_diametro",
+          "valor": 0.019,
+          "unidad": "m",
+          "descripcion": "Alojamiento en el bastidor de los dos 6800-2Z que sujetan el arbol de levas",
+          "tolerancia": "H7"
         }
       ]
     }

@@ -78,6 +78,19 @@ class Valor(BaseModel):
             raise ValueError(f"'{self.nombre}' está en {self.unidad}, no en metros")
         return Metros(self.valor)
 
+    @property
+    def radianes(self) -> float:
+        """La pareja de `metros`, que faltaba.
+
+        Había accesor que comprueba la unidad para las longitudes y ninguno
+        para los ángulos, así que un ángulo se leía como `.valor` a pelo —sin
+        que nada dijera si estaba en radianes o en grados—, que es justo lo
+        que la regla 3 existe para evitar.
+        """
+        if self.unidad != "rad":
+            raise ValueError(f"'{self.nombre}' está en {self.unidad}, no en radianes")
+        return self.valor
+
 
 class Contrato(BaseModel):
     """Un grupo de cotas que se congelan juntas porque se usan juntas."""

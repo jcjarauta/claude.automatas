@@ -151,7 +151,7 @@ def test_el_poste_del_contrato_sale_de_la_geometria(contratos: Contratos):
 
 
 def test_el_obstaculo_del_contrato_es_el_del_conjunto(contratos: Contratos):
-    assert contratos.valor("bastidor", "poste_diametro").metros == pytest.approx(
+    assert contratos.valor("bastidor", "poste_obstaculo_diametro").metros == pytest.approx(
         2.0 * float(Cartucho().radio_poste)
     )
 
@@ -202,3 +202,59 @@ def test_el_featurescript_dice_que_no_se_edita_a_mano(contratos: Contratos):
 def test_el_csv_tiene_una_fila_por_variable_mas_la_cabecera(contratos: Contratos):
     filas = csv(contratos).strip().split("\n")
     assert len(filas) == len(contratos.variables()) + 1
+
+
+def test_el_marco_del_cinco_barras_pone_cada_pivote_a_la_distancia_del_cabestrante(
+    contratos: Contratos,
+):
+    """**«Una eleccion de empaquetado» que no es libre.**
+
+    `CLAUDE.md` decia que el marco del cinco barras va en (-16,225, -28,103)
+    girado 150 grados y que eso «lleva los pivotes junto a sus postes». Es
+    mucho mas fuerte que eso: deja cada pivote a **68,000 mm exactos** de su
+    poste, que es `amplificador_entre_ejes`, la distancia que el cabestrante
+    necesita entre el sector y el tambor. Mover el marco rompe el
+    amplificador.
+
+    El giro vivia solo en la prosa —estaban la x y la y en el contrato y no
+    el angulo—, y sin el no se puede situar un solo agujero del bastidor.
+    """
+    import math
+
+    c = {
+        n: contratos.valor("bastidor", n).metros
+        for n in (
+            "brazo_origen_x",
+            "brazo_origen_y",
+            "brazo_separacion",
+            "poste_radio_al_arbol",
+            "amplificador_entre_ejes",
+            "caja_centro_y",
+        )
+    }
+    giro = contratos.valor("bastidor", "brazo_origen_giro").radianes
+    reparto = contratos.valor("bastidor", "poste_reparto").radianes
+
+    cos, sen = math.cos(giro), math.sin(giro)
+
+    def al_arbol(x: float, y: float) -> tuple[float, float]:
+        return c["brazo_origen_x"] + cos * x - sen * y, c["brazo_origen_y"] + sen * x + cos * y
+
+    postes = [
+        (
+            c["poste_radio_al_arbol"] * math.cos(reparto * i),
+            c["poste_radio_al_arbol"] * math.sin(reparto * i),
+        )
+        for i in range(3)
+    ]
+    for signo in (-1.0, 1.0):
+        pivote = al_arbol(signo * c["brazo_separacion"] / 2.0, 0.0)
+        cerca = min(math.dist(pivote, p) for p in postes)
+        assert cerca == pytest.approx(c["amplificador_entre_ejes"], abs=1e-6), (
+            f"el pivote queda a {cerca * 1000:.3f} mm de su poste y el cabestrante "
+            f"pide {c['amplificador_entre_ejes'] * 1000:.3f}"
+        )
+
+    # Y el centro del papel cae donde dice la prosa: 132,5 mm del arbol.
+    papel = al_arbol(0.0, c["caja_centro_y"])
+    assert math.hypot(*papel) == pytest.approx(0.1325, abs=1e-4)

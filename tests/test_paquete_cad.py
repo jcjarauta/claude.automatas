@@ -348,7 +348,7 @@ def test_cada_cota_circular_tiene_sus_dos_formas(paquete: Path):
     # lo decía, así que el exportador no les sacaba gemelo y no había radio que
     # teclear. Son la misma familia que los dientes del piñón: el nombre decide
     # si la cota existe en la forma en que se usa.
-    assert gemelos == 26, f"esperaba 26 cotas circulares con gemelo, hay {gemelos}"
+    assert gemelos == 28, f"esperaba 28 cotas circulares con gemelo, hay {gemelos}"
 
 
 def test_el_gemelo_dice_que_es_derivado(paquete: Path):
