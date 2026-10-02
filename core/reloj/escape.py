@@ -84,3 +84,38 @@ def abarque(dientes: int) -> float:
 def angulo_abarcado(dientes: int) -> float:
     """Radianes de rueda que hay entre las dos paletas."""
     return abarque(dientes) * 2.0 * math.pi / dientes
+
+
+def distancia_entre_centros(radio_punta: float, dientes: int) -> float:
+    """Del centro de la rueda al eje del ancora.
+
+    La construccion clasica del ancora de retroceso pone el eje donde cada
+    brazo queda **perpendicular al radio de la rueda** en el punto de
+    contacto: asi la paleta empuja en la direccion del movimiento y no contra
+    el eje. Eso hace el triangulo centro-contacto-eje rectangulo en el
+    contacto, y la distancia sale de la hipotenusa.
+
+    Se dispara cuando el abarque se acerca a media vuelta, y eso es lo que
+    impide abarcar mucho mas de un cuarto de rueda.
+    """
+    return radio_punta / math.cos(angulo_abarcado(dientes) / 2.0)
+
+
+def brazo_paleta(radio_punta: float, dientes: int) -> float:
+    """Del eje del ancora al punto de contacto de la paleta.
+
+    Es el cateto del mismo triangulo. Con 30 dientes y abarque 7,5 el angulo
+    es de un cuarto de vuelta, el triangulo sale isosceles y el brazo mide
+    justo el radio de la rueda.
+    """
+    return radio_punta * math.tan(angulo_abarcado(dientes) / 2.0)
+
+
+def recorrido_del_ancora(amplitud: float) -> float:
+    """Radianes que barre el ancora en una oscilacion, de extremo a extremo.
+
+    La horquilla ata ancora y pendulo, asi que es el doble de la amplitud. Y
+    es **todo** el presupuesto angular que hay: reposo, impulso y caida salen
+    de aqui, no se suman a ello.
+    """
+    return 2.0 * amplitud

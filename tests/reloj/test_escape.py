@@ -86,3 +86,50 @@ def test_el_ancora_abarca_un_cuarto_de_vuelta_largo():
     """Con 30 dientes y abarque 7,5 son 90 grados exactos, que es lo que hace
     que el ancora sea una pieza de proporciones manejables."""
     assert escape.angulo_abarcado(dientes=30) == pytest.approx(math.pi / 2.0)
+
+
+def test_el_brazo_del_ancora_es_tangente_a_la_rueda():
+    """La construccion clasica del ancora de retroceso: el eje se pone a la
+    distancia que hace que cada brazo quede PERPENDICULAR al radio de la
+    rueda en el punto de contacto. Asi la paleta empuja en la direccion del
+    movimiento y no contra el eje."""
+    radio = 45.0
+    d = escape.distancia_entre_centros(radio, dientes=30)
+    brazo = escape.brazo_paleta(radio, dientes=30)
+    # El triangulo centro-contacto-eje tiene que ser rectangulo en el contacto
+    assert brazo**2 + radio**2 == pytest.approx(d**2, rel=1e-9)
+
+
+def test_con_abarque_de_noventa_grados_el_brazo_mide_el_radio():
+    """Caso particular de 30 dientes y abarque 7,5: el cuarto de vuelta hace
+    el triangulo isosceles y el ancora sale de proporciones manejables."""
+    assert escape.brazo_paleta(45.0, dientes=30) == pytest.approx(45.0, rel=1e-9)
+    assert escape.distancia_entre_centros(45.0, dientes=30) == pytest.approx(
+        45.0 * math.sqrt(2.0), rel=1e-9
+    )
+
+
+def test_el_eje_del_ancora_queda_siempre_fuera_de_la_rueda():
+    """Obvio y facil de romper con un signo: si la distancia saliera menor
+    que el radio, el eje caeria dentro del dentado."""
+    for dientes in (20, 30, 36, 48, 60):
+        assert escape.distancia_entre_centros(45.0, dientes) > 45.0
+
+
+def test_abarcar_mas_angulo_aleja_el_eje():
+    """Y se dispara cerca de media vuelta, que es lo que impide abarcar mucho
+    mas de un cuarto. Se compara por angulo y no por dientes: el abarque ronda
+    siempre el cuarto, asi que mas dientes no significa mas angulo."""
+    anchos = sorted(
+        (escape.angulo_abarcado(d), escape.distancia_entre_centros(45.0, d))
+        for d in (20, 30, 36, 48, 60)
+    )
+    distancias = [d for _, d in anchos]
+    assert distancias == sorted(distancias)
+
+
+def test_el_recorrido_del_ancora_es_el_del_pendulo():
+    """La horquilla los ata, asi que el ancora barre exactamente lo que barre
+    el pendulo. Ese es TODO el presupuesto angular que hay para repartir
+    entre reposo, impulso y caida."""
+    assert escape.recorrido_del_ancora(amplitud=0.0349) == pytest.approx(0.0698, rel=1e-9)

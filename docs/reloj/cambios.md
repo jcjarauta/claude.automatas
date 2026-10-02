@@ -330,3 +330,50 @@ El `rueda_escape_cubo_diametro` tampoco es geometría: en un disco plano de 4 mm
 no hay cubo que tornear. Es el **asiento del collar** que aprieta la rueda
 contra el eje, y la descripción lo dice ahora para que nadie lo busque en el
 STEP.
+
+
+---
+
+## 2.2 · El áncora
+
+**La cota que manda no está en la pieza: está entre las dos.**
+`ancora_entre_centros` = 63,64 mm, del centro de la rueda al eje del áncora, y
+es la más apretada del reloj. Por eso la hoja dibuja el escape montado y no el
+áncora sola: en un dibujo de la pieza aislada esa cota no se ve.
+
+No se elige. Sale de la construcción clásica del áncora de retroceso, que pone
+el eje donde **cada brazo queda perpendicular al radio de la rueda en el punto
+de contacto** —así la paleta empuja en la dirección del movimiento y no contra
+el eje—. Eso hace el triángulo rectángulo, y con abarque de un cuarto de vuelta
+sale isósceles: el brazo mide justo el radio de la rueda, 45 mm.
+
+| Cota | Valor | De dónde sale |
+| --- | --- | --- |
+| `ancora_entre_centros` | **63,64** | `radio / cos(abarque/2)` |
+| `ancora_brazo` | **45** | `radio × tan(abarque/2)` |
+| `ancora_angulo_brazos` | **90°** | El mismo que abarca sobre la rueda |
+| `ancora_recorrido` | **4°** | Dos veces la amplitud: la horquilla ata áncora y péndulo |
+
+### El presupuesto angular, que es de suma cero
+
+Los 4° del recorrido son **todo** lo que hay. Reposo, impulso y caída salen de
+ahí; no se añaden. Y el reposo está apretado por los dos lados:
+
+- **Por arriba**: los dos reposos no pueden pasar de la mitad del recorrido, o
+  no queda ángulo para empujar. Con 1° el test falló por exactamente eso: 2° de
+  reposo contra 2° de impulso.
+- **Por abajo**: el reposo tiene que superar el **error de sierra** de la rueda.
+  0,6° sobre un brazo de 45 son **0,47 mm**, contra los ±0,3 que se le piden al
+  corte. Un reposo menor que el error de corte deja dientes que no llegan a
+  apoyar, y el escape se dispara solo en algunos.
+
+Queda en **0,6°**, que es el punto donde los dos límites dejan más margen. Si
+R2 dice que es poco, el único sitio de donde sacar más es la **amplitud del
+péndulo**, y eso cuesta energía al cuadrado.
+
+### Lo que esta hoja no lleva, y no es un olvido
+
+El reposo y el impulso **no van en ningún plano de pieza**. Las paletas son
+postizas con ranura y tornillo: se ajustan en el banco R2, se marca la posición
+buena, y entran en el dossier como **cotas de puesta a punto**. La ranura de
+8 mm da 10,2° de recorrido de ajuste, diecisiete veces el reposo buscado.

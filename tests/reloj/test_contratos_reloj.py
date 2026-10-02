@@ -19,7 +19,12 @@ from pathlib import Path
 import pytest
 
 from compile.contratos import Contratos, Estado, Valor, cargar
-from core.reloj.escape import par_con_rendimiento, par_minimo_teorico
+from core.reloj.escape import (
+    brazo_paleta,
+    distancia_entre_centros,
+    par_con_rendimiento,
+    par_minimo_teorico,
+)
 from core.reloj.pendulo import Pendulo
 from core.units import Julios, Kilogramos, Metros
 from scripts.exportar_variables import (
@@ -1117,3 +1122,97 @@ def test_el_vuelco_de_la_rueda_esta_declarado(reloj: Contratos):
     lado. Que no se pueda impedir no significa que no haya que decirlo: sin
     convenio de desde dónde se mira, el dibujo no tiene sentido de giro."""
     assert reloj.valor("rueda_escape", "rueda_escape_vuelco_cambia_el_sentido").valor == 1.0
+
+
+# --- 2.2 · el áncora ----------------------------------------------------
+
+
+def test_la_distancia_entre_centros_sale_de_la_rueda(reloj: Contratos):
+    """No se elige: la fija la construcción clásica, que pone el eje donde
+    cada brazo queda perpendicular al radio de la rueda en el contacto."""
+    radio = reloj.valor("rueda_escape", "rueda_escape_diametro").en_mm / 2.0
+    dientes = int(reloj.valor("escape", "dientes_escape").valor)
+    assert reloj.valor("ancora", "ancora_entre_centros").en_mm == pytest.approx(
+        distancia_entre_centros(radio, dientes), abs=0.01
+    )
+
+
+def test_el_brazo_sale_de_la_rueda(reloj: Contratos):
+    radio = reloj.valor("rueda_escape", "rueda_escape_diametro").en_mm / 2.0
+    dientes = int(reloj.valor("escape", "dientes_escape").valor)
+    assert reloj.valor("ancora", "ancora_brazo").en_mm == pytest.approx(
+        brazo_paleta(radio, dientes), abs=0.01
+    )
+
+
+def test_el_triangulo_del_escape_es_rectangulo(reloj: Contratos):
+    """La comprobación que lo ata todo: centro de rueda, contacto y eje del
+    áncora forman un triángulo rectángulo en el contacto. Si no, la paleta
+    empuja contra el eje en vez de en la dirección del movimiento."""
+    radio = reloj.valor("rueda_escape", "rueda_escape_diametro").en_mm / 2.0
+    brazo = reloj.valor("ancora", "ancora_brazo").en_mm
+    entre = reloj.valor("ancora", "ancora_entre_centros").en_mm
+    assert radio**2 + brazo**2 == pytest.approx(entre**2, rel=1e-4)
+
+
+def test_el_eje_del_ancora_no_cae_dentro_de_la_rueda(reloj: Contratos):
+    assert (
+        reloj.valor("ancora", "ancora_entre_centros").en_mm
+        > reloj.valor("rueda_escape", "rueda_escape_diametro").en_mm / 2.0
+    )
+
+
+def test_el_recorrido_del_ancora_es_el_del_pendulo(reloj: Contratos):
+    assert reloj.valor("ancora", "ancora_recorrido").valor == pytest.approx(
+        2.0 * reloj.valor("oscilador", "amplitud_nominal").valor, abs=1e-6
+    )
+
+
+def test_el_reposo_cabe_en_el_recorrido_con_sitio_para_el_impulso(reloj: Contratos):
+    """LA envolvente del escape. Los dos reposos salen del mismo presupuesto
+    angular que el impulso: si se llevan más de la mitad, no queda recorrido
+    para empujar y el reloj se para."""
+    recorrido = reloj.valor("ancora", "ancora_recorrido").valor
+    reposo = reloj.valor("ancora", "ancora_reposo").valor
+    assert 0.0 < 2.0 * reposo < recorrido / 2.0
+
+
+def test_un_reposo_de_cero_no_es_un_escape(reloj: Contratos):
+    """`docs/reloj/plan-de-diseno.md`: con reposo cero el veredicto es
+    negativo, porque un escape sin reposo se dispara con cualquier vibración.
+    Aquí se comprueba que el contrato no lo permite."""
+    assert reloj.valor("ancora", "ancora_reposo").valor > 0.0
+
+
+def test_la_ranura_da_recorrido_de_sobra_al_reposo(reloj: Contratos):
+    """La ranura es lo que convierte «un pelín más» en una cota repetible.
+    Tiene que cubrir varias veces el reposo buscado, o no hay margen para
+    encontrarlo."""
+    brazo = reloj.valor("ancora", "ancora_brazo").en_mm
+    recorrido = reloj.valor("ancora", "ancora_ranura_largo").en_mm / brazo
+    assert recorrido > 3.0 * reloj.valor("ancora", "ancora_reposo").valor
+
+
+def test_el_ancora_y_la_rueda_salen_del_mismo_tablero(reloj: Contratos):
+    assert reloj.valor("ancora", "ancora_espesor").en_mm == pytest.approx(
+        reloj.valor("rueda_escape", "rueda_escape_espesor").en_mm, abs=0.01
+    )
+
+
+def test_el_brazo_es_mas_ancho_que_su_ranura(reloj: Contratos):
+    pared = (
+        reloj.valor("ancora", "ancora_brazo_ancho").en_mm
+        - reloj.valor("ancora", "ancora_ranura_ancho").en_mm
+    ) / 2.0
+    assert pared >= 2.5
+
+
+def test_el_reposo_es_mayor_que_el_error_de_sierra(reloj: Contratos):
+    """El límite por abajo, y el que hace que el escape sea viable en madera.
+    Si el reposo medido en el brazo es menor que lo que se desvía un diente
+    cortado a mano (±0,3 mm, la tolerancia declarada de la rueda), hay dientes
+    que no llegan a apoyar y el escape se dispara solo en algunos."""
+    arco = (
+        reloj.valor("ancora", "ancora_brazo").en_mm * reloj.valor("ancora", "ancora_reposo").valor
+    )
+    assert arco > 0.3

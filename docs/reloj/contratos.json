@@ -493,6 +493,84 @@
       ]
     },
     {
+      "nombre": "ancora",
+      "estado": "pendiente",
+      "congelado_el": "",
+      "porque": "La geometria del cuerpo es derivada y cierra sola, pero el reposo y el impulso NO se dibujan: se buscan en el banco R2 con las paletas postizas y se anotan como cotas de puesta a punto. Es la unica pieza del reloj que se termina ajustando y no cortando",
+      "valores": [
+        {
+          "nombre": "ancora_entre_centros",
+          "valor": 0.06364,
+          "unidad": "m",
+          "descripcion": "DERIVADO: radio_punta / cos(abarque/2). Del centro de la rueda al eje del ancora. Es LA cota del escape y la mas apretada del reloj: la pone la plantilla de taladrado de las platinas, no el pulso",
+          "tolerancia": "+/-0,2 · critica"
+        },
+        {
+          "nombre": "ancora_brazo",
+          "valor": 0.045,
+          "unidad": "m",
+          "descripcion": "DERIVADO: radio_punta x tan(abarque/2). Del eje del ancora al contacto de la paleta. Con abarque de un cuarto de vuelta el triangulo sale isosceles y el brazo mide justo el radio de la rueda",
+          "tolerancia": "+/-0,3"
+        },
+        {
+          "nombre": "ancora_angulo_brazos",
+          "valor": 1.5707963267948966,
+          "unidad": "rad",
+          "descripcion": "DERIVADO: el mismo que abarca el ancora sobre la rueda. Los dos brazos salen del eje a 90 grados uno de otro",
+          "tolerancia": "derivado"
+        },
+        {
+          "nombre": "ancora_recorrido",
+          "valor": 0.06981317,
+          "unidad": "rad",
+          "descripcion": "DERIVADO: dos veces la amplitud. La horquilla ata ancora y pendulo, asi que el ancora barre lo que barre el pendulo. Son 4 grados, y ESE es todo el presupuesto que hay para repartir entre reposo, impulso y caida",
+          "tolerancia": "lo fija el pendulo"
+        },
+        {
+          "nombre": "ancora_reposo",
+          "valor": 0.010471975511965976,
+          "unidad": "rad",
+          "descripcion": "Lo que el diente apoya en la paleta antes de empezar a empujar. Lo aprietan dos limites por lados opuestos: por arriba, los dos reposos no pueden pasar de la mitad del recorrido o no queda angulo para impulsar; por abajo, el reposo tiene que ser mayor que el error de sierra de la rueda -0,6 grados sobre un brazo de 45 son 0,47 mm, contra los +/-0,3 que se le piden al corte-. No se corta: se ajusta moviendo la paleta en su ranura, y lo busca R2",
+          "tolerancia": "PUESTA A PUNTO · la busca R2"
+        },
+        {
+          "nombre": "ancora_espesor",
+          "valor": 0.004,
+          "unidad": "m",
+          "descripcion": "El mismo contrachapado que la rueda. Las dos piezas del escape salen del mismo tablero",
+          "tolerancia": "+/-0,3"
+        },
+        {
+          "nombre": "ancora_brazo_ancho",
+          "valor": 0.01,
+          "unidad": "m",
+          "descripcion": "Ancho del brazo. Tiene que aguantar el impulso sin flexar: un ancora que flexa se come parte del impulso y lo devuelve tarde",
+          "tolerancia": "+/-0,5"
+        },
+        {
+          "nombre": "ancora_eje_diametro",
+          "valor": 0.01,
+          "unidad": "m",
+          "descripcion": "DERIVADO: el mismo eje_diametro que el resto del reloj",
+          "tolerancia": "H7, deslizante"
+        },
+        {
+          "nombre": "ancora_ranura_largo",
+          "valor": 0.008,
+          "unidad": "m",
+          "descripcion": "Carrera de la ranura que ajusta la paleta. Ocho milimetros de ranura sobre un brazo de 45 dan unos 10 grados de recorrido de reposo: de sobra para encontrar el bueno",
+          "tolerancia": "+/-0,3"
+        },
+        {
+          "nombre": "ancora_ranura_ancho",
+          "valor": 0.0042,
+          "unidad": "m",
+          "descripcion": "DERIVADO: el paso del M4 que fija la paleta. La misma broca que todo el reloj",
+          "tolerancia": "paso, no roscado"
+        }
+      ]
+    },
+    {
       "nombre": "tren",
       "estado": "pendiente",
       "congelado_el": "",

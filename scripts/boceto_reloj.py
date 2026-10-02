@@ -1569,6 +1569,228 @@ def rueda_escape(c: Contratos) -> str:
     return "\n".join(p)
 
 
+def ancora(c: Contratos) -> str:
+    """La pieza 2.2: el cuerpo del ancora.
+
+    Se dibuja **con la rueda detras**, y no por adorno: la cota que manda
+    -`ancora_entre_centros`- no esta en el ancora sino entre las dos piezas,
+    y es la mas apretada del reloj. Un dibujo del ancora sola no deja verla.
+
+    Lo que esta hoja NO lleva es el reposo ni el impulso: son cotas de puesta
+    a punto, se buscan en el banco R2 moviendo las paletas en su ranura, y
+    ponerlas en un plano seria prometer una precision que la madera no da.
+    """
+    a = c.contrato("ancora")
+    entre = a.valor("ancora_entre_centros").en_mm
+    brazo = a.valor("ancora_brazo").en_mm
+    abierto = a.valor("ancora_angulo_brazos").valor
+    recorrido = a.valor("ancora_recorrido").valor
+    reposo = a.valor("ancora_reposo").valor
+    espesor = a.valor("ancora_espesor").en_mm
+    ancho = a.valor("ancora_brazo_ancho").en_mm
+    eje = a.valor("ancora_eje_diametro").en_mm
+    ranura_l = a.valor("ancora_ranura_largo").en_mm
+    ranura_a = a.valor("ancora_ranura_ancho").en_mm
+    rueda = c.valor("rueda_escape", "rueda_escape_diametro").en_mm / 2.0
+    fondo = c.valor("rueda_escape", "rueda_escape_diametro_fondo").en_mm / 2.0
+
+    e = 2.0
+    p: list[str] = [CABEZA.format(cota=COTA, ancho=900, alto=700)]
+    p.append(_texto(34, 34, "2.2 \u00b7 \u00c1NCORA", 15, TINTA, "start", "bold"))
+    p.append(
+        _texto(
+            34,
+            50,
+            "Boceto de comprobaci\u00f3n \u00b7 cotas le\u00eddas de docs/reloj/contratos.json",
+            9.5,
+            AUX,
+            "start",
+        )
+    )
+
+    # La rueda abajo y el ancora encima, que es como van montadas.
+    rx, ry = 330.0, 370.0
+    ax, ay = rx, ry - entre * e
+    p.append(_texto(120, 92, "EL ESCAPE MONTADO \u00b7 escala 2:1", 9, TINTA, "start"))
+    p.append(
+        _texto(120, 105, "la rueda va detr\u00e1s; el \u00e1ncora es la pieza", 8, AUX, "start")
+    )
+    for radio, trazo in ((rueda * e, "6 3"), (fondo * e, "3 3")):
+        p.append(
+            f'<circle cx="{rx}" cy="{ry}" r="{radio:.1f}" fill="none" stroke="{AUX}" '
+            f'stroke-width="0.9" stroke-dasharray="{trazo}"/>'
+        )
+    p.append(
+        f'<circle cx="{rx}" cy="{ry}" r="{eje * e / 2.0:.1f}" fill="none" stroke="{AUX}" '
+        f'stroke-width="1"/>'
+    )
+    p.append(_texto(rx, ry + rueda * e + 18, "la rueda de escape", 8, AUX))
+
+    # Los dos contactos, a media abertura del eje del ancora.
+    contactos = []
+    for signo in (-1.0, 1.0):
+        ang = math.pi / 2.0 + signo * abierto / 2.0
+        cxp, cyp = ax + brazo * e * math.cos(ang), ay + brazo * e * math.sin(ang)
+        contactos.append((cxp, cyp))
+        p.append(
+            f'<path d="M{ax:.1f} {ay:.1f}L{cxp:.1f} {cyp:.1f}" stroke="{TINTA}" '
+            f'stroke-width="{ancho * e / 2.0:.1f}" stroke-linecap="round" opacity="0.18"/>'
+        )
+        p.append(
+            f'<path d="M{ax:.1f} {ay:.1f}L{cxp:.1f} {cyp:.1f}" stroke="{TINTA}" '
+            f'stroke-width="1.6"/>'
+        )
+        # La ranura de la paleta, sobre el brazo y junto al contacto.
+        ux, uy = (cxp - ax) / (brazo * e), (cyp - ay) / (brazo * e)
+        x1, y1 = cxp - ux * ranura_l * e, cyp - uy * ranura_l * e
+        p.append(
+            f'<path d="M{x1:.1f} {y1:.1f}L{cxp:.1f} {cyp:.1f}" stroke="{COTA}" '
+            f'stroke-width="{ranura_a * e:.1f}" stroke-linecap="round" opacity="0.5"/>'
+        )
+        # El radio de la rueda al contacto: el angulo recto es la construccion.
+        p.append(
+            f'<path d="M{rx:.1f} {ry:.1f}L{cxp:.1f} {cyp:.1f}" stroke="{COTA}" '
+            f'stroke-width="0.9" stroke-dasharray="5 3"/>'
+        )
+    p.append(
+        f'<circle cx="{ax:.1f}" cy="{ay:.1f}" r="{eje * e / 2.0:.1f}" fill="none" '
+        f'stroke="{TINTA}" stroke-width="1.6"/>'
+    )
+    # La marca de angulo recto en un contacto, que es lo que hay que ver.
+    cxp, cyp = contactos[1]
+    p.append(
+        f'<path d="M{cxp - 9:.1f} {cyp - 9:.1f}l9 9l-9 9" fill="none" stroke="{COTA}" '
+        f'stroke-width="1"/>'
+    )
+    p.append(_texto(cxp + 20, cyp + 32, "90\u00b0 por construcci\u00f3n", 8, COTA, "start", "bold"))
+    p.append(_texto(cxp + 20, cyp + 43, "el brazo es tangente a la rueda", 7.5, AUX, "start"))
+
+    p.append(
+        _cota_v(
+            ay,
+            ry,
+            rx - rueda * e - 54,
+            f"{entre:.1f}",
+            "#cota.ancora_entre_centros",
+            desde=rx - rueda * e,
+        )
+    )
+    p.append(
+        _texto(
+            rx - rueda * e - 54,
+            (ay + ry) / 2.0 + 26,
+            "LA COTA CR\u00cdTICA",
+            8,
+            COTA,
+            "end",
+            "bold",
+        )
+    )
+    p.append(
+        _cota_v(
+            ay,
+            contactos[1][1],
+            ax + brazo * e + 60,
+            f"{brazo:.0f}",
+            "#cota.ancora_brazo",
+            desde=contactos[1][0],
+            lado="der",
+        )
+    )
+    p.append(
+        _texto(ax, ay - 30, f"{math.degrees(abierto):.0f}\u00b0 entre brazos", 9, COTA, peso="bold")
+    )
+    p.append(_texto(ax, ay - 20, "#angulo.ancora_angulo_brazos", 7.5, AUX))
+
+    # ---- el presupuesto angular ------------------------------------------
+    bx, by = 600.0, 180.0
+    p.append(_texto(bx, 92, "EL PRESUPUESTO ANGULAR", 9, TINTA, "start"))
+    p.append(_texto(bx, 105, "todo sale del recorrido, nada se suma", 8, AUX, "start"))
+    total = math.degrees(recorrido)
+    rep = math.degrees(reposo)
+    ancho_barra = 250.0
+    tramos = [
+        ("reposo", rep, COTA),
+        ("impulso y ca\u00edda", total - 2.0 * rep, AUX),
+        ("reposo", rep, COTA),
+    ]
+    xx = bx
+    for rotulo, grados, color in tramos:
+        w = ancho_barra * grados / total
+        p.append(
+            f'<rect x="{xx:.1f}" y="{by}" width="{w:.1f}" height="26" fill="{color}" '
+            f'fill-opacity="0.25" stroke="{color}" stroke-width="1"/>'
+        )
+        p.append(_texto(xx + w / 2.0, by + 17, f"{grados:.1f}\u00b0", 9, TINTA, peso="bold"))
+        p.append(_texto(xx + w / 2.0, by + 40, rotulo, 7.5, AUX))
+        xx += w
+    p.append(
+        _cota_h(bx, bx + ancho_barra, by + 74, f"{total:.0f}\u00b0", "#angulo.ancora_recorrido")
+    )
+    lineas = [
+        "El recorrido del \u00e1ncora es el del p\u00e9ndulo: la horquilla los ata.",
+        f"Con {total:.0f}\u00b0 en total, los dos reposos no pueden pasar de la mitad",
+        "o no queda \u00e1ngulo para empujar.",
+        "",
+        f"Y por abajo: {rep:.1f}\u00b0 sobre un brazo de {brazo:.0f} son {brazo * reposo:.2f} mm,",
+        "contra los \u00b10,3 que se le piden al corte de la rueda.",
+        "Un reposo menor que el error de sierra deja dientes que no apoyan.",
+    ]
+    for i, linea in enumerate(lineas):
+        p.append(_texto(bx, by + 120 + i * 15, linea, 8.5, TINTA, "start"))
+
+    p.append(
+        '<rect x="34" y="520" width="832" height="46" rx="4" fill="#fff4e5" '
+        'stroke="#d98324" stroke-width="1"/>'
+    )
+    p.append(
+        _texto(
+            46,
+            539,
+            "EL REPOSO Y EL IMPULSO NO EST\u00c1N EN ESTA HOJA, Y NO ES UN OLVIDO.",
+            9.5,
+            "#8a5200",
+            "start",
+            "bold",
+        )
+    )
+    p.append(
+        _texto(
+            46,
+            555,
+            "Se buscan en el banco R2 moviendo las paletas en su ranura, y se anotan como "
+            "cotas de puesta a punto en el dossier.",
+            9,
+            "#8a5200",
+            "start",
+        )
+    )
+    p.append(
+        f'<rect x="34" y="584" width="832" height="52" fill="none" stroke="{TINTA}" '
+        'stroke-width="1.2"/>'
+    )
+    campos = [
+        ("N\u00famero", "2.2"),
+        ("Material", "Abedul 4 mm"),
+        ("Espesor", f"{espesor:.0f} mm"),
+        ("Cantidad", "1 cuerpo"),
+        ("Paletas", "2, postizas"),
+        ("Conjunto", "Escape \u00b7 banco R2"),
+        ("Estado", "PENDIENTE \u00b7 R2"),
+    ]
+    celda = 832 / len(campos)
+    for i, (k, val) in enumerate(campos):
+        bxx = 34 + i * celda
+        p.append(
+            f'<path d="M{bxx:.1f} 584h{celda:.1f}v52h-{celda:.1f}z" fill="none" '
+            f'stroke="{AUX}" stroke-width="0.6"/>'
+        )
+        p.append(_texto(bxx + 10, 602, k.upper(), 7.5, AUX, "start"))
+        p.append(_texto(bxx + 10, 621, val, 10.5, TINTA, "start", "bold"))
+    p.append("</svg>")
+    return "\n".join(p)
+
+
 PIEZAS = {
     "varilla": varilla,
     "lenteja": lenteja,
@@ -1576,6 +1798,7 @@ PIEZAS = {
     "muelle": muelle,
     "escuadra": escuadra,
     "rueda_escape": rueda_escape,
+    "ancora": ancora,
 }
 
 PREFIJOS = {
@@ -1586,6 +1809,7 @@ PREFIJOS = {
     "muelle": ("muelle_",),
     "escuadra": ("escuadra_",),
     "rueda_escape": ("rueda_escape_",),
+    "ancora": ("ancora_",),
 }
 """Que cotas son de cada pieza. El prefijo del nombre decide, igual que
 decide el gemelo de radio: asi se puede leer el contrato y saber de quien es
@@ -1609,6 +1833,12 @@ INTERFACES = {
     ),
     "lenteja": ("vastago_diametro", "vastago_saliente", "longitud_pendulo_nominal"),
     "rueda_escape": ("dientes_escape", "abarque_ancora", "eje_diametro", "vuelta_rueda_escape"),
+    "ancora": (
+        "rueda_escape_diametro",
+        "rueda_escape_diametro_fondo",
+        "abarque_ancora",
+        "amplitud_nominal",
+    ),
     "escuadra": (
         "anclaje_tornillo_separacion",
         "anclaje_tornillo_diametro",
