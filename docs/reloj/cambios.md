@@ -494,3 +494,50 @@ comprobación de que la construcción es la buena.
 Que el socavado coincidiera en 8° con el `undercut angle` de la demostración,
 después de la corrección de esta mañana, es una validación cruzada que no
 esperaba.
+
+
+### El ángulo incluido no era una cota suelta, y faltaba el hueco
+
+Al acotar el diente para poder trazarlo salió que `rueda_escape_angulo_incluido`
+= 23° **no encajaba con el resto**: con nuestra altura y nuestro socavado, la
+cuña que sale de la geometría es de **132°**. Un diente romo, no un gancho.
+
+La causa es que mi generador hacía el dorso llegar **hasta el fondo del diente
+siguiente**. Así no hay cuña que valga: el perfil es una onda continua.
+
+Leído como lo que es —la **cuña de la punta**, entre cara y dorso— el diente se
+reparte y aparece lo que faltaba:
+
+| | Ángulo en la punta | Ángulo de centro |
+| --- | --- | --- |
+| Cara de ataque | socavado **8°** | adelanto **1,25°** |
+| Punta | — | espesor **0,50°** |
+| Dorso | incluido − socavado = **15°** | retraso **2,39°** |
+| **Hueco** | — | **7,86°** |
+
+El diente ocupa 4,14° de los 12 y **el hueco se lleva el resto**: 5,21 mm de
+arco en el fondo, tres veces y media la hoja de una segueta.
+
+> **Esa es la envolvente de fabricación que faltaba.** El `paso ≥ 8 mm` decía
+> que los dientes están lo bastante separados; no decía que haya por dónde
+> meter la sierra entre dos. Son cosas distintas y ahora las vigilan dos tests.
+
+### Dos clases de ángulo que no son la misma
+
+El socavado y la inclinación del dorso se miden **en la punta**; un boceto se
+traza por **ángulos de centro**. La conversión es `atan(altura × tan(ángulo) /
+radio)` y no es despreciable: 8° de socavado son 1,25° de centro.
+
+Las dos conversiones están ahora declaradas —`punta_adelanto` y
+`dorso_retraso`— porque **son los números que se teclean**, y pedirle a quien
+dibuja que los calcule con un lápiz es pedirle que se equivoque. Es el mismo
+error que ya costó un STEP esta mañana, en la otra dirección.
+
+### La hoja pasa a tres paneles
+
+La rueda con sus radios, **un diente a 12:1 acotado para trazarlo** —con los
+cuatro ángulos de centro acumulados desde el pie del dorso, que es como se
+construye— y **el engrane**, con el áncora puesta y los dos arcos de reposo
+dibujados con su radio. Ese tercer panel es el que explica para qué sirve el
+perfil: el diente apoya en un arco centrado en el eje del áncora, y por eso la
+rueda no se mueve.

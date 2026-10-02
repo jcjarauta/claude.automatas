@@ -1266,12 +1266,13 @@ def escuadra(c: Contratos) -> str:
 def rueda_escape(c: Contratos) -> str:
     """La pieza 2.1: la rueda de escape.
 
-    La primera del reloj cuyo contorno **se genera** en vez de dibujarse: los
-    treinta dientes salen del paso angular y de la inclinacion, asi que tocar
-    `dientes_escape` los redibuja todos. Eso es lo que hace que la rueda sea
-    parametrica de verdad y no un dibujo con un numero al lado.
+    Tres paneles. La rueda entera con sus radios, **un diente acotado para
+    trazarlo** -que es lo que faltaba: los angulos de la punta no se pueden
+    teclear en un boceto, hay que convertirlos a angulos de centro- y el
+    engrane con el ancora, que es donde se ve para que sirve el perfil.
     """
     r = c.contrato("rueda_escape")
+    a = c.contrato("ancora")
     diam = r.valor("rueda_escape_diametro").en_mm
     fondo = r.valor("rueda_escape_diametro_fondo").en_mm
     altura = r.valor("rueda_escape_altura_diente").en_mm
@@ -1281,15 +1282,24 @@ def rueda_escape(c: Contratos) -> str:
     eje = r.valor("rueda_escape_eje_diametro").en_mm
     socavado = r.valor("rueda_escape_socavado").valor
     incluido = r.valor("rueda_escape_angulo_incluido").valor
+    dorso_inc = r.valor("rueda_escape_dorso_inclinacion").valor
     espesor_punta = r.valor("rueda_escape_espesor_punta").valor
-    radios = int(r.valor("rueda_escape_radios").valor)
-    ancho_radio = 8.0
     angular = r.valor("rueda_escape_paso_angular").valor
+    adelanto = r.valor("rueda_escape_punta_adelanto").valor
+    retraso = r.valor("rueda_escape_dorso_retraso").valor
+    hueco = r.valor("rueda_escape_hueco_angular").valor
+    radios = int(r.valor("rueda_escape_radios").valor)
+    ancho_radio = r.valor("rueda_escape_radio_ancho").en_mm
     dientes = int(c.valor("escape", "dientes_escape").valor)
     abarca = c.valor("escape", "abarque_ancora").valor
+    entre = a.valor("ancora_entre_centros").en_mm
+    brazo = a.valor("ancora_brazo").en_mm
+    abierto = a.valor("ancora_angulo_brazos").valor
+    arco_e = a.valor("ancora_arco_entrada").en_mm
+    arco_s = a.valor("ancora_arco_salida").en_mm
+    reposo = a.valor("ancora_reposo").valor
 
-    e = 1.8
-    p: list[str] = [CABEZA.format(cota=COTA, ancho=900, alto=700)]
+    p: list[str] = [CABEZA.format(cota=COTA, ancho=1180, alto=1020)]
     p.append(_texto(34, 34, "2.1 \u00b7 RUEDA DE ESCAPE", 15, TINTA, "start", "bold"))
     p.append(
         _texto(
@@ -1302,88 +1312,68 @@ def rueda_escape(c: Contratos) -> str:
         )
     )
 
-    cx, cy = 300.0, 300.0
-    rp, rf = diam * e / 2.0, fondo * e / 2.0
+    def perfil(cx: float, cy: float, e: float, desde: float = 0.0) -> str:
+        """El contorno de los 30 dientes. Cuatro puntos por diente y el hueco."""
+        rp, rf = diam * e / 2.0, fondo * e / 2.0
 
-    def polar(radio: float, ang: float) -> tuple[float, float]:
-        return cx + radio * math.cos(ang), cy + radio * math.sin(ang)
+        def pol(rad: float, ang: float) -> tuple[float, float]:
+            return cx + rad * math.cos(ang + desde), cy + rad * math.sin(ang + desde)
 
-    # El contorno completo, diente a diente. Cada uno sale del fondo, sube a
-    # la punta inclinada en el sentido de giro y vuelve al fondo del
-    # siguiente: la cara de ataque es la corta, el dorso la larga.
-    # El diente con los tres angulos de Graham, no con uno. El SOCAVADO
-    # inclina la cara de ataque respecto del radio; el ESPESOR DE PUNTA da el
-    # plano de la punta -que no es un filo: medio grado son 0,39 mm, y es
-    # justo donde apoya la paleta-; el resto lo cierra el dorso.
-    desvio = altura * e * math.tan(socavado) / rp
-    media = espesor_punta / 2.0
-    trozos: list[str] = []
-    for i in range(dientes):
-        a0 = i * angular
-        x0, y0 = polar(rf, a0)
-        x1, y1 = polar(rp, a0 + angular - desvio - media)
-        x2, y2 = polar(rp, a0 + angular - desvio + media)
-        x3, y3 = polar(rf, a0 + angular)
-        trozos.append(f"{'M' if i == 0 else 'L'}{x0:.2f} {y0:.2f}")
-        trozos.append(f"L{x1:.2f} {y1:.2f}")
-        trozos.append(f"L{x2:.2f} {y2:.2f}")
-        trozos.append(f"L{x3:.2f} {y3:.2f}")
-    p.append(f'<path d="{" ".join(trozos)}Z" fill="none" stroke="{TINTA}" stroke-width="1.4"/>')
-    for radio, trazo in ((rf, "3 3"), (cubo * e / 2.0, "4 2")):
+        trozos: list[str] = []
+        for i in range(dientes):
+            a0 = i * angular
+            puntos = [
+                pol(rf, a0),
+                pol(rp, a0 + retraso),
+                pol(rp, a0 + retraso + espesor_punta),
+                pol(rf, a0 + retraso + espesor_punta + adelanto),
+                pol(rf, a0 + angular),
+            ]
+            for n, (xx, yy) in enumerate(puntos):
+                trozos.append(f"{'M' if i == 0 and n == 0 else 'L'}{xx:.2f} {yy:.2f}")
+        return " ".join(trozos) + "Z"
+
+    # ---- panel 1, la rueda -----------------------------------------------
+    e1 = 1.6
+    cx, cy = 280.0, 330.0
+    rp1, rf1 = diam * e1 / 2.0, fondo * e1 / 2.0
+    p.append(_texto(cx - rp1 - 40, 92, "LA RUEDA \u00b7 escala 1,6:1", 9, TINTA, "start"))
+    p.append(
+        _texto(
+            cx - rp1 - 40, 105, f"{dientes} dientes \u00b7 VISTA DESDE LA ESFERA", 8, AUX, "start"
+        )
+    )
+    p.append(f'<path d="{perfil(cx, cy, e1)}" fill="none" stroke="{TINTA}" stroke-width="1.4"/>')
+    for radio, trazo in ((rf1, "3 3"), (cubo * e1 / 2.0, "4 2")):
         p.append(
             f'<circle cx="{cx}" cy="{cy}" r="{radio:.1f}" fill="none" stroke="{AUX}" '
             f'stroke-width="0.8" stroke-dasharray="{trazo}"/>'
         )
-    # Los radios: este es el eje mas rapido del reloj y la masa que se le
-    # quite vale por el cuadrado de la velocidad.
     for k in range(radios):
         ang = k * 2.0 * math.pi / radios + math.pi / 6.0
-        x1, y1 = polar(cubo * e / 2.0, ang)
-        x2, y2 = polar(rf - 3, ang)
         p.append(
-            f'<path d="M{x1:.1f} {y1:.1f}L{x2:.1f} {y2:.1f}" stroke="{TINTA}" '
-            f'stroke-width="{ancho_radio * e:.1f}" stroke-linecap="round" fill="none" '
-            f'opacity="0.35"/>'
+            f'<path d="M{cx + cubo * e1 / 2.0 * math.cos(ang):.1f} '
+            f"{cy + cubo * e1 / 2.0 * math.sin(ang):.1f}"
+            f'L{cx + (rf1 - 3) * math.cos(ang):.1f} {cy + (rf1 - 3) * math.sin(ang):.1f}" '
+            f'stroke="{TINTA}" stroke-width="{ancho_radio * e1:.1f}" stroke-linecap="round" '
+            f'fill="none" opacity="0.3"/>'
         )
     p.append(
-        f'<circle cx="{cx}" cy="{cy}" r="{eje * e / 2.0:.1f}" fill="none" stroke="{TINTA}" '
+        f'<circle cx="{cx}" cy="{cy}" r="{eje * e1 / 2.0:.1f}" fill="none" stroke="{TINTA}" '
         f'stroke-width="1.4"/>'
     )
-    for ang in (0.0, math.pi / 2.0):
-        dx, dy = math.cos(ang) * (rp + 16), math.sin(ang) * (rp + 16)
-        p.append(
-            f'<path d="M{cx - dx:.1f} {cy - dy:.1f}L{cx + dx:.1f} {cy + dy:.1f}" '
-            f'stroke="{AUX}" stroke-width="0.6" stroke-dasharray="10 3 2 3"/>'
-        )
-
-    # El sector que abarca el ancora, que es de donde sale su tamano.
-    a_ini, a_fin = math.radians(-135.0), math.radians(-135.0) + abarca * angular
-    xa, ya = polar(rp, a_ini)
-    xb, yb = polar(rp, a_fin)
+    ra = rp1 + 28
     p.append(
-        f'<path d="M{cx} {cy}L{xa:.1f} {ya:.1f}A{rp:.1f} {rp:.1f} 0 0 1 {xb:.1f} {yb:.1f}Z" '
-        f'fill="{COTA}" fill-opacity="0.08" stroke="{COTA}" stroke-width="0.9" '
-        f'stroke-dasharray="5 3"/>'
-    )
-    xm, ym = polar(rp * 0.66, (a_ini + a_fin) / 2.0)
-    p.append(_texto(xm, ym, f"{abarca:g} dientes", 8.5, COTA, peso="bold"))
-    p.append(_texto(xm, ym + 11, "lo que abarca el \u00e1ncora", 7.5, COTA))
-    p.append(_texto(xm, ym + 21, "#num.abarque_ancora", 7.5, AUX))
-
-    # Sin decir desde donde se mira, un disco plano no tiene sentido de giro:
-    # volteado, los dientes miran al otro lado.
-    ra = rp + 30
-    p.append(
-        f'<path d="M{cx + ra * math.cos(math.radians(-60)):.1f} '
-        f"{cy + ra * math.sin(math.radians(-60)):.1f}A{ra:.1f} {ra:.1f} 0 0 1 "
-        f"{cx + ra * math.cos(math.radians(-20)):.1f} "
-        f'{cy + ra * math.sin(math.radians(-20)):.1f}" stroke="{COTA}" stroke-width="1.4" '
+        f'<path d="M{cx + ra * math.cos(math.radians(-62)):.1f} '
+        f"{cy + ra * math.sin(math.radians(-62)):.1f}A{ra:.1f} {ra:.1f} 0 0 1 "
+        f"{cx + ra * math.cos(math.radians(-22)):.1f} "
+        f'{cy + ra * math.sin(math.radians(-22)):.1f}" stroke="{COTA}" stroke-width="1.4" '
         f'fill="none" marker-end="url(#f)"/>'
     )
     p.append(
         _texto(
-            cx + ra * math.cos(math.radians(-40)) + 10,
-            cy + ra * math.sin(math.radians(-40)),
+            cx + ra * math.cos(math.radians(-42)) + 10,
+            cy + ra * math.sin(math.radians(-42)),
             "giro",
             8,
             COTA,
@@ -1391,161 +1381,328 @@ def rueda_escape(c: Contratos) -> str:
             "bold",
         )
     )
-    p.append(_texto(cx - rp - 40, 92, "LA RUEDA \u00b7 escala 1,8:1", 9, TINTA, "start"))
-    p.append(
-        _texto(
-            cx - rp - 40,
-            105,
-            f"{dientes} dientes generados del paso \u00b7 VISTA DESDE LA ESFERA",
-            8,
-            AUX,
-            "start",
-        )
-    )
     p.append(
         _cota_v(
-            cy - rp,
-            cy + rp,
-            cx - rp - 40,
+            cy - rp1,
+            cy + rp1,
+            cx - rp1 - 40,
             f"\u00d8{diam:.0f}",
             "#cota.rueda_escape_diametro",
-            desde=cx - rp,
+            desde=cx - rp1,
         )
     )
     p.append(
         _cota_v(
-            cy - rf,
-            cy + rf,
-            cx + rp + 40,
+            cy - rf1,
+            cy + rf1,
+            cx + rp1 + 40,
             f"\u00d8{fondo:.0f}",
             "#cota.rueda_escape_diametro_fondo",
-            desde=cx + rf,
+            desde=cx + rf1,
             lado="der",
         )
     )
     p.append(
         _cota_h(
-            cx - cubo * e / 2.0,
-            cx + cubo * e / 2.0,
-            cy + rp + 56,
+            cx - cubo * e1 / 2.0,
+            cx + cubo * e1 / 2.0,
+            cy + rp1 + 60,
             f"\u00d8{cubo:.0f}",
             "#cota.rueda_escape_cubo_diametro",
         )
     )
     p.append(
-        f'<path d="M{cx - eje * e / 2.0:.1f} {cy:.1f}l-50 60h-30" stroke="{COTA}" '
+        f'<path d="M{cx - eje * e1 / 2.0:.1f} {cy:.1f}l-46 56h-30" stroke="{COTA}" '
         f'stroke-width="1" fill="none"/>'
     )
     p.append(
-        _texto(cx - eje * e / 2.0 - 84, cy + 56, f"\u00d8{eje:.0f} H7", 9.5, COTA, "end", "bold")
+        _texto(cx - eje * e1 / 2.0 - 80, cy + 52, f"\u00d8{eje:.0f} H7", 9.5, COTA, "end", "bold")
     )
     p.append(
-        _texto(cx - eje * e / 2.0 - 84, cy + 66, "#cota.rueda_escape_eje_diametro", 7.5, AUX, "end")
+        _texto(
+            cx - eje * e1 / 2.0 - 80, cy + 62, "#cota.rueda_escape_eje_diametro", 7.5, AUX, "end"
+        )
     )
-
-    # ---- detalle del diente ----------------------------------------------
-    dx0, dy0 = 720.0, 250.0
-    f2 = 10.0
-    p.append(_texto(dx0 - 40, 92, "UN DIENTE \u00b7 escala 10:1", 9, TINTA, "start"))
-    p.append(_texto(dx0 - 40, 105, "el sentido de giro va a la derecha", 8, AUX, "start"))
-    base = paso * f2
-    alto = altura * f2
-    # El dorso sube despacio desde el fondo hasta casi el siguiente fondo; la
-    # cara cae en vertical, inclinada `inclinacion` del radio. Es el mismo
-    # diente que genera la vista de planta, visto desenrollado.
-    sesgo = math.tan(socavado) * alto
-    punta = espesor_punta * rp / e * f2
+    ang_r = math.pi / 6.0
     p.append(
-        f'<path d="M{dx0 - base:.1f} {dy0:.1f}L{dx0 - sesgo - punta:.1f} {dy0 - alto:.1f}'
-        f"L{dx0 - sesgo:.1f} {dy0 - alto:.1f}L{dx0:.1f} {dy0:.1f}"
-        f"L{dx0 + base - sesgo - punta:.1f} {dy0 - alto:.1f}"
-        f"L{dx0 + base - sesgo:.1f} {dy0 - alto:.1f}"
-        f'L{dx0 + base:.1f} {dy0:.1f}" fill="none" stroke="{TINTA}" stroke-width="1.6"/>'
-    )
-    p.append(
-        f'<path d="M{dx0 - base - 20:.1f} {dy0:.1f}H{dx0 + base + 20:.1f}" stroke="{AUX}" '
-        f'stroke-width="0.8" stroke-dasharray="4 2"/>'
-    )
-    p.append(_texto(dx0 + base + 24, dy0 + 3, "el fondo", 8, AUX, "start"))
-    # El angulo se mide entre la cara de ataque y el radio, que en esta vista
-    # es la vertical. Marcarlo en la punta y no en la base es lo que hace que
-    # se entienda que lo que se inclina es la punta.
-    xr = dx0
-    p.append(
-        f'<path d="M{xr:.1f} {dy0 + 14:.1f}V{dy0 - alto - 34:.1f}" stroke="{AUX}" '
-        f'stroke-width="0.6" stroke-dasharray="6 3"/>'
-    )
-    p.append(
-        f'<path d="M{xr:.1f} {dy0 - alto - 34:.1f}A34 34 0 0 0 '
-        f"{xr - 34 * math.sin(socavado):.1f} "
-        f'{dy0 - alto - 34 + 34 * (1 - math.cos(socavado)):.1f}" stroke="{COTA}" '
+        f'<path d="M{cx + (rf1 * 0.6) * math.cos(ang_r) + 10:.1f} '
+        f'{cy + (rf1 * 0.6) * math.sin(ang_r) + 10:.1f}l40 40h30" stroke="{COTA}" '
         f'stroke-width="1" fill="none"/>'
     )
     p.append(
         _texto(
-            xr - 8,
-            dy0 - alto - 40,
-            f"{math.degrees(socavado):.0f}\u00b0 socavado",
+            cx + rf1 * 0.6 * math.cos(ang_r) + 84,
+            cy + rf1 * 0.6 * math.sin(ang_r) + 46,
+            f"{radios} radios de {ancho_radio:.0f}",
             9.5,
             COTA,
-            "end",
+            "start",
             "bold",
         )
     )
     p.append(
         _texto(
-            xr - 8,
-            dy0 - alto - 30,
-            "#angulo.rueda_escape_socavado",
+            cx + rf1 * 0.6 * math.cos(ang_r) + 84,
+            cy + rf1 * 0.6 * math.sin(ang_r) + 56,
+            "#num.rueda_escape_radios \u00b7 #cota.rueda_escape_radio_ancho",
             7.5,
-            AUX,
-            "end",
-        )
-    )
-    p.append(_texto(xr - 6, dy0 + 16, "cara de ataque", 7.5, COTA, "end"))
-    p.append(_texto(dx0 + base / 2.0, dy0 + 16, "el dorso, que no toca", 7.5, AUX))
-    p.append(
-        _cota_v(
-            dy0 - alto,
-            dy0,
-            dx0 - base - 44,
-            f"{altura:.0f}",
-            "#cota.rueda_escape_altura_diente",
-            desde=dx0 - base,
-        )
-    )
-    p.append(_cota_h(dx0 - base, dx0, dy0 + 70, f"{paso:.1f}", "#cota.rueda_escape_paso_diente"))
-    p.append(
-        _texto(
-            dx0 - base,
-            dy0 + 108,
-            f"punta de {espesor_punta * (diam / 2.0):.2f} mm \u00b7 "
-            f"{math.degrees(incluido):.0f}\u00b0 de \u00e1ngulo incluido \u00b7 "
-            f"{radios} radios",
-            8,
             AUX,
             "start",
         )
     )
+
+    # ---- panel 2, un diente, acotado para trazarlo ------------------------
+    # El socavado y el dorso se miden EN LA PUNTA; el boceto se construye
+    # desde el centro. Las dos conversiones son lo que se teclea, y por eso
+    # este panel las lleva las dos.
+    e2 = 12.0
+    dcx, dcy = 840.0, 690.0
+    rp2, rf2 = diam * e2 / 2.0, fondo * e2 / 2.0
     p.append(
         _texto(
-            dx0 - base,
-            dy0 + 122,
-            "#angulo.rueda_escape_espesor_punta \u00b7 #num.rueda_escape_radios",
+            620, 92, "UN DIENTE \u00b7 escala 12:1 \u00b7 acotado para trazarlo", 9, TINTA, "start"
+        )
+    )
+    p.append(
+        _texto(
+            620,
+            105,
+            "los \u00e1ngulos de la punta y los de centro: no son los mismos",
             8,
             AUX,
             "start",
         )
     )
 
+    def pol2(rad: float, ang: float) -> tuple[float, float]:
+        return dcx + rad * math.cos(ang - math.pi / 2.0), dcy + rad * math.sin(ang - math.pi / 2.0)
+
+    base = -angular * 0.55
+    pts = [
+        pol2(rf2, base),
+        pol2(rp2, base + retraso),
+        pol2(rp2, base + retraso + espesor_punta),
+        pol2(rf2, base + retraso + espesor_punta + adelanto),
+        pol2(rf2, base + angular),
+        pol2(rp2, base + angular + retraso),
+    ]
     p.append(
-        '<rect x="34" y="520" width="832" height="46" rx="4" fill="#fff4e5" '
+        '<path d="'
+        + " ".join(f"{'M' if i == 0 else 'L'}{x:.1f} {y:.1f}" for i, (x, y) in enumerate(pts))
+        + f'" fill="none" stroke="{TINTA}" stroke-width="1.8"/>'
+    )
+    for rad, trazo, rot in ((rp2, "6 3", "punta"), (rf2, "3 3", "fondo")):
+        x0, y0 = pol2(rad, base - 0.012)
+        x1, y1 = pol2(rad, base + angular + 0.03)
+        p.append(
+            f'<path d="M{x0:.1f} {y0:.1f}A{rad:.1f} {rad:.1f} 0 0 1 {x1:.1f} {y1:.1f}" '
+            f'fill="none" stroke="{AUX}" stroke-width="0.8" stroke-dasharray="{trazo}"/>'
+        )
+        p.append(_texto(x1 + 8, y1 + 3, f"c\u00edrculo de {rot}", 7.5, AUX, "start"))
+    # Los radios al centro: son las lineas de construccion de verdad, porque
+    # un boceto se traza por angulos de centro y no por angulos de punta.
+    for ang in (
+        base,
+        base + retraso,
+        base + retraso + espesor_punta,
+        base + retraso + espesor_punta + adelanto,
+        base + angular,
+    ):
+        x1, y1 = pol2(rf2 - 26, ang)
+        x2, y2 = pol2(rp2 + 16, ang)
+        p.append(
+            f'<path d="M{x1:.1f} {y1:.1f}L{x2:.1f} {y2:.1f}" stroke="{AUX}" stroke-width="0.6" '
+            f'stroke-dasharray="8 3 2 3"/>'
+        )
+    p.append(
+        _texto(
+            640,
+            250,
+            "Los cuatro radios acotan, acumulados desde el pie del dorso:",
+            8.5,
+            TINTA,
+            "start",
+        )
+    )
+    for i, (rotulo, grados, clave) in enumerate(
+        (
+            ("retraso del dorso", math.degrees(retraso), "#angulo.rueda_escape_dorso_retraso"),
+            (
+                "espesor de la punta",
+                math.degrees(espesor_punta),
+                "#angulo.rueda_escape_espesor_punta",
+            ),
+            ("adelanto de la punta", math.degrees(adelanto), "#angulo.rueda_escape_punta_adelanto"),
+            ("hueco para la sierra", math.degrees(hueco), "#angulo.rueda_escape_hueco_angular"),
+        )
+    ):
+        p.append(_texto(656, 270 + i * 16, f"{grados:5.2f}\u00b0", 9.5, COTA, "start", "bold"))
+        p.append(_texto(710, 270 + i * 16, rotulo, 8.5, TINTA, "start"))
+        p.append(_texto(850, 270 + i * 16, clave, 7.5, AUX, "start"))
+    p.append(
+        _texto(
+            640,
+            350,
+            f"Suman {math.degrees(angular):.0f}\u00b0, el paso. El diente ocupa "
+            f"{math.degrees(retraso + espesor_punta + adelanto):.2f}\u00b0 y el hueco el resto:",
+            8.5,
+            TINTA,
+            "start",
+        )
+    )
+    p.append(
+        _texto(
+            640,
+            365,
+            f"{fondo / 2.0 * hueco:.2f} mm de arco en el fondo, tres veces y media la hoja de la "
+            "segueta.",
+            8.5,
+            TINTA,
+            "start",
+        )
+    )
+    p.append(
+        _texto(
+            640, 394, "Los \u00e1ngulos medidos EN LA PUNTA, de donde salen:", 8.5, TINTA, "start"
+        )
+    )
+    for i, (rotulo, grados, clave) in enumerate(
+        (
+            ("socavado de la cara", math.degrees(socavado), "#angulo.rueda_escape_socavado"),
+            (
+                "inclinaci\u00f3n del dorso",
+                math.degrees(dorso_inc),
+                "#angulo.rueda_escape_dorso_inclinacion",
+            ),
+            (
+                "cu\u00f1a de la punta",
+                math.degrees(incluido),
+                "#angulo.rueda_escape_angulo_incluido",
+            ),
+        )
+    ):
+        p.append(_texto(656, 414 + i * 16, f"{grados:5.1f}\u00b0", 9.5, COTA, "start", "bold"))
+        p.append(_texto(710, 414 + i * 16, rotulo, 8.5, TINTA, "start"))
+        p.append(_texto(850, 414 + i * 16, clave, 7.5, AUX, "start"))
+    p.append(
+        _texto(
+            640,
+            482,
+            f"altura {altura:.0f} \u00b7 #cota.rueda_escape_altura_diente \u00b7 "
+            f"paso de arco {paso:.2f} \u00b7 #cota.rueda_escape_paso_diente",
+            8.5,
+            AUX,
+            "start",
+        )
+    )
+
+    # ---- panel 3, el engrane ----------------------------------------------
+    e3 = 2.0
+    gx, gy = 300.0, 800.0
+    ax, ay = gx, gy - entre * e3
+    p.append(_texto(60, 620, "EL ENGRANE \u00b7 escala 2:1 \u00b7 en el reposo", 9, TINTA, "start"))
+    p.append(
+        _texto(
+            60, 633, "para qu\u00e9 sirve el perfil: el diente apoya en el ARCO", 8, AUX, "start"
+        )
+    )
+    p.append(
+        f'<path d="{perfil(gx, gy, e3, desde=-math.pi / 2.0 - 0.02)}" fill="none" '
+        f'stroke="{TINTA}" stroke-width="1.2"/>'
+    )
+    p.append(
+        f'<circle cx="{gx}" cy="{gy}" r="{fondo * e3 / 2.0:.1f}" fill="none" stroke="{AUX}" '
+        f'stroke-width="0.8" stroke-dasharray="3 3"/>'
+    )
+    for signo, arco, rotulo in ((-1.0, arco_e, "entrada"), (1.0, arco_s, "salida")):
+        ang = math.pi / 2.0 + signo * abierto / 2.0
+        ux, uy = math.cos(ang), math.sin(ang)
+        p.append(
+            f'<path d="M{ax:.1f} {ay:.1f}L{ax + brazo * e3 * ux:.1f} '
+            f'{ay + brazo * e3 * uy:.1f}" stroke="{TINTA}" stroke-width="1.6"/>'
+        )
+        # El arco de reposo, centrado en el eje del ancora: esto es el deadbeat
+        r3 = arco * e3
+        a1, a2 = ang - reposo * 1.6, ang + reposo * 1.6
+        p.append(
+            f'<path d="M{ax + r3 * math.cos(a1):.1f} {ay + r3 * math.sin(a1):.1f}'
+            f"A{r3:.1f} {r3:.1f} 0 0 1 {ax + r3 * math.cos(a2):.1f} "
+            f'{ay + r3 * math.sin(a2):.1f}" fill="none" stroke="{COTA}" stroke-width="2.6"/>'
+        )
+        p.append(
+            _texto(
+                ax + r3 * math.cos(ang) + signo * 96,
+                ay + r3 * math.sin(ang) + 34,
+                f"arco de {rotulo}",
+                7.5,
+                COTA,
+                "start" if signo > 0 else "end",
+                "bold",
+            )
+        )
+        p.append(
+            _texto(
+                ax + r3 * math.cos(ang) + signo * 96,
+                ay + r3 * math.sin(ang) + 44,
+                f"R{arco:.2f}",
+                9,
+                COTA,
+                "start" if signo > 0 else "end",
+                "bold",
+            )
+        )
+    p.append(
+        f'<circle cx="{ax:.1f}" cy="{ay:.1f}" r="{eje * e3 / 2.0:.1f}" fill="none" '
+        f'stroke="{TINTA}" stroke-width="1.6"/>'
+    )
+    p.append(_texto(ax, ay - 14, "eje del \u00e1ncora", 8, AUX))
+    p.append(
+        f'<path d="M{ax:.1f} {ay:.1f}L{gx:.1f} {gy:.1f}" stroke="{AUX}" stroke-width="0.6" '
+        f'stroke-dasharray="8 3 2 3"/>'
+    )
+    p.append(
+        _cota_v(
+            ay,
+            gy,
+            gx - diam * e3 / 2.0 - 54,
+            f"{entre:.2f}",
+            "#cota.ancora_entre_centros",
+            desde=gx - diam * e3 / 2.0,
+        )
+    )
+    p.append(
+        _texto(
+            620,
+            660,
+            "LOS DOS ARCOS EST\u00c1N CENTRADOS EN EL EJE DEL \u00c1NCORA, y en eso",
+            8.5,
+            COTA,
+            "start",
+            "bold",
+        )
+    )
+    for i, linea in enumerate(
+        [
+            "consiste el deadbeat: mientras el diente apoya en el arco, el \u00e1ncora",
+            "gira y la rueda no se mueve. En un retroceso la cara es un plano y la",
+            "rueda retrocede. Los dos radios difieren en la profundidad del impulso,",
+            f"{arco_s - arco_e:.2f} mm, que es lo que el diente empuja.",
+        ]
+    ):
+        p.append(_texto(620, 676 + i * 14, linea, 8.5, TINTA, "start"))
+    p.append(
+        _texto(620, 750, f"abarque {abarca:g} dientes \u00b7 #num.abarque_ancora", 8, AUX, "start")
+    )
+    p.append(_texto(620, 764, f"brazo {brazo:.0f} \u00b7 #cota.ancora_brazo", 8, AUX, "start"))
+
+    p.append(
+        '<rect x="34" y="904" width="1112" height="46" rx="4" fill="#fff4e5" '
         'stroke="#d98324" stroke-width="1"/>'
     )
     p.append(
         _texto(
             46,
-            539,
+            923,
             "NO ES PLANTILLA DE CORTE, Y ESTA MENOS QUE NINGUNA: el perfil del diente decide el "
             "reposo del escape.",
             9.5,
@@ -1557,16 +1714,16 @@ def rueda_escape(c: Contratos) -> str:
     p.append(
         _texto(
             46,
-            555,
-            "Un disco plano se monta del rev\u00e9s sin que se note y los dientes miran "
-            "al otro lado: si el escape no engancha, se voltea la rueda.",
+            939,
+            "Un disco plano se monta del rev\u00e9s sin que se note y los dientes miran al otro "
+            "lado: si el escape no engancha, se voltea la rueda.",
             9,
             "#8a5200",
             "start",
         )
     )
     p.append(
-        f'<rect x="34" y="584" width="832" height="52" fill="none" stroke="{TINTA}" '
+        f'<rect x="34" y="956" width="1112" height="52" fill="none" stroke="{TINTA}" '
         'stroke-width="1.2"/>'
     )
     campos = [
@@ -1575,18 +1732,19 @@ def rueda_escape(c: Contratos) -> str:
         ("Espesor", f"{espesor:.0f} mm"),
         ("Cantidad", "1"),
         ("Dientes", f"{dientes}"),
-        ("Conjunto", "Escape \u00b7 banco R2"),
+        ("Radios", f"{radios}"),
+        ("Conjunto", "Escape \u00b7 R2"),
         ("Estado", "PENDIENTE \u00b7 R2"),
     ]
-    celda = 832 / len(campos)
+    celda = 1112 / len(campos)
     for i, (k, val) in enumerate(campos):
         bx = 34 + i * celda
         p.append(
-            f'<path d="M{bx:.1f} 584h{celda:.1f}v52h-{celda:.1f}z" fill="none" '
+            f'<path d="M{bx:.1f} 956h{celda:.1f}v52h-{celda:.1f}z" fill="none" '
             f'stroke="{AUX}" stroke-width="0.6"/>'
         )
-        p.append(_texto(bx + 10, 602, k.upper(), 7.5, AUX, "start"))
-        p.append(_texto(bx + 10, 621, val, 10.5, TINTA, "start", "bold"))
+        p.append(_texto(bx + 10, 974, k.upper(), 7.5, AUX, "start"))
+        p.append(_texto(bx + 10, 993, val, 10.5, TINTA, "start", "bold"))
     p.append("</svg>")
     return "\n".join(p)
 

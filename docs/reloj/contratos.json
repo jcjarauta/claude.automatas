@@ -487,7 +487,7 @@
           "nombre": "rueda_escape_angulo_incluido",
           "valor": 0.4014257279586958,
           "unidad": "rad",
-          "descripcion": "Angulo de la PUNTA del diente, entre la cara de ataque y el dorso. Con el socavado y el espesor de punta define el diente entero: son tres cotas y no una",
+          "descripcion": "La CUNA de la punta: el angulo entre la cara de ataque y el dorso. Con el socavado reparte el diente -el dorso se lleva incluido - socavado = 15 grados- y de esa reparticion sale el hueco entre dientes. Es lo que impide que el perfil sea una onda sin sitio para la segueta",
           "tolerancia": "+/-2 grados"
         },
         {
@@ -510,6 +510,41 @@
           "unidad": "adimensional",
           "descripcion": "Radios de la rueda. No es decoracion: este es el eje mas rapido del reloj y la masa que se le quite vale por el cuadrado de la velocidad en la inercia que hay que vencer",
           "tolerancia": "3, 4, 5 o 6"
+        },
+        {
+          "nombre": "rueda_escape_dorso_inclinacion",
+          "valor": 0.2617993877991494,
+          "unidad": "rad",
+          "descripcion": "DERIVADO: angulo_incluido - socavado. Lo que el dorso se inclina del radio, del otro lado que la cara. El incluido es la CUNA de la punta: entre los dos reparten el diente",
+          "tolerancia": "derivado"
+        },
+        {
+          "nombre": "rueda_escape_punta_adelanto",
+          "valor": 0.0218584,
+          "unidad": "rad",
+          "descripcion": "DERIVADO: atan(altura x tan(socavado) / radio_punta). Angulo CENTRAL del fondo de ataque a la esquina delantera de la punta. Es el numero que se teclea al trazar, porque el socavado se mide en la punta y el boceto se construye desde el centro",
+          "tolerancia": "derivado"
+        },
+        {
+          "nombre": "rueda_escape_dorso_retraso",
+          "valor": 0.0416569,
+          "unidad": "rad",
+          "descripcion": "DERIVADO: atan(altura x tan(dorso_inclinacion) / radio_punta). Lo mismo por el otro lado: de la esquina trasera de la punta al pie del dorso",
+          "tolerancia": "derivado"
+        },
+        {
+          "nombre": "rueda_escape_hueco_angular",
+          "valor": 0.1371976,
+          "unidad": "rad",
+          "descripcion": "DERIVADO: paso_angular - adelanto - espesor_punta - retraso. EL HUECO ENTRE DIENTES, y es la envolvente de fabricacion que faltaba: el dorso NO llega al fondo del diente siguiente. Si llegase, el perfil seria una onda y no habria por donde meter la segueta",
+          "tolerancia": "derivado · minimo para la sierra"
+        },
+        {
+          "nombre": "rueda_escape_radio_ancho",
+          "valor": 0.008,
+          "unidad": "m",
+          "descripcion": "Ancho de cada radio de la rueda. Ocho milimetros en contrachapado de 4 aguantan de sobra el par y quitan casi toda la masa del disco",
+          "tolerancia": "+/-0,5"
         }
       ]
     },

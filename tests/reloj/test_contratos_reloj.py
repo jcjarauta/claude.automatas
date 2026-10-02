@@ -277,11 +277,18 @@ def test_cada_magnitud_cae_en_el_tipo_que_le_toca(reloj: Contratos):
 
 def test_el_factor_convierte_de_verdad(reloj: Contratos):
     """La columna `factor` está para poder auditar la conversión: el valor
-    del contrato por el factor tiene que dar el valor de la tabla."""
+    del contrato por el factor tiene que dar el valor de la tabla.
+
+    La tolerancia es la del **redondeo que declara la propia unidad**, no una
+    fija: un ángulo pequeño como el adelanto de la punta —1,2524°— cae fuera de
+    cualquier tolerancia relativa apretada solo por escribirse con cuatro
+    decimales, y eso no es un error de conversión."""
     for contrato in reloj.contratos:
         for valor in contrato.valores:
             cifra, conversion = convertir(valor)
-            assert float(cifra) == pytest.approx(valor.valor * conversion.factor, rel=1e-6)
+            esperado = valor.valor * conversion.factor
+            redondeo = 0.5 * 10.0 ** (-conversion.decimales)
+            assert float(cifra) == pytest.approx(esperado, abs=redondeo, rel=1e-9), valor.nombre
 
 
 def test_el_metro_sale_en_milimetros_y_el_radian_en_grados(reloj: Contratos):
@@ -1384,3 +1391,62 @@ def test_la_rueda_lleva_radios_y_no_es_un_disco(reloj: Contratos):
     el cuadrado de la velocidad en la inercia que hay que vencer."""
     radios = reloj.valor("rueda_escape", "rueda_escape_radios").valor
     assert radios in (3.0, 4.0, 5.0, 6.0)
+
+
+def test_el_dorso_se_lleva_lo_que_la_cuna_deja(reloj: Contratos):
+    """El ángulo incluido es la cuña de la punta, no una cota suelta: entre la
+    cara y el dorso reparten el diente, y el dorso se lleva lo que queda."""
+    r = reloj.contrato("rueda_escape")
+    assert r.valor("rueda_escape_dorso_inclinacion").valor == pytest.approx(
+        r.valor("rueda_escape_angulo_incluido").valor - r.valor("rueda_escape_socavado").valor,
+        abs=1e-6,
+    )
+
+
+def test_los_dos_angulos_centrales_salen_de_los_de_la_punta(reloj: Contratos):
+    """El socavado y el dorso se miden EN LA PUNTA; el boceto se construye
+    desde el centro. Las dos conversiones son lo que se teclea al trazar, y
+    por eso están declaradas en vez de calcularse con un lápiz."""
+    r = reloj.contrato("rueda_escape")
+    radio = r.valor("rueda_escape_diametro").en_mm / 2.0
+    altura = r.valor("rueda_escape_altura_diente").en_mm
+    for central, punta in (
+        ("rueda_escape_punta_adelanto", "rueda_escape_socavado"),
+        ("rueda_escape_dorso_retraso", "rueda_escape_dorso_inclinacion"),
+    ):
+        assert r.valor(central).valor == pytest.approx(
+            math.atan(altura * math.tan(r.valor(punta).valor) / radio), abs=1e-6
+        ), central
+
+
+def test_el_diente_deja_hueco_para_la_sierra(reloj: Contratos):
+    """LA envolvente de fabricación que faltaba. El dorso NO llega al fondo
+    del diente siguiente: si llegase, el perfil sería una onda continua y no
+    habría por dónde meter la segueta. El hueco tiene que dar al menos para
+    girar la hoja, que son unos 3 mm."""
+    r = reloj.contrato("rueda_escape")
+    hueco = r.valor("rueda_escape_hueco_angular").valor
+    assert hueco == pytest.approx(
+        r.valor("rueda_escape_paso_angular").valor
+        - r.valor("rueda_escape_punta_adelanto").valor
+        - r.valor("rueda_escape_espesor_punta").valor
+        - r.valor("rueda_escape_dorso_retraso").valor,
+        abs=1e-6,
+    )
+    arco = r.valor("rueda_escape_diametro_fondo").en_mm / 2.0 * hueco
+    assert arco >= 3.0, f"el hueco entre dientes son {arco:.1f} mm y la segueta no gira"
+
+
+def test_el_diente_no_invade_al_de_al_lado(reloj: Contratos):
+    r = reloj.contrato("rueda_escape")
+    ocupa = (
+        r.valor("rueda_escape_punta_adelanto").valor
+        + r.valor("rueda_escape_espesor_punta").valor
+        + r.valor("rueda_escape_dorso_retraso").valor
+    )
+    assert ocupa < r.valor("rueda_escape_paso_angular").valor / 2.0
+
+
+def test_los_radios_dejan_pasar_el_cubo(reloj: Contratos):
+    r = reloj.contrato("rueda_escape")
+    assert r.valor("rueda_escape_radio_ancho").en_mm < r.valor("rueda_escape_cubo_diametro").en_mm
