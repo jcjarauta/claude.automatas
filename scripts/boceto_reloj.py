@@ -22,7 +22,8 @@ import argparse
 import sys
 from pathlib import Path
 
-from compile.contratos import Contratos, cargar
+from compile.contratos import Contratos, Valor, cargar
+from scripts.exportar_variables import NOMBRE_MAPA, conversion_de
 
 RELOJ = Path("docs/reloj/contratos.json")
 
@@ -467,21 +468,101 @@ def lenteja(c: Contratos) -> str:
 
 PIEZAS = {"varilla": varilla, "lenteja": lenteja}
 
+PREFIJOS = {"varilla": ("varilla_",), "lenteja": ("lenteja_",), "vastago": ("vastago_",)}
+"""Que cotas son de cada pieza. El prefijo del nombre decide, igual que
+decide el gemelo de radio: asi se puede leer el contrato y saber de quien es
+cada cota sin conocer el conjunto."""
+
+INTERFACES = {
+    "varilla": ("vastago_diametro", "longitud_pendulo_nominal"),
+    "lenteja": ("vastago_diametro", "vastago_saliente", "longitud_pendulo_nominal"),
+    "vastago": ("varilla_vastago_diametro", "varilla_vastago_profundidad"),
+}
+"""Cotas de OTRA pieza que esta toca. Van en la tabla aparte y rotuladas,
+porque cambiarlas desde aqui rompe la pieza de al lado: una cota de junta
+nombrada por un solo lado invita a cambiarla en un solo sitio."""
+
+
+def _fila(valor: Valor) -> tuple[str, str, str, str, str]:
+    """Una fila de la tabla, con la variable que le toca en Onshape.
+
+    El tipo lo decide la misma tabla de conversion que escribe los CSV, para
+    que la tabla no pueda prometer una variable que el Variable Studio no
+    tiene: una masa no entra en el CAD, y aqui tiene que decirlo.
+    """
+    conversion = conversion_de(valor)
+    cifra = f"{valor.valor * conversion.factor:g}"
+    mapa = NOMBRE_MAPA.get(conversion.tipo)
+    variable = f"`#{mapa}.{valor.nombre}`" if mapa else "**no entra en el CAD**"
+    return (
+        valor.nombre,
+        f"{cifra} {conversion.simbolo}".strip(),
+        variable,
+        valor.tolerancia or "—",
+        valor.descripcion,
+    )
+
+
+def tabla_de_cotas(c: Contratos, pieza: str) -> str:
+    """La tabla de la pieza, en markdown, leida del contrato.
+
+    No se teclea por la misma razon que no se teclea el boceto: una tabla
+    escrita a mano se queda atras en cuanto el contrato cambia, y nadie se
+    entera porque sigue pareciendo correcta.
+    """
+    propias: list[tuple[str, str, str, str, str]] = []
+    vecinas: list[tuple[str, str, str, str, str]] = []
+    for contrato in c.contratos:
+        for valor in contrato.valores:
+            if valor.nombre.startswith(PREFIJOS[pieza]):
+                propias.append(_fila(valor))
+            elif valor.nombre in INTERFACES[pieza]:
+                vecinas.append(_fila(valor))
+
+    lineas = [f"### Cotas de la pieza `{pieza}`", ""]
+    lineas.append("| Cota | Valor | Variable | Tolerancia | De donde sale |")
+    lineas.append("| --- | --- | --- | --- | --- |")
+    for n, v, var, tol, desc in propias:
+        lineas.append(f"| `{n}` | {v} | {var} | {tol} | {desc} |")
+    if vecinas:
+        lineas += [
+            "",
+            "**Cotas de interfaz**, de otras piezas que esta toca. Cambiarlas",
+            "desde aqui rompe la pieza de al lado.",
+            "",
+            "| Cota | Valor | Variable | De donde sale |",
+            "| --- | --- | --- | --- |",
+        ]
+        for n, v, var, _tol, desc in vecinas:
+            lineas.append(f"| `{n}` | {v} | {var} | {desc} |")
+    return "\n".join(lineas) + "\n"
+
 
 def main(argv: list[str] | None = None) -> int:
     partes = argparse.ArgumentParser(prog="boceto_reloj", description=__doc__)
-    partes.add_argument("--pieza", default="varilla", choices=sorted(PIEZAS))
+    partes.add_argument("--pieza", default="varilla", choices=sorted(PREFIJOS))
+    partes.add_argument("--tabla", action="store_true", help="la tabla de cotas, en markdown")
     partes.add_argument("--contratos", type=Path, default=RELOJ)
     partes.add_argument("--out", type=Path, default=None)
     opciones = partes.parse_args(argv)
 
-    svg = PIEZAS[opciones.pieza](cargar(opciones.contratos))
+    contratos = cargar(opciones.contratos)
+    if opciones.tabla:
+        texto, sufijo = tabla_de_cotas(contratos, opciones.pieza), "cotas.md"
+    else:
+        if opciones.pieza not in PIEZAS:
+            print(f"no hay boceto de '{opciones.pieza}' todavia", file=sys.stderr)
+            return 2
+        texto, sufijo = PIEZAS[opciones.pieza](contratos), "boceto.svg"
     if opciones.out is None:
-        print(svg)
+        print(texto)
         return 0
     opciones.out.mkdir(parents=True, exist_ok=True)
-    ruta = opciones.out / f"boceto-{opciones.pieza}.svg"
-    ruta.write_text(svg, encoding="utf-8")
+    nombre = (
+        f"boceto-{opciones.pieza}.svg" if sufijo == "boceto.svg" else f"cotas-{opciones.pieza}.md"
+    )
+    ruta = opciones.out / nombre
+    ruta.write_text(texto, encoding="utf-8")
     print(f"escrito {ruta}")
     return 0
 
