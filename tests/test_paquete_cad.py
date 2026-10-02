@@ -153,6 +153,32 @@ def test_las_variables_van_partidas_por_unidad(paquete: Path):
     assert "radio_base" not in angulo
 
 
+def test_una_circunferencia_de_taladros_tiene_su_diametro(paquete: Path):
+    """**Un patrón circular se acota por su circunferencia, en diámetro.**
+
+    Faltó dibujando el volante: `volante_aligeramiento_al_centro` vale 30 y
+    no lleva «radio» ni «diametro» en el nombre, así que el exportador no le
+    sacaba gemelo y en el campo del CAD —que pide Ø60— no había nada que
+    teclear. Mismo fallo que el canto del sector, con otra cara.
+
+    El nombre no se cambia: ya está entregado, y renombrar una cota
+    entregada cuesta reteclear el croquis. Lo que sabe que esa distancia es
+    una circunferencia es la **ficha**, que declara el patrón en `polares`.
+    """
+    import csv as _csv
+
+    from scripts.comparar_dxf import circunferencias_de_taladros
+
+    filas = _csv.reader((paquete / "variables_cota.csv").read_text(encoding="utf-8").splitlines())
+    valores = {f[0]: float(f[1]) for f in filas if f}
+    taladros = circunferencias_de_taladros()
+    assert taladros, "ninguna ficha declara un patrón circular: el cruce no comprueba nada"
+    for nombre in sorted(taladros):
+        gemelo = nombre if nombre.endswith("_diametro") else f"{nombre}_diametro"
+        assert gemelo in valores, f"{nombre} es una circunferencia de taladros y no tiene diámetro"
+        assert valores[gemelo] == pytest.approx(2.0 * valores[nombre])
+
+
 def test_ninguna_hoja_rotula_un_angulo_negativo(paquete: Path):
     """**El campo de ángulo no acepta el signo.** La herramienta de ángulo
     mide una magnitud: metido con el menos, el campo se pone en rojo, y
@@ -397,7 +423,11 @@ def test_cada_cota_circular_tiene_sus_dos_formas(paquete: Path):
     # Y 31 con el volante, que trae dos círculos enteros: su contorno y los
     # seis aligeramientos. El resto de sus cotas son las del brazo —cala con
     # la misma cara plana sobre la misma barra Ø10 h6—, así que no suman.
-    assert gemelos == 31, f"esperaba 31 cotas circulares con gemelo, hay {gemelos}"
+    #
+    # Y 32 con la circunferencia de taladros del volante: un patrón se acota
+    # por su circunferencia de construcción, y esa el CAD la pide en
+    # diámetro. Lo sabe la ficha, que declara el patrón, no el nombre.
+    assert gemelos == 32, f"esperaba 32 cotas circulares con gemelo, hay {gemelos}"
 
 
 def test_el_gemelo_dice_que_es_derivado(paquete: Path):

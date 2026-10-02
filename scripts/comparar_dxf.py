@@ -350,6 +350,23 @@ def angulos_en_rad() -> dict[str, float]:
     }
 
 
+def circunferencias_de_taladros() -> frozenset[str]:
+    """Las cotas que alguna ficha usa como radio de un **patrón circular**.
+
+    Un patrón de más de un agujero no se dibuja agujero a agujero: se traza
+    una circunferencia de construcción y se repite sobre ella, y esa
+    circunferencia el CAD la acota en **diámetro**. Así que estas cotas son
+    circulares aunque su nombre diga «al_centro» o «al_arbol», y les hace
+    falta gemelo igual que a un radio.
+
+    Lo dice la ficha y no el nombre a propósito: el nombre ya se entregó, y
+    renombrar una cota entregada cuesta reteclear el croquis. Con `cuantos`
+    = 1 no hay patrón —se acota la distancia y punto—, y entonces un
+    diámetro sería un número que no mide nada.
+    """
+    return frozenset(r for f in FICHAS.values() for r, _, cuantos in f.polares if cuantos > 1)
+
+
 def cotas_en_mm() -> dict[str, float]:
     """El contrato en milímetros, **con los gemelos**.
 
@@ -366,7 +383,7 @@ def cotas_en_mm() -> dict[str, float]:
                 continue
             nombre, valor = v["nombre"], float(v["valor"]) * MM
             salida[nombre] = valor
-            if "radio" in nombre:
+            if "radio" in nombre or nombre in circunferencias_de_taladros():
                 salida[f"{nombre}_diametro"] = valor * 2.0
             elif "diametro" in nombre:
                 salida[f"{nombre}_radio"] = valor / 2.0

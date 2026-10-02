@@ -526,6 +526,19 @@ falla si el esquema versionado se queda atrás.
   `alto_de_leyenda` reservando el sitio: abajo está la pila de cotas
   horizontales y un radio que la cruza se lee como parte de ella.
 
+- **Un patrón circular se acota por su circunferencia, y esa va en
+  diámetro.** `volante_aligeramiento_al_centro` vale 30 y no lleva «radio»
+  ni «diametro» en el nombre, así que no sacaba gemelo: en el campo del CAD
+  —que pide **Ø60**— no había nada que teclear. Lo vio quien dibujaba, con
+  la pieza medio hecha.
+
+  Es la misma familia que el canto del sector, pero el arreglo no puede ser
+  el de entonces —renombrar— porque la cota ya estaba entregada. Lo que sabe
+  que esa distancia es una circunferencia no es el nombre, es la **ficha**:
+  declara el patrón en `polares`, y `circunferencias_de_taladros()` saca de
+  ahí quién necesita gemelo. Con un solo agujero no hay patrón: se acota la
+  distancia y un diámetro sería un número que no mide nada.
+
 - **Dimensionar sobre el demo.** El volante salió de `demo/hola.json` y se
   habría quedado un **tercio corto**: «firma», que es un trazo cursivo
   largo, pide 3,62 × 10⁻⁴ kg·m² contra los 2,28 de «hola». Los casos de

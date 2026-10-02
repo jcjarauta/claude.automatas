@@ -44,6 +44,7 @@ from emit.dxf import escribir_dxf
 from emit.plataforma import BRAZOS, PERFILES
 from emit.plataforma import brazo as brazo_de
 from emit.plataforma import escribir_dxf as escribir_perfil
+from scripts.comparar_dxf import circunferencias_de_taladros
 from scripts.exportar_variables import csv, featurescript
 
 
@@ -155,7 +156,7 @@ def con_gemelos(filas: list[list[str]]) -> list[list[str]]:
             )
             salida.append(derivada)
             continue
-        if "radio" in nombre:
+        if "radio" in nombre or nombre in circunferencias_de_taladros():
             gemelo, factor = f"{nombre}_diametro", 2.0
         elif "diametro" in nombre:
             gemelo, factor = f"{nombre}_radio", 0.5

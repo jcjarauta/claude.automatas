@@ -420,6 +420,14 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
             default=None,
         )
         cual = f"Ø{2 * cerca.radio:g} · " if cerca else ""
+        # **Un patrón se dibuja sobre una circunferencia, y esa se acota en
+        # diámetro.** Con más de un agujero nadie los sitúa de uno en uno:
+        # se traza una circunferencia de construcción y se repite sobre
+        # ella. Ofrecer el radio ahí es el fallo del canto del sector con
+        # otra cara, y faltó al dibujar el volante.
+        donde, cota_donde = numero(c[cota_r]), cota_r
+        if cuantos > 1:
+            donde, cota_donde = f"en Ø{numero(2 * c[cota_r])}", f"{cota_r}_diametro"
         for cx_, cy_ in centros:
             d.append(
                 f'<line class="eje" x1="{ox:.2f}" y1="{oy:.2f}" '
@@ -462,17 +470,15 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
                 + 2.9
                 * max(len(f"{cual}{numero(c[cota_r])}"), len(f"{marca}{numero(grados)}°{lado}")),
             )
-        for i, linea in enumerate(
-            (f"{cual}{numero(c[cota_r])}", f"{marca}{numero(grados)}°{lado}")
-        ):
+        for i, linea in enumerate((f"{cual}{donde}", f"{marca}{numero(grados)}°{lado}")):
             d.append(
                 f'<text class="cotatx" x="{tx:.2f}" y="{ty - 1.2 + 6.5 * i:.2f}" '
                 f'style="text-anchor:{ancla}">{linea}</text>'
             )
         d.append(
             f'<text class="cotavar" x="{x + 10:.1f}" y="{leyenda:.1f}">'
-            f"{cual}{numero(c[cota_r])} · {marca}{numero(grados)}°{lado} → "
-            f"#cota.{cota_r} · #angulo.{teclea}</text>"
+            f"{cual}{donde} · {marca}{numero(grados)}°{lado} → "
+            f"#cota.{cota_donde} · #angulo.{teclea}</text>"
         )
         leyenda += 7
 
