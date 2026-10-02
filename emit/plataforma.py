@@ -176,6 +176,41 @@ def tambor(c: dict[str, float] | None = None) -> Perfil:
     return disco(c["amplificador_tambor_radio_mecanizado"], c["brazo_eje_diametro"])
 
 
+def platina_levas(c: dict[str, float] | None = None) -> Perfil:
+    """La platina de levas: un disco con los seis agujeros del mecanismo.
+
+    **Es un disco y no un rectángulo** porque los seis caben dentro de 71,063
+    —los tres postes son los de más afuera— así que el contorno se dice con
+    una sola cota, y es la forma que el reparto a 120° ya pedía.
+
+    Los dos pivotes del cinco barras caen a la **misma distancia**, 68,213, y a
+    ángulos simétricos respecto de la bisectriz de 60° entre el poste 1 y el
+    2. No es casualidad: salen de la misma transformación que deja cada
+    pivote a 68,000 de su poste, que es lo que el cabestrante necesita.
+    """
+    c = contrato_mm() if c is None else c
+    perfil = circulo((0.0, 0.0), c["platina_diametro"] / 2)
+    perfil += circulo((0.0, 0.0), c["rodamiento_arbol_alojamiento_diametro"] / 2)
+    # `contrato_mm` pasa a milímetros las LONGITUDES y deja los ángulos en
+    # radianes, así que aquí no se divide por nada. Dividir por MM «por
+    # simetría» ponía los tres postes a dos milésimas de grado uno de otro.
+    for i in range(3):
+        t = c["poste_reparto"] * i
+        centro = (
+            c["poste_radio_al_arbol"] * math.cos(t),
+            c["poste_radio_al_arbol"] * math.sin(t),
+        )
+        perfil += circulo(centro, c["poste_eje_diametro"] / 2)
+    for cota in ("platina_pivote_angulo_izquierdo", "platina_pivote_angulo_derecho"):
+        t = c[cota]
+        centro = (
+            c["platina_pivote_al_arbol"] * math.cos(t),
+            c["platina_pivote_al_arbol"] * math.sin(t),
+        )
+        perfil += circulo(centro, c["brazo_eje_diametro"] / 2)
+    return perfil
+
+
 def ranura(centro: Punto, largo: float, radio: float) -> Perfil:
     """Una ranura recta: dos semicírculos y sus dos tangentes, horizontal.
 
@@ -257,6 +292,7 @@ PERFILES = {
     "sector": lambda c: sector(c),
     "tambor": lambda c: tambor(c),
     "seguidor": lambda c: seguidor(c),
+    "platina_levas": lambda c: platina_levas(c),
 }
 """Las piezas prismáticas que no son barras. El resto sale de `BRAZOS`.
 
@@ -458,6 +494,30 @@ LISTADO: dict[str, Ficha] = {
         "pestañas sino que los dos asientos sean coplanarios, y eso es una tolerancia y "
         "no un resalte. R8 son 160 espesores de cinta: pasa de sobra el radio mínimo.",
     ),
+    "platina_levas": Ficha(
+        "disco de contrachapado con los seis agujeros del mecanismo",
+        2,
+        (
+            Variable("cota", "platina_diametro", "Ø del disco"),
+            Variable("cota", "platina_espesor", "espesor", en_el_perfil=False),
+            Variable("cota", "rodamiento_arbol_alojamiento_diametro", "Ø del árbol", "H7"),
+            Variable("cota", "poste_eje_diametro", "Ø de cada poste", "h6"),
+            Variable("cota", "poste_radio_al_arbol", "del árbol a los postes"),
+            Variable("angulo", "poste_reparto", "entre postes"),
+            Variable("cota", "brazo_eje_diametro", "Ø de cada pivote"),
+            Variable("cota", "platina_pivote_al_arbol", "del árbol a los pivotes"),
+            Variable("angulo", "platina_pivote_angulo_izquierdo", "pivote izquierdo a"),
+            Variable("angulo", "platina_pivote_angulo_derecho", "pivote derecho a"),
+        ),
+        ("plancha", "platina_espesor"),
+        "Un disco y no un rectángulo: los seis agujeros caben dentro de 71,063 —los "
+        "postes son los de más afuera— así que el contorno se dice con una sola cota. "
+        "Van DOS, y los tres postes de Ø8 hacen de pilares entre ellas: ya medían 70 "
+        "para atravesar los tres planos de leva, y la pila ocupa 56. El segundo plato "
+        "no es por rigidez —un poste en voladizo flecta 0,0135 mm con 5 N, contra un "
+        "presupuesto de error de 2,79— sino porque deja el mecanismo a la vista, que "
+        "es el argumento del producto.",
+    ),
     "seguidor": Ficha(
         "barra de dos cubos con cuatro agujeros en línea, en POM-C de 5",
         3,
@@ -473,6 +533,11 @@ LISTADO: dict[str, Ficha] = {
             Variable("cota", "union_sector_seguidor_cerca", "pivote al tornillo cercano"),
             Variable("cota", "union_sector_seguidor_lejos", "pivote al tornillo lejano"),
             Variable("cota", "union_sector_seguidor_diametro", "Ø paso de los dos al sector"),
+            Variable(
+                "cota", "rodillo_descuelgue_1", "baja el rodillo, canal 1", en_el_perfil=False
+            ),
+            Variable("cota", "rodillo_descuelgue_2", "canal 2", en_el_perfil=False),
+            Variable("cota", "rodillo_descuelgue_3", "canal 3", en_el_perfil=False),
         ),
         ("plancha", "seguidor_espesor"),
         "La misma plancha de POM-C 5 que las levas y el sector, y justo el largo útil "

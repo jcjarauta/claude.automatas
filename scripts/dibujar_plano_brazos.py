@@ -273,7 +273,7 @@ def frente(c: dict[str, float], cual: str, x: float, y: float, ancho: float, alt
     d += radial(cx + largo * k, cy, r1 * k, math.radians(50), f"R{r1:g}")
     d.append(
         f'<text class="aviso" x="{x + ancho / 2:.1f}" y="{y + 39:.1f}" '
-        f'text-anchor="middle">importa {cual}.dxf · ancla con DOS coincidentes: '
+        f'style="text-anchor:middle">importa {cual}.dxf · ancla con DOS coincidentes: '
         "el agujero del datum al origen y el otro centro al eje X</text>"
     )
     return d + tabla(c, cual, x, y + alto - PIE + 12, ancho)

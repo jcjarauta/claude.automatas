@@ -87,7 +87,13 @@ def test_cada_pieza_con_ficha_de_comparador_esta_en_el_listado():
 def test_toda_cota_que_el_perfil_resuelve_la_comprueba_el_comparador():
     """Lo que el DXF trae resuelto tiene que estar vigilado: es geometría que
     nadie va a volver a mirar. Lo que no trae —espesor, calaje— se teclea y lo
-    vigila quien acota."""
+    vigila quien acota.
+
+    **Y los ángulos cuentan igual que las longitudes.** La platina es la
+    primera pieza que sitúa agujeros en polares, y un ángulo que el DXF trae
+    resuelto y nadie comprueba es exactamente el fallo que este cruce existe
+    para cazar: el reparto a 120° se ve bien a 119 como se vería a 120.
+    """
     for pieza, ficha in LISTADO.items():
         f = FICHAS[pieza]
         comprobadas = set(f.radios) | set(f.entre_centros) | set(f.segmentos)
@@ -98,8 +104,19 @@ def test_toda_cota_que_el_perfil_resuelve_la_comprueba_el_comparador():
         if f.voladizo:
             comprobadas.add(f.voladizo)
         comprobadas |= set(f.desde_datum)
+        # Un agujero en polares lo sitúan DOS cotas, y el comparador las mira
+        # las dos: la distancia al centro y el ángulo desde +X.
+        comprobadas |= {radio for radio, _, _ in f.polares}
+        angulos = {angulo for _, angulo, _ in f.polares}
+        if f.cara_plana_angulo:
+            angulos.add(f.cara_plana_angulo)
         for v in ficha.variables:
-            if not (v.en_el_perfil and v.mapa == "cota"):
+            if not v.en_el_perfil:
+                continue
+            if v.mapa == "angulo":
+                assert v.nombre in angulos, f"{pieza}: {v.nombre} se dibuja y no se comprueba"
+                continue
+            if v.mapa != "cota":
                 continue
             # El listado y la ficha pueden nombrar la misma cota por su
             # gemelo: la tabla dice el diámetro porque es lo que pide el

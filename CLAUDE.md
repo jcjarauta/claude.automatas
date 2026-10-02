@@ -525,6 +525,23 @@ falla si el esquema versionado se queda atrás.
   `alto_de_leyenda` reservando el sitio: abajo está la pila de cotas
   horizontales y un radio que la cruza se lee como parte de ella.
 
+- **El test medía las cajas de los rótulos donde el dibujo no las pone.** La
+  hoja de estilo le gana a un atributo de presentación, así que
+  `.cotatx{text-anchor:middle}` se comía el `text-anchor="end"` que `radial`
+  escribía en cada rótulo: el número salía **centrado** en el final de la
+  directriz y se extendía hacia dentro de la pieza, encima del rasgo que
+  describe. Y `caja_del_rotulo` y el test de solapes sí leían el atributo, de
+  modo que la comprobación escrita para cazar un rótulo mal puesto estaba
+  midiendo otro sitio: pasaba con los rótulos montados.
+
+  Salió dibujando la platina, porque es la primera pieza con cotas a los dos
+  lados de la planta y el desplazamiento se veía. El anclaje va ahora en
+  `style`, y el test se niega a leer uno puesto por atributo.
+
+  La lección general: **una comprobación que modela el render tiene que
+  mirar lo que el render mira.** Si el modelo y el dibujo discrepan, el test
+  no es que no cace nada, es que dice que todo está bien.
+
 - **Rotular una variable que no existe.** Es la misma familia, y ha salido
   **tres veces**: los dientes que no estaban en la hoja, los dientes puestos
   en el mapa de milímetros, y `#pieza.tornilleria_longitud`, que el perfil

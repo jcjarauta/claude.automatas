@@ -171,14 +171,20 @@ def _rotulos(svg: str) -> list[tuple[str, float, float, float, float]]:
     for clase, atributos, texto in re.findall(patron, svg):
         if "rotate" in atributos:
             continue
-        interesa = (clase == "cotatx" and texto[:1] in "ØR") or (
+        # Los de las polares llevan grado y van sueltos alrededor de la
+        # planta, que es donde más sitio hay y más fácil es taparse: el del
+        # pivote derecho y el de los postes salen los dos casi en horizontal.
+        interesa = (clase == "cotatx" and (texto[:1] in "ØR" or "°" in texto)) or (
             clase == "cotavar" and "→" in texto
         )
         if not (interesa or texto == "DATUM"):
             continue
         x = float(re.search(r' x="([-\d.]+)"', atributos).group(1))
         y = float(re.search(r' y="([-\d.]+)"', atributos).group(1))
-        ancla = (re.search(r'text-anchor="(\w+)"', atributos) or [None, None])[1]
+        # Del `style`, que es donde el renderizador lo mira: un atributo
+        # `text-anchor` pierde contra la clase y no mueve el texto.
+        assert 'text-anchor="' not in atributos, f"anclaje por atributo, no se aplica: {texto}"
+        ancla = (re.search(r"text-anchor:(\w+)", atributos) or [None, None])[1]
         if ancla is None:
             ancla = "start" if clase == "cotavar" else "middle"
         ancho = len(texto) * _ANCHO[clase]

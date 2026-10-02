@@ -122,11 +122,21 @@ def radial(
     xt = xk + (-2.0 if ancla == "end" else 2.0 if ancla == "start" else 0.0)
     # Con la directriz vertical el número va ENCIMA del final, no sobre la línea.
     yt = (yk - 2.4 if uy < 0 else yk + 5.6) if ancla == "middle" else yk + 1.9
-    d.append(f'<text class="cotatx" text-anchor="{ancla}" x="{xt:.2f}" y="{yt:.2f}">{texto}</text>')
+    # **El anclaje va en `style` y no en el atributo.** La hoja de estilo le
+    # gana a un atributo de presentación, así que `.cotatx{text-anchor:middle}`
+    # se comía este `ancla` y el número salía centrado en el final de la
+    # directriz: el texto se extendía hacia DENTRO de la pieza y se montaba
+    # sobre el rasgo que describe. Y lo peor no era eso: `caja_del_rotulo` y el
+    # test de solapes sí leían el atributo, así que medían las cajas donde el
+    # dibujo no las pone. La comprobación que existe para cazar un rótulo mal
+    # puesto estaba mirando otro sitio.
+    d.append(
+        f'<text class="cotatx" style="text-anchor:{ancla}" x="{xt:.2f}" y="{yt:.2f}">{texto}</text>'
+    )
     if variable:
         d.append(
             f'<text class="cotavar" x="{xt:.2f}" y="{yt + 5.4:.2f}" '
-            f'text-anchor="{ancla}">{variable}</text>'
+            f'style="text-anchor:{ancla}">{variable}</text>'
         )
     return d
 

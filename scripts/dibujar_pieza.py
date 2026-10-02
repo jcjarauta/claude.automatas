@@ -37,10 +37,12 @@ from emit.plataforma import (
     contrato_mm,
     eje_pivote,
     mordaza,
+    platina_levas,
     sector,
     seguidor,
     tambor,
 )
+from emit.plataforma import _numero as numero
 from emit.plataforma import brazo as brazo_de
 from scripts.acotar import ESTILO, FLECHA, auxiliar, cota_h, cota_v, radial
 from scripts.comparar_dxf import FICHAS, cotas_en_mm
@@ -57,6 +59,7 @@ PERFIL_DE = {
     "sector": sector,
     "tambor": tambor,
     "seguidor": seguidor,
+    "platina_levas": platina_levas,
 }
 """De dónde sale la forma de cada pieza.
 
@@ -152,6 +155,27 @@ def _verticales(perfil: Perfil, largo: float, tol: float = 1e-6):
     )
 
 
+def _polares(ficha, c: dict[str, float]) -> list[tuple[str, str, list[tuple[float, float]]]]:
+    """Los centros de cada grupo polar, con las dos cotas que los sitúan.
+
+    Misma cuenta que hace el perfil, y a propósito: si el dibujo situara los
+    agujeros por su cuenta podría enseñar una pieza que el DXF no tiene. Los
+    ángulos de `contrato_mm` siguen en radianes —la regla 3— así que aquí no
+    se divide por nada.
+    """
+    salida = []
+    for radio, angulo, cuantos in ficha.polares:
+        r = c[radio]
+        centros = [
+            (r * math.cos(c[angulo] * i), r * math.sin(c[angulo] * i))
+            if cuantos > 1
+            else (r * math.cos(c[angulo]), r * math.sin(c[angulo]))
+            for i in range(cuantos)
+        ]
+        salida.append((radio, angulo, centros))
+    return salida
+
+
 def alto_de_pila(nombre: str, c: dict[str, float]) -> float:
     """Lo que ocupan las cotas horizontales bajo la pieza.
 
@@ -183,7 +207,8 @@ def alto_de_leyenda(nombre: str, c: dict[str, float]) -> float:
     """
     ficha, cotas, perfil = FICHAS[nombre], cotas_en_mm(), PERFIL_DE[nombre](c)
     vistos = {_nombre_del_radio(ficha, cotas, e.radio) for e in perfil if isinstance(e, Arco)}
-    return 7.0 * len(vistos - {""}) + 14.0 if vistos - {""} else 0.0
+    cuantas = len(vistos - {""}) + len(ficha.polares)
+    return 7.0 * cuantas + 14.0 if cuantas else 0.0
 
 
 def alto_de_vista(nombre: str, c: dict[str, float], ancho: float = 230.0) -> float:
@@ -358,6 +383,47 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
         )
         leyenda += 7
 
+    # Los agujeros en POLARES: un rayo desde el datum a cada uno.
+    #
+    # **Un agujero que no está sobre +X no lo sitúa ninguna cota de la pila**,
+    # que mide en horizontal desde el datum. La platina es la primera pieza
+    # con agujeros repartidos, y sin esto sus dos números —la distancia y el
+    # ángulo— vivían solo en la tabla: se teclean sin saber a qué agujero van,
+    # que es justo lo que este bucle existe para evitar.
+    #
+    # El número va en el rayo y el nombre en la leyenda, igual que los radios.
+    for cota_r, cota_a, centros in _polares(ficha, c):
+        grados = math.degrees(c[cota_a])
+        cuantos = len(centros)
+        for cx_, cy_ in centros:
+            d.append(
+                f'<line class="eje" x1="{ox:.2f}" y1="{oy:.2f}" '
+                f'x2="{ox + cx_ * k:.2f}" y2="{oy - cy_ * k:.2f}"/>'
+            )
+        # El número va FUERA del contorno, en la prolongación del primer rayo.
+        #
+        # A media distancia caía sobre el datum y sobre el número del grupo de
+        # al lado —el del pivote derecho acababa pegado al de los postes, que
+        # salen los dos casi en horizontal—, y dos rótulos superpuestos
+        # mienten sin avisar. Fuera los separa el ángulo, que es lo único que
+        # los distingue de verdad. Y solo el PRIMER rayo lo lleva: repetido en
+        # los tres se lee como tres cotas distintas.
+        marca = f"{cuantos}× " if cuantos > 1 else ""
+        ang_r = math.atan2(centros[0][1], centros[0][0])
+        fuera = math.hypot(*centros[0]) * k + 12.0
+        ancla = "start" if math.cos(ang_r) > 0.3 else "end" if math.cos(ang_r) < -0.3 else "middle"
+        d.append(
+            f'<text class="cotatx" x="{ox + math.cos(ang_r) * fuera:.2f}" '
+            f'y="{oy - math.sin(ang_r) * fuera + 2:.2f}" style="text-anchor:{ancla}">'
+            f"{numero(c[cota_r])} · {marca}{numero(grados)}°</text>"
+        )
+        d.append(
+            f'<text class="cotavar" x="{x + 10:.1f}" y="{leyenda:.1f}">'
+            f"{numero(c[cota_r])} · {marca}{numero(grados)}° → "
+            f"#cota.{cota_r} · #angulo.{cota_a}</text>"
+        )
+        leyenda += 7
+
     # Cotas horizontales, apiladas hacia abajo para que no se monten.
     nivel = abajo + 16
     centros = sorted({e.centro[0] for e in perfil if isinstance(e, Arco)})
@@ -391,7 +457,7 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
             medio = (extremos[0] + extremos[-1]) / 2
             d.append(
                 f'<text class="cotavar" x="{ox + medio * k:.2f}" y="{nivel - 2:.2f}" '
-                f'text-anchor="middle">CENTRADA en ese punto, '
+                f'style="text-anchor:middle">CENTRADA en ese punto, '
                 f"{(extremos[-1] - extremos[0]) / 2:g} a cada lado</text>"
             )
             nivel += 10

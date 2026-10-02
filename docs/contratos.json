@@ -598,6 +598,69 @@
           "unidad": "m",
           "descripcion": "Alojamiento en el bastidor de los dos 6800-2Z que sujetan el arbol de levas",
           "tolerancia": "H7"
+        },
+        {
+          "nombre": "seguidor_plano_z",
+          "valor": 0.021,
+          "unidad": "m",
+          "descripcion": "De la cara inferior de la primera leva a la del plano de los seguidores. Los tres seguidores van en UN solo plano porque su brazo pasa por encima de las levas: llega a 26 mm del arbol y la leva tiene 55 de radio base",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "rodillo_descuelgue_1",
+          "valor": 0.021,
+          "unidad": "m",
+          "descripcion": "Lo que el eje del rodillo baja del plano medio de los seguidores al centro de su leva, para el canal 1. Son multiplos del paso de la pila (5 de leva + 2 de separador), y por eso salen tres ejes distintos y no uno",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "rodillo_descuelgue_2",
+          "valor": 0.014,
+          "unidad": "m",
+          "descripcion": "Lo mismo para el canal 2",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "rodillo_descuelgue_3",
+          "valor": 0.007,
+          "unidad": "m",
+          "descripcion": "Lo mismo para el canal 3",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "platina_diametro",
+          "valor": 0.17,
+          "unidad": "m",
+          "descripcion": "Diametro del disco. Los seis agujeros caben dentro de 71,063 —los postes son los de mas afuera— asi que la platina es un DISCO y no un rectangulo: una sola cota de contorno, y es la forma que el reparto a 120 grados ya pedia. Va en DIAMETRO porque el contorno es un circulo entero y la herramienta de circulo acota el diametro; el gemelo da el radio",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "platina_espesor",
+          "valor": 0.009,
+          "unidad": "m",
+          "descripcion": "Contrachapado de abedul de 9, el del despiece",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "platina_pivote_al_arbol",
+          "valor": 0.068213312,
+          "unidad": "m",
+          "descripcion": "Del arbol a cada pivote del cinco barras. No lleva «radio» en el nombre a proposito: es una DISTANCIA, no el radio de un circulo, y una cota asi llamada acaba tecleada en una herramienta de circulo. DERIVADA de brazo_origen_x/y/giro y de brazo_separacion: esta porque el CAD situa un agujero en polares y resolver la transformacion de cabeza se falla. Los dos pivotes caen al mismo radio",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "platina_pivote_angulo_izquierdo",
+          "valor": -1.019387627,
+          "unidad": "rad",
+          "descripcion": "Angulo del pivote izquierdo desde +X. Derivada, como su distancia al arbol",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "platina_pivote_angulo_derecho",
+          "valor": 3.113782723,
+          "unidad": "rad",
+          "descripcion": "Angulo del pivote derecho. Los dos son simetricos respecto de la bisectriz de 60 grados entre el poste 1 y el 2",
+          "tolerancia": ""
         }
       ]
     }

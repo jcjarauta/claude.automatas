@@ -104,6 +104,18 @@ class Ficha:
     ella el bloque se puede dibujar centrado entre los tornillos —que es lo
     natural y lo que estaba mal— y la ranura se sale por el extremo.
     """
+    polares: tuple[tuple[str, str, int], ...] = ()
+    """Agujeros situados en POLARES: (cota del radio, cota del ángulo, cuántos).
+
+    Con `cuantos` > 1 el ángulo es un reparto y se repite desde 0: los tres
+    postes de la platina son («poste_radio_al_arbol», «poste_reparto», 3).
+
+    Hace falta porque `desde_datum` solo mira sobre +X, y la platina es la
+    primera pieza cuyos agujeros no están en línea: dos de ellos caen a
+    -58,407° y 178,407°, que es donde los pone la transformación del marco
+    del cinco barras. Teclear catorce coordenadas cartesianas de tres
+    decimales es justo donde se cuela un error que no se ve.
+    """
     simetrico: bool = False
     """El contorno es simétrico respecto del eje X.
 
@@ -118,6 +130,17 @@ class Ficha:
     del centro, pero puede caer a +4 o a -4, y la cara mirando al lado
     contrario cala el brazo media vuelta girado. Es la misma pieza vista en
     el croquis y otra distinta montada.
+    """
+    cara_plana_angulo: str = ""
+    """El ángulo que la comprobación de la cara plana deja **fijado**.
+
+    Una cuerda vertical obliga a que la normal de la cara vaya por ±X, y el
+    signo decide cuál de los dos: entre las dos cosas el ángulo queda clavado
+    en cero sin que nadie lo mida. Se declara para que el cruce con el
+    listado lo vea —un ángulo que el DXF trae resuelto y nadie comprueba es
+    de los que se ven bien a 119 como a 120— y para que la comprobación avise
+    si algún día el contrato pone ahí otro valor, que es donde dejaría de
+    valer.
     """
     datum: str = ""
     """La cota del rasgo que va en el ORIGEN, y de ahí a +X el siguiente.
@@ -155,6 +178,7 @@ FICHAS: dict[str, Ficha] = {
         segmentos={"brazo_chaveta_cuerda": 1},
         tangentes=4,
         cara_plana="brazo_chaveta",
+        cara_plana_angulo="brazo_chaveta_angulo",
         datum="brazo_eje_diametro_radio",
     ),
     "brazo_distal": Ficha(
@@ -176,6 +200,7 @@ FICHAS: dict[str, Ficha] = {
         segmentos={"brazo_chaveta_cuerda": 1},
         tangentes=4,
         cara_plana="brazo_chaveta",
+        cara_plana_angulo="brazo_chaveta_angulo",
         datum="brazo_eje_diametro_radio",
     ),
     "mordaza": Ficha(
@@ -197,7 +222,23 @@ FICHAS: dict[str, Ficha] = {
         {"brazo_eje_diametro_radio": 1},
         segmentos={"brazo_chaveta_cuerda": 1},
         cara_plana="brazo_chaveta",
+        cara_plana_angulo="brazo_chaveta_angulo",
         datum="brazo_eje_diametro_radio",
+    ),
+    "platina_levas": Ficha(
+        "disco de contrachapado con los seis agujeros del mecanismo",
+        {
+            "platina_diametro_radio": 1,
+            "rodamiento_arbol_alojamiento_diametro_radio": 1,
+            "poste_eje_diametro_radio": 3,
+            "brazo_eje_diametro_radio": 2,
+        },
+        polares=(
+            ("poste_radio_al_arbol", "poste_reparto", 3),
+            ("platina_pivote_al_arbol", "platina_pivote_angulo_izquierdo", 1),
+            ("platina_pivote_al_arbol", "platina_pivote_angulo_derecho", 1),
+        ),
+        datum="rodamiento_arbol_alojamiento_diametro_radio",
     ),
     "seguidor": Ficha(
         "barra de dos cubos con cuatro agujeros en línea: muelle, dos al sector y rodillo",
@@ -265,6 +306,23 @@ class Informe:
     @property
     def cuadra(self) -> bool:
         return not self.hallazgos
+
+
+def angulos_en_rad() -> dict[str, float]:
+    """Los ángulos del contrato, que `cotas_en_mm` deja fuera a propósito.
+
+    Un DXF no lleva ángulos como dato, pero sí lleva los CENTROS que un
+    ángulo sitúa, y la platina es la primera pieza que los tiene fuera de
+    +X. Van en su propio diccionario para que nadie sume radianes a
+    milímetros, que es la regla 3.
+    """
+    datos = json.loads(CONTRATOS.read_text(encoding="utf-8"))
+    return {
+        v["nombre"]: float(v["valor"])
+        for grupo in datos["contratos"]
+        for v in grupo["valores"]
+        if v["unidad"] == "rad"
+    }
 
 
 def cotas_en_mm() -> dict[str, float]:
@@ -448,6 +506,33 @@ def comparar(ruta: Path, pieza: str, tol: float = TOLERANCIA) -> Informe:
                 Hallazgo("falta", f"#cota.{nombre} pide un centro a {esperado:g} del datum")
             )
 
+    # --- agujeros en polares ---
+    for cota_r, cota_a, cuantos in ficha.polares:
+        radio = cotas[cota_r]
+        # Con `cuantos` > 1 la cota es el REPARTO y los agujeros van a sus
+        # múltiplos desde 0; con uno solo, la cota es su propio ángulo.
+        angulo = angulos_en_rad()[cota_a]
+        cuales = [angulo * i for i in range(cuantos)] if cuantos > 1 else [angulo]
+        esperados = [(radio * math.cos(t), radio * math.sin(t)) for t in cuales]
+        lejos = max(
+            min(math.dist(e, c) for c, _ in circulares) if circulares else 1e9 for e in esperados
+        )
+        if lejos <= tol:
+            for e in esperados:
+                situados.append(e)
+            inf.bien.append(
+                f"{cuantos} centro(s) a {radio:g} y {math.degrees(angulo):g}°"
+                f"   #cota.{cota_r} · #angulo.{cota_a}"
+            )
+        else:
+            inf.hallazgos.append(
+                Hallazgo(
+                    "falta",
+                    f"#cota.{cota_r} con #angulo.{cota_a} pide {cuantos} centro(s) en polares"
+                    f" y el peor se queda a {lejos:.4f} mm",
+                )
+            )
+
     # --- dónde empieza el contorno respecto del datum ---
     if ficha.voladizo:
         esperado = cotas[ficha.voladizo]
@@ -585,6 +670,17 @@ def comparar(ruta: Path, pieza: str, tol: float = TOLERANCIA) -> Informe:
     # --- la cara plana, con signo ---
     if ficha.cara_plana:
         esperado = cotas[ficha.cara_plana]
+        if ficha.cara_plana_angulo:
+            girada = angulos_en_rad()[ficha.cara_plana_angulo]
+            if abs(girada) > 1e-9:
+                inf.hallazgos.append(
+                    Hallazgo(
+                        "falta",
+                        f"#angulo.{ficha.cara_plana_angulo} vale {math.degrees(girada):g}° y "
+                        "esta comprobación busca una cuerda VERTICAL: a otro ángulo no mira "
+                        "la pieza que hay, mira la que había",
+                    )
+                )
         cuerda = cotas[next(iter(ficha.segmentos))] if ficha.segmentos else 0.0
         datum = min(
             (c for c, r in circulares if abs(r - cotas[ficha.datum]) <= tol),

@@ -258,3 +258,64 @@ def test_el_marco_del_cinco_barras_pone_cada_pivote_a_la_distancia_del_cabestran
     # Y el centro del papel cae donde dice la prosa: 132,5 mm del arbol.
     papel = al_arbol(0.0, c["caja_centro_y"])
     assert math.hypot(*papel) == pytest.approx(0.1325, abs=1e-4)
+
+
+def test_los_pivotes_en_polares_son_los_mismos_que_salen_de_la_transformacion(
+    contratos: Contratos,
+):
+    """`platina_pivote_al_arbol` y sus dos angulos son DERIVADOS.
+
+    Existen porque el CAD situa un agujero en polares y resolver la
+    transformacion del marco del cinco barras de cabeza se falla, igual que
+    `brazo_chaveta_cuerda` existe porque hacer la raiz a mano se falla. Pero
+    un derivado que nadie cruza con su origen es un numero suelto mas, asi
+    que aqui se rehace la cuenta.
+
+    Y de paso queda escrito lo que se vio al calcularlo: los dos pivotes caen
+    al **mismo radio** y a angulos simetricos respecto de la bisectriz de 60
+    grados entre el poste 1 y el 2.
+    """
+    import math
+
+    c = {
+        n: contratos.valor("bastidor", n).metros
+        for n in (
+            "brazo_origen_x",
+            "brazo_origen_y",
+            "brazo_separacion",
+            "platina_pivote_al_arbol",
+        )
+    }
+    giro = contratos.valor("bastidor", "brazo_origen_giro").radianes
+    cos, sen = math.cos(giro), math.sin(giro)
+
+    angulos = {}
+    for signo, lado in ((-1.0, "izquierdo"), (1.0, "derecho")):
+        x = signo * c["brazo_separacion"] / 2.0
+        punto = (c["brazo_origen_x"] + cos * x, c["brazo_origen_y"] + sen * x)
+        assert math.hypot(*punto) == pytest.approx(c["platina_pivote_al_arbol"], abs=1e-9)
+        angulos[lado] = math.atan2(punto[1], punto[0])
+        declarado = contratos.valor("bastidor", f"platina_pivote_angulo_{lado}").radianes
+        assert angulos[lado] == pytest.approx(declarado, abs=1e-9)
+
+    # 1e-7 y no 1e-9: los dos angulos se guardan redondeados a nueve
+    # decimales, que a 68 mm de radio son 70 nanometros. El redondeo es del
+    # dato, no de la cuenta.
+    bisectriz = math.radians(60.0)
+    assert (angulos["izquierdo"] + angulos["derecho"]) / 2.0 == pytest.approx(bisectriz, abs=1e-7)
+
+
+def test_los_tres_rodillos_cuelgan_a_un_paso_de_pila_cada_uno(contratos: Contratos):
+    """Los tres seguidores van en UN plano y cada rodillo baja a su leva.
+
+    El brazo del seguidor llega a 26 mm del arbol y la leva tiene 55 de radio
+    base, asi que el brazo pasa por encima: no cabe en el plano de su leva.
+    De ahi que los tres descuelgues sean distintos, y que se diferencien en
+    exactamente un paso de pila —una leva mas un separador— y no en cualquier
+    cosa.
+    """
+    d = [contratos.valor("bastidor", f"rodillo_descuelgue_{i}").metros for i in (1, 2, 3)]
+    paso = float(Escribiente().espesor_leva) + float(Cartucho().separador)
+    assert d[0] - d[1] == pytest.approx(paso, abs=1e-9)
+    assert d[1] - d[2] == pytest.approx(paso, abs=1e-9)
+    assert d[2] == pytest.approx(paso, abs=1e-9)

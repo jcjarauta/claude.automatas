@@ -348,7 +348,13 @@ def test_cada_cota_circular_tiene_sus_dos_formas(paquete: Path):
     # lo decía, así que el exportador no les sacaba gemelo y no había radio que
     # teclear. Son la misma familia que los dientes del piñón: el nombre decide
     # si la cota existe en la forma en que se usa.
-    assert gemelos == 28, f"esperaba 28 cotas circulares con gemelo, hay {gemelos}"
+    #
+    # Y la platina las trajo por los dos lados a la vez: `platina_diametro` se
+    # llama así —y no `platina_radio`— porque el contorno es un círculo entero
+    # y lo que se teclea es el diámetro, y `platina_pivote_al_arbol` dejó de
+    # llamarse radio porque es una DISTANCIA. La primera suma un gemelo, la
+    # segunda quita uno que no servía para nada: 29 y no 30.
+    assert gemelos == 29, f"esperaba 29 cotas circulares con gemelo, hay {gemelos}"
 
 
 def test_el_gemelo_dice_que_es_derivado(paquete: Path):
