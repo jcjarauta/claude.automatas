@@ -20,13 +20,16 @@ import pytest
 
 from compile.contratos import Contratos, Estado, Valor, cargar
 from scripts.exportar_variables import (
+    CABECERA_ONSHAPE,
     UNIDADES,
     Tipo,
     conversion_de,
     convertir,
     csv,
     csv_por_tipo,
+    descripcion_corta,
     featurescript,
+    tabla_onshape,
 )
 
 RELOJ = Path("docs/reloj/contratos.json")
@@ -333,3 +336,69 @@ def test_el_fichero_de_referencia_no_lleva_ninguna_cota(reloj: Contratos):
     filas = list(modulo_csv.reader(csv_por_tipo(reloj)[Tipo.REFERENCIA].strip().split("\n")))
     for fila in filas[1:]:
         assert fila[3] == Tipo.REFERENCIA.value
+
+
+# ---------------------------------------------------------------------------
+# La hoja que se teclea en el Variable Studio
+# ---------------------------------------------------------------------------
+
+
+def test_la_hoja_de_onshape_tiene_las_columnas_de_la_tabla(reloj: Contratos):
+    """Cuatro columnas y en su orden: la tabla del Variable Studio tiene esas
+    y no las diez del CSV completo."""
+    import csv as modulo_csv
+
+    for texto in tabla_onshape(reloj).values():
+        filas = list(modulo_csv.reader(texto.strip().split("\n")))
+        assert filas[0] == CABECERA_ONSHAPE
+        assert {len(f) for f in filas} == {4}
+
+
+def test_la_hoja_de_onshape_no_lleva_ninguna_magnitud_de_referencia(reloj: Contratos):
+    """Es el punto entero de haber separado por tipo: una masa no puede
+    acabar en el Variable Studio, porque allí nada impide acotar con ella."""
+    import csv as modulo_csv
+
+    tablas = tabla_onshape(reloj)
+    assert Tipo.REFERENCIA not in tablas
+    # Lo que no puede haber es una FILA con ese nombre. Citarlo en la
+    # descripcion de otra variable si vale: `vueltas_tambor` se explica como
+    # `autonomia / periodo_rueda_grande` y eso es exactamente lo que hay que
+    # poder leer en la celda.
+    filas = [f for texto in tablas.values() for f in modulo_csv.reader(texto.strip().split("\n"))]
+    nombres = {f[0] for f in filas[1:]}
+    for nombre in ("masa_pesa", "periodo_pendulo", "tension_cuerda_techo", "autonomia"):
+        assert nombre not in nombres, f"'{nombre}' no puede estar en el Variable Studio"
+
+
+def test_la_hoja_de_onshape_lleva_todas_las_cotas(reloj: Contratos):
+    todas = "\n".join(tabla_onshape(reloj).values())
+    esperadas = [
+        v.nombre for c in reloj.contratos for v in c.valores if conversion_de(v).tipo.dimensiona
+    ]
+    for nombre in esperadas:
+        assert nombre in todas
+
+
+def test_el_valor_se_escribe_con_su_unidad_y_sin_ceros_de_cola(reloj: Contratos):
+    import csv as modulo_csv
+
+    filas = list(modulo_csv.reader(tabla_onshape(reloj)[Tipo.LENGTH].strip().split("\n")))
+    por_nombre = {f[0]: f[2] for f in filas[1:]}
+    assert por_nombre["longitud_pendulo_nominal"] == "994 mm"
+    assert por_nombre["eje_diametro"] == "10 mm"
+    angulo = list(modulo_csv.reader(tabla_onshape(reloj)[Tipo.ANGLE].strip().split("\n")))
+    assert angulo[1][2] == "2 deg"
+
+
+def test_la_descripcion_corta_cabe_en_una_celda_y_sigue_diciendo_algo():
+    assert descripcion_corta("Del punto de flexion al centro de masas. Y mas cosas aqui") == (
+        "Del punto de flexion al centro de masas"
+    )
+    # Una primera frase demasiado corta no dice nada: se sigue leyendo.
+    assert descripcion_corta("Propuesta. El suelo lo pone la separacion").startswith(
+        "Propuesta. El"
+    )
+    largo = descripcion_corta("palabra " * 40)
+    assert len(largo) <= 70
+    assert largo.endswith("\u2026")

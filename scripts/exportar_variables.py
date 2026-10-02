@@ -276,6 +276,60 @@ def csv_por_tipo(contratos: Contratos) -> dict[Tipo, str]:
     return {tipo: _escribir_csv(CABECERA_CSV, cuerpo) for tipo, cuerpo in reparto.items()}
 
 
+CABECERA_ONSHAPE = ["Nombre", "Tipo de variable", "Valor", "Descripcion"]
+
+TIPO_EN_ONSHAPE = {
+    Tipo.LENGTH: "Longitud",
+    Tipo.ANGLE: "Angulo",
+    Tipo.NUMBER: "Numero",
+}
+
+
+def descripcion_corta(texto: str, limite: int = 70) -> str:
+    """La descripcion recortada a lo que cabe en una celda del CAD.
+
+    El porque entero vive en el repositorio; en el Variable Studio solo hace
+    falta reconocer la variable de un vistazo. Se corta por la primera frase,
+    salvo que la primera frase sea tan corta que no diga nada -`Propuesta.`-,
+    en cuyo caso se sigue y se recorta por palabra.
+    """
+    cabeza = texto.split(". ")[0]
+    if len(cabeza) < 25:
+        cabeza = texto
+    if len(cabeza) <= limite:
+        return cabeza.rstrip(".")
+    recorte = cabeza[: limite - 1].rsplit(" ", 1)[0]
+    return f"{recorte}\u2026"
+
+
+def tabla_onshape(contratos: Contratos) -> dict[Tipo, str]:
+    """La hoja con la forma exacta de la tabla del Variable Studio.
+
+    Cuatro columnas y en su orden, el valor ya con su unidad escrita como la
+    espera Onshape, y **sin las de REFERENCIA**: esas no entran en el Variable
+    Studio y meterlas ahi es justo lo que el tipo existe para impedir.
+    """
+    reparto: dict[Tipo, list[list[str]]] = {}
+    for contrato in contratos.contratos:
+        for valor in contrato.valores:
+            cifra, conversion = convertir(valor)
+            if not conversion.tipo.dimensiona:
+                continue
+            # Sin ceros de cola: estas celdas se teclean a mano y `994 mm` se
+            # lee y se escribe mejor que `994.0000 mm`.
+            limpia = cifra.rstrip("0").rstrip(".") if "." in cifra else cifra
+            celda = f"{limpia} {conversion.simbolo}".strip()
+            reparto.setdefault(conversion.tipo, []).append(
+                [
+                    valor.nombre,
+                    TIPO_EN_ONSHAPE[conversion.tipo],
+                    celda,
+                    descripcion_corta(valor.descripcion),
+                ]
+            )
+    return {tipo: _escribir_csv(CABECERA_ONSHAPE, cuerpo) for tipo, cuerpo in reparto.items()}
+
+
 def _maquina_de(fuente: Path) -> str:
     """El rotulo sale de la carpeta: `docs/reloj/contratos.json` -> reloj.
 
@@ -290,6 +344,11 @@ def main(argv: list[str] | None = None) -> int:
     partes = argparse.ArgumentParser(prog="exportar_variables", description=__doc__)
     partes.add_argument("--out", type=Path, default=None, help="carpeta donde escribir")
     partes.add_argument("--csv", action="store_true", help="CSV en vez de FeatureScript")
+    partes.add_argument(
+        "--onshape",
+        action="store_true",
+        help="la hoja con la forma de la tabla del Variable Studio, un fichero por tipo",
+    )
     partes.add_argument(
         "--por-tipo",
         action="store_true",
@@ -316,7 +375,12 @@ def main(argv: list[str] | None = None) -> int:
         print("--por-tipo solo tiene sentido con --csv", file=sys.stderr)
         return 2
 
-    if opciones.por_tipo:
+    if opciones.onshape:
+        tablas = {
+            f"onshape-{maquina}-{tipo.value.lower()}.csv": texto
+            for tipo, texto in tabla_onshape(contratos).items()
+        }
+    elif opciones.por_tipo:
         tablas = {
             f"variables-{maquina}-{tipo.value.lower()}.csv": texto
             for tipo, texto in csv_por_tipo(contratos).items()
