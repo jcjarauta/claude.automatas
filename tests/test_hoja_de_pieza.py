@@ -85,11 +85,28 @@ def test_cada_pieza_declara_por_donde_se_extruye():
         assert cota in cotas, f"{pieza}: {cota} no está en el contrato"
 
 
-def test_la_hoja_dibuja_las_dos_vistas():
-    texto = hoja()
-    assert "planta" in texto
-    assert "sección A-A" in texto, "falta la sección de las planchas"
-    assert "alzado" in texto, "falta el alzado de las barras"
+def test_la_hoja_dibuja_las_tres_vistas():
+    """**Dos vistas bastan para cortar; para montar hacen falta tres.**
+
+    Una plancha sale ahora con planta, alzado y perfil, los tres a la misma
+    escala y alineados: el alzado bajo la planta y el perfil a su derecha.
+    Lo que las hace servir es que compartan escala —antes eran 0,56 y 0,63
+    en la base, y con dos escalas no se puede seguir una cota de una vista a
+    la otra con la regla—.
+
+    Una barra no: su tercera vista sería la misma banda girada, y una vista
+    que no añade nada estorba.
+    """
+    for pieza in PERFIL_DE:
+        texto = hoja([pieza])
+        assert "planta" in texto
+        if LISTADO[pieza].solido[0] == "plancha":
+            for vista in (">alzado<", ">perfil<"):
+                assert vista in texto, f"{pieza}: falta {vista.strip('<>')}"
+            assert "alineados" in texto
+        else:
+            assert "alzado" in texto
+        assert LISTADO[pieza].solido[1] in texto
 
 
 def test_la_hoja_acota_todo_lo_que_la_ficha_declara():

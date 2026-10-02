@@ -231,6 +231,74 @@ def alto_de_vista(nombre: str, c: dict[str, float], ancho: float = 230.0) -> flo
     return (y1 - y0) * k
 
 
+HUECO_VISTAS = 13.0
+"""Entre la planta y las otras dos vistas. Un hueco y no cero: pegadas se
+leen como una sola pieza con un escalón."""
+
+
+def vistas_del_canto(
+    perfil: Perfil,
+    c: dict[str, float],
+    cota_espesor: str,
+    k: float,
+    ox: float,
+    oy: float,
+    caja_pieza: tuple[float, float, float, float],
+):
+    """El alzado y el perfil de una plancha, alineados con la planta.
+
+    Las dos son bandas del espesor, y lo que las hace servir para montar no
+    es el rectángulo: son los **agujeros proyectados**. Mirando de frente,
+    un agujero pasante se ve como dos líneas ocultas separadas su diámetro,
+    y ahí se lee de un vistazo cuál atraviesa, cuál no y a qué distancia del
+    canto queda cada uno. En la planta todos se ven igual de redondos.
+
+    El alzado proyecta a lo largo de Y y el perfil a lo largo de X, así que
+    cada agujero aparece en el alzado por su extensión en x y en el perfil
+    por la suya en y. No hay que elegir qué corte dibujar: se ven todos.
+    """
+    x0, y0, x1, y1 = caja_pieza
+    grueso = c[cota_espesor]
+    contorno = max((e.radio for e in perfil if isinstance(e, Arco)), default=0.0)
+    agujeros = [e for e in perfil if isinstance(e, Arco) and e.radio < contorno]
+
+    arriba_alz = oy - y0 * k + HUECO_VISTAS
+    izq_per = ox + x1 * k + HUECO_VISTAS
+    d = [
+        f'<rect class="corte" x="{ox + x0 * k:.2f}" y="{arriba_alz:.2f}" '
+        f'width="{(x1 - x0) * k:.2f}" height="{grueso * k:.2f}"/>',
+        f'<rect class="corte" x="{izq_per:.2f}" y="{oy - y1 * k:.2f}" '
+        f'width="{grueso * k:.2f}" height="{(y1 - y0) * k:.2f}"/>',
+        f'<text class="nota" x="{ox + (x0 + x1) / 2 * k:.2f}" '
+        f'y="{arriba_alz + grueso * k + 7:.2f}">alzado</text>',
+        f'<text class="nota" x="{izq_per + grueso * k / 2:.2f}" y="{oy - y1 * k - 3:.2f}">'
+        "perfil</text>",
+    ]
+    for e in agujeros:
+        for signo in (-1.0, 1.0):
+            xx = ox + (e.centro[0] + signo * e.radio) * k
+            d.append(
+                f'<line class="oculta" x1="{xx:.2f}" y1="{arriba_alz:.2f}" '
+                f'x2="{xx:.2f}" y2="{arriba_alz + grueso * k:.2f}"/>'
+            )
+            yy = oy - (e.centro[1] + signo * e.radio) * k
+            d.append(
+                f'<line class="oculta" x1="{izq_per:.2f}" y1="{yy:.2f}" '
+                f'x2="{izq_per + grueso * k:.2f}" y2="{yy:.2f}"/>'
+            )
+    # El espesor se acota en el alzado, que es donde se ve.
+    borde = ox + x0 * k
+    d += [
+        auxiliar(borde, arriba_alz, borde - 17, arriba_alz),
+        auxiliar(borde, arriba_alz + grueso * k, borde - 17, arriba_alz + grueso * k),
+        *cota_v(arriba_alz, arriba_alz + grueso * k, borde - 13, f"{grueso:g}"),
+        f'<text class="cotavar" x="{borde - 18:.2f}" y="{arriba_alz + grueso * k / 2:.2f}" '
+        f'transform="rotate(-90 {borde - 18:.2f} {arriba_alz + grueso * k / 2:.2f})" '
+        f'style="text-anchor:middle">#cota.{cota_espesor}</text>',
+    ]
+    return d
+
+
 def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, alto: float):
     """La vista de frente, con TODAS las cotas que la ficha declara.
 
@@ -245,9 +313,17 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
     hueco = alto - CABECERA
 
     pila, leyenda_alto = alto_de_pila(nombre, c), alto_de_leyenda(nombre, c)
+    # **Tres vistas alineadas y a UNA escala.** El alzado cae bajo la planta
+    # y el perfil a su derecha, los tres con el mismo `k`: así una cota que
+    # se mide en una se puede seguir con la regla hasta las otras dos, que
+    # es lo que convierte un dibujo en algo con lo que se monta. Con dos
+    # vistas a escalas distintas —0,56 y 0,63 en la base— no se puede.
+    clase, cota_espesor = LISTADO[nombre].solido
+    grueso = c[cota_espesor] if clase == "plancha" else 0.0
+    disponible = max(hueco - pila - leyenda_alto - 24, 20.0)
     k = min(
-        ancho * 0.46 / max(x1 - x0, 1e-6),
-        max(hueco - pila - leyenda_alto - 24, 20.0) / max(y1 - y0, 1e-6),
+        (ancho * 0.88 - HUECO_VISTAS) / max((x1 - x0) + grueso, 1e-6),
+        (disponible - HUECO_VISTAS) / max((y1 - y0) + grueso, 1e-6),
         7.0,
     )
     # `ox`, `oy` son el (0, 0) de la PIEZA en la hoja, no el centro de su
@@ -259,15 +335,21 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
     # a 59 de un borde y a 216 del otro, así que la planta subía 43 mm sobre
     # su sitio, se metía debajo de la leyenda y dejaba un hueco igual de
     # grande por abajo.
-    ox = x + ancho / 2 - ((x0 + x1) / 2) * k
+    ox = x + ancho / 2 - ((x0 + x1) / 2 + grueso / 2) * k
     oy = y + CABECERA + 16 + leyenda_alto + y1 * k
     abajo, derecha = oy - y0 * k, ox + x1 * k
 
-    d = [
-        f'<text class="vista" x="{x + ancho / 2:.1f}" y="{y + 12:.1f}">'
-        f"planta · escala {k:.2f}:1</text>"
-    ]
+    titulo = (
+        f"planta · alzado · perfil, a {k:.2f}:1 y alineados"
+        if clase == "plancha"
+        else f"planta · escala {k:.2f}:1"
+    )
+    d = [f'<text class="vista" x="{x + ancho / 2:.1f}" y="{y + 12:.1f}">{titulo}</text>']
     d += camino(perfil, k, ox, oy)
+    if clase == "plancha":
+        d += vistas_del_canto(perfil, c, cota_espesor, k, ox, oy, (x0, y0, x1, y1))
+        abajo += HUECO_VISTAS + grueso * k
+        derecha += HUECO_VISTAS + grueso * k
     d += [
         f'<line class="eje" x1="{ox - 13:.2f}" y1="{oy:.2f}" x2="{ox + 13:.2f}" y2="{oy:.2f}"/>',
         f'<line class="eje" x1="{ox:.2f}" y1="{oy - 13:.2f}" x2="{ox:.2f}" y2="{oy + 13:.2f}"/>',
@@ -831,10 +913,16 @@ def hoja(piezas: list[str] | None = None) -> str:
         # pieza. Reservarlo por pieza y no por hoja es lo que impide que la
         # tabla se salga por abajo del panel.
         suelo = alto_de_pie(nombre)
-        partes += planta(nombre, c, px, py + 30, vista_ancho, alto - suelo - 30)
-        partes += segunda_vista(
-            nombre, c, px + vista_ancho, py + 30, vista_ancho, alto - suelo - 30
-        )
+        if LISTADO[nombre].solido[0] == "plancha":
+            # Las tres vistas van juntas y alineadas, así que ocupan el panel
+            # entero: partidas en dos mitades no se pueden alinear, y
+            # alinearlas es lo que las hace servir para montar.
+            partes += planta(nombre, c, px, py + 30, ancho, alto - suelo - 30)
+        else:
+            partes += planta(nombre, c, px, py + 30, vista_ancho, alto - suelo - 30)
+            partes += segunda_vista(
+                nombre, c, px + vista_ancho, py + 30, vista_ancho, alto - suelo - 30
+            )
         partes += pie(nombre, c, px, py + alto - suelo + 8, ancho)
     partes.append("</svg>")
     h = cabecera + filas * alto + borde
