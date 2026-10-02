@@ -19,6 +19,7 @@ del fleje es todavia una aproximacion.
 | Qué piezas hay, en qué orden se hacen y de qué parámetro sale cada una | `docs/reloj/piezas.md` |
 | Los números que no se tocan | `docs/reloj/contratos.json` |
 | Por qué cada número se movió | `docs/reloj/cambios.md` |
+| La decisión pendiente del escape | `docs/reloj/escape-propuesta.md` |
 | Las etapas y sus puertas | `docs/reloj/ROADMAP.md` |
 | Los principios comunes a todas las máquinas | `docs/baseline.md` |
 
@@ -109,7 +110,8 @@ ficha, no la ficha misma.
 | Reloj de pared, no de sobremesa | Cerrada |
 | Péndulo de segundos: periodo 2 s, longitud ~994 mm | Cerrada |
 | Pesa como motor; nada de muelle real | Cerrada |
-| Escape de áncora de retroceso, con paletas regulables | Cerrada |
+| Escape de áncora con paletas regulables | Cerrada |
+| Retroceso o Graham (deadbeat) | **Reabierta** · ver `escape-propuesta.md` |
 | Madera y plantillas impresas como vía de fabricación | Cerrada |
 | 30 horas de autonomía en la primera generación | Propuesta |
 | El acople a autómatas se diseña como contrato, no se construye | Cerrada |
