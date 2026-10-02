@@ -73,7 +73,8 @@ Solo las de **nivel 0** se teclean.
 | `diametro_perno` | Resistencia y separación | 3 mm |
 | `distancias_entre_centros` | `modulo × (z_rueda + z_piñón) / 2` | 80 / 72 / 68 mm |
 | `masa_lenteja` | Q del péndulo y perturbación del escape | ~1 kg |
-| `masa_pesa` | **Par mínimo MEDIDO en el banco** | pendiente de R2 |
+| `masa_pesa` | **Par mínimo MEDIDO en el banco** | 3,5 kg, **previsión** |
+| `masa_pesa_techo` | Lo que aguanta la estructura sin rehacerla | 5 kg |
 
 ### El tren de ejemplo, que el compilador puede cambiar
 
@@ -109,7 +110,7 @@ del escribiente.
 | Varilla calibrada para ejes | Ø, tolerancia h7 | Contrato de eje |
 | Varilla para pernos de linterna | Ø3, rectitud | `diametro_perno` |
 | Rodamientos de los ejes rápidos | Ø interior, exterior, ancho | Ø del eje |
-| Cuerda | Ø, carga, **estiramiento** | `longitud_cuerda` |
+| Cuerda | Ø, carga, **estiramiento** | `tension_cuerda_techo` = 24,5 N, **no la previsión** |
 | Tuerca de regulación M6 + arandela | Paso 1,0 mm | `longitud_pendulo` |
 | Tornillería y pasadores | DIN | — |
 
@@ -183,7 +184,7 @@ y es el trabajo de nivel inicial del taller.
 | 4.6 | Rueda y piñón de minutos | Relación 12:1 del tren de esfera | Plantilla |
 | 4.7 | Rueda de horas | Relación 12:1 | Plantilla |
 | 4.8 | Polea de la pesa | `ramales_polea` | Disco + rodamiento |
-| 4.9 | Cubo de la pesa | `masa_pesa`, **pendiente de R2** | Tubo + lastre |
+| 4.9 | Cubo de la pesa | `masa_pesa` = 3,5 kg de previsión; **se llena hasta que ande** | Tubo + perdigón o arena |
 | 4.10 | Tabla de pared y caja | `longitud_pendulo` + `caida_disponible` | Plantilla |
 
 → **Medida que cierra la tanda:** siete días de marcha dentro de ±1 min/día.

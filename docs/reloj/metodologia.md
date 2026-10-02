@@ -82,25 +82,63 @@ cartucho.**
 
 Es el número que más sorprende y el que ordena todo el plan de pruebas.
 
-| | |
+Un péndulo de 1 kg a 2° de amplitud almacena **5,9 mJ**. Lo que pierde por
+oscilación depende de su factor de calidad Q, y ahí está la incógnita:
+
+| Q | Pierde por oscilación | Hay que reponerle |
+| --- | --- | --- |
+| 500 — varilla ancha, suspensión mediocre | 75 µJ | **37 µW** |
+| 1.000 | 37 µJ | **19 µW** |
+| 3.000 — buena suspensión, lenteja compacta | 12 µJ | **6 µW** |
+
+Y una pesa de 3,5 kg cayendo 1 m en 30 horas entrega **318 µW**.
+
+**Sobra entre un factor diez y un factor cincuenta, y todo es rozamiento.**
+Mantener el péndulo en marcha cuesta millonésimas de vatio; el resto se lo come
+la cadena de pivotes, el engrane y, sobre todo, el escape.
+
+Tres consecuencias que mandan sobre el plan:
+
+1. **La masa de la pesa no se puede calcular**, porque ni el Q de un péndulo de
+   madera ni el rozamiento de un pivote de madera están en ninguna tabla, y el
+   resultado es su producto. Se mide. Por eso el banco de escape (R2) va antes
+   que el tren, y no después.
+2. **El Q del péndulo es una estimación hasta que se mida.** La primera medida
+   real de R1 lo sustituye y entra en `bench/reloj/`.
+3. **El suelo físico no sirve para dimensionar.** Si el tren y el escape fueran
+   perfectos bastarían de 70 a 410 gramos. Ningún reloj de madera se acerca: el
+   rendimiento global real anda entre el 2 y el 12 %.
+
+### La previsión de la pesa, y por qué no bloquea nada
+
+Hace falta un número para pedir material, aunque no esté medido. Se pone, y se
+rotula como lo que es.
+
+| | Valor | De dónde sale |
+| --- | --- | --- |
+| Suelo físico | 0,07 – 0,41 kg | Solo la pérdida del péndulo, con rendimiento 100 % |
+| Relojes de madera comparables | 2 – 4 kg | Caída de ~1 m y 24–30 h de marcha |
+| **Previsión** | **3,5 kg** | Centro del rango empírico, con la polea 2:1 |
+| **Techo de diseño** | **5 kg** | Lo que aguanta la estructura sin rehacerla |
+
+**La previsión no bloquea nada porque la pesa es la pieza más barata de
+cambiar**: un tubo que se llena de perdigón o de arena hasta que el reloj anda.
+Lo que no se puede redimensionar después es todo lo demás, y por eso se calcula
+con el techo y no con la previsión:
+
+| Pieza | Con el techo de 5 kg |
 | --- | --- |
-| Energía almacenada en un péndulo de 1 kg a 2° de amplitud | ~6 mJ |
-| Lo que ese péndulo pierde por oscilación (Q ≈ 2.000, estimado) | ~0,02 mJ |
-| Potencia que hay que reponerle | **~10 µW** |
-| Potencia que entrega una pesa de 2 kg cayendo 1 m en 30 h | **~180 µW** |
+| Tensión de la cuerda (dos ramales) | 24,5 N, más su coeficiente de seguridad |
+| Par en el tambor | 1,04 N·m |
+| Eje de la rueda grande y su cojinete | Dimensionados para ese par |
+| Anclaje a la pared | 49 N más el peso del reloj |
 
-**Sobra un factor de casi veinte, y ese factor es todo rozamiento.** Mantener el
-péndulo en marcha cuesta una millonésima parte de un vatio; el resto se lo come
-la cadena de pivotes, el engrane y el escape.
+Con la previsión de 3,5 kg el par en el tambor son **730 mN·m**, quince veces
+el par máximo del escribiente. No es comparable porque no es la misma máquina,
+pero conviene tenerlo presente: aquí los ejes trabajan de verdad.
 
-Dos consecuencias que mandan sobre el plan:
-
-1. **La masa de la pesa no se puede calcular**, porque el rozamiento de un
-   pivote de madera no está en ninguna tabla. Se mide. Por eso el banco de
-   escape (R2) va antes que el tren, y no después.
-2. **El Q del péndulo es una estimación hasta que se mida.** El número de
-   arriba está puesto para dar el orden de magnitud, no para dimensionar nada.
-   La primera medida real de R1 lo sustituye y entra en `bench/reloj/`.
+**R2 sustituye la previsión por una medida** y, si sale muy distinta, lo que
+cambia es el contenido del tubo, no el diseño.
 
 ### El límite de conjunto, que ninguna envolvente de pieza ve
 

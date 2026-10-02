@@ -1,7 +1,6 @@
 {
   "version": "0.1.0",
   "fecha": "2026-10-02",
-  "maquina": "reloj",
   "contratos": [
     {
       "nombre": "oscilador",
@@ -42,7 +41,7 @@
     {
       "nombre": "escape",
       "estado": "pendiente",
-      "congelado_el": null,
+      "congelado_el": "",
       "porque": "La geometria se congela cuando el banco de escape (R2) diga con que reposo e impulso arranca de verdad",
       "valores": [
         {
@@ -78,7 +77,7 @@
     {
       "nombre": "tren",
       "estado": "pendiente",
-      "congelado_el": null,
+      "congelado_el": "",
       "porque": "El modulo y el numero de dientes dependen del par medido en R2. Hasta entonces son una propuesta",
       "valores": [
         {
@@ -121,7 +120,7 @@
     {
       "nombre": "energia",
       "estado": "pendiente",
-      "congelado_el": null,
+      "congelado_el": "",
       "porque": "La masa de la pesa NO se calcula: sale del par minimo medido en el banco de escape (R2)",
       "valores": [
         {
@@ -154,10 +153,24 @@
         },
         {
           "nombre": "masa_pesa",
-          "valor": 0.0,
+          "valor": 3.5,
           "unidad": "kg",
-          "descripcion": "SIN MEDIR. Se rellena con el resultado de R2. Un cero aqui significa que nadie lo sabe todavia",
-          "tolerancia": "pendiente de R2"
+          "descripcion": "PREVISION, no medida. Anclada en relojes de madera comparables de 1 m de caida y 24-30 h, que usan de 2 a 4 kg. El suelo fisico son 0,2-0,4 kg y nadie lo alcanza: el resto es rozamiento",
+          "tolerancia": "PREVISION · la mide R2"
+        },
+        {
+          "nombre": "masa_pesa_techo",
+          "valor": 5.0,
+          "unidad": "kg",
+          "descripcion": "Techo de diseno. Cuerda, polea, eje de la rueda grande y anclaje a pared se dimensionan para esto, no para la prevision: la pesa es lo barato de cambiar y lo demas no",
+          "tolerancia": "no se rebasa sin rehacer el anclaje"
+        },
+        {
+          "nombre": "tension_cuerda_techo",
+          "valor": 24.5,
+          "unidad": "N",
+          "descripcion": "Con el techo de 5 kg y polea de dos ramales: la mitad del peso. Es la carga que tiene que aguantar la cuerda, con su coeficiente",
+          "tolerancia": "derivada de masa_pesa_techo"
         }
       ]
     },

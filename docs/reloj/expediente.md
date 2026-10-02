@@ -110,8 +110,11 @@ ficha, no la ficha misma.
 
 ## Qué no está decidido, y quién lo decide
 
-- **La masa de la pesa.** No se calcula: se mide en el banco de escape (R2).
-  Cualquier número antes de esa medida es inventado.
+- **La masa de la pesa.** Hay una **previsión de 3,5 kg**, anclada en relojes de
+  madera comparables y rotulada como tal, para poder pedir material. La medida
+  real sale del banco de escape (R2). Lo que sí está decidido es el **techo de
+  diseño, 5 kg**: cuerda, polea, eje de la rueda grande y anclaje se calculan
+  con ese número, porque la pesa se cambia llenando un tubo y el anclaje no.
 - **El módulo del dentado.** Sale del compromiso entre holgura de corte a mano
   y tamaño de las platinas. Lo propone C12 y lo cierra la primera rueda que se
   corte.
