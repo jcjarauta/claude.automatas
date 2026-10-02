@@ -387,3 +387,35 @@ def test_la_leyenda_de_arriba_no_se_mete_dentro_del_dibujo():
     for y in leyenda:
         cerca = [t for t in dibujo if abs(t - y) < 3.0]
         assert not cerca, f"un renglón de leyenda a y={y} se monta sobre el contorno {cerca}"
+
+
+def test_el_pie_de_cada_hoja_cabe_dentro_de_su_panel():
+    """**Lo que se sale no es el panel, es el texto, y el panel sigue
+    saliendo entero.**
+
+    El alto reservado para el pie era la constante `PIE` = 112, y el pie no
+    mide siempre lo mismo: el porqué tiene las líneas que tenga y la tabla,
+    la mitad de las variables. El seguidor, con doce, pedía 126 y sus dos
+    últimos renglones se imprimían por debajo del marco. Llevaba así desde
+    que entró en el bucle.
+
+    Se mide sobre el SVG, como el de la leyenda: el último renglón de
+    cualquier texto tiene que quedar por encima del borde de abajo del
+    marco de su panel.
+    """
+    for pieza in PERFIL_DE:
+        svg = hoja([pieza])
+        marcos = [
+            (float(y), float(h))
+            for y, h in re.findall(
+                r'<rect class="marco"[^>]*y="([0-9.]+)"[^>]*height="([0-9.]+)"', svg
+            )
+        ]
+        assert len(marcos) == 1, f"{pieza}: se esperaba un panel"
+        suelo = marcos[0][0] + marcos[0][1]
+        textos = [float(y) for y in re.findall(r'<text[^>]*\sy="([0-9.]+)"', svg)]
+        dentro = [y for y in textos if y > marcos[0][0]]
+        assert dentro, f"{pieza}: el panel sale vacío"
+        assert max(dentro) <= suelo, (
+            f"{pieza}: el pie se sale {max(dentro) - suelo:.1f} mm por debajo del marco"
+        )

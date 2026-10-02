@@ -630,6 +630,40 @@ def segunda_vista(nombre: str, c: dict[str, float], x: float, y: float, ancho: f
         f'<rect class="corte" x="{cx - w / 2:.2f}" y="{cy - h / 2:.2f}" '
         f'width="{w:.2f}" height="{h:.2f}"/>'
     )
+    if clase == "plancha":
+        # **Los agujeros que el corte atraviesa, dibujados.** Un rectángulo
+        # liso dice el espesor y nada más, y para montar hace falta ver qué
+        # pasa de parte a parte y por dónde: un Ø19 que aloja un rodamiento
+        # y un Ø8 que recibe un poste se montan distinto y en el contorno se
+        # ven igual de redondos.
+        #
+        # El corte va por y = 0, que es la fila del datum, así que lo que
+        # aparece es lo que de verdad cruza esa línea. Lo demás no está, y
+        # eso también es información.
+        centro_x = (x0 + x1) / 2
+        for e in perfil:
+            if not isinstance(e, Arco) or abs(e.centro[1]) >= e.radio:
+                continue
+            media = math.sqrt(e.radio**2 - e.centro[1] ** 2)
+            if media * 2 > largo * 0.97:
+                continue  # el contorno, no un agujero
+            for signo in (-1.0, 1.0):
+                xx = cx + (e.centro[0] + signo * media - centro_x) * k
+                d.append(
+                    f'<line class="oculta" x1="{xx:.2f}" y1="{cy - h / 2:.2f}" '
+                    f'x2="{xx:.2f}" y2="{cy + h / 2:.2f}"/>'
+                )
+        # El datum, para que la sección y la planta se lean en el mismo
+        # sentido: sin él la sección se puede montar del revés.
+        dx = cx + (0.0 - centro_x) * k
+        d += [
+            f'<line class="eje" x1="{dx:.2f}" y1="{cy - h / 2 - 14:.2f}" '
+            f'x2="{dx:.2f}" y2="{cy + h / 2 + 14:.2f}"/>',
+            f'<text class="cotavar" x="{dx:.2f}" y="{cy - h / 2 - 16:.2f}" '
+            f'style="text-anchor:middle">DATUM</text>',
+            f'<text class="nota" x="{cx - w / 2 + 2:.2f}" y="{cy - h / 2 - 3:.2f}">arriba</text>',
+            f'<text class="nota" x="{cx - w / 2 + 2:.2f}" y="{cy + h / 2 + 7:.2f}">abajo</text>',
+        ]
     if clase == "barra" and FICHAS[nombre].cara_plana:
         # La cara plana, que recorre el largo entero. **Solo si la pieza la
         # tiene**: el tambor es una barra sin cara plana, y el alzado le
@@ -660,6 +694,30 @@ def segunda_vista(nombre: str, c: dict[str, float], x: float, y: float, ancho: f
     return d
 
 
+def alto_de_montaje(nombre: str) -> float:
+    """Lo que ocupa la banda EN EL CONJUNTO."""
+    montaje = LISTADO[nombre].montaje
+    return 6.0 * len(textwrap.wrap(montaje, 84)) + 16.0 if montaje else 0.0
+
+
+def alto_de_pie(nombre: str) -> float:
+    """Lo que ocupa TODO el pie: porqué, montaje y tabla de variables.
+
+    `PIE` era una constante de 112, y no lo es: el porqué tiene las líneas
+    que tenga y la tabla, la mitad de las variables de la pieza. Con doce
+    —el seguidor— pedía 126 y los dos últimos renglones salían por debajo
+    del marco del panel, impresos sobre el borde. Llevaba así desde que la
+    pieza entró en el bucle y nadie lo vio porque el panel sigue
+    dibujándose entero: lo que se sale es el texto.
+
+    Se reserva por pieza y no por hoja, y `PIE` se queda como suelo.
+    """
+    lista = LISTADO[nombre]
+    porque = 6.0 * len(textwrap.wrap(lista.porque, 84)) + 9.0
+    filas = (len(lista.variables) + 1) // 2
+    return max(PIE, porque + alto_de_montaje(nombre) + 9.0 + filas * 11.0 + 14.0)
+
+
 def pie(nombre: str, c: dict[str, float], x: float, y: float, ancho: float):
     """El porqué y la tabla de variables, que es lo que se teclea."""
     from emit.plataforma import _valor
@@ -668,7 +726,20 @@ def pie(nombre: str, c: dict[str, float], x: float, y: float, ancho: float):
     d = []
     for i, linea in enumerate(textwrap.wrap(lista.porque, 84)):
         d.append(f'<text class="aviso" x="{x + 6:.1f}" y="{y + 6 * i:.1f}">{linea}</text>')
-    y += 6 * len(textwrap.wrap(lista.porque, 84)) + 8
+    y += 6 * len(textwrap.wrap(lista.porque, 84)) + 9
+    # **El montaje, que no es el porqué.** El porqué justifica las cotas y se
+    # lee antes de dibujar; esto dice con qué se junta la pieza y se lee con
+    # ella ya cortada, en la mesa. Separados porque se usan en dos momentos
+    # distintos y por dos personas distintas.
+    if lista.montaje:
+        d.append(
+            f'<text class="nota" x="{x + 6:.1f}" y="{y:.1f}" '
+            'style="text-anchor:start">EN EL CONJUNTO</text>'
+        )
+        y += 7
+        for i, linea in enumerate(textwrap.wrap(lista.montaje, 84)):
+            d.append(f'<text class="varl" x="{x + 6:.1f}" y="{y + 6 * i:.1f}">{linea}</text>')
+        y += 6 * len(textwrap.wrap(lista.montaje, 84)) + 8
     d.append(
         f'<text class="nota" x="{x + ancho / 2:.1f}" y="{y:.1f}">'
         "lo que se teclea en el croquis</text>"
@@ -703,7 +774,10 @@ def hoja(piezas: list[str] | None = None) -> str:
         + 30
         + CABECERA
         + 40
-        + max(alto_de_pila(n, c) + alto_de_leyenda(n, c) + alto_de_vista(n, c) for n in piezas)
+        + max(
+            alto_de_pila(n, c) + alto_de_leyenda(n, c) + alto_de_vista(n, c) + alto_de_montaje(n)
+            for n in piezas
+        )
     )
     ancho = 2 * vista_ancho
     filas = len(piezas)
@@ -750,9 +824,16 @@ def hoja(piezas: list[str] | None = None) -> str:
         # El alto que se les pasa descuenta el desplazamiento: si no, la vista
         # cree que llega hasta py+alto-PIE y en realidad empieza 30 más abajo,
         # así que la última cota se metía en el porqué.
-        partes += planta(nombre, c, px, py + 30, vista_ancho, alto - PIE - 30)
-        partes += segunda_vista(nombre, c, px + vista_ancho, py + 30, vista_ancho, alto - PIE - 30)
-        partes += pie(nombre, c, px, py + alto - PIE + 8, ancho)
+        # El pie ya no mide siempre lo mismo: `PIE` cubría el porqué y la
+        # tabla, y la banda del montaje es tan larga como vecinos tenga la
+        # pieza. Reservarlo por pieza y no por hoja es lo que impide que la
+        # tabla se salga por abajo del panel.
+        suelo = alto_de_pie(nombre)
+        partes += planta(nombre, c, px, py + 30, vista_ancho, alto - suelo - 30)
+        partes += segunda_vista(
+            nombre, c, px + vista_ancho, py + 30, vista_ancho, alto - suelo - 30
+        )
+        partes += pie(nombre, c, px, py + alto - suelo + 8, ancho)
     partes.append("</svg>")
     h = cabecera + filas * alto + borde
     partes[1] = (

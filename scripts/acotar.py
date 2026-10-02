@@ -38,6 +38,7 @@ text{font-family:Helvetica,Arial,sans-serif;fill:#1b1b1b}
 .marco{fill:none;stroke:#ddd;stroke-width:0.6}
 .corte{fill:#dde5ee;stroke:#1b1b1b;stroke-width:0.9}
 .contorno{fill:none;stroke:#1b1b1b;stroke-width:0.9}
+.oculta{fill:none;stroke:#1b1b1b;stroke-width:0.6;stroke-dasharray:2.5 1.8}
 .cinta{fill:none;stroke:#b03030;stroke-width:1.6;stroke-linecap:round}
 .eje{stroke:#1b5fb0;stroke-width:0.5;stroke-dasharray:7 2 1.2 2}
 .aux{stroke:#9aa7b4;stroke-width:0.4}

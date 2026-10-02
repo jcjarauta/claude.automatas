@@ -450,9 +450,22 @@ class Ficha:
     la «mejora» al primer apuro. El porqué largo vive en `docs/contratos.md`;
     aquí va lo que hay que tener delante mientras se dibuja.
     """
+    montaje: str = ""
+    """Con qué se junta la pieza, cara por cara, y a qué altura queda.
+
+    El contorno y las cotas bastan para CORTARLA; para ENSAMBLARLA no. Un
+    disco de POM de 5 con cuatro agujeros no dice por sí mismo cuál de sus
+    dos caras mira al plato, qué lleva encima ni contra qué apoya, y eso es
+    justo lo que hay que saber con la pieza en la mano.
+
+    Se escribe mirando la sección: primero la cara de abajo, luego la de
+    arriba, y después lo que atraviesa.
+    """
 
 
-def _barra_calada(entre_centros: str, etiqueta: str, calaje: str, porque: str) -> Ficha:
+def _barra_calada(
+    entre_centros: str, etiqueta: str, calaje: str, porque: str, montaje: str = ""
+) -> Ficha:
     """El proximal y la palanca son la misma pieza con otra longitud, así que
     su lista de variables se escribe una vez. Repetirla era la forma segura
     de que una de las dos se quedara atrás."""
@@ -473,6 +486,7 @@ def _barra_calada(entre_centros: str, etiqueta: str, calaje: str, porque: str) -
         ),
         ("plancha", "brazo_espesor"),
         porque,
+        montaje,
     )
 
 
@@ -484,6 +498,12 @@ LISTADO: dict[str, Ficha] = {
         "Se corta UNA y valen las dos: los calajes suman -180 grados, así que el brazo "
         "derecho es este volteado. La cara plana del agujero es lo único que lo cala, y "
         "va a cero grados del eje de la pieza justo para que el volteo siga valiendo.",
+        montaje=(
+            "Cara de abajo contra la cabeza del perno del codo; cara de arriba contra el plato "
+            "1, con 1 mm de holgura. El cubo de Ø18 se cala en el eje de pivote por la cara "
+            "plana y se aprieta con un collar por debajo. El derecho es este mismo volteado, "
+            "así que queda un milímetro más abajo: los dos proximales se cruzan."
+        ),
     ),
     "brazo_distal": Ficha(
         "barra de dos cubos **iguales** en pletina de latón",
@@ -498,6 +518,11 @@ LISTADO: dict[str, Ficha] = {
         "Es una biela: gira libre en los dos pernos y no cala nada. Que los dos extremos "
         "salgan iguales es la consecuencia, no una elección; si dejaran de serlo sería "
         "que alguien le ha puesto un calaje que no necesita.",
+        montaje=(
+            "Va por debajo de los dos proximales, en su propio plano. Gira libre en los dos "
+            "pernos de Ø6: codo por un lado, punta por el otro. No cala nada, así que se monta "
+            "en cualquier sentido."
+        ),
     ),
     "palanca_lapiz": _barra_calada(
         "brazo_palanca",
@@ -506,6 +531,11 @@ LISTADO: dict[str, Ficha] = {
         "Como el proximal pero más corta. Su error no desplaza el trazo, lo levanta "
         "antes o después; aun así va calada, porque con la palanca girada el lápiz no "
         "apoya donde debe.",
+        montaje=(
+            "Calada al eje del balancín por la cara plana, en el extremo de x = 65, por encima "
+            "del plato 1. En el extremo libre cuelga el tirante por su perno de Ø6. Horizontal "
+            "a media altura de levantamiento: ese es el calaje."
+        ),
     ),
     "mordaza": Ficha(
         "bloque con un tornillo que aprieta y una ranura que cala",
@@ -529,6 +559,11 @@ LISTADO: dict[str, Ficha] = {
         "patrón. Agarra por ROZAMIENTO y no por arrastre: la cinta no se arrolla a menos "
         "de 5 mm de radio, así que un pasador tendría que ser de Ø10 y no cabe. Los dos "
         "tornillos son M3 y M4 a propósito, para que no se puedan cambiar de agujero.",
+        montaje=(
+            "Se atornilla sobre la cara libre del sector, con el M4 pasando por su ranura. La "
+            "cinta entra entre el bloque y el sector, y el M3 la aprieta contra el canto. Dos "
+            "por cinta, una en cada anclaje, justo por fuera de los puntos de tangencia."
+        ),
     ),
     "eje_pivote": Ficha(
         "barra Ø10 h6 con una cara plana, cortada a medida",
@@ -544,6 +579,11 @@ LISTADO: dict[str, Ficha] = {
         "ángulo: mientras el calaje se mecanizaba aquí, esta pieza traía cuatro "
         "decimales y había una por lado. La cara plana es la misma que la del agujero "
         "del brazo, para que encajen.",
+        montaje=(
+            "Atraviesa el plato 1. Por debajo cala el brazo proximal; por encima, el tambor del "
+            "cabestrante, cuya cara alta queda a 33,5 del plato. Un circlip a cada punta. La "
+            "cara plana mira al otro cubo del brazo y es lo único que fija el calaje."
+        ),
     ),
     "sector": Ficha(
         "disco de POM sin muesca, con los dos tornillos que lo calan al seguidor",
@@ -563,6 +603,12 @@ LISTADO: dict[str, Ficha] = {
         "tornillos que lo calan al seguidor, y hacen falta: su agujero central es de paso "
         "—libra la valona de Ø15— y no sujeta ni orienta nada, así que sin ellos el disco "
         "gira suelto sobre el casquillo y la relación 6:1 no llega al brazo.",
+        montaje=(
+            "Se atornilla a la cara de ARRIBA del seguidor con los dos M3, así que gira con él "
+            "sobre el poste. Su agujero de Ø16 libra la valona del casquillo. El canto tiene "
+            "que quedar coplanario con el del tambor dentro de 0,2 mm: eso es lo que sustituye "
+            "a las pestañas."
+        ),
     ),
     "tambor": Ficha(
         "cilindro liso con agujero, sin pestañas",
@@ -577,6 +623,10 @@ LISTADO: dict[str, Ficha] = {
         "Cilindro liso, sin pestañas. Lo que mantiene la cinta en su sitio no son las "
         "pestañas sino que los dos asientos sean coplanarios, y eso es una tolerancia y "
         "no un resalte. R8 son 160 espesores de cinta: pasa de sobra el radio mínimo.",
+        montaje=(
+            "Cala en el eje de pivote por encima del plato 1, enfrentado al sector de su canal. "
+            "La cinta lo abraza 185 grados y se ancla en el sector, no aquí."
+        ),
     ),
     "manivela": Ficha(
         "barra de dos cubos en pletina de latón, como los brazos",
@@ -599,6 +649,11 @@ LISTADO: dict[str, Ficha] = {
         "los 4 N·m de C9 signifiquen 40 N en la mano, que es lo que empuja un adulto sin "
         "esforzarse. NO lleva calaje: la manivela se cala donde se quiera, que para eso se "
         "gira. Va en el eje rápido, con el piñón Z20 y el volante.",
+        montaje=(
+            "Fuera de la pila, encima del plato 3: cala en el eje de la manivela por la cara "
+            "plana y lleva el pomo en el perno del extremo. Es lo único que sobresale por "
+            "arriba."
+        ),
     ),
     "volante": Ficha(
         "disco de latón aligerado, en el eje de la manivela",
@@ -626,6 +681,10 @@ LISTADO: dict[str, Ficha] = {
         "Aligerado porque la inercia vive en el borde: seis agujeros de Ø24 quitan 100 g de "
         "latón y solo un 9 % de inercia. Cala con la misma cara plana que los brazos, sin "
         "prisionero: un taladro radial no sale de una plancha cortada.",
+        montaje=(
+            "Entre los dos rodamientos del eje de la manivela, en la bahía del reductor, junto "
+            "al piñón. Cala por la cara plana y no lleva prisionero."
+        ),
     ),
     "base": Ficha(
         "tabla de nogal con los tres agujeros de los postes",
@@ -654,6 +713,11 @@ LISTADO: dict[str, Ficha] = {
         "para que no asome el acero por debajo. "
         "Lo que esta tabla todavía no sabe es a qué altura queda el plato 1: "
         "base_al_plato son 75 provisionales y de ahí cuelga el largo del poste.",
+        montaje=(
+            "Es la pieza de abajo y no se monta sobre nada. Recibe los tres postes en sus "
+            "agujeros ciegos de 15, y sobre ella apoyan los soportes de la mesa del papel. La "
+            "tarjeta va suelta encima de la mesa."
+        ),
     ),
     "platina_levas": Ficha(
         "disco de contrachapado con los siete agujeros del mecanismo",
@@ -691,6 +755,12 @@ LISTADO: dict[str, Ficha] = {
         "por rigidez —un poste en voladizo flecta 0,0135 mm con 5 N, contra un "
         "presupuesto de error de 2,79— sino porque deja el mecanismo a la vista, que "
         "es el argumento del producto.",
+        montaje=(
+            "Los tres son la misma pieza y van a tres alturas: el 1 sobre los separadores de la "
+            "base, el 2 a 58 por encima y el 3 a 20 más. Los tres postes los atraviesan y son "
+            "lo que los separa y los alinea. El Ø19 del centro y el de 28 llevan los "
+            "rodamientos del árbol y del eje de la manivela."
+        ),
     ),
     "seguidor": Ficha(
         "barra de dos cubos con cuatro agujeros en línea, en POM-C de 5",
@@ -720,6 +790,12 @@ LISTADO: dict[str, Ficha] = {
         "variación del par va con r². A 12 varía un 9,6 % en todo el barrido; a 30, un 60 %. "
         "Y el sector se cala con DOS tornillos en línea con el brazo: su agujero es de "
         "paso y no sitúa nada, y una brida con ellos a 11 pediría un cubo de Ø28.",
+        montaje=(
+            "Pivota sobre su poste a través del casquillo igus, en el plano único de "
+            "seguidores, a 21 de la cara baja de la primera leva. Por encima lleva el sector "
+            "atornillado; por debajo, el eje del rodillo descolgado hasta su leva: 21, 14 o 7 "
+            "según el canal, que es lo único que distingue un montaje de otro."
+        ),
     ),
 }
 """Qué se teclea en cada pieza de la plataforma, y nada más.
