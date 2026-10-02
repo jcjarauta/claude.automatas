@@ -157,6 +157,30 @@ def test_el_que_volvio_de_onshape_con_los_dos_agujeros_cambiados():
     assert sum(h.gravedad == "huerfano" for h in inf.hallazgos) == 2, informe(inf)
 
 
+def test_el_que_volvio_de_onshape_bueno():
+    """**El archivo real por el lado que pasa**, que es el que no se vigilaba.
+
+    El resto de esta prueba, salvo el vecino de arriba, le da al lector STEP
+    archivos que escribo yo: por construcción traen el formato que el lector
+    espera, así que no dicen nada sobre si sigue entendiendo lo que exporta
+    Onshape. Y un archivo roto tampoco lo dice —falla igual si el lector no
+    entiende nada—.
+
+    Lo que caza este es el fallo contrario y más silencioso: que el lector
+    deje de reconocer una pieza **correcta**. Eso no rompe ningún camino de
+    error; rompe el día que alguien entrega una pieza buena y el comparador
+    le dice que no cuadra.
+    """
+    inf = comparar(DATOS / "platina_levas_buena.step", "platina_levas")
+    assert inf.cuadra, informe(inf)
+    # Y que pase por el motivo bueno: los ocho círculos y el espesor del
+    # contrato, no una comparación que se quedó sin rasgos que mirar.
+    entidades, circulares, _, espesor = leer_step(DATOS / "platina_levas_buena.step")
+    assert entidades == {"CIRCLE": 8}
+    assert len(circulares) == 8
+    assert espesor == pytest.approx(contrato_mm()["platina_espesor"], abs=1e-6)
+
+
 def test_el_mismo_archivo_real_trae_el_espesor_bueno():
     """Para que el caso de prueba no pase por el motivo equivocado: de lo
     que trae el archivo real, lo único que está mal son los dos agujeros."""
