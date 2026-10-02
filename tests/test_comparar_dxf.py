@@ -30,6 +30,8 @@ def brazo(
     tangentes: bool = True,
     en_datum: bool = False,
     cara_al_reves: bool = False,
+    eje: float | None = None,
+    chaveta: float | None = None,
 ) -> Path:
     """Un `brazo_proximal` en DXF, con los defectos que se le pidan.
 
@@ -39,8 +41,10 @@ def brazo(
     c = contrato()
     largo = c["brazo_proximal"] * MM if largo is None else largo
     r1 = c["brazo_extremo_diametro"] * MM / 2
-    a0, a1 = c["brazo_eje_diametro"] * MM / 2, c["brazo_perno_diametro"] * MM / 2
-    ch, cu = c["brazo_chaveta"] * MM, c["brazo_chaveta_cuerda"] * MM
+    a0 = c["brazo_eje_diametro"] * MM / 2 if eje is None else eje
+    a1 = c["brazo_perno_diametro"] * MM / 2
+    ch = c["brazo_chaveta"] * MM if chaveta is None else chaveta
+    cu = 2.0 * math.sqrt(a0**2 - ch**2)
     x0, x1 = (0.0, largo) if en_datum else (-largo / 2, largo / 2)
 
     doc = ezdxf.new("R2010")
@@ -111,10 +115,25 @@ def test_caza_un_contorno_que_no_es_tangente(tmp_path: Path):
 
 
 def test_no_confunde_el_proximal_con_la_palanca(tmp_path: Path):
-    """Son la misma forma con otra distancia entre centros, así que es el
-    par de piezas que de verdad se puede confundir."""
+    """Eran la misma forma con otra distancia entre centros, y ese era el par
+    que de verdad se podía confundir.
+
+    **Ya no lo son**: la palanca cuelga del eje del balancín, que es de 4
+    porque el brazo de entrada mide 6,33, así que su cubo y su cara plana
+    son otros. Lo que antes las separaba era un número y ahora las separan
+    cuatro: el test sigue valiendo y además es más fácil de pasar, que es lo
+    que uno quiere de un par de piezas parecidas.
+    """
+    c = contrato()
     assert adivinar(brazo(tmp_path)) == "brazo_proximal"
-    assert adivinar(brazo(tmp_path, largo=contrato()["brazo_palanca"] * MM)) == "palanca_lapiz"
+    palanca = brazo(
+        tmp_path,
+        largo=c["brazo_palanca"] * MM,
+        cubo=c["balancin_cubo_diametro"] * MM / 2,
+        eje=c["balancin_eje_diametro"] * MM / 2,
+        chaveta=c["balancin_chaveta"] * MM,
+    )
+    assert adivinar(palanca) == "palanca_lapiz"
 
 
 def test_un_proximal_juzgado_como_distal_no_cuadra(tmp_path: Path):

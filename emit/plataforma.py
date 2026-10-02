@@ -259,6 +259,30 @@ def volante(c: dict[str, float] | None = None) -> Perfil:
     return perfil
 
 
+def balancin(c: dict[str, float] | None = None) -> Perfil:
+    """El brazo de entrada del balancín: la pieza que da el cuarto de vuelta.
+
+    Es una barra de dos cubos como los brazos, pero diminuta: 6,333 entre
+    centros, que es `levantamiento_pasador_al_pivote` partido por la
+    relación. No es una elección de tamaño, es lo que la relación 6 obliga a
+    medir, y es lo que decide que el eje sea de 4 y no de 10 como los demás:
+    con 10 el pasador se metería dentro del agujero del eje.
+
+    Cala por la cara plana, igual que los brazos, y en el mismo eje va la
+    palanca del lápiz 78 mm más adelante. El eje corre de proa a popa, y esa
+    orientación es toda la invención: convierte el movimiento del seguidor,
+    que va de lado, en el vertical que necesita la mesa.
+    """
+    c = contrato_mm() if c is None else c
+    largo = c["balancin_entrada"]
+    cubo, extremo = c["balancin_cubo_diametro"] / 2, c["balancin_extremo_diametro"] / 2
+    return (
+        barra(largo, cubo, extremo)
+        + agujero_en_d((0.0, 0.0), c["balancin_eje_diametro"] / 2, c["balancin_chaveta"])
+        + circulo((largo, 0.0), c["balancin_perno_diametro"] / 2)
+    )
+
+
 def ranura(centro: Punto, largo: float, radio: float) -> Perfil:
     """Una ranura recta: dos semicírculos y sus dos tangentes, horizontal.
 
@@ -373,6 +397,7 @@ PERFILES = {
     "platina_levas": lambda c: platina_levas(c),
     "volante": lambda c: volante(c),
     "base": lambda c: base(c),
+    "balancin": lambda c: balancin(c),
 }
 """Las piezas prismáticas que no son barras. El resto sale de `BRAZOS`.
 
@@ -382,13 +407,17 @@ causa: la hoja del cabestrante rotulaba el canto como radio y el campo del
 CAD pide diámetro. Un disco con un agujero es una forma como otra."""
 
 BRAZOS = {
-    "brazo_proximal": ("brazo_proximal", True),
-    "brazo_distal": ("brazo_distal", False),
-    "palanca_lapiz": ("brazo_palanca", True),
+    "brazo_proximal": ("brazo_proximal", True, "brazo"),
+    "brazo_distal": ("brazo_distal", False, "brazo"),
+    # **La palanca ya no va en un eje de 10.** Cuelga del eje del balancín,
+    # que es de 4 porque el brazo de entrada mide 6,33 y con 10 el pasador
+    # se metía DENTRO del agujero del eje. El cubo y la cara plana la siguen
+    # a ese eje: lo que comparten es el encaje, no la familia de piezas.
+    "palanca_lapiz": ("brazo_palanca", True, "balancin"),
     # La manivela es un brazo más: la misma pletina con otro largo, el
     # mismo agujero en D y el mismo perno de Ø6 en el extremo, que aquí
     # lleva el pomo en vez de una biela. Lo único suyo es cuánto mide.
-    "manivela": ("manivela_entre_centros", True),
+    "manivela": ("manivela_entre_centros", True, "brazo"),
 }
 
 
@@ -397,7 +426,7 @@ def brazo(cual: str, c: dict[str, float] | None = None) -> Perfil:
     if cual not in BRAZOS:
         raise KeyError(f"no sé dibujar «{cual}». Hay: {', '.join(BRAZOS)}")
     c = contrato_mm() if c is None else c
-    entre_centros, calado = BRAZOS[cual]
+    entre_centros, calado, eje = BRAZOS[cual]
     largo = c[entre_centros]
     extremo, perno = c["brazo_extremo_diametro"] / 2, c["brazo_perno_diametro"] / 2
     if not calado:
@@ -407,10 +436,10 @@ def brazo(cual: str, c: dict[str, float] | None = None) -> Perfil:
             + circulo((0.0, 0.0), perno)
             + circulo((largo, 0.0), perno)
         )
-    cubo, eje = c["brazo_cubo_diametro"] / 2, c["brazo_eje_diametro"] / 2
+    cubo, radio = c[f"{eje}_cubo_diametro"] / 2, c[f"{eje}_eje_diametro"] / 2
     return (
         barra(largo, cubo, extremo)
-        + agujero_en_d((0.0, 0.0), eje, c["brazo_chaveta"])
+        + agujero_en_d((0.0, 0.0), radio, c[f"{eje}_chaveta"])
         + circulo((largo, 0.0), perno)
     )
 
@@ -464,7 +493,12 @@ class Ficha:
 
 
 def _barra_calada(
-    entre_centros: str, etiqueta: str, calaje: str, porque: str, montaje: str = ""
+    entre_centros: str,
+    etiqueta: str,
+    calaje: str,
+    porque: str,
+    montaje: str = "",
+    eje: str = "brazo",
 ) -> Ficha:
     """El proximal y la palanca son la misma pieza con otra longitud, así que
     su lista de variables se escribe una vez. Repetirla era la forma segura
@@ -475,12 +509,12 @@ def _barra_calada(
         (
             Variable("cota", entre_centros, etiqueta),
             Variable("cota", "brazo_espesor", "espesor", en_el_perfil=False),
-            Variable("cota", "brazo_eje_diametro", "Ø eje", "H7"),
+            Variable("cota", f"{eje}_eje_diametro", "Ø eje", "H7"),
             Variable("cota", "brazo_perno_diametro", "Ø perno", "H7"),
-            Variable("cota", "brazo_cubo_diametro_radio", "R del cubo del eje"),
+            Variable("cota", f"{eje}_cubo_diametro_radio", "R del cubo del eje"),
             Variable("cota", "brazo_extremo_diametro_radio", "R del extremo"),
-            Variable("cota", "brazo_chaveta", "cara plana a"),
-            Variable("cota", "brazo_chaveta_cuerda", "cuerda"),
+            Variable("cota", f"{eje}_chaveta", "cara plana a"),
+            Variable("cota", f"{eje}_chaveta_cuerda", "cuerda"),
             Variable("angulo", "brazo_chaveta_angulo", "girada"),
             Variable("angulo", calaje, "calaje del EJE", en_el_perfil=False),
         ),
@@ -536,10 +570,11 @@ LISTADO: dict[str, Ficha] = {
             "del plato 1. En el extremo libre cuelga el tirante por su perno de Ø6. Horizontal "
             "a media altura de levantamiento: ese es el calaje."
         ),
+        eje="balancin",
     ),
     "mordaza": Ficha(
         "bloque con un tornillo que aprieta y una ranura que cala",
-        6,
+        4,
         (
             Variable("cota", "mordaza_largo", "largo"),
             Variable("cota", "mordaza_voladizo", "del tornillo al borde"),
@@ -567,7 +602,7 @@ LISTADO: dict[str, Ficha] = {
     ),
     "eje_pivote": Ficha(
         "barra Ø10 h6 con una cara plana, cortada a medida",
-        3,
+        2,
         (
             Variable("cota", "brazo_eje_diametro", "Ø", "h6"),
             Variable("cota", "eje_pivote_largo", "largo", "PENDIENTE", en_el_perfil=False),
@@ -587,7 +622,7 @@ LISTADO: dict[str, Ficha] = {
     ),
     "sector": Ficha(
         "disco de POM sin muesca, con los dos tornillos que lo calan al seguidor",
-        3,
+        2,
         (
             Variable("cota", "amplificador_sector_radio_mecanizado_diametro", "Ø del canto"),
             Variable("cota", "amplificador_sector_espesor", "espesor", en_el_perfil=False),
@@ -612,7 +647,7 @@ LISTADO: dict[str, Ficha] = {
     ),
     "tambor": Ficha(
         "cilindro liso con agujero, sin pestañas",
-        3,
+        2,
         (
             Variable("cota", "amplificador_tambor_radio_mecanizado_diametro", "Ø del canto"),
             Variable("cota", "amplificador_tambor_ancho", "ancho", en_el_perfil=False),
@@ -717,6 +752,33 @@ LISTADO: dict[str, Ficha] = {
             "Es la pieza de abajo y no se monta sobre nada. Recibe los tres postes en sus "
             "agujeros ciegos de 15, y sobre ella apoyan los soportes de la mesa del papel. La "
             "tarjeta va suelta encima de la mesa."
+        ),
+    ),
+    "balancin": Ficha(
+        "barra de dos cubos diminuta, en la misma pletina de latón de 3",
+        1,
+        (
+            Variable("cota", "balancin_entrada", "entre centros"),
+            Variable("cota", "balancin_espesor", "espesor", en_el_perfil=False),
+            Variable("cota", "balancin_eje_diametro", "Ø eje", "H7"),
+            Variable("cota", "balancin_perno_diametro", "Ø pasador", "H7"),
+            Variable("cota", "balancin_cubo_diametro_radio", "R del cubo del eje"),
+            Variable("cota", "balancin_extremo_diametro_radio", "R del extremo"),
+            Variable("cota", "balancin_chaveta", "cara plana a"),
+            Variable("cota", "balancin_chaveta_cuerda", "cuerda"),
+            Variable("angulo", "brazo_chaveta_angulo", "girada"),
+        ),
+        ("plancha", "balancin_espesor"),
+        "Mide 6,333 entre centros porque es lo que la relación 6 obliga: el pasador del "
+        "seguidor va a 38 del pivote y 38 partido por 6 es esto. De ahí sale todo lo "
+        "demás de la pieza, incluido que su eje sea de 4 y no de 10 como los otros tres: "
+        "con 10 el pasador se metería DENTRO del agujero del eje, pared -0,17, y con 4 "
+        "quedan 3,33. Esa pared es la cota que manda aquí.",
+        montaje=(
+            "Calado por la cara plana en el extremo de popa del eje del balancín, por "
+            "encima del plano de seguidores. El pasador de Ø2 recibe la bieleta, que "
+            "viene horizontal desde el agujero del seguidor 3. En el otro extremo del "
+            "mismo eje, 78 mm a proa, va la palanca del lápiz."
         ),
     ),
     "platina_levas": Ficha(

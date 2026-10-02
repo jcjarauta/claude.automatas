@@ -404,6 +404,83 @@ el plato 1 y `eje_pivote_largo`, que lleva desde el principio con 45.
 
 ---
 
+## Contrato de levantamiento · PENDIENTE
+
+El canal 3 no tenía etapa de salida. Tres señales lo decían: `eje_pivote` eran
+tres y la platina solo tiene dos agujeros de Ø10; un cabestrante exige ejes
+paralelos y el lápiz tiene que subir; y `PalancaElevadora` vale igual para un
+eje horizontal que para cualquier conversor 1:1, así que el modelo tampoco lo
+decidía.
+
+### Lo que la medida tumbó
+
+La primera propuesta era bajar el canal 3 a 1:1, con el argumento de que el
+6:1 no compraba nada y costaba un factor seis de alzada. **Medido, es falso.**
+
+| arco \ relación | 1 | 2 | 3 | 6 |
+| --- | --- | --- | --- | --- |
+| **8°** | 41,4 ✗ | 23,8 ✓ | 16,4 ✓ | **8,3 ✓** |
+| 16° | 23,9 ✓ | 12,4 ✓ | 8,4 ✓ | 4,2 ✓ |
+
+Ángulo de presión máximo contra un límite de 30. El levantamiento es un
+**evento**: sube 3 mm en 8° de θ, y lo que dispara la presión es la pendiente,
+no la amplitud. A 1:1 la leva se autointerseca.
+
+Y la alzada pequeña que preocupaba —0,563 mm— no importa: ±0,05 de corte más
+0,040 de polígono dan ±0,48 mm sobre un levantamiento de 3, y el lápiz solo
+tiene que librar el papel. **No es una cota de precisión.**
+
+Consecuencia: **la leva no cambia, la relación sigue siendo 6, `calaje_elevador`
+no se mueve y los golden no se regeneran.** `core/` y `compile/` no se tocan.
+
+### Lo que sí cambia: quién hace el 6:1
+
+Un **balancín** en vez de un cabestrante. Da el cuarto de vuelta *y* la
+relación en una pieza, y con él desaparecen del canal 3 el sector, el tambor,
+sus dos mordazas y un eje: `sector` y `tambor` pasan a ×2, `mordaza` a ×4 y
+`eje_pivote` a ×2.
+
+El pasador que lo ataca va en **el agujero que dejó el sector**, a 38 del
+pivote, así que el seguidor sigue siendo la misma pieza en los tres canales.
+
+### La pared que decide el diámetro del eje
+
+`balancin_entrada` vale 38/6 = **6,333**, y no es una elección: es lo que la
+relación obliga. De ahí sale lo demás, incluido que el eje sea de 4 y no de 10
+como los otros tres:
+
+| eje | pared entre el pasador y el agujero del eje |
+| --- | --- |
+| Ø10 | **−0,17** — el pasador entra DENTRO del agujero |
+| Ø6 con M3 | 1,83 |
+| Ø4 con pasador Ø2 | **3,33** ✓ |
+
+La regla del repo pide 3. Con Ø4 y un pasador de Ø2 —la carga son 6,4 N, que
+en un Ø2 dan 2 MPa de cortadura— quedan 3,33 sin forzar nada.
+
+**Y arrastra la palanca del lápiz**, que cuelga de ese mismo eje: su cubo y su
+cara plana dejan de ser los de un eje de 10. Es una pieza ya entregada y hay
+que redibujarla.
+
+### Por dónde baja
+
+El tirante cae a **x = 65**, medido barriendo el cinco barras por toda la caja
+de escritura: deja 19,6 mm a los brazos y 43,7 fuera del canto del plato, y
+queda por fuera de la tarjeta. La línea central no vale: por ahí barren los
+brazos.
+
+### El lápiz deja de deslizar
+
+Va **rígido** sobre una flexura de dos láminas de 1.4310 de 0,15 × 12 × 25:
+1037 N/m, 0,52 N a 0,5 mm y 144 MPa, el 10 % del límite. Dos láminas y no una
+en voladizo, que giraría la punta 1,5 veces la flecha partido por el largo.
+
+Eso mete una cota nueva en el contrato y es la más fácil de olvidar:
+**`mesa_planitud` = 0,5 mm** sobre los 105 × 74 de la tarjeta. Lo único que
+absorbe el alabeo es la flexura, y 0,5 es todo su recorrido.
+
+---
+
 ## Registro de cambios
 
 | Fecha | Contrato | Cambio | Motivo |
@@ -432,3 +509,5 @@ el plato 1 y `eje_pivote_largo`, que lleva desde el principio con 45.
 | 2026-10-02 | Bastidor | `platina_radio` → **`platina_diametro`**, `platina_pivote_radio` → `platina_pivote_al_arbol` | El contorno es un círculo entero y la herramienta de círculo acota el diámetro. Renombradas ANTES de entregarlas, que es cuando sale gratis |
 | 2026-10-02 | **Base** | Añadido el grupo: 190 × 275 × 25 de nogal, tres agujeros ciegos de Ø8 en triángulo equilátero y la tarjeta A7 | La planta la cierran el plato por detrás y el papel por delante, con 10 mm a cada punta. Los 210 × 160 de la ficha se quedaban 115 mm cortos de fondo |
 | 2026-10-02 | Bastidor | **Añadido `poste_vano`** y `poste_largo` de 105 a **195**, derivado de la cadena entera | El poste baja hasta la base y hace de pata, así que no hace falta pilar y los tres platos siguen siendo la misma pieza. Y el «70 de antes» llevaba dentro, sin declarar, el vano entre el plato 1 y el plato 2 |
+| 2026-10-02 | **Levantamiento** | Añadido el grupo: balancín 6,333/40, tirante a x = 65, mesa del papel sobre dos bielas de 40 y flexura de dos láminas | El canal 3 no tenía etapa de salida. Medir tumbó el 1:1 —41,4° de presión contra 30— así que la relación 6 se queda y la hace un balancín: una pieza en vez de cinco, y la leva no se toca |
+| 2026-10-02 | Levantamiento | Eje del balancín de **Ø4**, no Ø10 como los otros tres, y pasador de Ø2 | Con el brazo de entrada en 6,333, un Ø10 mete el pasador DENTRO del agujero del eje: pared −0,17. Con Ø4 y Ø2 quedan 3,33. Arrastra el cubo y la cara plana de la palanca del lápiz, que hay que redibujar |

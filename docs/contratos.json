@@ -839,6 +839,216 @@
           "tolerancia": ""
         }
       ]
+    },
+    {
+      "nombre": "levantamiento",
+      "estado": "pendiente",
+      "porque": "El canal 3 no tenia etapa de salida: el seguidor gira sobre un poste vertical y el lapiz tiene que subir, y ese cuarto de vuelta no lo declaraba nadie. Lo hace un balancin, que de paso da la relacion 6 y ahorra el cabestrante entero",
+      "valores": [
+        {
+          "nombre": "levantamiento_pasador_al_pivote",
+          "valor": 0.038,
+          "unidad": "m",
+          "descripcion": "Del pivote del seguidor al pasador que ataca el balancin. Es el agujero que dejo el sector al desaparecer de este canal, asi que el seguidor sigue siendo la misma pieza en los tres. Recorre 0,475 mm",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "balancin_entrada",
+          "valor": 0.006333333333333333,
+          "unidad": "m",
+          "descripcion": "Brazo de entrada del balancin. Derivada: pasador_al_pivote / relacion_varillaje. Es lo que hace que la relacion siga valiendo 6 exactos sin tocar la leva",
+          "tolerancia": "+-0,02"
+        },
+        {
+          "nombre": "balancin_eje_diametro",
+          "valor": 0.004,
+          "unidad": "m",
+          "descripcion": "Eje del balancin, barra h6 con una cara plana. Horizontal y de proa a popa: es esa orientacion la que convierte el movimiento del seguidor, que va de lado, en el vertical de la palanca. Y es 4 y no 10 como los demas ejes porque el brazo de entrada mide 6,33: con 10 el perno de la bieleta se meteria DENTRO del agujero del eje, pared -0,17",
+          "tolerancia": "h6"
+        },
+        {
+          "nombre": "balancin_eje_largo",
+          "valor": 0.085,
+          "unidad": "m",
+          "descripcion": "Del brazo de entrada a la palanca, mas los dos apoyos y el margen",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "balancin_chaveta",
+          "valor": 0.0016,
+          "unidad": "m",
+          "descripcion": "Del eje al plano de la cara plana. Es el 80 % del radio, la misma proporcion que brazo_chaveta sobre el eje de 10",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "balancin_chaveta_cuerda",
+          "valor": 0.0024,
+          "unidad": "m",
+          "descripcion": "Cuerda de la cara plana. Derivada de balancin_eje_diametro y balancin_chaveta: esta porque el CAD deja acotar el plano por cualquiera de las dos y la raiz de cabeza se falla",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "balancin_espesor",
+          "valor": 0.003,
+          "unidad": "m",
+          "descripcion": "La misma pletina de laton de 3 que los brazos",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "balancin_cubo_diametro",
+          "valor": 0.01,
+          "unidad": "m",
+          "descripcion": "Cubo del eje: 3 de pared sobre un agujero de 4",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "balancin_extremo_diametro",
+          "valor": 0.008,
+          "unidad": "m",
+          "descripcion": "Diametro del extremo donde va el pasador de la bieleta: 3 de pared sobre el Ø2",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "balancin_perno_diametro",
+          "valor": 0.002,
+          "unidad": "m",
+          "descripcion": "Pasador que une el balancin con la bieleta. Es un pasador de 2 y no un M3 por la misma pared: con M3 quedaban 2,83 y con este 3,33. La carga son 6,4 N, que en un Ø2 dan 2 MPa de cortadura",
+          "tolerancia": "H7"
+        },
+        {
+          "nombre": "balancin_eje_x",
+          "valor": 0.025,
+          "unidad": "m",
+          "descripcion": "A que distancia del eje de simetria corre el eje del balancin. Lo fija la bieleta: el pasador del seguidor esta en el eje y el tirante tiene que caer a 65, fuera del plato y al lado de la tarjeta",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "bieleta_entre_centros",
+          "valor": 0.025,
+          "unidad": "m",
+          "descripcion": "Del pasador del seguidor al brazo de entrada del balancin. Va en el plano de los seguidores y en la misma direccion en que se mueven los dos extremos, que es lo que la deja trabajar a traccion y compresion puras",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "tirante_x",
+          "valor": 0.065,
+          "unidad": "m",
+          "descripcion": "Donde baja el tirante. Medido con el barrido del cinco barras: deja 19,6 mm a los brazos y 43,7 fuera del canto del plato, y queda por fuera de la tarjeta",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "tirante_y",
+          "valor": 0.08,
+          "unidad": "m",
+          "descripcion": "Lo mismo en el otro eje, en el marco del cinco barras",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "tirante_diametro",
+          "valor": 0.004,
+          "unidad": "m",
+          "descripcion": "Varilla del tirante. La carga son menos de 2 N; el diametro lo decide el pandeo sobre 85 mm, no la tension",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "mesa_biela",
+          "valor": 0.04,
+          "unidad": "m",
+          "descripcion": "Las dos bielas que cuelgan la mesa. Igual que brazo_palanca a proposito: asi los dos extremos del tirante recorren lo mismo y la varilla solo traslada",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "mesa_bisagra_cerca",
+          "valor": 0.04,
+          "unidad": "m",
+          "descripcion": "De la linea de pivotes del cinco barras a la bisagra trasera de la mesa",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "mesa_bisagra_lejos",
+          "valor": 0.1,
+          "unidad": "m",
+          "descripcion": "Y a la delantera. Las dos bielas son paralelas: la mesa baja 3 mm y se corre 0,113 en horizontal, con el lapiz ya en el aire",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "mesa_ancho",
+          "valor": 0.12,
+          "unidad": "m",
+          "descripcion": "Ancho de la mesa. Lo limita el tirante, que baja a 65: 60 de media mesa mas 2 de la varilla dejan los 3 de holgura_minima",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "mesa_fondo",
+          "valor": 0.09,
+          "unidad": "m",
+          "descripcion": "Fondo de la mesa: la tarjeta A7 mas 8 por delante y por detras",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "mesa_espesor",
+          "valor": 0.004,
+          "unidad": "m",
+          "descripcion": "Espesor de la mesa",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "mesa_altura",
+          "valor": 0.012,
+          "unidad": "m",
+          "descripcion": "De la cara alta de la base a la cara alta de la mesa. Debajo viven las dos bielas y sus bisagras",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "mesa_planitud",
+          "valor": 0.0005,
+          "unidad": "m",
+          "descripcion": "Lo que la mesa puede alabearse respecto del plano de la punta. Es una cota NUEVA que nace de que el lapiz ya no desliza: lo unico que absorbe el alabeo es la flexura, y 0,5 es todo su recorrido",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "flexura_espesor",
+          "valor": 0.00015,
+          "unidad": "m",
+          "descripcion": "Espesor de cada lamina, en 1.4310. Da 1037 N/m con dos, o sea 0,52 N a 0,5 mm, y 144 MPa de tension: el 10 % del limite elastico",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "flexura_ancho",
+          "valor": 0.012,
+          "unidad": "m",
+          "descripcion": "Ancho de cada lamina",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "flexura_largo",
+          "valor": 0.025,
+          "unidad": "m",
+          "descripcion": "Largo libre de cada lamina, entre empotramientos",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "flexura_separacion",
+          "valor": 0.02,
+          "unidad": "m",
+          "descripcion": "Entre las dos laminas. DOS y no una: un voladizo gira la punta 1,5 veces la flecha partido por el largo, y sobre el portaminas eso son milimetros en el papel. En paralelogramo traslada sin girar, con 6 um de recorrido parasito",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "flexura_recorrido",
+          "valor": 0.0005,
+          "unidad": "m",
+          "descripcion": "Lo que la punta puede bajar desde su posicion de escritura. Es a la vez la precarga, el alabeo que tolera y lo que el lapiz sube antes de despegar",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "balancin_pared",
+          "valor": 0.0033333333333333335,
+          "unidad": "m",
+          "descripcion": "Pared entre el agujero del eje y el del pasador. Derivada: balancin_entrada menos los dos radios. Es LA cota que decide el diametro del eje, y con el Ø10 de los demas ejes sale negativa",
+          "tolerancia": ""
+        }
+      ]
     }
   ]
 }

@@ -34,6 +34,7 @@ from emit.plataforma import (
     Arco,
     Perfil,
     Segmento,
+    balancin,
     base,
     contrato_mm,
     eje_pivote,
@@ -65,6 +66,7 @@ PERFIL_DE = {
     "platina_levas": platina_levas,
     "volante": volante,
     "base": base,
+    "balancin": balancin,
 }
 """De dónde sale la forma de cada pieza.
 
