@@ -911,6 +911,21 @@ falla si el esquema versionado se queda atrás.
   decide, como antes; con varias manda el nombre —palabras en común y
   luego prefijo— y si ninguna comparte una palabra no se elige ninguna.
 
+- **Acotar contra un círculo da el canto, no el centro.** La herramienta de
+  distancia del CAD mide lo más corto entre los dos rasgos que se pinchan,
+  así que un círculo contra una línea da la **pared** del agujero y no su
+  eje. La base volvió con el contorno corrido **4,0000 mm** —exactamente el
+  radio del Ø8 del datum— en los dos bordes de Y, mientras el de X, acotado
+  al punto central, salía clavado. El dibujo se ve impecable: el rectángulo
+  mide sus 190 × 275 y los tres agujeros están en su triángulo; lo único
+  movido es dónde cae uno respecto del otro.
+
+  Es la familia del radio contra el diámetro: **el campo acepta un número
+  razonable y no hay nada que mirar**. Hay que pinchar el PUNTO central, y
+  por eso `voladizo`, `retranqueo` y `desde_datum` rotulan ahora «al CENTRO
+  del datum» en la propia cota, donde se lee al teclearla y no en una nota
+  al pie.
+
 - **Fase.** Un cartucho montado desfasado escribe basura. La marca física y la
   verificación van en el dossier, no solo en el código.
 

@@ -498,25 +498,33 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
     nivel = abajo + 16
     centros = sorted({e.centro[0] for e in perfil if isinstance(e, Arco)})
 
-    def horizontal(xa: float, xb: float, cota: str):
+    def horizontal(xa: float, xb: float, cota: str, desde_el_centro: bool = False):
         nonlocal nivel
         a, b = ox + xa * k, ox + xb * k
         d.extend([auxiliar(a, oy, a, nivel + 3), auxiliar(b, oy, b, nivel + 3)])
         d.extend(cota_h(a, b, nivel, f"{cotas[cota]:g}"))
+        # **Acotar contra un círculo da el canto, no el centro.** La
+        # herramienta de distancia del CAD mide lo más corto entre los dos
+        # rasgos que se pinchan, así que un círculo contra una línea da la
+        # pared y no el eje: la base volvió con el contorno 4 mm corrido,
+        # exactamente el radio del agujero datum, con el dibujo impecable.
+        # Hay que pinchar el PUNTO central, y la hoja lo dice donde se lee.
+        aviso = " · al CENTRO del datum" if desde_el_centro else ""
         d.append(
-            f'<text class="cotavar" x="{min(a, b):.2f}" y="{nivel + 9:.2f}">#cota.{cota}</text>'
+            f'<text class="cotavar" x="{min(a, b):.2f}" y="{nivel + 9:.2f}">'
+            f"#cota.{cota}{aviso}</text>"
         )
         nivel += 15
 
     if ficha.voladizo:
         # Del datum al borde: es lo único que sitúa el contorno, y sin ella
         # el que dibuja tiene que deducir dónde empieza el bloque.
-        horizontal(-cotas[ficha.voladizo], 0.0, ficha.voladizo)
+        horizontal(-cotas[ficha.voladizo], 0.0, ficha.voladizo, desde_el_centro=True)
     for cota in ficha.entre_centros:
         if len(centros) >= 2:
             horizontal(centros[0], centros[-1], cota)
     for cota in ficha.desde_datum:
-        horizontal(0.0, cotas[cota], cota)
+        horizontal(0.0, cotas[cota], cota, desde_el_centro=True)
     if ficha.ranura:
         radio = cotas[ficha.ranura[1]]
         extremos = sorted(
@@ -582,7 +590,7 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
         d.append(
             f'<text class="cotavar" x="{lado + 5:.2f}" y="{(ya + yb) / 2:.2f}" '
             f'transform="rotate(-90 {lado + 5:.2f} {(ya + yb) / 2:.2f})">'
-            f"#cota.{ficha.retranqueo}</text>"
+            f"#cota.{ficha.retranqueo} · al CENTRO del datum</text>"
         )
         lado += 22
     return d
