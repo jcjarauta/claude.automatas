@@ -447,8 +447,8 @@ def _medidas_rueda_escape_step(c: Contratos, ruta: Path) -> list[Medida]:
     radial = punta - fondo * math.cos(arco)
     medidas.append(
         Medida(
-            "inclinacion de la cara, grados",
-            math.degrees(r.valor("rueda_escape_inclinacion_diente").valor),
+            "socavado de la cara, grados",
+            math.degrees(r.valor("rueda_escape_socavado").valor),
             math.degrees(math.atan2(tangencial, radial)),
         )
     )

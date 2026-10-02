@@ -20,7 +20,11 @@ import pytest
 
 from compile.contratos import Contratos, Estado, Valor, cargar
 from core.reloj.escape import (
+    angulo_de_centro,
+    barrido_del_arco,
     brazo_paleta,
+    caras_de_impulso,
+    cuerda_de_impulso,
     distancia_entre_centros,
     par_con_rendimiento,
     par_minimo_teorico,
@@ -1406,16 +1410,28 @@ def test_el_dorso_se_lleva_lo_que_la_cuna_deja(reloj: Contratos):
 def test_los_dos_angulos_centrales_salen_de_los_de_la_punta(reloj: Contratos):
     """El socavado y el dorso se miden EN LA PUNTA; el boceto se construye
     desde el centro. Las dos conversiones son lo que se teclea al trazar, y
-    por eso están declaradas en vez de calcularse con un lápiz."""
+    por eso están declaradas en vez de calcularse con un lápiz.
+
+    Lo que se comprueba aquí es la IDA Y VUELTA, no la fórmula: se traza el
+    flanco con el ángulo de centro guardado y se mide lo que se aparta del
+    radio en la punta, que tiene que dar el ángulo pedido. La versión
+    anterior de este test comparaba la fórmula consigo misma, y por eso no
+    vio que la fórmula estaba mal.
+    """
     r = reloj.contrato("rueda_escape")
-    radio = r.valor("rueda_escape_diametro").en_mm / 2.0
-    altura = r.valor("rueda_escape_altura_diente").en_mm
-    for central, punta in (
+    punta = r.valor("rueda_escape_diametro").en_mm / 2.0
+    fondo = r.valor("rueda_escape_diametro_fondo").en_mm / 2.0
+    for central, en_la_punta in (
         ("rueda_escape_punta_adelanto", "rueda_escape_socavado"),
         ("rueda_escape_dorso_retraso", "rueda_escape_dorso_inclinacion"),
     ):
-        assert r.valor(central).valor == pytest.approx(
-            math.atan(altura * math.tan(r.valor(punta).valor) / radio), abs=1e-6
+        centro = r.valor(central).valor
+        pie = (fondo * math.sin(centro), fondo * math.cos(centro))
+        flanco = (pie[0], pie[1] - punta)
+        medido = math.acos(-flanco[1] / math.hypot(*flanco))
+        assert medido == pytest.approx(r.valor(en_la_punta).valor, abs=math.radians(0.01)), central
+        assert centro == pytest.approx(
+            angulo_de_centro(punta, fondo, r.valor(en_la_punta).valor), abs=1e-6
         ), central
 
 
@@ -1484,4 +1500,112 @@ def test_con_treinta_dientes_la_verificacion_vale_el_radio(reloj: Contratos):
         pytest.skip("la coincidencia es propia de 30 dientes")
     assert r.valor("rueda_escape_cuerda_cinco").en_mm == pytest.approx(
         r.valor("rueda_escape_diametro").en_mm / 2.0, abs=0.01
+    )
+
+
+# --- las paletas: la pieza 2.3 ---------------------------------------------
+
+
+def test_las_dos_caras_de_impulso_salen_del_nucleo(reloj: Contratos):
+    """Las inclinaciones de los dos planos no se eligen: caen de la bajada
+    radial contra el barrido tangencial, y el núcleo es quien las calcula."""
+    a = reloj.contrato("ancora")
+    entrada, salida = caras_de_impulso(
+        a.valor("ancora_brazo").valor,
+        a.valor("ancora_impulso").valor,
+        a.valor("ancora_impulso_profundidad").valor,
+    )
+    assert a.valor("paleta_cara_entrada").valor == pytest.approx(entrada, abs=math.radians(0.02))
+    assert a.valor("paleta_cara_salida").valor == pytest.approx(salida, abs=math.radians(0.02))
+
+
+def test_las_dos_paletas_no_son_iguales(reloj: Contratos):
+    """El error que invita a cometer un dibujo simétrico. La diferencia no es
+    un residuo: es el ángulo de impulso entero, y cortarlas iguales deja cada
+    una a un grado de donde va."""
+    a = reloj.contrato("ancora")
+    diferencia = a.valor("paleta_cara_salida").valor - a.valor("paleta_cara_entrada").valor
+    assert diferencia == pytest.approx(a.valor("ancora_impulso").valor, abs=math.radians(0.02))
+
+
+def test_la_cara_media_es_de_45_grados(reloj: Contratos):
+    """Porque el contrato eligió profundidad = brazo x impulso, que iguala los
+    dos catetos. Si alguien cambia la profundidad, este test cae y avisa de
+    que el dibujo de la paleta ya no vale."""
+    a = reloj.contrato("ancora")
+    media = (a.valor("paleta_cara_entrada").valor + a.valor("paleta_cara_salida").valor) / 2.0
+    assert media == pytest.approx(math.radians(45.0), abs=math.radians(0.02))
+
+
+def test_el_largo_de_la_cara_es_la_hipotenusa(reloj: Contratos):
+    a = reloj.contrato("ancora")
+    assert a.valor("paleta_cara_largo").valor == pytest.approx(
+        cuerda_de_impulso(
+            a.valor("ancora_brazo").valor,
+            a.valor("ancora_impulso").valor,
+            a.valor("ancora_impulso_profundidad").valor,
+        ),
+        abs=1e-5,
+    )
+
+
+def test_el_arco_barre_el_reposo_y_el_suplementario(reloj: Contratos):
+    a = reloj.contrato("ancora")
+    assert a.valor("paleta_arco_barrido").valor == pytest.approx(
+        barrido_del_arco(a.valor("ancora_reposo").valor, a.valor("ancora_suplementario").valor),
+        abs=math.radians(0.02),
+    )
+
+
+def test_el_arco_dibujado_cubre_el_barrido_y_el_margen_de_caida(reloj: Contratos):
+    """Un arco corto deja el diente en el vacío al final del suplementario, y
+    entonces el escape se dispara solo en los dientes cortos de sierra. El
+    margen es la caída medida sobre el brazo, que es lo que baja un diente
+    que apoya antes de lo previsto."""
+    a = reloj.contrato("ancora")
+    brazo = a.valor("ancora_brazo").en_mm
+    barrido = a.valor("paleta_arco_barrido").valor
+    necesario = a.valor("ancora_arco_salida").en_mm * barrido
+    margen = brazo * a.valor("ancora_caida").valor
+    assert a.valor("paleta_arco_largo").en_mm >= necesario + margen
+
+
+def test_el_taladro_queda_en_el_centro_de_la_ranura(reloj: Contratos):
+    """La cota que fija el radio de la paleta, y con él el reposo. Tiene que
+    caer en el MEDIO de la ranura del brazo, o la puesta a punto sale
+    coja: todo el ajuste para un lado y nada para el otro."""
+    a = reloj.contrato("ancora")
+    assert a.valor("paleta_taladro_al_arco").en_mm == pytest.approx(
+        a.valor("ancora_brazo").en_mm
+        - a.valor("ancora_ranura_al_eje").en_mm
+        - a.valor("ancora_ranura_largo").en_mm / 2.0,
+        abs=0.2,
+    )
+
+
+def test_la_paleta_tiene_el_espesor_de_la_rueda(reloj: Contratos):
+    """Más delgada y el diente apoya en parte de su canto, que marca la
+    madera en una línea en vez de una cara."""
+    a = reloj.contrato("ancora")
+    assert a.valor("paleta_espesor").en_mm == pytest.approx(
+        reloj.valor("rueda_escape", "rueda_escape_espesor").en_mm, abs=0.01
+    )
+
+
+def test_el_canto_de_trabajo_cabe_en_el_ancho_de_la_paleta(reloj: Contratos):
+    """El arco más la proyección tangencial de la cara. Si no cabe, la cara
+    se come el arco y el reposo desaparece por un lado."""
+    a = reloj.contrato("ancora")
+    arco = a.valor("paleta_arco_largo").en_mm
+    cara = a.valor("paleta_cara_largo").en_mm
+    tangencial = cara * math.cos(a.valor("paleta_cara_entrada").valor)
+    assert a.valor("paleta_ancho").en_mm >= arco + tangencial
+
+
+def test_el_taladro_de_la_paleta_pasa_por_la_ranura_del_brazo(reloj: Contratos):
+    """El mismo tornillo atraviesa las dos: un diámetro distinto en cada sitio
+    es un tornillo que no entra o un ajuste que baila."""
+    a = reloj.contrato("ancora")
+    assert a.valor("paleta_taladro").en_mm == pytest.approx(
+        a.valor("ancora_ranura_ancho").en_mm, abs=0.01
     )

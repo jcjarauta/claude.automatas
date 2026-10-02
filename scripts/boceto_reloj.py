@@ -1460,21 +1460,8 @@ def rueda_escape(c: Contratos) -> str:
     e2 = 12.0
     dcx, dcy = 840.0, 690.0
     rp2, rf2 = diam * e2 / 2.0, fondo * e2 / 2.0
-    p.append(
-        _texto(
-            620, 92, "UN DIENTE \u00b7 escala 12:1 \u00b7 acotado para trazarlo", 9, TINTA, "start"
-        )
-    )
-    p.append(
-        _texto(
-            620,
-            105,
-            "los \u00e1ngulos de la punta y los de centro: no son los mismos",
-            8,
-            AUX,
-            "start",
-        )
-    )
+    p.append(_texto(620, 92, "UN DIENTE \u00b7 escala 12:1", 9, TINTA, "start"))
+    p.append(_texto(620, 105, "para trazarlo, hoja 2.1-D", 8, AUX, "start"))
 
     def pol2(rad: float, ang: float) -> tuple[float, float]:
         return dcx + rad * math.cos(ang - math.pi / 2.0), dcy + rad * math.sin(ang - math.pi / 2.0)
@@ -1800,6 +1787,411 @@ def rueda_escape(c: Contratos) -> str:
     return "\n".join(p)
 
 
+def diente(c: Contratos) -> str:
+    """La pieza 2.1, en detalle: UN diente a 34:1, acotado en milimetros.
+
+    Existe aparte porque a esta escala **un angulo no se puede acotar**: el
+    centro de la rueda cae un metro y medio fuera de la hoja y no hay donde
+    poner el vertice. Lo que se puede trazar son distancias, asi que la hoja
+    gira el diente hasta poner su radio de referencia vertical y lo acota en
+    milimetros: alturas al eje y separaciones perpendiculares.
+
+    Y lleva la tabla de los cinco puntos en coordenadas, que es lo que se
+    teclea en un croquis: situar cinco puntos y repetirlos cada 12 grados no
+    se equivoca; construir cuatro angulos acumulados con un lapiz, si.
+    """
+    r = c.contrato("rueda_escape")
+    rp = r.valor("rueda_escape_diametro").en_mm / 2.0
+    rf = r.valor("rueda_escape_diametro_fondo").en_mm / 2.0
+    altura = r.valor("rueda_escape_altura_diente").en_mm
+    espesor = r.valor("rueda_escape_espesor").en_mm
+    angular = r.valor("rueda_escape_paso_angular").valor
+    retraso = r.valor("rueda_escape_dorso_retraso").valor
+    punta = r.valor("rueda_escape_espesor_punta").valor
+    adelanto = r.valor("rueda_escape_punta_adelanto").valor
+    hueco = r.valor("rueda_escape_hueco_angular").valor
+    socavado = r.valor("rueda_escape_socavado").valor
+    dorso_inc = r.valor("rueda_escape_dorso_inclinacion").valor
+    incluido = r.valor("rueda_escape_angulo_incluido").valor
+    cuerda = r.valor("rueda_escape_cuerda_diente").en_mm
+    cuerda5 = r.valor("rueda_escape_cuerda_cinco").en_mm
+    dientes = int(c.valor("escape", "dientes_escape").valor)
+
+    # Los cinco puntos del perfil, acumulando desde el pie del dorso. El
+    # marco esta girado: el radio por A es el eje Y, asi que x es separacion
+    # perpendicular y y es altura al eje de la rueda. Son las coordenadas
+    # que se teclean, no una vista bonita.
+    pasos = (
+        ("A", "pie del dorso", rf, 0.0),
+        ("B", "punta, lado del dorso", rp, retraso),
+        ("C", "punta, lado de la cara", rp, punta),
+        ("D", "pie de la cara", rf, adelanto),
+        ("A'", "pie del diente siguiente", rf, hueco),
+    )
+    acumulado, puntos = 0.0, []
+    for marca, rotulo, radio, salto in pasos:
+        acumulado += salto
+        puntos.append(
+            (
+                marca,
+                rotulo,
+                radio,
+                acumulado,
+                radio * math.sin(acumulado),
+                radio * math.cos(acumulado),
+            )
+        )
+
+    p: list[str] = [CABEZA.format(cota=COTA, ancho=1180, alto=1020)]
+    p.append(_texto(34, 34, "2.1-D · EL DIENTE, EN DETALLE", 15, TINTA, "start", "bold"))
+    p.append(
+        _texto(
+            34,
+            50,
+            "Boceto de comprobación · cotas leídas de docs/reloj/contratos.json",
+            9.5,
+            AUX,
+            "start",
+        )
+    )
+
+    # ---- el diente, girado y acotado en milimetros ------------------------
+    e = 34.0
+    ox, oy = 190.0, 250.0 + rp * e
+    p.append(_texto(130, 96, "UN DIENTE · escala 34:1", 9, TINTA, "start"))
+    p.append(
+        _texto(
+            130,
+            109,
+            "girado: el radio por A es vertical, así que todo se acota en mm",
+            8,
+            AUX,
+            "start",
+        )
+    )
+
+    def xy(x: float, y: float) -> tuple[float, float]:
+        return ox + x * e, oy - y * e
+
+    for radio, trazo, rotulo in ((rp, "7 4", "círculo de punta"), (rf, "4 3", "de fondo")):
+        x0, y0 = xy(-0.9, radio)
+        x1, y1 = xy(9.1, math.sqrt(max(radio**2 - 9.1**2, 0.0)))
+        p.append(
+            f'<path d="M{x0:.1f} {y0:.1f}A{radio * e:.1f} {radio * e:.1f} 0 0 0 '
+            f'{x1:.1f} {y1:.1f}" fill="none" stroke="{AUX}" stroke-width="0.9" '
+            f'stroke-dasharray="{trazo}"/>'
+        )
+        p.append(_texto(x1 + 8, y1 + 3 + (0.0 if radio == rp else 14.0), rotulo, 7.5, AUX, "start"))
+    # El perfil: dorso, punta, cara, y el fondo hasta el diente siguiente.
+    trozos = []
+    for i, (_, _, _, _, xx, yy) in enumerate(puntos):
+        sx, sy = xy(xx, yy)
+        trozos.append(f"{'M' if i == 0 else 'L'}{sx:.1f} {sy:.1f}")
+    # El fondo es un arco, no una recta: a esta escala se ve, y dibujarlo
+    # recto es lo que convierte el fondo en una esquina.
+    dx, dy = xy(puntos[3][4], puntos[3][5])
+    ax, ay = xy(puntos[4][4], puntos[4][5])
+    cuerpo = " ".join(trozos[:4])
+    p.append(
+        f'<path d="{cuerpo}" fill="{COTA}" fill-opacity="0.07" stroke="{TINTA}" '
+        f'stroke-width="2.2" stroke-linejoin="round"/>'
+    )
+    p.append(
+        f'<path d="M{dx:.1f} {dy:.1f}A{rf * e:.1f} {rf * e:.1f} 0 0 0 {ax:.1f} {ay:.1f}" '
+        f'fill="none" stroke="{TINTA}" stroke-width="2.2"/>'
+    )
+    for marca, _, _, _, xx, yy in puntos:
+        sx, sy = xy(xx, yy)
+        p.append(f'<circle cx="{sx:.1f}" cy="{sy:.1f}" r="3.4" fill="{TINTA}"/>')
+        p.append(_texto(sx + 11, sy - 8, marca, 11, TINTA, "start", "bold"))
+    # Los radios de construccion, que son lo que diverge y por eso se ven.
+    for _, _, _radio, ang, _, _ in puntos:
+        x0, y0 = xy(math.sin(ang) * (rf - 3.0), math.cos(ang) * (rf - 3.0))
+        x1, y1 = xy(math.sin(ang) * (rp + 1.6), math.cos(ang) * (rp + 1.6))
+        p.append(
+            f'<path d="M{x0:.1f} {y0:.1f}L{x1:.1f} {y1:.1f}" stroke="{AUX}" '
+            f'stroke-width="0.6" stroke-dasharray="9 3 2 3"/>'
+        )
+    p.append(_texto(*xy(1.0, rp + 2.4), "la PUNTA", 8, TINTA, "middle", "bold"))
+    p.append(_texto(*xy(0.55, rf + altura * 0.45), "dorso", 8.5, TINTA, "end", "bold"))
+    p.append(_texto(*xy(3.05, rf + altura * 0.45), "cara", 8.5, COTA, "start", "bold"))
+    p.append(_texto(*xy(5.6, rf - 2.4), "hueco de la sierra", 8, AUX, "middle"))
+    # Las separaciones perpendiculares: ES LO QUE SE MIDE.
+    for i, (marca, _, _, _, xx, _) in enumerate(puntos[1:], start=0):
+        base = 612.0 + i * 34.0
+        p.append(
+            _cota_h(
+                xy(0.0, 0.0)[0],
+                xy(xx, 0.0)[0],
+                base,
+                f"{xx:.3f}",
+                f"a {marca}",
+                fuera=xx < 3.0,
+            )
+        )
+    p.append(
+        _cota_v(
+            xy(0.0, rp)[1],
+            xy(0.0, rf)[1],
+            132.0,
+            f"{altura:.0f}",
+            "",
+            desde=xy(0.0, rf)[0],
+            lado="der",
+        )
+    )
+    p.append(_texto(139, 392, "#cota.rueda_escape_altura_diente", 7, AUX, "start"))
+    p.append(
+        _texto(
+            130,
+            770,
+            "Las cuatro separaciones se miden del radio por A, perpendicular a él.",
+            8.5,
+            TINTA,
+            "start",
+        )
+    )
+    p.append(
+        _texto(
+            130,
+            784,
+            "A esta escala el centro de la rueda cae a 1,5 m de la hoja: no hay",
+            8.5,
+            TINTA,
+            "start",
+        )
+    )
+    p.append(_texto(130, 798, "dónde poner el vértice de un ángulo.", 8.5, TINTA, "start"))
+
+    # ---- la tabla de los cinco puntos ------------------------------------
+    tx = 660.0
+    p.append(_texto(tx, 96, "LOS CINCO PUNTOS", 9, TINTA, "start"))
+    p.append(
+        _texto(
+            tx,
+            109,
+            "del centro de la rueda · el eje Y es el radio por A",
+            8,
+            AUX,
+            "start",
+        )
+    )
+    cols = (0.0, 46.0, 212.0, 296.0, 378.0, 452.0)
+    for i, titulo in enumerate(("", "", "ángulo", "R", "x", "y")):
+        p.append(_texto(tx + cols[i], 132, titulo, 7.5, AUX, "start"))
+    p.append(f'<path d="M{tx:.1f} 137H{tx + 486:.1f}" stroke="{AUX}" stroke-width="0.8"/>')
+    for i, (marca, rotulo, radio, ang, xx, yy) in enumerate(puntos):
+        fy = 154.0 + i * 22.0
+        p.append(_texto(tx, fy, marca, 10.5, TINTA, "start", "bold"))
+        p.append(_texto(tx + cols[1], fy, rotulo, 8, TINTA, "start"))
+        p.append(_texto(tx + cols[2], fy, f"{math.degrees(ang):6.3f}°", 9, COTA, "start"))
+        p.append(_texto(tx + cols[3], fy, f"{radio:.2f}", 9, TINTA, "start"))
+        p.append(_texto(tx + cols[4], fy, f"{xx:+.3f}", 9.5, COTA, "start", "bold"))
+        p.append(_texto(tx + cols[5], fy, f"{yy:.3f}", 9.5, COTA, "start", "bold"))
+    p.append(f'<path d="M{tx:.1f} 270H{tx + 486:.1f}" stroke="{AUX}" stroke-width="0.8"/>')
+    p.append(
+        _texto(
+            tx,
+            290,
+            "Se sit\u00faan los cinco puntos, se unen A-B-C-D con rectas, D-A\u2032 con",
+            8.5,
+            TINTA,
+            "start",
+        )
+    )
+    p.append(
+        _texto(
+            tx,
+            304,
+            f"un arco de R{rf:.0f}, y el conjunto se repite {dientes} veces cada "
+            f"{math.degrees(angular):.0f}°.",
+            8.5,
+            TINTA,
+            "start",
+        )
+    )
+
+    # ---- de donde salen esos angulos -------------------------------------
+    p.append(_texto(tx, 350, "DE DÓNDE SALEN ESOS ÁNGULOS", 9, TINTA, "start"))
+    p.append(
+        _texto(
+            tx,
+            363,
+            "los de la punta se eligen; los de centro se calculan",
+            8,
+            AUX,
+            "start",
+        )
+    )
+    filas = (
+        (
+            "socavado de la cara",
+            socavado,
+            "#angulo.rueda_escape_socavado",
+            adelanto,
+            "#angulo.rueda_escape_punta_adelanto",
+        ),
+        (
+            "inclinación del dorso",
+            dorso_inc,
+            "#angulo.rueda_escape_dorso_inclinacion",
+            retraso,
+            "#angulo.rueda_escape_dorso_retraso",
+        ),
+    )
+    p.append(_texto(tx + 196, 386, "EN LA PUNTA", 7.5, AUX, "start"))
+    p.append(_texto(tx + 290, 386, "DE CENTRO", 7.5, AUX, "start"))
+    for i, (rotulo, en_punta, clave_p, de_centro, clave_c) in enumerate(filas):
+        fy = 404.0 + i * 32.0
+        p.append(_texto(tx, fy, rotulo, 8.5, TINTA, "start"))
+        p.append(_texto(tx + 196, fy, f"{math.degrees(en_punta):.1f}°", 10, COTA, "start", "bold"))
+        p.append(_texto(tx + 290, fy, f"{math.degrees(de_centro):.2f}°", 10, COTA, "start", "bold"))
+        p.append(_texto(tx + 20, fy + 12, f"{clave_p}  →  {clave_c}", 7, AUX, "start"))
+    for i, linea in enumerate(
+        [
+            "La conversión sale de CORTAR el flanco con el círculo de fondo, y no",
+            "de atan(altura \u00d7 tan\u03b1 / radio_punta): esa pone el desplazamiento al",
+            "radio de punta cuando ocurre al bajar, y se queda un 16 % corta.",
+            f"{math.degrees(socavado):.0f}° de socavado son {math.degrees(adelanto):.2f}° "
+            "de centro, no 1,25 — que dejaba la cara a 6,75°.",
+        ]
+    ):
+        p.append(_texto(tx, 472 + i * 14, linea, 8.5, TINTA, "start"))
+    p.append(
+        _texto(
+            tx,
+            538,
+            f"La cuña de la punta sale de las dos: "
+            f"{math.degrees(incluido):.0f}°. "
+            "#angulo.rueda_escape_angulo_incluido",
+            8.5,
+            AUX,
+            "start",
+        )
+    )
+
+    # ---- lo que hay que verificar ----------------------------------------
+    p.append(
+        f'<rect x="{tx:.1f}" y="560" width="486" height="118" rx="4" fill="#eef4fd" '
+        f'stroke="{COTA}" stroke-width="1"/>'
+    )
+    p.append(_texto(tx + 14, 584, "VERIFICAR LA RUEDA CORTADA", 9.5, COTA, "start", "bold"))
+    p.append(
+        _texto(
+            tx + 14,
+            606,
+            f"{cuerda5:.2f} mm",
+            13,
+            COTA,
+            "start",
+            "bold",
+        )
+    )
+    p.append(
+        _texto(
+            tx + 108,
+            606,
+            "de punta a punta saltando CINCO dientes.",
+            9,
+            TINTA,
+            "start",
+        )
+    )
+    p.append(
+        _texto(
+            tx + 14,
+            626,
+            "Cinco pasos son 60° y la cuerda de 60° vale el radio: sale el radio",
+            8.5,
+            TINTA,
+            "start",
+        )
+    )
+    p.append(
+        _texto(
+            tx + 14,
+            640,
+            f"clavado. Entre dos puntas contiguas son {cuerda:.2f}, no los "
+            f"{rp * angular:.2f} del arco:",
+            8.5,
+            TINTA,
+            "start",
+        )
+    )
+    p.append(
+        _texto(
+            tx + 14,
+            654,
+            "el pie de rey mide la CUERDA. #cota.rueda_escape_cuerda_cinco",
+            8.5,
+            TINTA,
+            "start",
+        )
+    )
+    p.append(
+        _texto(
+            tx + 14,
+            670,
+            "Sobre un diente el error de lectura es del 0,5 %; sobre cinco, 0,11 %.",
+            8.5,
+            AUX,
+            "start",
+        )
+    )
+
+    p.append(
+        f'<rect x="{tx:.1f}" y="698" width="486" height="106" rx="4" fill="#fff4e5" '
+        'stroke="#d98324" stroke-width="1"/>'
+    )
+    p.append(_texto(tx + 14, 722, "LO QUE DECIDE ESTE PERFIL", 9.5, "#8a5200", "start", "bold"))
+    for i, linea in enumerate(
+        [
+            "La cara de ataque socavada es lo que hace que el diente EMPUJE la",
+            "paleta en vez de resbalar sobre ella. Con socavado cero la cara es",
+            "radial, la componente útil se anula y el escape se agarrota.",
+            "El hueco es lo único que dice si cabe la sierra entre dos dientes.",
+        ]
+    ):
+        p.append(_texto(tx + 14, 744 + i * 15, linea, 8.5, "#8a5200", "start"))
+
+    p.append(
+        f'<rect x="34" y="836" width="1112" height="52" fill="none" stroke="{TINTA}" '
+        'stroke-width="1.2"/>'
+    )
+    campos = [
+        ("Pieza", "2.1"),
+        ("Detalle", "1 de 30 dientes"),
+        ("Material", "Abedul 4 mm"),
+        ("Espesor", f"{espesor:.0f} mm"),
+        ("Paso", f"{math.degrees(angular):.0f}°"),
+        ("Altura", f"{altura:.0f} mm"),
+        ("Conjunto", "Escape · R2"),
+        ("Estado", "PENDIENTE · R2"),
+    ]
+    celda = 1112 / len(campos)
+    for i, (k, val) in enumerate(campos):
+        bx = 34 + i * celda
+        p.append(
+            f'<path d="M{bx:.1f} 836h{celda:.1f}v52h-{celda:.1f}z" fill="none" '
+            f'stroke="{AUX}" stroke-width="0.6"/>'
+        )
+        p.append(_texto(bx + 10, 854, k.upper(), 7.5, AUX, "start"))
+        p.append(_texto(bx + 10, 873, val, 10.5, TINTA, "start", "bold"))
+    p.append(
+        _texto(
+            34,
+            918,
+            "NO ES PLANTILLA DE CORTE. La rueda se corta con el fichero de la pieza 2.1; "
+            "esta hoja es para trazar el croquis y para comprobar lo cortado.",
+            9,
+            AUX,
+            "start",
+        )
+    )
+    p.append("</svg>")
+    return "\n".join(p)
+
+
 def ancora(c: Contratos) -> str:
     """La pieza 2.2: el cuerpo del ancora.
 
@@ -1824,6 +2216,9 @@ def ancora(c: Contratos) -> str:
     abierto = a.valor("ancora_angulo_brazos").valor
     recorrido = a.valor("ancora_recorrido").valor
     reposo = a.valor("ancora_reposo").valor
+    impulso = a.valor("ancora_impulso").valor
+    caida = a.valor("ancora_caida").valor
+    suplementario = a.valor("ancora_suplementario").valor
     espesor = a.valor("ancora_espesor").en_mm
     ancho = a.valor("ancora_brazo_ancho").en_mm
     eje = a.valor("ancora_eje_diametro").en_mm
@@ -1834,6 +2229,10 @@ def ancora(c: Contratos) -> str:
     hueco = a.valor("ancora_hueco_a_la_rueda").en_mm
     caja_an = a.valor("ancora_caja_ancho").en_mm
     caja_al = a.valor("ancora_caja_alto").en_mm
+    pal_l = a.valor("paleta_largo").en_mm
+    pal_a = a.valor("paleta_ancho").en_mm
+    cara_e = a.valor("paleta_cara_entrada").valor
+    cara_s = a.valor("paleta_cara_salida").valor
     rueda = c.valor("rueda_escape", "rueda_escape_diametro").en_mm / 2.0
     fondo = c.valor("rueda_escape", "rueda_escape_diametro_fondo").en_mm / 2.0
 
@@ -1971,6 +2370,18 @@ def ancora(c: Contratos) -> str:
             f'<path d="M{r1x:.1f} {r1y:.1f}L{mxp:.1f} {myp:.1f}" stroke="{COTA}" '
             f'stroke-width="{ranura_a * e2:.1f}" stroke-linecap="round" fill="none" '
             f'opacity="0.55"/>'
+        )
+        # La huella de la paleta, que no es parte de esta pieza pero decide
+        # hasta donde llega el brazo: a trazos, y rotulada con su hoja.
+        hx, hy = bx + ux * brazo * e2, by + uy * brazo * e2
+        px_, py_ = -uy * pal_a * e2 / 2.0, ux * pal_a * e2 / 2.0
+        p.append(
+            f'<path d="M{hx + px_:.1f} {hy + py_:.1f}'
+            f"L{hx - px_:.1f} {hy - py_:.1f}"
+            f"L{hx - px_ - ux * pal_l * e2:.1f} {hy - py_ - uy * pal_l * e2:.1f}"
+            f"L{hx + px_ - ux * pal_l * e2:.1f} {hy + py_ - uy * pal_l * e2:.1f}"
+            f'Z" fill="{COTA}" fill-opacity="0.10" stroke="{COTA}" stroke-width="1" '
+            f'stroke-dasharray="5 3"/>'
         )
     p.append(
         f'<circle cx="{bx:.1f}" cy="{by:.1f}" r="{cubo * e2 / 2.0:.1f}" fill="none" '
@@ -2147,29 +2558,31 @@ def ancora(c: Contratos) -> str:
     px, py = 90.0, 580.0
     p.append(_texto(px, 550, "EL PRESUPUESTO ANGULAR", 9, TINTA, "start"))
     total = math.degrees(recorrido)
-    rep = math.degrees(reposo)
     barra = 250.0
     xx = px
+    # Cuatro tramos y no tres: el suplementario es lo que distingue un Graham
+    # de un retroceso, y el reposo ocurre UNA vez por medio barrido, no dos.
     for rotulo, grados, color in (
-        ("reposo", rep, COTA),
-        ("impulso y ca\u00edda", total - 2.0 * rep, AUX),
-        ("reposo", rep, COTA),
+        ("supl.", math.degrees(suplementario), AUX),
+        ("reposo", math.degrees(reposo), COTA),
+        ("impulso", math.degrees(impulso), "#1f9d55"),
+        ("ca\u00edda", math.degrees(caida), "#c0392b"),
     ):
         w = barra * grados / total
         p.append(
             f'<rect x="{xx:.1f}" y="{py}" width="{w:.1f}" height="26" fill="{color}" '
             f'fill-opacity="0.25" stroke="{color}" stroke-width="1"/>'
         )
-        p.append(_texto(xx + w / 2.0, py + 17, f"{grados:.1f}\u00b0", 9, TINTA, peso="bold"))
+        p.append(_texto(xx + w / 2.0, py + 17, f"{grados:.2f}\u00b0", 8.5, TINTA, peso="bold"))
         p.append(_texto(xx + w / 2.0, py + 40, rotulo, 7.5, AUX))
         xx += w
     p.append(_cota_h(px, px + barra, py + 74, f"{total:.0f}\u00b0", "#angulo.ancora_recorrido"))
     for i, linea in enumerate(
         [
             "El recorrido del \u00e1ncora es el del p\u00e9ndulo: la horquilla los ata, y de",
-            "esos 4\u00b0 salen reposo, impulso y ca\u00edda. No se suman a ellos.",
-            f"Por abajo: {rep:.1f}\u00b0 sobre un brazo de {brazo:.0f} son "
-            f"{brazo * reposo:.2f} mm,",
+            f"esos {total:.0f}\u00b0 salen los cuatro tramos. No se suman a ellos.",
+            f"Por abajo manda el reposo: {math.degrees(reposo):.1f}\u00b0 sobre un brazo de "
+            f"{brazo:.0f} son {brazo * reposo:.2f} mm,",
             "contra los \u00b10,3 que se le piden al corte de la rueda.",
         ]
     ):
@@ -2183,7 +2596,9 @@ def ancora(c: Contratos) -> str:
         _texto(
             46,
             787,
-            "EL REPOSO Y EL IMPULSO NO EST\u00c1N EN ESTA HOJA, Y NO ES UN OLVIDO.",
+            "LAS DOS PALETAS SON LA PIEZA 2.3 Y NO SON IGUALES: la de ENTRADA lleva la "
+            f"cara a {math.degrees(cara_e):.0f}\u00b0 y la de SALIDA a "
+            f"{math.degrees(cara_s):.0f}\u00b0.",
             9.5,
             "#8a5200",
             "start",
@@ -2194,8 +2609,8 @@ def ancora(c: Contratos) -> str:
         _texto(
             46,
             803,
-            "Se buscan en el banco R2 moviendo las paletas en su ranura, y se anotan como "
-            "cotas de puesta a punto en el dossier.",
+            "Aqu\u00ed solo se ve su huella, a trazos. El reposo se busca en el banco R2 "
+            "moviendo la paleta en su ranura, y se anota en el dossier.",
             9,
             "#8a5200",
             "start",
@@ -2228,6 +2643,401 @@ def ancora(c: Contratos) -> str:
     return "\n".join(p)
 
 
+def paletas(c: Contratos) -> str:
+    """La pieza 2.3: las dos paletas, que **no son iguales**.
+
+    Van en hoja propia y no en la del ancora por una razon que no es de
+    espacio: dibujadas juntas y a escala se ve que la de entrada y la de
+    salida llevan la cara a angulos distintos, y es lo unico que impide el
+    error de cortar dos piezas con la misma plantilla.
+
+    Lo que lleva cada una es el arco de reposo -centrado en el eje del
+    ancora, que es lo que hace el escape deadbeat- y el plano de impulso,
+    con su largo y su inclinacion contra la tangente del arco, que es la
+    referencia que se puede trazar.
+    """
+    a = c.contrato("ancora")
+    brazo = a.valor("ancora_brazo").en_mm
+    arco_e = a.valor("ancora_arco_entrada").en_mm
+    arco_s = a.valor("ancora_arco_salida").en_mm
+    cara_e = a.valor("paleta_cara_entrada").valor
+    cara_s = a.valor("paleta_cara_salida").valor
+    cara_l = a.valor("paleta_cara_largo").en_mm
+    arco_barrido = a.valor("paleta_arco_barrido").valor
+    arco_largo = a.valor("paleta_arco_largo").en_mm
+    al_arco = a.valor("paleta_taladro_al_arco").en_mm
+    largo = a.valor("paleta_largo").en_mm
+    ancho = a.valor("paleta_ancho").en_mm
+    espesor = a.valor("paleta_espesor").en_mm
+    taladro = a.valor("paleta_taladro").en_mm
+    impulso = a.valor("ancora_impulso").valor
+    reposo = a.valor("ancora_reposo").valor
+    suplem = a.valor("ancora_suplementario").valor
+    caida = a.valor("ancora_caida").valor
+    recorrido = a.valor("ancora_recorrido").valor
+    profundidad = a.valor("ancora_impulso_profundidad").en_mm
+    ranura_l = a.valor("ancora_ranura_largo").en_mm
+    rueda_esp = c.valor("rueda_escape", "rueda_escape_espesor").en_mm
+
+    p: list[str] = [CABEZA.format(cota=COTA, ancho=1180, alto=1020)]
+    p.append(_texto(34, 34, "2.3 · LAS PALETAS", 15, TINTA, "start", "bold"))
+    p.append(
+        _texto(
+            34,
+            50,
+            "Boceto de comprobación · cotas leídas de docs/reloj/contratos.json",
+            9.5,
+            AUX,
+            "start",
+        )
+    )
+
+    def una(ox: float, oy: float, radio: float, cara: float, rotulo: str, clave: str) -> None:
+        """Una paleta, con el arco arriba y el cuerpo colgando de el.
+
+        El marco esta girado: la tangente del arco de reposo en el punto de
+        contacto es horizontal, y el eje del ancora queda arriba a `radio`.
+        Asi la inclinacion de la cara se acota contra una horizontal, que es
+        lo unico que se puede trazar con una escuadra.
+        """
+        e = 15.0
+        p.append(_texto(ox - 112, oy - 230, rotulo, 10, TINTA, "start", "bold"))
+        p.append(_texto(ox - 112, oy - 217, clave, 7.5, AUX, "start"))
+        p.append(_texto(ox - 112, oy - 202, "escala 15:1", 8, AUX, "start"))
+        # El arco de reposo. A 15:1 su radio son 660 px y se ve casi recto:
+        # eso es honesto, porque lo es.
+        semi = arco_largo * e / 2.0
+        flecha = semi**2 / (2.0 * radio * e)
+        p.append(
+            f'<path d="M{ox - semi:.1f} {oy + flecha:.1f}A{radio * e:.1f} {radio * e:.1f} '
+            f'0 0 1 {ox + semi:.1f} {oy + flecha:.1f}" fill="none" stroke="{COTA}" '
+            f'stroke-width="3"/>'
+        )
+        # El plano de impulso, que arranca donde acaba el arco.
+        fx = ox + semi + cara_l * e * math.cos(cara)
+        fy = oy + flecha - cara_l * e * math.sin(cara)
+        p.append(
+            f'<path d="M{ox + semi:.1f} {oy + flecha:.1f}L{fx:.1f} {fy:.1f}" '
+            f'stroke="{COTA}" stroke-width="3"/>'
+        )
+        # El cuerpo: un rectangulo colgando del canto de trabajo.
+        p.append(
+            f'<path d="M{ox - semi:.1f} {oy + flecha:.1f}'
+            f"L{ox - ancho * e / 2.0:.1f} {oy + flecha + 6:.1f}"
+            f"V{oy + largo * e:.1f}H{ox + ancho * e / 2.0:.1f}"
+            f"V{fy - 4:.1f}L{fx:.1f} {fy:.1f}"
+            f'" fill="{AUX}" fill-opacity="0.16" stroke="{TINTA}" stroke-width="1.6"/>'
+        )
+        # El taladro, a `al_arco` del canto. ES LA COTA QUE FIJA EL REPOSO.
+        hx, hy = ox, oy + flecha + al_arco * e
+        p.append(
+            f'<circle cx="{hx:.1f}" cy="{hy:.1f}" r="{taladro * e / 2.0:.1f}" fill="#ffffff" '
+            f'stroke="{TINTA}" stroke-width="1.4"/>'
+        )
+        for dx, dy in ((taladro * e / 2.0 + 10, 0.0), (0.0, taladro * e / 2.0 + 10)):
+            p.append(
+                f'<path d="M{hx - dx:.1f} {hy - dy:.1f}L{hx + dx:.1f} {hy + dy:.1f}" '
+                f'stroke="{AUX}" stroke-width="0.6" stroke-dasharray="8 3 2 3"/>'
+            )
+        # La tangente, prolongada: la referencia contra la que se acota.
+        p.append(
+            f'<path d="M{ox + semi - 20:.1f} {oy + flecha:.1f}H{ox + semi + 86:.1f}" '
+            f'stroke="{AUX}" stroke-width="0.8" stroke-dasharray="5 3"/>'
+        )
+        p.append(
+            f'<path d="M{ox + semi + 52:.1f} {oy + flecha:.1f}'
+            f"A52 52 0 0 0 {ox + semi + 52 * math.cos(cara):.1f} "
+            f'{oy + flecha - 52 * math.sin(cara):.1f}" fill="none" stroke="{COTA}" '
+            f'stroke-width="1.2" marker-end="url(#f)"/>'
+        )
+        p.append(
+            _texto(
+                ox + semi + 64,
+                oy + flecha - 40,
+                f"{math.degrees(cara):.0f}°",
+                12,
+                COTA,
+                "start",
+                "bold",
+            )
+        )
+        p.append(_texto(ox + semi + 20, oy + flecha - 78, "contra la TANGENTE", 7.5, AUX, "start"))
+        p.append(_texto(ox - semi - 4, oy + flecha - 12, "arco de reposo", 8, COTA, "end"))
+        p.append(_texto(ox - semi - 4, oy + flecha - 2, f"R{radio:.2f}", 9.5, COTA, "end", "bold"))
+        p.append(
+            _texto(
+                ox - semi - 4,
+                oy + flecha + 10,
+                f"centrado en el eje del \u00e1ncora, {radio:.2f} abajo",
+                7,
+                AUX,
+                "end",
+            )
+        )
+        p.append(
+            _texto(
+                ox + semi + 24,
+                oy + flecha + 22,
+                f"plano de impulso {cara_l:.2f}",
+                8,
+                COTA,
+                "start",
+                "bold",
+            )
+        )
+        p.append(
+            _texto(ox + semi + 24, oy + flecha + 32, "#cota.paleta_cara_largo", 7, AUX, "start")
+        )
+        p.append(_texto(ox - semi - 6, oy + flecha - 24, "este lado, RECESADO", 7, AUX, "end"))
+        p.append(
+            _cota_v(
+                oy + flecha,
+                hy,
+                ox - ancho * e / 2.0 - 46,
+                f"{al_arco:.0f}",
+                "#cota.paleta_taladro_al_arco",
+                desde=ox - ancho * e / 2.0,
+            )
+        )
+        p.append(
+            _cota_h(
+                ox - ancho * e / 2.0,
+                ox + ancho * e / 2.0,
+                oy + largo * e + 46,
+                f"{ancho:.0f}",
+                "#cota.paleta_ancho",
+            )
+        )
+        p.append(
+            _cota_v(
+                oy + flecha,
+                oy + largo * e,
+                ox + ancho * e / 2.0 + 52,
+                f"{largo:.0f}",
+                "#cota.paleta_largo",
+                desde=ox + ancho * e / 2.0,
+                lado="der",
+            )
+        )
+        p.append(
+            _cota_h(
+                ox - semi,
+                ox + semi,
+                oy + flecha - 74,
+                f"{arco_largo:.0f}",
+                "#cota.paleta_arco_largo",
+            )
+        )
+
+    una(
+        300.0,
+        300.0,
+        arco_e,
+        cara_e,
+        "PALETA DE ENTRADA · la de la derecha",
+        "#angulo.paleta_cara_entrada · #cota.ancora_arco_entrada",
+    )
+    una(
+        850.0,
+        300.0,
+        arco_s,
+        cara_s,
+        "PALETA DE SALIDA · la de la izquierda",
+        "#angulo.paleta_cara_salida · #cota.ancora_arco_salida",
+    )
+    p.append(f'<path d="M575 120V560" stroke="{AUX}" stroke-width="0.8" stroke-dasharray="6 4"/>')
+
+    # ---- por que no son iguales -------------------------------------------
+    p.append(
+        '<rect x="34" y="604" width="556" height="150" rx="4" fill="#fff4e5" '
+        'stroke="#d98324" stroke-width="1"/>'
+    )
+    p.append(
+        _texto(
+            48,
+            628,
+            "LAS DOS NO SON IGUALES, Y LA DIFERENCIA NO ES UN REDONDEO",
+            9.5,
+            "#8a5200",
+            "start",
+            "bold",
+        )
+    )
+    for i, linea in enumerate(
+        [
+            "La paleta GIRA mientras el diente desliza sobre ella, así que en el marco",
+            "propio de la paleta la geometría sale sesgada hacia un lado en la entrada",
+            "y hacia el otro en la salida. El sesgo es el ángulo de impulso ENTERO,",
+            f"{math.degrees(impulso):.0f}°, repartido mitad y mitad sobre los 45° de la media:",
+            f"entrada 45 \u2212 1 = {math.degrees(cara_e):.0f}\u00b0, salida 45 + 1 = "
+            f"{math.degrees(cara_s):.0f}°.",
+            "Cortarlas las dos a 45 deja cada una a un grado de donde va, y un grado",
+            f"sobre {math.degrees(impulso):.0f}° de impulso es la MITAD del tramo en que entra "
+            "energía.",
+        ]
+    ):
+        p.append(_texto(48, 650 + i * 14, linea, 8.5, "#8a5200", "start"))
+
+    # ---- de donde salen los 45 --------------------------------------------
+    p.append(_texto(620, 604, "DE DÓNDE SALEN LOS 45° DE LA MEDIA", 9, TINTA, "start"))
+    p.append(
+        _texto(
+            620,
+            617,
+            "de igualar la bajada radial al barrido tangencial",
+            8,
+            AUX,
+            "start",
+        )
+    )
+    # El triangulo que lo explica, dibujado: es mas corto que contarlo.
+    tx0, ty0, lado = 660.0, 650.0, 78.0
+    p.append(
+        f'<path d="M{tx0:.1f} {ty0:.1f}h{lado:.1f}v{lado:.1f}z" fill="{COTA}" '
+        f'fill-opacity="0.10" stroke="{COTA}" stroke-width="1.6"/>'
+    )
+    p.append(_texto(tx0 + lado / 2.0, ty0 - 8, f"brazo × impulso = {profundidad:.3f}", 8, COTA))
+    p.append(
+        _texto(tx0 + lado + 8, ty0 + lado / 2.0, f"bajada = {profundidad:.3f}", 8, COTA, "start")
+    )
+    p.append(_texto(tx0 + 10, ty0 + lado - 14, "45°", 11, COTA, "start", "bold"))
+    for i, linea in enumerate(
+        [
+            "El contrato elige profundidad = brazo × impulso, así que los dos",
+            f"catetos valen lo mismo, {profundidad:.3f} mm, y el plano que une los",
+            "extremos es la diagonal del cuadrado. Su largo es la hipotenusa:",
+            f"√2 × {profundidad:.3f} = {cara_l:.3f} mm.",
+        ]
+    ):
+        p.append(_texto(620, 762 + i * 14, linea, 8.5, TINTA, "start"))
+
+    # ---- el canto ----------------------------------------------------------
+    p.append(_texto(34, 788, "EL CANTO · escala 8:1", 9, TINTA, "start"))
+    e4 = 8.0
+    kx, ky = 70.0, 806.0
+    p.append(
+        f'<rect x="{kx:.1f}" y="{ky:.1f}" width="150" height="{rueda_esp * e4:.1f}" '
+        f'fill="{AUX}" fill-opacity="0.18" stroke="{TINTA}" stroke-width="1.4"/>'
+    )
+    p.append(
+        f'<rect x="{kx + 196:.1f}" y="{ky:.1f}" width="120" height="{espesor * e4:.1f}" '
+        f'fill="{COTA}" fill-opacity="0.22" stroke="{COTA}" stroke-width="1.6"/>'
+    )
+    for x in (kx, kx + 196):
+        p.append(
+            f'<path d="M{x - 14:.1f} {ky:.1f}H{x + 330 - (x - kx):.1f}" stroke="{AUX}" '
+            f'stroke-width="0.5" stroke-dasharray="4 3"/>'
+        )
+    p.append(
+        f'<path d="M{kx - 14:.1f} {ky + rueda_esp * e4:.1f}H{kx + 330:.1f}" stroke="{AUX}" '
+        f'stroke-width="0.5" stroke-dasharray="4 3"/>'
+    )
+    p.append(_texto(kx + 75, ky + rueda_esp * e4 + 18, "la rueda, abedul 4", 8, AUX))
+    p.append(_texto(kx + 256, ky + espesor * e4 + 18, "la paleta, latón 4", 8, COTA))
+    p.append(
+        _cota_v(
+            ky,
+            ky + espesor * e4,
+            kx + 348,
+            f"{espesor:.0f}",
+            "#cota.paleta_espesor",
+            desde=kx + 316,
+            lado="der",
+        )
+    )
+    for i, linea in enumerate(
+        [
+            "EL MISMO ESPESOR QUE LA RUEDA, y las dos caras coplanarias. Más delgada",
+            "y el diente apoya en parte de su canto; más gruesa y sobra material que",
+            "estorba al diente de al lado. El latón va duro contra el abedul porque la",
+            "paleta recibe un golpe cada 2 s y cada diente uno cada 60.",
+        ]
+    ):
+        p.append(_texto(34, 882 + i * 14, linea, 8.5, TINTA, "start"))
+
+    # ---- el presupuesto y la puesta a punto --------------------------------
+    p.append(_texto(620, 834, "QUÉ HACE CADA TRAMO DEL BARRIDO", 9, TINTA, "start"))
+    barra, bx0, by0 = 420.0, 620.0, 848.0
+    total = math.degrees(recorrido)
+    tramos = (
+        ("suplementario", math.degrees(suplem), AUX, "en el ARCO"),
+        ("reposo", math.degrees(reposo), COTA, "en el ARCO"),
+        ("impulso", math.degrees(impulso), "#1f9d55", "en la CARA"),
+        ("caída", math.degrees(caida), "#c0392b", "por el aire"),
+    )
+    xx = bx0
+    for rotulo, grados, color, donde in tramos:
+        w = barra * grados / total
+        p.append(
+            f'<rect x="{xx:.1f}" y="{by0}" width="{w:.1f}" height="28" fill="{color}" '
+            f'fill-opacity="0.22" stroke="{color}" stroke-width="1"/>'
+        )
+        p.append(_texto(xx + w / 2.0, by0 + 18, f"{grados:.2f}°", 9, TINTA, peso="bold"))
+        p.append(_texto(xx + w / 2.0, by0 + 41, rotulo, 7.5, TINTA))
+        p.append(_texto(xx + w / 2.0, by0 + 52, donde, 7, AUX))
+        xx += w
+    p.append(_cota_h(bx0, bx0 + barra, by0 + 86, f"{total:.0f}°", "#angulo.ancora_recorrido"))
+    p.append(
+        _texto(
+            620,
+            952,
+            f"El arco tiene que cubrir suplementario + reposo = "
+            f"{math.degrees(arco_barrido):.2f}°, que sobre",
+            8.5,
+            TINTA,
+            "start",
+        )
+    )
+    p.append(
+        _texto(
+            620,
+            966,
+            f"R{arco_s:.1f} son {arco_s * arco_barrido:.2f} mm, más "
+            f"{brazo * caida:.2f} de margen por si un diente apoya antes.",
+            8.5,
+            TINTA,
+            "start",
+        )
+    )
+    p.append(
+        _texto(
+            620,
+            980,
+            f"Por eso se dibuja {arco_largo:.0f} y no {arco_s * arco_barrido:.1f}: corto, el "
+            "diente se queda en el vacío.",
+            8.5,
+            TINTA,
+            "start",
+        )
+    )
+    p.append(
+        _texto(
+            34,
+            952,
+            f"PUESTA A PUNTO: la ranura de {ranura_l:.0f} del brazo da ±"
+            f"{ranura_l / 2.0:.0f} mm alrededor de los {al_arco:.0f},",
+            8.5,
+            COTA,
+            "start",
+            "bold",
+        )
+    )
+    p.append(
+        _texto(
+            34,
+            966,
+            f"y mover la paleta 1 mm cambia el reposo en "
+            f"{math.degrees(1.0 / brazo):.1f}°. El reposo NO se corta: se busca",
+            8.5,
+            TINTA,
+            "start",
+        )
+    )
+    p.append(_texto(34, 980, "en el banco R2 y se anota en el dossier.", 8.5, TINTA, "start"))
+    p.append("</svg>")
+    return "\n".join(p)
+
+
 PIEZAS = {
     "varilla": varilla,
     "lenteja": lenteja,
@@ -2235,7 +3045,9 @@ PIEZAS = {
     "muelle": muelle,
     "escuadra": escuadra,
     "rueda_escape": rueda_escape,
+    "diente": diente,
     "ancora": ancora,
+    "paletas": paletas,
 }
 
 PREFIJOS = {
@@ -2246,7 +3058,9 @@ PREFIJOS = {
     "muelle": ("muelle_",),
     "escuadra": ("escuadra_",),
     "rueda_escape": ("rueda_escape_",),
+    "diente": ("rueda_escape_",),
     "ancora": ("ancora_",),
+    "paletas": ("paleta_",),
 }
 """Que cotas son de cada pieza. El prefijo del nombre decide, igual que
 decide el gemelo de radio: asi se puede leer el contrato y saber de quien es
@@ -2284,6 +3098,21 @@ INTERFACES = {
         "soporte_alto",
     ),
     "vastago": ("varilla_vastago_diametro", "varilla_vastago_profundidad"),
+    "diente": ("dientes_escape",),
+    "paletas": (
+        "ancora_arco_entrada",
+        "ancora_arco_salida",
+        "ancora_brazo",
+        "ancora_impulso",
+        "ancora_impulso_profundidad",
+        "ancora_ranura_largo",
+        "ancora_ranura_ancho",
+        "ancora_recorrido",
+        "ancora_reposo",
+        "ancora_caida",
+        "ancora_suplementario",
+        "rueda_escape_espesor",
+    ),
 }
 """Cotas de OTRA pieza que esta toca. Van en la tabla aparte y rotuladas,
 porque cambiarlas desde aqui rompe la pieza de al lado: una cota de junta

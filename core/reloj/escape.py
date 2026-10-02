@@ -1,4 +1,4 @@
-"""C12 · el escape de ancora de retroceso.
+"""C12 · el escape de ancora Graham.
 
 Lo que decide este modulo es **cuanto par hay que meter por el eje de la rueda
 de escape** para que el pendulo no se pare. De ese numero cuelga el tren
@@ -89,7 +89,7 @@ def angulo_abarcado(dientes: int) -> float:
 def distancia_entre_centros(radio_punta: float, dientes: int) -> float:
     """Del centro de la rueda al eje del ancora.
 
-    La construccion clasica del ancora de retroceso pone el eje donde cada
+    La construccion clasica del ancora pone el eje donde cada
     brazo queda **perpendicular al radio de la rueda** en el punto de
     contacto: asi la paleta empuja en la direccion del movimiento y no contra
     el eje. Eso hace el triangulo centro-contacto-eje rectangulo en el
@@ -119,3 +119,95 @@ def recorrido_del_ancora(amplitud: float) -> float:
     de aqui, no se suman a ello.
     """
     return 2.0 * amplitud
+
+
+def barrido_del_arco(reposo: float, suplementario: float) -> float:
+    """Radianes que el diente pasa apoyado en el arco de reposo.
+
+    Son los dos tramos en que la rueda no se mueve: el reposo propiamente
+    dicho y el arco suplementario que el pendulo sigue recorriendo despues.
+    La caida no cuenta porque en ese tramo el diente va por el aire.
+
+    Multiplicado por el radio del arco da el **largo de la superficie de
+    reposo**, que es la cota que el dibujo necesita: una paleta con el arco
+    corto deja el diente en el vacio al final del suplementario y el escape
+    se dispara solo.
+    """
+    return reposo + suplementario
+
+
+def cuerda_de_impulso(brazo: float, impulso: float, profundidad: float) -> float:
+    """Largo del plano de impulso de la paleta.
+
+    El contacto baja `profundidad` en radio mientras la paleta barre
+    `brazo x impulso` en tangencial, y el plano que une los dos extremos es
+    la hipotenusa. Con la eleccion del contrato los dos catetos son iguales y
+    la cuerda sale `raiz de dos` veces uno de ellos.
+    """
+    return math.hypot(profundidad, brazo * impulso)
+
+
+def caras_de_impulso(brazo: float, impulso: float, profundidad: float) -> tuple[float, float]:
+    """Inclinacion de los dos planos de impulso, en radianes.
+
+    Devuelve `(entrada, salida)`, medidos **contra la tangente del arco de
+    reposo** de cada paleta, que es la referencia que se puede trazar: el
+    arco ya esta dibujado y la tangente sale de prolongarlo.
+
+    La parte facil es la media: `atan(profundidad / (brazo x impulso))`, la
+    diagonal del rectangulo que forman la bajada radial y el barrido
+    tangencial. Con `profundidad = brazo x impulso` son 45 grados justos.
+
+    La parte que no es obvia, y que es la razon de que esta funcion exista en
+    vez de una constante, es que **las dos paletas no son iguales**: la
+    paleta gira mientras el diente desliza sobre ella, asi que en el marco
+    propio de la paleta la geometria sale sesgada hacia un lado en la entrada
+    y hacia el otro en la salida. El sesgo no es un residuo de calculo, es el
+    angulo de impulso **entero**, repartido mitad y mitad:
+
+        entrada = media - impulso / 2
+        salida  = media + impulso / 2
+
+    Cortar las dos a la media -que es lo que invita a hacer un dibujo
+    simetrico- deja cada una a un grado de donde va, y un grado sobre dos de
+    impulso es la mitad del tramo en que entra energia.
+    """
+    if impulso <= 0.0:
+        raise ValueError("una paleta sin impulso no tiene plano de impulso")
+    media = math.atan2(profundidad, brazo * impulso)
+    return media - impulso / 2.0, media + impulso / 2.0
+
+
+def angulo_de_centro(radio_punta: float, radio_fondo: float, inclinacion: float) -> float:
+    """Angulo de centro que subtiende un flanco recto de la punta al fondo.
+
+    `inclinacion` es lo que el flanco se aparta de la direccion radial
+    **medido en la punta**, que es como se define el socavado de la cara y la
+    inclinacion del dorso, y como lo mide el revisor sobre el STEP. Lo que
+    devuelve es el angulo entre el radio por la punta y el radio por el pie,
+    que es lo que se teclea en un croquis.
+
+    La conversion ingenua -`atan(altura x tan(inclinacion) / radio_punta)`- es
+    la trampa: trata el desplazamiento tangencial como si ocurriera a radio de
+    punta, cuando ocurre al bajar hasta el de fondo. Con punta 45, fondo 38 y
+    8 grados se queda en 1,25 en vez de 1,49, y la cara sale cortada a 6,75.
+
+    La buena sale de cortar la recta con el circulo de fondo. Con la punta en
+    el eje y `t` el largo del flanco:
+
+        t^2 - 2 R cos(a) t + (R^2 - r^2) = 0
+
+    y de las dos raices vale la corta, que es la que cruza el circulo de
+    fondo viniendo de la punta.
+    """
+    if inclinacion == 0.0:
+        return 0.0
+    coseno = math.cos(inclinacion)
+    discriminante = radio_punta**2 * coseno**2 - (radio_punta**2 - radio_fondo**2)
+    if discriminante <= 0.0:
+        raise ValueError(
+            f"un flanco a {math.degrees(inclinacion):.1f} grados no llega al fondo: "
+            "sale tangente al circulo de fondo y el diente no se cierra"
+        )
+    largo = radio_punta * coseno - math.sqrt(discriminante)
+    return math.atan2(largo * math.sin(inclinacion), radio_punta - largo * coseno)

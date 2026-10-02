@@ -600,3 +600,149 @@ alguien va a medir de todos modos, y es mejor que esté dicho que no.
 Tres tests lo defienden: que la cuerda no es el paso de arco, que la
 verificación salta cinco dientes, y que con treinta dientes ese salto vale el
 radio.
+
+## 2026-10-02 · Ampliar el diente destapa que el contrato mentía
+
+Pedir el detalle del diente a mayor escala no era una petición de estética. A
+34:1 el perfil se ve, y lo que se vio es que **las dos caras no salen al ángulo
+que el contrato pide**:
+
+| | Pedido | Salía | Ángulo de centro guardado |
+| --- | --- | --- | --- |
+| Cara de ataque (socavado) | 8° | **6,75°** | 1,25° |
+| Dorso | 15° | **12,68°** | 2,387° |
+
+6,75° es exactamente lo que midió el revisor sobre el primer STEP del escape.
+El 30 de septiembre escribí aquí que la culpa era mía por leer mal el ángulo y
+que el arreglo iba en el generador. **El diagnóstico era correcto a medias: el
+dibujo estaba bien, pero el número que puse en su lugar también estaba mal.**
+
+### La conversión era la ingenua
+
+Puse `atan(altura × tanα / radio_punta)`. Esa fórmula trata el desplazamiento
+tangencial del flanco como si ocurriera **a radio de punta**, y ocurre al
+bajar hasta el de fondo, donde el mismo milímetro de arco vale más grados. Se
+queda corta un 16 %, siempre en el mismo sentido.
+
+La buena sale de **cortar la recta del flanco con el círculo de fondo**. Con
+la punta en el eje y `t` el largo del flanco:
+
+```
+t² − 2·R·cos(α)·t + (R² − r²) = 0
+```
+
+y de las dos raíces vale la corta, que es la que cruza el círculo de fondo
+viniendo de la punta. El ángulo de centro es entonces
+`atan2(t·sinα, R − t·cosα)`.
+
+| | Antes | Ahora |
+| --- | --- | --- |
+| `rueda_escape_punta_adelanto` | 1,25° | **1,486°** |
+| `rueda_escape_dorso_retraso` | 2,387° | **2,848°** |
+| `rueda_escape_hueco_angular` | 7,86° | **7,166°** |
+| Hueco en mm de arco al fondo | 5,21 | **4,75** |
+
+El hueco encoge porque el diente ocupa más de lo que decía: 4,83° de los 12 en
+vez de 4,14. Sigue holgado para la segueta, que es lo que vigila su test.
+
+### Por qué no saltó ningún test
+
+Porque el test **comparaba la fórmula consigo misma**: leía
+`punta_adelanto` del contrato y lo contrastaba contra
+`atan(altura × tan(socavado) / radio)`, que es de donde había salido. Un test
+así no puede fallar nunca, y no falló.
+
+El que hay ahora traza el flanco con el ángulo de centro guardado y **mide**
+lo que se aparta del radio en la punta. Es la ida y vuelta, y es la misma
+definición que usa el revisor de STEP, así que el contrato y el revisor ya no
+pueden discrepar en silencio. Al núcleo va `escape.angulo_de_centro`, con
+cuatro tests propios, uno de los cuales deja constancia del tamaño del error
+para que nadie vuelva a la fórmula corta pensando que es equivalente.
+
+> **La lección de método**: un test que reproduce el cálculo que vigila no es
+> un test. Vigilar una conversión exige medir el resultado por un camino que
+> no comparta código con ella. Es lo mismo que ya se hace con la masa del
+> kernel contra la del polígono, y lo que no se estaba haciendo aquí.
+
+---
+
+## 2026-10-02 · Las paletas, y que no son iguales
+
+La pieza 2.3. El áncora tenía brazos, ranura y arcos, pero **lo que toca el
+diente no estaba dibujado en ninguna parte**: la paleta era una línea gruesa.
+
+### El plano de impulso sale de la geometría, no se elige
+
+La paleta gira sobre su eje mientras el diente desliza sobre ella. Si se lleva
+el contacto final al marco propio de la paleta —girándolo lo que la paleta
+gira— la cara queda determinada:
+
+```
+media   = atan(profundidad / (brazo × impulso))
+entrada = media − impulso/2
+salida  = media + impulso/2
+```
+
+El contrato ya había elegido `profundidad = brazo × impulso`, que iguala la
+bajada radial al barrido tangencial. Los dos catetos valen lo mismo, 1,571 mm,
+y el plano que une los extremos es **la diagonal del cuadrado**: 45° de media
+y 2,222 mm de largo.
+
+### Y ahí está el que importa
+
+> **La de entrada va a 44° y la de salida a 46°.** La diferencia no es un
+> residuo de cálculo: es el ángulo de impulso **entero**, repartido mitad y
+> mitad.
+
+Viene de que la paleta gira mientras el diente desliza, lo que sesga la
+geometría hacia un lado en la entrada y hacia el otro en la salida. Cortar las
+dos a 45 —que es exactamente lo que invita a hacer un dibujo simétrico, y lo
+que haría cualquiera con una sola plantilla— deja cada una a un grado de donde
+va. Y un grado sobre dos de impulso es **la mitad del tramo en que entra
+energía**.
+
+Por eso las dos van juntas en la misma hoja y a la misma escala: es lo único
+que impide el error.
+
+Lo comprueban tres tests contra una construcción geométrica a pelo —intersecar
+el círculo de punta con el arco de reposo y girar— que no comparte una línea
+con la forma cerrada.
+
+### El resto de la pieza
+
+| | |
+| --- | --- |
+| Arco de reposo | R44,21 (entrada) y R45,79 (salida), centrados en el eje del áncora |
+| Largo del arco | 4 mm, con mínimo de 3,2 |
+| Plano de impulso | 2,222 mm |
+| Taladro al arco | 9 mm, **la cota que fija el reposo** |
+| Cuerpo | 14 × 10 × 4 |
+| Material | Latón de 4 |
+
+El **largo del arco** es la envolvente que faltaba por este lado. Tiene que
+cubrir suplementario + reposo = 3,25°, que sobre R45,79 son 2,60 mm, más 0,59
+de margen por si un diente corto de sierra apoya antes de lo previsto: 3,19.
+Se dibuja 4. Corto, el diente se queda en el vacío al final del suplementario
+y el escape se dispara solo.
+
+El **taladro a 9 del arco** cae en el medio de la ranura de 8 del brazo, y eso
+no es casualidad: deja ±4 mm de puesta a punto a cada lado. Descentrado, el
+ajuste sale cojo —todo para un lado y nada para el otro— y mover la paleta 1 mm
+cambia el reposo en 1,3°.
+
+El **latón de 4** es el mismo espesor que la rueda, y el dossier exige las dos
+caras coplanarias. Más delgada y el diente apoya en parte de su canto, que
+marca la madera en una línea en vez de una cara. Va duro contra el abedul
+porque la paleta recibe un golpe cada 2 s y cada diente uno cada 60: se
+desgasta treinta veces más deprisa.
+
+### De paso, el presupuesto del áncora era el del retroceso
+
+La hoja 2.2 pintaba la barra como `reposo · impulso y caída · reposo`, con el
+reposo a los dos lados. Eso es un retroceso. En un Graham son **cuatro tramos
+y una vez cada uno**: suplementario 1,75 + reposo 1,50 + impulso 2,00 + caída
+0,75 = 6°. Corregido en las dos hojas.
+
+Y `revisar_cad.py` seguía pidiendo `rueda_escape_inclinacion_diente`, una cota
+que dejó de existir cuando se partió en tres el 30 de septiembre: el revisor de
+la rueda habría reventado al primer STEP. Ahora lee `rueda_escape_socavado`.

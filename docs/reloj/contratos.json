@@ -520,21 +520,21 @@
         },
         {
           "nombre": "rueda_escape_punta_adelanto",
-          "valor": 0.0218584,
+          "valor": 0.025939288458635815,
           "unidad": "rad",
-          "descripcion": "DERIVADO: atan(altura x tan(socavado) / radio_punta). Angulo CENTRAL del fondo de ataque a la esquina delantera de la punta. Es el numero que se teclea al trazar, porque el socavado se mide en la punta y el boceto se construye desde el centro",
+          "descripcion": "DERIVADO: el angulo de CENTRO que subtiende la cara de ataque, de la punta al pie. Sale de cortar el flanco con el circulo de fondo, no de atan(altura x tan a / radio_punta): esa trata el desplazamiento como si ocurriera a radio de punta y se queda un 16 % corta. Con 8 grados de socavado son 1,486 y no 1,25, que dejaba la cara cortada a 6,75",
           "tolerancia": "derivado"
         },
         {
           "nombre": "rueda_escape_dorso_retraso",
-          "valor": 0.0416569,
+          "valor": 0.04971053426592803,
           "unidad": "rad",
-          "descripcion": "DERIVADO: atan(altura x tan(dorso_inclinacion) / radio_punta). Lo mismo por el otro lado: de la esquina trasera de la punta al pie del dorso",
+          "descripcion": "DERIVADO: el angulo de CENTRO que subtiende el dorso, por el mismo camino que el adelanto. Con 15 grados de inclinacion son 2,848 y no 2,387",
           "tolerancia": "derivado"
         },
         {
           "nombre": "rueda_escape_hueco_angular",
-          "valor": 0.1371976,
+          "valor": 0.12506304125478407,
           "unidad": "rad",
           "descripcion": "DERIVADO: paso_angular - adelanto - espesor_punta - retraso. EL HUECO ENTRE DIENTES, y es la envolvente de fabricacion que faltaba: el dorso NO llega al fondo del diente siguiente. Si llegase, el perfil seria una onda y no habria por donde meter la segueta",
           "tolerancia": "derivado · minimo para la sierra"
@@ -600,7 +600,7 @@
           "nombre": "ancora_recorrido",
           "valor": 0.10471975511965978,
           "unidad": "rad",
-          "descripcion": "DERIVADO: dos veces la amplitud. La horquilla ata ancora y pendulo, asi que el ancora barre lo que barre el pendulo. Son 4 grados, y ESE es todo el presupuesto que hay para repartir entre reposo, impulso y caida",
+          "descripcion": "DERIVADO: dos veces la amplitud. La horquilla ata ancora y pendulo, asi que el ancora barre lo que barre el pendulo. Son 6 grados, y ESE es todo el presupuesto que hay para repartir entre suplementario, reposo, impulso y caida",
           "tolerancia": "lo fija el pendulo"
         },
         {
@@ -728,6 +728,76 @@
           "unidad": "m",
           "descripcion": "DERIVADO: brazo x impulso. Lo que baja la paleta entre el principio y el final del impulso, y la diferencia entre los dos arcos",
           "tolerancia": "derivado"
+        },
+        {
+          "nombre": "paleta_cara_entrada",
+          "valor": 0.767944870877505,
+          "unidad": "rad",
+          "descripcion": "DERIVADO: atan(profundidad / (brazo x impulso)) - impulso/2. Inclinacion del plano de impulso de la paleta de ENTRADA, medida contra la TANGENTE de su arco de reposo, que es la referencia que se puede trazar. La media de las dos sale de igualar la bajada radial al barrido tangencial: 45 grados justos. El menos medio impulso es el sesgo que mete que la paleta gire mientras el diente desliza sobre ella",
+          "tolerancia": "derivado"
+        },
+        {
+          "nombre": "paleta_cara_salida",
+          "valor": 0.8028514559173916,
+          "unidad": "rad",
+          "descripcion": "DERIVADO: la misma media MAS impulso/2. LAS DOS PALETAS NO SON IGUALES y se diferencian en el angulo de impulso entero, 2 grados. Cortarlas las dos a 45 deja cada una a un grado de donde va, y un grado sobre dos de impulso es la mitad del tramo en que entra energia",
+          "tolerancia": "derivado"
+        },
+        {
+          "nombre": "paleta_cara_largo",
+          "valor": 0.002222,
+          "unidad": "m",
+          "descripcion": "DERIVADO: hipotenusa de la bajada radial y el barrido tangencial, raiz de dos veces uno de ellos. Largo del plano de impulso: lo que el diente recorre sobre la paleta empujando",
+          "tolerancia": "derivado"
+        },
+        {
+          "nombre": "paleta_arco_barrido",
+          "valor": 0.05672320068981571,
+          "unidad": "rad",
+          "descripcion": "DERIVADO: reposo + suplementario. Lo que el diente pasa apoyado en el arco sin mover la rueda. La caida no cuenta porque en ese tramo el diente va por el aire",
+          "tolerancia": "derivado"
+        },
+        {
+          "nombre": "paleta_arco_largo",
+          "valor": 0.004,
+          "unidad": "m",
+          "descripcion": "Largo de la superficie de reposo. El minimo es radio x barrido = 2,60, mas el margen de caida sobre el brazo, 0,59: 3,19. Se dibuja 4 porque un diente corto de sierra apoya antes y tiene que encontrar arco donde apoyar. Corto, el diente se queda en el vacio al final del suplementario y el escape se dispara solo",
+          "tolerancia": "+/-0,3 · minimo 3,2"
+        },
+        {
+          "nombre": "paleta_taladro_al_arco",
+          "valor": 0.009,
+          "unidad": "m",
+          "descripcion": "DERIVADO: brazo - ranura_al_eje - ranura_largo/2. Del centro del taladro al arco de reposo. ES LA COTA QUE FIJA EL RADIO de la paleta, y por tanto el reposo: la ranura de 8 en el brazo da los +/-4 de puesta a punto alrededor de ella",
+          "tolerancia": "+/-0,2 · critica"
+        },
+        {
+          "nombre": "paleta_largo",
+          "valor": 0.014,
+          "unidad": "m",
+          "descripcion": "Del arco de reposo al canto de atras. Los 9 del taladro al arco mas 5 de material detras, que es lo que sujeta un M4 en laton sin desgarrarse",
+          "tolerancia": "+/-0,5"
+        },
+        {
+          "nombre": "paleta_ancho",
+          "valor": 0.01,
+          "unidad": "m",
+          "descripcion": "Ancho de la paleta. El canto de trabajo ocupa 4 de arco mas 1,57 de la proyeccion tangencial de la cara: 5,6. El resto es margen para limar a la linea sin comerse la superficie",
+          "tolerancia": "+/-0,5"
+        },
+        {
+          "nombre": "paleta_espesor",
+          "valor": 0.004,
+          "unidad": "m",
+          "descripcion": "Laton de 4, EL MISMO ESPESOR QUE LA RUEDA. Mas delgada y el diente apoya en parte de su canto; mas gruesa y sobra material que estorba al diente de al lado. El dossier exige que las dos caras queden coplanarias con la rueda, que es lo que hace valer la igualdad",
+          "tolerancia": "+/-0,2"
+        },
+        {
+          "nombre": "paleta_taladro",
+          "valor": 0.0042,
+          "unidad": "m",
+          "descripcion": "M4 de paso, igual que la ranura del brazo: el tornillo pasa por las dos y aprieta con tuerca y arandela ancha, que es lo que permite mover la paleta y volver a fijarla",
+          "tolerancia": "paso, no roscado"
         }
       ]
     },

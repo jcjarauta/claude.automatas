@@ -133,3 +133,174 @@ def test_el_recorrido_del_ancora_es_el_del_pendulo():
     el pendulo. Ese es TODO el presupuesto angular que hay para repartir
     entre reposo, impulso y caida."""
     assert escape.recorrido_del_ancora(amplitud=0.0349) == pytest.approx(0.0698, rel=1e-9)
+
+
+# --- C12 · el plano de impulso de la paleta --------------------------------
+#
+# Lo que sigue contrasta la forma cerrada contra una construccion geometrica
+# que no comparte una sola linea de codigo con ella: intersectar el circulo
+# de punta de la rueda con el arco de reposo de la paleta, y llevar el
+# segundo contacto al marco de la paleta girandolo lo que la paleta gira.
+# Es el mismo metodo que ya cruza la masa del kernel con la del poligono.
+
+
+def _cara_por_construccion(
+    radio_punta: float,
+    entre: float,
+    brazo: float,
+    impulso: float,
+    profundidad: float,
+    lado: float,
+) -> tuple[float, float]:
+    """Angulo de la cara con la tangente del arco, y su cuerda, a pelo.
+
+    `lado` vale +1 para la paleta de entrada, que apoya en el arco interior y
+    el diente la empuja hacia fuera, y -1 para la de salida.
+    """
+    r_apoyo = brazo - lado * profundidad / 2.0
+    r_suelta = brazo + lado * profundidad / 2.0
+
+    def contacto(radio: float) -> tuple[float, float]:
+        """Donde se cruzan el circulo de punta y el radio de la paleta."""
+        y = (radio_punta**2 - radio**2 - entre**2) / (2.0 * entre)
+        return math.sqrt(radio**2 - y**2), y
+
+    def girar(punto: tuple[float, float], angulo: float) -> tuple[float, float]:
+        x, y = punto
+        return (
+            x * math.cos(angulo) - y * math.sin(angulo),
+            x * math.sin(angulo) + y * math.cos(angulo),
+        )
+
+    p1 = contacto(r_apoyo)
+    p2 = girar(contacto(r_suelta), -impulso)
+    dx, dy = p2[0] - p1[0], p2[1] - p1[1]
+    radial = (dx * p1[0] + dy * p1[1]) / r_apoyo
+    tangencial = (-dx * p1[1] + dy * p1[0]) / r_apoyo
+    return math.atan2(abs(radial), abs(tangencial)), math.hypot(dx, dy)
+
+
+def test_la_cara_de_impulso_coincide_con_la_construccion_geometrica() -> None:
+    radio, entre, brazo = 0.045, 0.06364, 0.045
+    impulso = math.radians(2.0)
+    profundidad = brazo * impulso
+    entrada, salida = escape.caras_de_impulso(brazo, impulso, profundidad)
+    por_mano_e, _ = _cara_por_construccion(radio, entre, brazo, impulso, profundidad, +1.0)
+    por_mano_s, _ = _cara_por_construccion(radio, entre, brazo, impulso, profundidad, -1.0)
+    assert entrada == pytest.approx(por_mano_e, abs=math.radians(0.01))
+    assert salida == pytest.approx(por_mano_s, abs=math.radians(0.01))
+
+
+def test_las_dos_caras_difieren_exactamente_en_el_impulso() -> None:
+    """La paleta gira mientras el diente desliza, y eso sesga la geometria.
+
+    Es el error que invita a cortar las dos paletas iguales: no lo son, y la
+    diferencia no es un residuo sino el angulo de impulso entero.
+    """
+    brazo, impulso = 0.045, math.radians(2.0)
+    entrada, salida = escape.caras_de_impulso(brazo, impulso, brazo * impulso)
+    assert salida - entrada == pytest.approx(impulso)
+
+
+def test_cuando_la_profundidad_iguala_al_barrido_la_cara_media_es_de_45() -> None:
+    """La eleccion `profundidad = brazo x impulso` es la que da los 45.
+
+    No es una casualidad bonita: iguala la bajada radial al barrido
+    tangencial, y la cara que une las dos es la diagonal del cuadrado.
+    """
+    brazo, impulso = 0.045, math.radians(2.0)
+    entrada, salida = escape.caras_de_impulso(brazo, impulso, brazo * impulso)
+    assert (entrada + salida) / 2.0 == pytest.approx(math.radians(45.0))
+
+
+def test_una_cara_mas_tumbada_pide_menos_par_y_mas_recorrido() -> None:
+    """Media la profundidad y la cara se tumba: es el compromiso del escape."""
+    brazo, impulso = 0.045, math.radians(2.0)
+    tumbada, _ = escape.caras_de_impulso(brazo, impulso, brazo * impulso / 2.0)
+    normal, _ = escape.caras_de_impulso(brazo, impulso, brazo * impulso)
+    assert tumbada < normal
+
+
+def test_la_cuerda_de_la_cara_coincide_con_la_construccion() -> None:
+    radio, entre, brazo = 0.045, 0.06364, 0.045
+    impulso = math.radians(2.0)
+    profundidad = brazo * impulso
+    _, por_mano = _cara_por_construccion(radio, entre, brazo, impulso, profundidad, +1.0)
+    assert escape.cuerda_de_impulso(brazo, impulso, profundidad) == pytest.approx(
+        por_mano, rel=1e-3
+    )
+
+
+def test_la_cuerda_es_la_hipotenusa_de_bajada_y_barrido() -> None:
+    brazo, impulso = 0.045, math.radians(2.0)
+    cuerda = escape.cuerda_de_impulso(brazo, impulso, brazo * impulso)
+    assert cuerda == pytest.approx(math.sqrt(2.0) * brazo * impulso)
+
+
+def test_un_impulso_nulo_no_tiene_cara() -> None:
+    with pytest.raises(ValueError, match="sin impulso"):
+        escape.caras_de_impulso(0.045, 0.0, 0.001)
+
+
+def test_el_arco_de_reposo_barre_el_reposo_y_el_suplementario() -> None:
+    """El diente se queda en el arco esos dos tramos y no mas.
+
+    La caida no cuenta: en ese tramo el diente va por el aire. Pero el arco
+    se dibuja con ese margen de mas, porque un diente corto de sierra apoya
+    antes y tiene que encontrar arco donde apoyar.
+    """
+    reposo, suplementario = math.radians(1.5), math.radians(1.75)
+    assert escape.barrido_del_arco(reposo, suplementario) == pytest.approx(math.radians(3.25))
+
+
+# --- C12 · del angulo de la punta al angulo de centro ----------------------
+
+
+def _inclinacion_por_construccion(radio_punta: float, radio_fondo: float, centro: float) -> float:
+    """El angulo que sale de verdad, midiendolo sobre el flanco dibujado.
+
+    Coloca la punta en el eje, el pie al angulo de centro dado, y mide lo que
+    el flanco se aparta de la direccion radial EN LA PUNTA. Es la definicion
+    que usa el revisor de STEP, y por eso es la que vale de juez.
+    """
+    punta = (0.0, radio_punta)
+    pie = (radio_fondo * math.sin(centro), radio_fondo * math.cos(centro))
+    flanco = (pie[0] - punta[0], pie[1] - punta[1])
+    coseno = -flanco[1] / math.hypot(*flanco)
+    return math.acos(coseno)
+
+
+def test_el_angulo_de_centro_devuelve_la_inclinacion_pedida() -> None:
+    """La ida y la vuelta tienen que cerrar. Es el test que faltaba: la
+    conversion anterior usaba `atan(altura x tan a / radio_punta)`, que trata
+    el desplazamiento como si ocurriera en el radio de punta cuando ocurre en
+    el de fondo, y se quedaba corta un 16 %."""
+    for grados in (4.0, 8.0, 15.0, 22.0):
+        pedido = math.radians(grados)
+        centro = escape.angulo_de_centro(0.045, 0.038, pedido)
+        assert _inclinacion_por_construccion(0.045, 0.038, centro) == pytest.approx(
+            pedido, abs=math.radians(0.01)
+        )
+
+
+def test_la_formula_vieja_se_queda_corta() -> None:
+    """Deja constancia del tamano del error, que no es un redondeo: 8 grados
+    de socavado daban 1,25 de centro y la cara salia a 6,75."""
+    pedido = math.radians(8.0)
+    vieja = math.atan(0.007 * math.tan(pedido) / 0.045)
+    buena = escape.angulo_de_centro(0.045, 0.038, pedido)
+    assert vieja < buena
+    assert _inclinacion_por_construccion(0.045, 0.038, vieja) == pytest.approx(
+        math.radians(6.75), abs=math.radians(0.02)
+    )
+
+
+def test_una_cara_radial_no_tiene_angulo_de_centro() -> None:
+    assert escape.angulo_de_centro(0.045, 0.038, 0.0) == pytest.approx(0.0)
+
+
+def test_una_inclinacion_que_no_llega_al_fondo_se_rechaza() -> None:
+    """Pasado cierto angulo el flanco sale tangente y nunca corta el circulo
+    de fondo: el diente no se cierra y el perfil no existe."""
+    with pytest.raises(ValueError, match="no llega al fondo"):
+        escape.angulo_de_centro(0.045, 0.038, math.radians(60.0))
