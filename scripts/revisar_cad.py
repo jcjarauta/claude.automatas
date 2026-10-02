@@ -115,6 +115,23 @@ def _medidas_varilla_step(c: Contratos, ruta: Path) -> list[Medida]:
     vastago = v.valor("varilla_vastago_diametro").en_mm
     hallado = [c0 for d, c0 in cilindros if abs(d - vastago) <= HOLGURA]
     medidas.append(Medida("taladro del vastago, diametro", vastago, vastago if hallado else None))
+
+    # La profundidad: el taladro entra por el extremo de abajo, asi que se
+    # mide del fondo del cilindro al final de la pieza. Un taladro del
+    # diametro correcto pero corto pasaria la comprobacion de arriba.
+    if hallado:
+        fondo = min(c0[0] for c0 in hallado)
+        medidas.append(
+            Medida(
+                "taladro del vastago, profundidad",
+                v.valor("varilla_vastago_profundidad").en_mm,
+                largo - fondo,
+            )
+        )
+        medidas.append(Medida("taladro del vastago, al eje del ancho", ancho / 2.0, hallado[0][1]))
+        medidas.append(
+            Medida("taladro del vastago, al eje del espesor", espesor / 2.0, hallado[0][2])
+        )
     return medidas
 
 

@@ -503,24 +503,70 @@ def test_la_descripcion_del_gemelo_dice_de_donde_sale(reloj: Contratos):
 
 
 def test_la_cadena_del_pendulo_suma_la_longitud_nominal(reloj: Contratos):
-    """40 por encima del punto de flexión + la varilla + lo que hay del
-    extremo de la varilla al centro de la lenteja = 994. Si esto se separa,
-    la varilla se corta para un péndulo que no es el que se va a montar."""
+    """Del punto de flexión del muelle al extremo de la varilla, más la
+    varilla, más lo que hay del extremo al centro de la lenteja = 994.
+
+    El largo de la varilla es DERIVADO de esta suma, no una elección. Antes
+    lo era de `varilla_sobre_flexion`, que era una suposición marcada
+    PENDIENTE; la ficha del muelle la sustituyó y el largo cambió solo. Este
+    test es lo que hace que ese cambio no pueda pasar en silencio."""
     nominal = reloj.valor("oscilador", "longitud_pendulo_nominal").en_mm
-    arriba = reloj.valor("pendulo", "varilla_sobre_flexion").en_mm
+    flexion = reloj.valor("suspension", "muelle_flexion_a_varilla").en_mm
     largo = reloj.valor("pendulo", "varilla_largo").en_mm
     centro = reloj.valor("lenteja", "lenteja_centro_bajo_varilla").en_mm
-    assert (largo - arriba) + centro == pytest.approx(nominal)
+    assert flexion + largo + centro == pytest.approx(nominal)
 
 
-def test_los_dos_taladros_caben_en_el_tramo_de_arriba(reloj: Contratos):
-    """Los dos sujetan la varilla al soporte, así que tienen que quedar por
-    encima del punto de flexión: si uno cae por debajo, el tornillo pellizca
-    la parte que oscila."""
-    arriba = reloj.valor("pendulo", "varilla_sobre_flexion").en_mm
+def test_el_punto_de_flexion_es_la_mitad_del_tramo_libre(reloj: Contratos):
+    """El pivote efectivo de un muelle de suspensión no está en el amarre
+    sino en el centro del tramo que flexa. Es una aproximación: depende de la
+    rigidez frente al peso de la lenteja, y R1 la mide."""
+    assert reloj.valor("suspension", "muelle_flexion_a_varilla").en_mm == pytest.approx(
+        reloj.valor("suspension", "muelle_largo_libre").en_mm / 2.0
+    )
+
+
+def test_el_muelle_llega_a_los_dos_amarres(reloj: Contratos):
+    """Tiene que cubrir el tramo libre, lo que entra en el soporte y lo que
+    solapa la varilla hasta pasar su segundo taladro."""
+    libre = reloj.valor("suspension", "muelle_largo_libre").en_mm
+    lejos = reloj.valor("pendulo", "varilla_taladro_lejos").en_mm
+    assert reloj.valor("suspension", "muelle_largo").en_mm >= libre + lejos + 10.0
+
+
+def test_los_tornillos_del_soporte_no_atraviesan_el_muelle(reloj: Contratos):
+    """Taladrar un fleje de 0,1 mm es crear la línea por donde va a romper.
+    Los dos tornillos pasan a los lados, no por él."""
+    sep = reloj.valor("suspension", "soporte_tornillo_separacion").en_mm
+    tornillo = reloj.valor("suspension", "soporte_tornillo_diametro").en_mm
+    muelle = reloj.valor("suspension", "muelle_ancho").en_mm
+    holgura = sep / 2.0 - tornillo / 2.0 - muelle / 2.0
+    assert holgura >= 2.0, f"solo {holgura:.1f} mm entre el tornillo y el canto del fleje"
+
+
+def test_los_tornillos_dejan_pared_hasta_el_borde_del_bloque(reloj: Contratos):
+    ancho = reloj.valor("suspension", "soporte_ancho").en_mm
+    sep = reloj.valor("suspension", "soporte_tornillo_separacion").en_mm
+    tornillo = reloj.valor("suspension", "soporte_tornillo_diametro").en_mm
+    assert ancho / 2.0 - sep / 2.0 - tornillo / 2.0 >= 3.0
+
+
+def test_el_soporte_es_mas_ancho_que_el_muelle(reloj: Contratos):
+    assert (
+        reloj.valor("suspension", "soporte_ancho").en_mm
+        > reloj.valor("suspension", "muelle_ancho").en_mm
+    )
+
+
+def test_los_dos_taladros_quedan_dentro_del_solape_del_muelle(reloj: Contratos):
+    """Los dos aprietan el muelle contra la varilla, así que el fleje tiene
+    que llegar a cubrirlos. Un taladro fuera del solape no aprieta nada: deja
+    el muelle sujeto por un solo punto y el péndulo gira sobre sí mismo."""
+    libre = reloj.valor("suspension", "muelle_largo_libre").en_mm
+    solape = reloj.valor("suspension", "muelle_largo").en_mm - libre
     radio = reloj.valor("pendulo", "varilla_taladro_diametro").en_mm / 2.0
     for clave in ("varilla_taladro_cerca", "varilla_taladro_lejos"):
-        assert reloj.valor("pendulo", clave).en_mm + radio < arriba, f"{clave} se sale"
+        assert reloj.valor("pendulo", clave).en_mm + radio < solape, f"{clave} se sale del muelle"
 
 
 def test_los_taladros_no_se_comen_el_ancho_de_la_varilla(reloj: Contratos):

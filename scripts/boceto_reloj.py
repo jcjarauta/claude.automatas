@@ -31,11 +31,13 @@ TINTA = "#1a1a1a"
 COTA = "#0b63c5"
 AUX = "#9aa0a6"
 
-CABEZA = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 560"
+CABEZA = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 {alto}"
  font-family="Helvetica, Arial, sans-serif">
 <defs><marker id="f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7"
  orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="{cota}"/></marker></defs>
-<rect x="0" y="0" width="760" height="560" fill="#ffffff"/>"""
+<rect x="0" y="0" width="760" height="{alto}" fill="#ffffff"/>"""
+"""El alto es de cada hoja: el ancho de 760 no, porque lo fija el rotulo de
+variable mas largo y ese es el mismo en todas."""
 
 
 def _texto(
@@ -69,21 +71,40 @@ def _cota_h(x0: float, x1: float, y: float, etiqueta: str, variable: str) -> str
 
 
 def _cota_v(
-    y0: float, y1: float, x: float, etiqueta: str, variable: str, desde: float | None = None
+    y0: float,
+    y1: float,
+    x: float,
+    etiqueta: str,
+    variable: str,
+    desde: float | None = None,
+    lado: str = "izq",
 ) -> str:
     """Cota vertical. `desde` es el borde de la pieza, para que la linea de
-    referencia llegue hasta ella en vez de quedarse en el aire."""
-    medio = (y0 + y1) / 2
+    referencia llegue hasta ella en vez de quedarse en el aire.
+
+    `lado` dice a que mano de la linea se escribe. Por defecto a la izquierda,
+    que es lo normal; a la derecha cuando a la izquierda ya hay algo escrito.
+    El rotulo de la variable es largo y se come medio dibujo si cae del lado
+    equivocado."""
     a = x - 4 if desde is None else min(x - 4, desde)
     b = x + 22 if desde is None else max(x + 6, desde)
+    tx = x - 7 if lado == "izq" else x + 7
+    ancla = "end" if lado == "izq" else "start"
+    # Una cota corta no tiene sitio entre sus dos lineas de referencia: el
+    # rotulo de la variable sale por debajo y queda subrayado por la de
+    # abajo. Cuando no cabe, el bloque de texto se saca por arriba.
+    if y1 - y0 >= 40:
+        y_eti, y_var = (y0 + y1) / 2 + 3, (y0 + y1) / 2 + 14
+    else:
+        y_eti, y_var = y0 - 15, y0 - 5
     return "".join(
         [
             f'<path d="M{a:.1f} {y0:.1f}H{b:.1f}" stroke="{AUX}" stroke-width="0.6"/>',
             f'<path d="M{a:.1f} {y1:.1f}H{b:.1f}" stroke="{AUX}" stroke-width="0.6"/>',
             f'<path d="M{x:.1f} {y0:.1f}V{y1:.1f}" stroke="{COTA}" stroke-width="1" '
             f'marker-start="url(#f)" marker-end="url(#f)"/>',
-            _texto(x - 7, medio + 3, etiqueta, 10, COTA, ancla="end", peso="bold"),
-            _texto(x - 7, medio + 14, variable, 7.5, AUX, ancla="end"),
+            _texto(tx, y_eti, etiqueta, 10, COTA, ancla=ancla, peso="bold"),
+            _texto(tx, y_var, variable, 7.5, AUX, ancla=ancla),
         ]
     )
 
@@ -99,8 +120,12 @@ def varilla(c: Contratos) -> str:
     cerca = c.valor("pendulo", "varilla_taladro_cerca").en_mm
     lejos = c.valor("pendulo", "varilla_taladro_lejos").en_mm
     nominal = c.valor("oscilador", "longitud_pendulo_nominal").en_mm
+    flexion = c.valor("suspension", "muelle_flexion_a_varilla").en_mm
+    # Lo que la varilla no cuenta: de su extremo de abajo al centro de masas
+    # de la lenteja. Es la cadena entera y tiene que cerrar en el rotulo.
+    al_centro = nominal - flexion - largo
 
-    p: list[str] = [CABEZA.format(cota=COTA)]
+    p: list[str] = [CABEZA.format(cota=COTA, alto=560)]
     p.append(_texto(34, 34, "1.1 · VARILLA DEL PÉNDULO", 15, TINTA, "start", "bold"))
     p.append(
         _texto(
@@ -170,8 +195,8 @@ def varilla(c: Contratos) -> str:
         _texto(
             x0,
             yc + 91,
-            f"40 sobre el punto de flexión + 950 de varilla + 44 al centro de la "
-            f"lenteja = {nominal:.0f} mm de péndulo",
+            f"{flexion:.0f} del punto de flexi\u00f3n al canto + {largo:.0f} de varilla "
+            f"+ {al_centro:.0f} al centro de la lenteja = {nominal:.0f} mm de p\u00e9ndulo",
             8,
             AUX,
             "start",
@@ -302,7 +327,7 @@ def lenteja(c: Contratos) -> str:
     masa = c.valor("lenteja", "lenteja_masa").valor
     centro = c.valor("lenteja", "lenteja_centro_bajo_varilla").en_mm
 
-    p: list[str] = [CABEZA.format(cota=COTA)]
+    p: list[str] = [CABEZA.format(cota=COTA, alto=560)]
     p.append(_texto(34, 34, "1.2 \u00b7 LENTEJA", 15, TINTA, "start", "bold"))
     p.append(
         _texto(
@@ -466,15 +491,230 @@ def lenteja(c: Contratos) -> str:
     return "\n".join(p)
 
 
-PIEZAS = {"varilla": varilla, "lenteja": lenteja}
+def soporte(c: Contratos) -> str:
+    """La pieza 1.4: el bloque que amarra el muelle de suspension.
 
-PREFIJOS = {"varilla": ("varilla_",), "lenteja": ("lenteja_",), "vastago": ("vastago_",)}
+    Su canto de abajo es el datum del pendulo entero: de ahi empieza a contar
+    el tramo libre del muelle, y a la mitad de ese tramo esta el punto de
+    flexion del que cuelgan los 994 mm.
+    """
+    anc = c.valor("suspension", "soporte_ancho").en_mm
+    alt = c.valor("suspension", "soporte_alto").en_mm
+    esp = c.valor("suspension", "soporte_espesor").en_mm
+    placa = c.valor("suspension", "soporte_placa_espesor").en_mm
+    tor = c.valor("suspension", "soporte_tornillo_diametro").en_mm
+    sep = c.valor("suspension", "soporte_tornillo_separacion").en_mm
+    canto = c.valor("suspension", "soporte_tornillo_al_canto").en_mm
+    libre = c.valor("suspension", "muelle_largo_libre").en_mm
+    flexion = c.valor("suspension", "muelle_flexion_a_varilla").en_mm
+    mu_anc = c.valor("suspension", "muelle_ancho").en_mm
+    va_esp = c.valor("pendulo", "varilla_espesor").en_mm
+
+    e = 2.0
+    p: list[str] = [CABEZA.format(cota=COTA, alto=560)]
+    p.append(_texto(34, 34, "1.4 \u00b7 SOPORTE DE SUSPENSI\u00d3N", 15, TINTA, "start", "bold"))
+    p.append(
+        _texto(
+            34,
+            50,
+            "Boceto de comprobaci\u00f3n \u00b7 cotas le\u00eddas de docs/reloj/contratos.json",
+            9.5,
+            AUX,
+            "start",
+        )
+    )
+
+    # ---- vista frontal ---------------------------------------------------
+    # Los rotulos de variable son largos (#cota.soporte_tornillo_separacion
+    # son 33 caracteres) y mandan sobre la colocacion mas que la pieza.
+    x0, y0 = 150.0, 140.0
+    w, h = anc * e, alt * e
+    p.append(_texto(x0 - 56, 92, "VISTA FRONTAL \u00b7 escala 2:1", 9, TINTA, "start"))
+    cxm = x0 + w / 2
+    yt = y0 + h - canto * e
+    p.append(
+        f'<rect x="{cxm - mu_anc * e / 2:.1f}" y="{y0 + 12:.1f}" width="{mu_anc * e:.1f}" '
+        f'height="{h - 12 + 16:.1f}" fill="{COTA}" fill-opacity="0.12" stroke="{COTA}" '
+        f'stroke-width="0.9" stroke-dasharray="4 2"/>'
+    )
+    p.append(
+        f'<rect x="{x0}" y="{y0}" width="{w:.1f}" height="{h:.1f}" fill="none" '
+        f'stroke="{TINTA}" stroke-width="1.4"/>'
+    )
+    for dx in (-sep * e / 2, sep * e / 2):
+        p.append(
+            f'<circle cx="{cxm + dx:.1f}" cy="{yt:.1f}" r="{tor * e / 2:.2f}" fill="none" '
+            f'stroke="{TINTA}" stroke-width="1.2"/>'
+        )
+    p.append(_texto(cxm, y0 + h + 32, "el muelle, detr\u00e1s", 8, COTA))
+    p.append(_cota_h(x0, x0 + w, y0 + h + 62, f"{anc:.0f}", "#cota.soporte_ancho"))
+    p.append(
+        _cota_h(
+            cxm - sep * e / 2,
+            cxm + sep * e / 2,
+            y0 - 22,
+            f"{sep:.0f}",
+            "#cota.soporte_tornillo_separacion",
+        )
+    )
+    p.append(_cota_v(y0, y0 + h, x0 - 30, f"{alt:.0f}", "#cota.soporte_alto", desde=x0))
+    p.append(
+        _cota_v(
+            yt,
+            y0 + h,
+            x0 + w + 26,
+            f"{canto:.0f}",
+            "#cota.soporte_tornillo_al_canto",
+            desde=x0 + w,
+            lado="der",
+        )
+    )
+    xd, yd = cxm + sep * e / 2, yt - 4
+    p.append(
+        f'<path d="M{xd:.1f} {yd:.1f}l20 -44h20" stroke="{COTA}" stroke-width="1" fill="none"/>'
+    )
+    p.append(_texto(xd + 44, yd - 48, f"2 \u00d7 \u00d8{tor:.1f}", 9.5, COTA, "start", "bold"))
+    p.append(_texto(xd + 44, yd - 38, "#cota.soporte_tornillo_diametro", 7.5, AUX, "start"))
+
+    # ---- vista lateral, el montaje --------------------------------------
+    sx = 470.0
+    p.append(
+        _texto(sx - 90, 92, "VISTA LATERAL \u00b7 el montaje \u00b7 escala 2:1", 9, TINTA, "start")
+    )
+    p.append(
+        f'<rect x="{sx}" y="{y0}" width="{esp * e:.1f}" height="{h:.1f}" fill="{AUX}" '
+        f'fill-opacity="0.18" stroke="{TINTA}" stroke-width="1.4"/>'
+    )
+    xm = sx + esp * e
+    p.append(
+        f'<rect x="{xm + 2:.1f}" y="{y0}" width="{placa * e:.1f}" height="{h:.1f}" fill="{AUX}" '
+        f'fill-opacity="0.18" stroke="{TINTA}" stroke-width="1.4"/>'
+    )
+    p.append(_texto(sx - 8, y0 + 14, "bloque", 8, AUX, "end"))
+    p.append(_texto(xm + placa * e + 14, y0 + 12, "placa", 8, AUX, "start"))
+    yc_canto = y0 + h
+    yf = yc_canto + flexion * e
+    ylib = yc_canto + libre * e
+    p.append(f'<path d="M{xm:.1f} {y0:.1f}V{ylib + 44:.1f}" stroke="{COTA}" stroke-width="2"/>')
+    p.append(
+        f'<rect x="{xm - va_esp * e / 2:.1f}" y="{ylib:.1f}" width="{va_esp * e:.1f}" '
+        f'height="44" fill="none" stroke="{TINTA}" stroke-width="1.4"/>'
+    )
+    p.append(_texto(xm + 26, ylib + 30, "varilla", 8, AUX, "start"))
+    p.append(
+        f'<path d="M{xm - 120:.1f} {yf:.1f}H{xm + 40:.1f}" stroke="{COTA}" stroke-width="1" '
+        f'stroke-dasharray="6 3"/>'
+    )
+    p.append(
+        f'<path d="M{xm - 120:.1f} {yf:.1f}V{ylib + 52:.1f}" stroke="{COTA}" stroke-width="1" '
+        f'stroke-dasharray="6 3"/>'
+    )
+    p.append(
+        _texto(
+            xm - 120,
+            ylib + 66,
+            "PUNTO DE FLEXI\u00d3N \u00b7 de aqu\u00ed cuelgan los 994",
+            9,
+            COTA,
+            "start",
+            "bold",
+        )
+    )
+    p.append(
+        _cota_v(yc_canto, yf, sx - 42, f"{flexion:.0f}", "#cota.muelle_flexion_a_varilla", desde=sx)
+    )
+    p.append(
+        _cota_v(
+            yc_canto,
+            ylib,
+            xm + 50,
+            f"{libre:.0f}",
+            "#cota.muelle_largo_libre",
+            desde=xm,
+            lado="der",
+        )
+    )
+    # El espesor se ve a lo ancho en esta vista: acotarlo en vertical era
+    # medir el alto del bloque por segunda vez y con el numero equivocado.
+    p.append(
+        _cota_h(
+            sx,
+            xm + 2 + placa * e,
+            y0 - 22,
+            f"{esp:.0f} + {placa:.0f}",
+            "#cota.soporte_espesor",
+        )
+    )
+
+    p.append(
+        '<rect x="34" y="384" width="692" height="30" rx="4" fill="#fff4e5" '
+        'stroke="#d98324" stroke-width="1"/>'
+    )
+    p.append(
+        _texto(
+            46,
+            403,
+            "EL CANTO DE ABAJO DEL BLOQUE ES EL DATUM DEL P\u00c9NDULO. Si se monta "
+            "1 mm m\u00e1s arriba, el reloj atrasa 43 s al d\u00eda.",
+            9.5,
+            "#8a5200",
+            "start",
+            "bold",
+        )
+    )
+    p.append(
+        f'<rect x="34" y="432" width="692" height="104" fill="none" stroke="{TINTA}" '
+        'stroke-width="1.2"/>'
+    )
+    campos = [
+        ("N\u00famero", "1.4"),
+        ("Pieza", "Soporte de suspensi\u00f3n"),
+        ("Material", "Madera dura"),
+        ("Espesor", f"{esp:.0f} + {placa:.0f} mm"),
+        ("Cantidad", "1 bloque + 1 placa"),
+        ("Veta", "A lo ancho"),
+        ("Conjunto", "P\u00e9ndulo \u00b7 tanda 1"),
+        ("Estado", "PENDIENTE \u00b7 sin anclaje"),
+    ]
+    for i, (k, v) in enumerate(campos):
+        bx = 34 + (i % 4) * 173
+        by = 432 + (i // 4) * 52
+        p.append(
+            f'<path d="M{bx} {by}h173v52h-173z" fill="none" stroke="{AUX}" stroke-width="0.6"/>'
+        )
+        p.append(_texto(bx + 10, by + 18, k.upper(), 7.5, AUX, "start"))
+        p.append(_texto(bx + 10, by + 37, v, 11, TINTA, "start", "bold"))
+    p.append("</svg>")
+    return "\n".join(p)
+
+
+PIEZAS = {"varilla": varilla, "lenteja": lenteja, "soporte": soporte}
+
+PREFIJOS = {
+    "varilla": ("varilla_",),
+    "lenteja": ("lenteja_",),
+    "vastago": ("vastago_",),
+    "soporte": ("soporte_",),
+    "muelle": ("muelle_",),
+}
 """Que cotas son de cada pieza. El prefijo del nombre decide, igual que
 decide el gemelo de radio: asi se puede leer el contrato y saber de quien es
 cada cota sin conocer el conjunto."""
 
 INTERFACES = {
-    "varilla": ("vastago_diametro", "longitud_pendulo_nominal"),
+    "varilla": (
+        "vastago_diametro",
+        "longitud_pendulo_nominal",
+        "muelle_flexion_a_varilla",
+        "muelle_largo",
+    ),
+    "soporte": ("muelle_ancho", "muelle_espesor", "muelle_largo_libre"),
+    "muelle": (
+        "soporte_tornillo_al_canto",
+        "varilla_ancho",
+        "varilla_taladro_cerca",
+        "varilla_taladro_lejos",
+    ),
     "lenteja": ("vastago_diametro", "vastago_saliente", "longitud_pendulo_nominal"),
     "vastago": ("varilla_vastago_diametro", "varilla_vastago_profundidad"),
 }

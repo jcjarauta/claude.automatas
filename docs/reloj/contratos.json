@@ -39,6 +39,98 @@
       ]
     },
     {
+      "nombre": "suspension",
+      "estado": "pendiente",
+      "congelado_el": "",
+      "porque": "El punto de flexion efectivo depende de la rigidez del muelle frente al peso de la lenteja. R1 lo mide colgando el pendulo y cronometrando",
+      "valores": [
+        {
+          "nombre": "muelle_espesor",
+          "valor": 0.0001,
+          "unidad": "m",
+          "descripcion": "Fleje de acero de 0,1. Se corta de una galga de espesores o de una regla de acero: no hace falta proveedor ni plazo",
+          "tolerancia": "comercial"
+        },
+        {
+          "nombre": "muelle_ancho",
+          "valor": 0.012,
+          "unidad": "m",
+          "descripcion": "Ancho del fleje. Mas ancho resiste mejor el giro lateral del pendulo; mas estrecho flexa mas parejo",
+          "tolerancia": "+/-0,2 de corte"
+        },
+        {
+          "nombre": "muelle_largo_libre",
+          "valor": 0.03,
+          "unidad": "m",
+          "descripcion": "Tramo que flexa, entre el canto del soporte y el extremo de la varilla. Es LA cota del muelle: de ella sale el punto de flexion",
+          "tolerancia": "+/-0,5"
+        },
+        {
+          "nombre": "muelle_flexion_a_varilla",
+          "valor": 0.015,
+          "unidad": "m",
+          "descripcion": "DERIVADO: la mitad del largo libre. El pivote efectivo de un muelle de suspension cae en el centro del tramo que flexa, no en el amarre",
+          "tolerancia": "aproximacion, la mide R1"
+        },
+        {
+          "nombre": "muelle_largo",
+          "valor": 0.09,
+          "unidad": "m",
+          "descripcion": "Largo total del fleje: 30 libres mas 20 dentro del soporte y 40 solapando la varilla",
+          "tolerancia": "+/-1"
+        },
+        {
+          "nombre": "soporte_ancho",
+          "valor": 0.036,
+          "unidad": "m",
+          "descripcion": "Ancho del bloque. El muelle de 12 mas los dos tornillos a los lados mas pared",
+          "tolerancia": "+/-0,5"
+        },
+        {
+          "nombre": "soporte_alto",
+          "valor": 0.04,
+          "unidad": "m",
+          "descripcion": "Alto del bloque, del canto de apriete hacia arriba",
+          "tolerancia": "+/-0,5"
+        },
+        {
+          "nombre": "soporte_espesor",
+          "valor": 0.012,
+          "unidad": "m",
+          "descripcion": "Espesor del cuerpo. La placa que aprieta va aparte",
+          "tolerancia": "+/-0,5"
+        },
+        {
+          "nombre": "soporte_placa_espesor",
+          "valor": 0.004,
+          "unidad": "m",
+          "descripcion": "Placa de apriete. Reparte la presion de los dos tornillos a lo ancho del fleje",
+          "tolerancia": "+/-0,3"
+        },
+        {
+          "nombre": "soporte_tornillo_diametro",
+          "valor": 0.0042,
+          "unidad": "m",
+          "descripcion": "Paso de los dos M4 que aprietan el muelle contra el bloque",
+          "tolerancia": "paso, no roscado"
+        },
+        {
+          "nombre": "soporte_tornillo_separacion",
+          "valor": 0.024,
+          "unidad": "m",
+          "descripcion": "Entre los dos tornillos. Pasan a los lados del fleje, no por el: taladrar un fleje de 0,1 es crear la linea por donde va a romper",
+          "tolerancia": "+/-0,3"
+        },
+        {
+          "nombre": "soporte_tornillo_al_canto",
+          "valor": 0.01,
+          "unidad": "m",
+          "descripcion": "Del canto de apriete a la linea de tornillos. El canto es el datum: de ahi empieza a contar el largo libre",
+          "tolerancia": "+/-0,3"
+        }
+      ]
+    },
+    {
       "nombre": "pendulo",
       "estado": "pendiente",
       "congelado_el": "",
@@ -46,10 +138,10 @@
       "valores": [
         {
           "nombre": "varilla_largo",
-          "valor": 0.99,
+          "valor": 0.935,
           "unidad": "m",
-          "descripcion": "Largo de corte: 40 sobre el punto de flexion + 950 bajo. La varilla acaba antes de la lenteja y de ahi para abajo es vastago roscado",
-          "tolerancia": "+/-1"
+          "descripcion": "DERIVADO: longitud_pendulo_nominal - muelle_flexion_a_varilla - lenteja_centro_bajo_varilla = 994 - 15 - 44. No se elige",
+          "tolerancia": "+/-1, la tuerca absorbe el resto"
         },
         {
           "nombre": "varilla_ancho",
@@ -64,13 +156,6 @@
           "unidad": "m",
           "descripcion": "Espesor del liston. Con la veta a lo largo: la varilla trabaja a flexion y la humedad la mueve menos en esa direccion",
           "tolerancia": "+/-0,3 de sierra"
-        },
-        {
-          "nombre": "varilla_sobre_flexion",
-          "valor": 0.04,
-          "unidad": "m",
-          "descripcion": "Varilla por encima del punto de flexion del muelle, para que el soporte la agarre. PENDIENTE de la ficha del muelle: el punto de flexion no esta en el amarre",
-          "tolerancia": "PENDIENTE de la ficha del muelle"
         },
         {
           "nombre": "varilla_taladro_diametro",
