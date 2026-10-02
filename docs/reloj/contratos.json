@@ -567,6 +567,48 @@
           "unidad": "m",
           "descripcion": "DERIVADO: el paso del M4 que fija la paleta. La misma broca que todo el reloj",
           "tolerancia": "paso, no roscado"
+        },
+        {
+          "nombre": "ancora_cubo_diametro",
+          "valor": 0.024,
+          "unidad": "m",
+          "descripcion": "Cubo alrededor del eje, igual que el de la rueda: mismo collar para las dos piezas del escape. Y es lo que tiene que pasar por delante de la rueda sin tocarla",
+          "tolerancia": "+/-0,5"
+        },
+        {
+          "nombre": "ancora_brazo_material",
+          "valor": 0.04,
+          "unidad": "m",
+          "descripcion": "Donde acaba la MADERA del brazo, cinco milimetros antes del punto de contacto. Los ultimos cinco los pone la paleta, que va atornillada sobre la cara: por eso el brazo acaba corto",
+          "tolerancia": "+/-0,5"
+        },
+        {
+          "nombre": "ancora_ranura_al_eje",
+          "valor": 0.032,
+          "unidad": "m",
+          "descripcion": "DERIVADO: ancora_brazo_material - ancora_ranura_largo. Del eje al principio de la ranura. Es la que se marca al taladrar, porque el final de la ranura coincide con el final del brazo",
+          "tolerancia": "derivado"
+        },
+        {
+          "nombre": "ancora_hueco_a_la_rueda",
+          "valor": 0.00664,
+          "unidad": "m",
+          "descripcion": "DERIVADO: entre_centros - radio_punta - cubo/2. Lo que queda entre el canto de la rueda y el cubo del ancora. Es el limite de conjunto del escape: no lo ve ninguna envolvente de pieza, igual que el hueco al poste del escribiente",
+          "tolerancia": "derivado · minimo 3"
+        },
+        {
+          "nombre": "ancora_caja_ancho",
+          "valor": 0.066569,
+          "unidad": "m",
+          "descripcion": "DERIVADO: 2 x brazo_material x sen(45) + brazo_ancho. El trozo de tablero que hay que reservar a lo ancho",
+          "tolerancia": "derivado"
+        },
+        {
+          "nombre": "ancora_caja_alto",
+          "valor": 0.045284,
+          "unidad": "m",
+          "descripcion": "DERIVADO: brazo_material x cos(45) + cubo/2 + brazo_ancho/2. Lo que hay que reservar a lo alto, del canto de arriba del cubo a la punta de los brazos",
+          "tolerancia": "derivado"
         }
       ]
     },

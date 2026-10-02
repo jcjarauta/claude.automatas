@@ -1216,3 +1216,63 @@ def test_el_reposo_es_mayor_que_el_error_de_sierra(reloj: Contratos):
         reloj.valor("ancora", "ancora_brazo").en_mm * reloj.valor("ancora", "ancora_reposo").valor
     )
     assert arco > 0.3
+
+
+def test_la_ranura_empieza_donde_dice_la_cuenta(reloj: Contratos):
+    """Acaba en la punta del brazo, así que su principio es lo único que hay
+    que marcar. Derivarlo evita restar con un lápiz."""
+    a = reloj.contrato("ancora")
+    assert a.valor("ancora_ranura_al_eje").en_mm == pytest.approx(
+        a.valor("ancora_brazo_material").en_mm - a.valor("ancora_ranura_largo").en_mm, abs=0.01
+    )
+
+
+def test_la_madera_del_brazo_acaba_antes_del_contacto(reloj: Contratos):
+    """La paleta va atornillada sobre la cara y es la que llega al diente. Si
+    el brazo llegase hasta el contacto, la paleta no tendría nada que ajustar
+    y el escape dejaría de ser regulable."""
+    a = reloj.contrato("ancora")
+    salva = a.valor("ancora_brazo").en_mm - a.valor("ancora_brazo_material").en_mm
+    assert 3.0 <= salva <= a.valor("ancora_ranura_largo").en_mm
+
+
+def test_la_rueda_pasa_por_delante_del_cubo_del_ancora(reloj: Contratos):
+    """EL LÍMITE DE CONJUNTO del escape, y no lo ve ninguna envolvente de
+    pieza: la rueda gira a 45 mm de su centro y el cubo del áncora está a
+    63,64 de ahí. Es el equivalente del hueco al poste del escribiente."""
+    a = reloj.contrato("ancora")
+    hueco = (
+        a.valor("ancora_entre_centros").en_mm
+        - reloj.valor("rueda_escape", "rueda_escape_diametro").en_mm / 2.0
+        - a.valor("ancora_cubo_diametro").en_mm / 2.0
+    )
+    assert a.valor("ancora_hueco_a_la_rueda").en_mm == pytest.approx(hueco, abs=0.01)
+    assert hueco >= 3.0
+
+
+def test_la_ranura_no_llega_al_cubo(reloj: Contratos):
+    a = reloj.contrato("ancora")
+    assert (
+        a.valor("ancora_ranura_al_eje").en_mm - a.valor("ancora_cubo_diametro").en_mm / 2.0 >= 5.0
+    )
+
+
+def test_la_caja_del_ancora_sale_de_sus_brazos(reloj: Contratos):
+    a = reloj.contrato("ancora")
+    brazo = a.valor("ancora_brazo_material").en_mm
+    medio = a.valor("ancora_angulo_brazos").valor / 2.0
+    assert a.valor("ancora_caja_ancho").en_mm == pytest.approx(
+        2.0 * brazo * math.sin(medio) + a.valor("ancora_brazo_ancho").en_mm, abs=0.1
+    )
+    assert a.valor("ancora_caja_alto").en_mm == pytest.approx(
+        brazo * math.cos(medio)
+        + a.valor("ancora_cubo_diametro").en_mm / 2.0
+        + a.valor("ancora_brazo_ancho").en_mm / 2.0,
+        abs=0.1,
+    )
+
+
+def test_el_ancora_y_la_rueda_comparten_collar(reloj: Contratos):
+    assert reloj.valor("ancora", "ancora_cubo_diametro").en_mm == pytest.approx(
+        reloj.valor("rueda_escape", "rueda_escape_cubo_diametro").en_mm, abs=0.01
+    )

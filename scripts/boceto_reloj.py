@@ -1572,30 +1572,41 @@ def rueda_escape(c: Contratos) -> str:
 def ancora(c: Contratos) -> str:
     """La pieza 2.2: el cuerpo del ancora.
 
-    Se dibuja **con la rueda detras**, y no por adorno: la cota que manda
-    -`ancora_entre_centros`- no esta en el ancora sino entre las dos piezas,
-    y es la mas apretada del reloj. Un dibujo del ancora sola no deja verla.
+    Tres vistas, y cada una existe por una razon distinta:
 
-    Lo que esta hoja NO lleva es el reposo ni el impulso: son cotas de puesta
-    a punto, se buscan en el banco R2 moviendo las paletas en su ranura, y
-    ponerlas en un plano seria prometer una precision que la madera no da.
+    - **El escape montado**, porque la cota que manda -`ancora_entre_centros`-
+      no esta en el ancora sino entre las dos piezas, y en un dibujo de la
+      pieza sola no se ve.
+    - **El cuerpo**, que es la pieza que se corta: dos ovalos y un circulo
+      unidos, con la ranura situada desde el eje.
+    - **El canto**, porque la paleta va atornillada sobre la cara y eso solo
+      se entiende de lado.
+
+    Lo que NO lleva es el reposo ni el impulso: son cotas de puesta a punto,
+    se buscan en R2 moviendo la paleta en su ranura, y ponerlas en un plano
+    seria prometer una precision que la madera no da.
     """
     a = c.contrato("ancora")
     entre = a.valor("ancora_entre_centros").en_mm
     brazo = a.valor("ancora_brazo").en_mm
+    material = a.valor("ancora_brazo_material").en_mm
     abierto = a.valor("ancora_angulo_brazos").valor
     recorrido = a.valor("ancora_recorrido").valor
     reposo = a.valor("ancora_reposo").valor
     espesor = a.valor("ancora_espesor").en_mm
     ancho = a.valor("ancora_brazo_ancho").en_mm
     eje = a.valor("ancora_eje_diametro").en_mm
+    cubo = a.valor("ancora_cubo_diametro").en_mm
     ranura_l = a.valor("ancora_ranura_largo").en_mm
     ranura_a = a.valor("ancora_ranura_ancho").en_mm
+    ranura_eje = a.valor("ancora_ranura_al_eje").en_mm
+    hueco = a.valor("ancora_hueco_a_la_rueda").en_mm
+    caja_an = a.valor("ancora_caja_ancho").en_mm
+    caja_al = a.valor("ancora_caja_alto").en_mm
     rueda = c.valor("rueda_escape", "rueda_escape_diametro").en_mm / 2.0
     fondo = c.valor("rueda_escape", "rueda_escape_diametro_fondo").en_mm / 2.0
 
-    e = 2.0
-    p: list[str] = [CABEZA.format(cota=COTA, ancho=900, alto=700)]
+    p: list[str] = [CABEZA.format(cota=COTA, ancho=1180, alto=900)]
     p.append(_texto(34, 34, "2.2 \u00b7 \u00c1NCORA", 15, TINTA, "start", "bold"))
     p.append(
         _texto(
@@ -1608,76 +1619,72 @@ def ancora(c: Contratos) -> str:
         )
     )
 
-    # La rueda abajo y el ancora encima, que es como van montadas.
-    rx, ry = 330.0, 370.0
-    ax, ay = rx, ry - entre * e
-    p.append(_texto(120, 92, "EL ESCAPE MONTADO \u00b7 escala 2:1", 9, TINTA, "start"))
+    def brazos(cx: float, cy: float, e: float, largo: float) -> list[tuple[float, float]]:
+        return [
+            (
+                cx + largo * e * math.cos(math.pi / 2.0 + s2 * abierto / 2.0),
+                cy + largo * e * math.sin(math.pi / 2.0 + s2 * abierto / 2.0),
+            )
+            for s2 in (-1.0, 1.0)
+        ]
+
+    # ---- vista 1, el escape montado --------------------------------------
+    e1 = 1.5
+    rx, ry = 250.0, 380.0
+    ax, ay = rx, ry - entre * e1
+    p.append(_texto(100, 92, "EL ESCAPE MONTADO \u00b7 escala 1,5:1", 9, TINTA, "start"))
     p.append(
-        _texto(120, 105, "la rueda va detr\u00e1s; el \u00e1ncora es la pieza", 8, AUX, "start")
+        _texto(100, 105, "la rueda va detr\u00e1s; el \u00e1ncora es la pieza", 8, AUX, "start")
     )
-    for radio, trazo in ((rueda * e, "6 3"), (fondo * e, "3 3")):
+    for radio, trazo in ((rueda * e1, "6 3"), (fondo * e1, "3 3")):
         p.append(
             f'<circle cx="{rx}" cy="{ry}" r="{radio:.1f}" fill="none" stroke="{AUX}" '
             f'stroke-width="0.9" stroke-dasharray="{trazo}"/>'
         )
-    p.append(
-        f'<circle cx="{rx}" cy="{ry}" r="{eje * e / 2.0:.1f}" fill="none" stroke="{AUX}" '
-        f'stroke-width="1"/>'
-    )
-    p.append(_texto(rx, ry + rueda * e + 18, "la rueda de escape", 8, AUX))
-
-    # Los dos contactos, a media abertura del eje del ancora.
-    contactos = []
-    for signo in (-1.0, 1.0):
-        ang = math.pi / 2.0 + signo * abierto / 2.0
-        cxp, cyp = ax + brazo * e * math.cos(ang), ay + brazo * e * math.sin(ang)
-        contactos.append((cxp, cyp))
+    contactos = brazos(ax, ay, e1, brazo)
+    for (cxp, cyp), (mxp, myp) in zip(contactos, brazos(ax, ay, e1, material), strict=True):
         p.append(
-            f'<path d="M{ax:.1f} {ay:.1f}L{cxp:.1f} {cyp:.1f}" stroke="{TINTA}" '
-            f'stroke-width="{ancho * e / 2.0:.1f}" stroke-linecap="round" opacity="0.18"/>'
+            f'<path d="M{ax:.1f} {ay:.1f}L{mxp:.1f} {myp:.1f}" stroke="{TINTA}" '
+            f'stroke-width="{ancho * e1:.1f}" stroke-linecap="round" opacity="0.2"/>'
         )
         p.append(
-            f'<path d="M{ax:.1f} {ay:.1f}L{cxp:.1f} {cyp:.1f}" stroke="{TINTA}" '
-            f'stroke-width="1.6"/>'
+            f'<path d="M{mxp:.1f} {myp:.1f}L{cxp:.1f} {cyp:.1f}" stroke="{COTA}" '
+            f'stroke-width="{ancho * e1:.1f}" stroke-linecap="round" opacity="0.45"/>'
         )
-        # La ranura de la paleta, sobre el brazo y junto al contacto.
-        ux, uy = (cxp - ax) / (brazo * e), (cyp - ay) / (brazo * e)
-        x1, y1 = cxp - ux * ranura_l * e, cyp - uy * ranura_l * e
-        p.append(
-            f'<path d="M{x1:.1f} {y1:.1f}L{cxp:.1f} {cyp:.1f}" stroke="{COTA}" '
-            f'stroke-width="{ranura_a * e:.1f}" stroke-linecap="round" opacity="0.5"/>'
-        )
-        # El radio de la rueda al contacto: el angulo recto es la construccion.
         p.append(
             f'<path d="M{rx:.1f} {ry:.1f}L{cxp:.1f} {cyp:.1f}" stroke="{COTA}" '
             f'stroke-width="0.9" stroke-dasharray="5 3"/>'
         )
     p.append(
-        f'<circle cx="{ax:.1f}" cy="{ay:.1f}" r="{eje * e / 2.0:.1f}" fill="none" '
-        f'stroke="{TINTA}" stroke-width="1.6"/>'
+        f'<circle cx="{ax:.1f}" cy="{ay:.1f}" r="{cubo * e1 / 2.0:.1f}" fill="#ffffff" '
+        f'stroke="{TINTA}" stroke-width="1.2"/>'
     )
-    # La marca de angulo recto en un contacto, que es lo que hay que ver.
+    p.append(
+        f'<circle cx="{ax:.1f}" cy="{ay:.1f}" r="{eje * e1 / 2.0:.1f}" fill="none" '
+        f'stroke="{TINTA}" stroke-width="1.4"/>'
+    )
+    p.append(_texto(rx, ry + rueda * e1 + 18, "la rueda de escape", 8, AUX))
     cxp, cyp = contactos[1]
     p.append(
         f'<path d="M{cxp - 9:.1f} {cyp - 9:.1f}l9 9l-9 9" fill="none" stroke="{COTA}" '
         f'stroke-width="1"/>'
     )
-    p.append(_texto(cxp + 20, cyp + 32, "90\u00b0 por construcci\u00f3n", 8, COTA, "start", "bold"))
-    p.append(_texto(cxp + 20, cyp + 43, "el brazo es tangente a la rueda", 7.5, AUX, "start"))
-
+    p.append(_texto(cxp + 30, cyp + 64, "90\u00b0 por construcci\u00f3n", 8, COTA, "start", "bold"))
+    p.append(_texto(cxp + 30, cyp + 75, "el brazo es tangente a la rueda", 7.5, AUX, "start"))
+    p.append(_texto(contactos[0][0] - 14, contactos[0][1] + 20, "la paleta", 7.5, COTA, "end"))
     p.append(
         _cota_v(
             ay,
             ry,
-            rx - rueda * e - 54,
+            rx - rueda * e1 - 48,
             f"{entre:.1f}",
             "#cota.ancora_entre_centros",
-            desde=rx - rueda * e,
+            desde=rx - rueda * e1,
         )
     )
     p.append(
         _texto(
-            rx - rueda * e - 54,
+            rx - rueda * e1 - 55,
             (ay + ry) / 2.0 + 26,
             "LA COTA CR\u00cdTICA",
             8,
@@ -1688,65 +1695,263 @@ def ancora(c: Contratos) -> str:
     )
     p.append(
         _cota_v(
-            ay,
-            contactos[1][1],
-            ax + brazo * e + 60,
-            f"{brazo:.0f}",
-            "#cota.ancora_brazo",
-            desde=contactos[1][0],
+            ay + cubo * e1 / 2.0,
+            ry - rueda * e1,
+            rx + rueda * e1 + 40,
+            f"{hueco:.1f}",
+            "#cota.ancora_hueco_a_la_rueda",
+            desde=rx + rueda * e1 * 0.4,
+            lado="der",
+        )
+    )
+
+    # ---- vista 2, el cuerpo ----------------------------------------------
+    e2 = 2.4
+    bx, by = 690.0, 200.0
+    p.append(_texto(bx - 120, 92, "EL CUERPO \u00b7 escala 2,4:1", 9, TINTA, "start"))
+    p.append(_texto(bx - 120, 105, "dos \u00f3valos y un c\u00edrculo, unidos", 8, AUX, "start"))
+    puntas = brazos(bx, by, e2, material)
+    for mxp, myp in puntas:
+        p.append(
+            f'<path d="M{bx:.1f} {by:.1f}L{mxp:.1f} {myp:.1f}" stroke="{TINTA}" '
+            f'stroke-width="{ancho * e2:.1f}" stroke-linecap="round" fill="none" '
+            f'opacity="0.14"/>'
+        )
+        p.append(
+            f'<path d="M{bx:.1f} {by:.1f}L{mxp:.1f} {myp:.1f}" stroke="{TINTA}" '
+            f'stroke-width="{ancho * e2:.1f}" stroke-linecap="round" fill="none" '
+            f'stroke-opacity="1" opacity="0.0"/>'
+        )
+    # El contorno: cada ovalo y el circulo del cubo, que es como se construye.
+    for mxp, myp in puntas:
+        ux, uy = (mxp - bx), (myp - by)
+        largo = math.hypot(ux, uy)
+        ux, uy = ux / largo, uy / largo
+        nx, ny = -uy * ancho * e2 / 2.0, ux * ancho * e2 / 2.0
+        r2 = ancho * e2 / 2.0
+        p.append(
+            f'<path d="M{bx + nx:.1f} {by + ny:.1f}L{mxp + nx:.1f} {myp + ny:.1f}'
+            f"A{r2:.1f} {r2:.1f} 0 0 1 {mxp - nx:.1f} {myp - ny:.1f}"
+            f'L{bx - nx:.1f} {by - ny:.1f}" fill="none" stroke="{TINTA}" stroke-width="1.4"/>'
+        )
+        # La ranura, situada desde el eje y acabada en la punta del brazo.
+        r1x, r1y = bx + ux * ranura_eje * e2, by + uy * ranura_eje * e2
+        p.append(
+            f'<path d="M{r1x:.1f} {r1y:.1f}L{mxp:.1f} {myp:.1f}" stroke="{COTA}" '
+            f'stroke-width="{ranura_a * e2:.1f}" stroke-linecap="round" fill="none" '
+            f'opacity="0.55"/>'
+        )
+    p.append(
+        f'<circle cx="{bx:.1f}" cy="{by:.1f}" r="{cubo * e2 / 2.0:.1f}" fill="none" '
+        f'stroke="{TINTA}" stroke-width="1.4"/>'
+    )
+    p.append(
+        f'<circle cx="{bx:.1f}" cy="{by:.1f}" r="{eje * e2 / 2.0:.1f}" fill="none" '
+        f'stroke="{TINTA}" stroke-width="1.4"/>'
+    )
+    for ang in (0.0, math.pi / 2.0):
+        dxx, dyy = math.cos(ang) * (cubo * e2 / 2.0 + 14), math.sin(ang) * (cubo * e2 / 2.0 + 14)
+        p.append(
+            f'<path d="M{bx - dxx:.1f} {by - dyy:.1f}L{bx + dxx:.1f} {by + dyy:.1f}" '
+            f'stroke="{AUX}" stroke-width="0.6" stroke-dasharray="10 3 2 3"/>'
+        )
+    mxp, myp = puntas[1]
+    ux, uy = (mxp - bx) / (material * e2), (myp - by) / (material * e2)
+    p.append(
+        f'<path d="M{bx + ux * ranura_eje * e2 + 12:.1f} {by + uy * ranura_eje * e2 - 12:.1f}'
+        f'l30 -56h40" stroke="{COTA}" stroke-width="1" fill="none"/>'
+    )
+    p.append(
+        _texto(
+            bx + ux * ranura_eje * e2 + 86,
+            by + uy * ranura_eje * e2 - 72,
+            f"ranura {ranura_l:.0f} \u00d7 \u00d8{ranura_a:.1f}",
+            9.5,
+            COTA,
+            "start",
+            "bold",
+        )
+    )
+    p.append(
+        _texto(
+            bx + ux * ranura_eje * e2 + 86,
+            by + uy * ranura_eje * e2 - 62,
+            "#cota.ancora_ranura_largo \u00b7 #cota.ancora_ranura_ancho",
+            7.5,
+            AUX,
+            "start",
+        )
+    )
+    p.append(
+        _cota_v(
+            by,
+            by + uy * ranura_eje * e2,
+            bx + 150,
+            f"{ranura_eje:.0f}",
+            "#cota.ancora_ranura_al_eje",
+            desde=bx + ux * ranura_eje * e2,
             lado="der",
         )
     )
     p.append(
-        _texto(ax, ay - 30, f"{math.degrees(abierto):.0f}\u00b0 entre brazos", 9, COTA, peso="bold")
+        _cota_v(
+            by,
+            by + uy * material * e2,
+            bx + 280,
+            f"{material:.0f}",
+            "#cota.ancora_brazo_material",
+            desde=mxp,
+            lado="der",
+        )
     )
-    p.append(_texto(ax, ay - 20, "#angulo.ancora_angulo_brazos", 7.5, AUX))
+    p.append(
+        _cota_h(
+            bx - caja_an * e2 / 2.0,
+            bx + caja_an * e2 / 2.0,
+            by + caja_al * e2 + 40,
+            f"{caja_an:.1f}",
+            "#cota.ancora_caja_ancho",
+        )
+    )
+    p.append(
+        _cota_v(
+            by - cubo * e2 / 2.0,
+            by + caja_al * e2 - cubo * e2 / 2.0,
+            bx - caja_an * e2 / 2.0 - 40,
+            f"{caja_al:.1f}",
+            "#cota.ancora_caja_alto",
+            desde=bx - caja_an * e2 / 2.0,
+        )
+    )
+    p.append(
+        f'<path d="M{bx - cubo * e2 / 2.0 - 10:.1f} {by:.1f}l-34 -40h-40" stroke="{COTA}" '
+        f'stroke-width="1" fill="none"/>'
+    )
+    p.append(
+        _texto(
+            bx - cubo * e2 / 2.0 - 88,
+            by - 46,
+            f"\u00d8{eje:.0f} H7 en \u00d8{cubo:.0f}",
+            9.5,
+            COTA,
+            "end",
+            "bold",
+        )
+    )
+    p.append(
+        _texto(
+            bx - cubo * e2 / 2.0 - 88,
+            by - 36,
+            "#cota.ancora_eje_diametro \u00b7 #cota.ancora_cubo_diametro",
+            7.5,
+            AUX,
+            "end",
+        )
+    )
+    p.append(
+        _texto(
+            bx,
+            by - cubo * e2 / 2.0 - 54,
+            f"{math.degrees(abierto):.0f}\u00b0 entre brazos",
+            9,
+            COTA,
+            peso="bold",
+        )
+    )
+    p.append(_texto(bx, by - cubo * e2 / 2.0 - 44, "#angulo.ancora_angulo_brazos", 7.5, AUX))
 
-    # ---- el presupuesto angular ------------------------------------------
-    bx, by = 600.0, 180.0
-    p.append(_texto(bx, 92, "EL PRESUPUESTO ANGULAR", 9, TINTA, "start"))
-    p.append(_texto(bx, 105, "todo sale del recorrido, nada se suma", 8, AUX, "start"))
+    # ---- vista 3, el canto ------------------------------------------------
+    e3 = 3.2
+    kx, ky = 700.0, 600.0
+    p.append(_texto(kx - 60, 550, "EL CANTO \u00b7 escala 3,2:1", 9, TINTA, "start"))
+    largo_k = 150.0
+    p.append(
+        f'<rect x="{kx:.1f}" y="{ky:.1f}" width="{largo_k:.1f}" height="{espesor * e3:.1f}" '
+        f'fill="{AUX}" fill-opacity="0.18" stroke="{TINTA}" stroke-width="1.4"/>'
+    )
+    p.append(
+        f'<rect x="{kx + largo_k - 70:.1f}" y="{ky - espesor * e3:.1f}" width="86" '
+        f'height="{espesor * e3:.1f}" fill="{COTA}" fill-opacity="0.18" stroke="{COTA}" '
+        f'stroke-width="1.2" stroke-dasharray="4 2"/>'
+    )
+    p.append(
+        f'<path d="M{kx + largo_k - 40:.1f} {ky - espesor * e3 - 10:.1f}'
+        f'V{ky + espesor * e3 + 10:.1f}" stroke="{COTA}" stroke-width="1.6"/>'
+    )
+    p.append(_texto(kx - 6, ky + espesor * e3 / 2.0 + 3, "el brazo", 8, AUX, "end"))
+    p.append(_texto(kx + largo_k + 10, ky - espesor * e3 / 2.0 + 3, "la paleta", 8, COTA, "start"))
+    p.append(_texto(kx + largo_k - 40, ky + espesor * e3 + 26, "M4 por la ranura", 7.5, COTA))
+    p.append(
+        _cota_v(
+            ky,
+            ky + espesor * e3,
+            kx - 46,
+            f"{espesor:.0f}",
+            "#cota.ancora_espesor",
+            desde=kx,
+        )
+    )
+    p.append(
+        _texto(
+            kx,
+            ky + espesor * e3 + 56,
+            "La paleta va SOBRE la cara, no en el canto: por eso el brazo acaba",
+            8.5,
+            TINTA,
+            "start",
+        )
+    )
+    p.append(
+        _texto(
+            kx,
+            ky + espesor * e3 + 70,
+            f"{brazo - material:.0f} mm antes del contacto y la paleta salva el resto.",
+            8.5,
+            TINTA,
+            "start",
+        )
+    )
+
+    # ---- el presupuesto angular -------------------------------------------
+    px, py = 90.0, 580.0
+    p.append(_texto(px, 550, "EL PRESUPUESTO ANGULAR", 9, TINTA, "start"))
     total = math.degrees(recorrido)
     rep = math.degrees(reposo)
-    ancho_barra = 250.0
-    tramos = [
+    barra = 250.0
+    xx = px
+    for rotulo, grados, color in (
         ("reposo", rep, COTA),
         ("impulso y ca\u00edda", total - 2.0 * rep, AUX),
         ("reposo", rep, COTA),
-    ]
-    xx = bx
-    for rotulo, grados, color in tramos:
-        w = ancho_barra * grados / total
+    ):
+        w = barra * grados / total
         p.append(
-            f'<rect x="{xx:.1f}" y="{by}" width="{w:.1f}" height="26" fill="{color}" '
+            f'<rect x="{xx:.1f}" y="{py}" width="{w:.1f}" height="26" fill="{color}" '
             f'fill-opacity="0.25" stroke="{color}" stroke-width="1"/>'
         )
-        p.append(_texto(xx + w / 2.0, by + 17, f"{grados:.1f}\u00b0", 9, TINTA, peso="bold"))
-        p.append(_texto(xx + w / 2.0, by + 40, rotulo, 7.5, AUX))
+        p.append(_texto(xx + w / 2.0, py + 17, f"{grados:.1f}\u00b0", 9, TINTA, peso="bold"))
+        p.append(_texto(xx + w / 2.0, py + 40, rotulo, 7.5, AUX))
         xx += w
-    p.append(
-        _cota_h(bx, bx + ancho_barra, by + 74, f"{total:.0f}\u00b0", "#angulo.ancora_recorrido")
-    )
-    lineas = [
-        "El recorrido del \u00e1ncora es el del p\u00e9ndulo: la horquilla los ata.",
-        f"Con {total:.0f}\u00b0 en total, los dos reposos no pueden pasar de la mitad",
-        "o no queda \u00e1ngulo para empujar.",
-        "",
-        f"Y por abajo: {rep:.1f}\u00b0 sobre un brazo de {brazo:.0f} son {brazo * reposo:.2f} mm,",
-        "contra los \u00b10,3 que se le piden al corte de la rueda.",
-        "Un reposo menor que el error de sierra deja dientes que no apoyan.",
-    ]
-    for i, linea in enumerate(lineas):
-        p.append(_texto(bx, by + 120 + i * 15, linea, 8.5, TINTA, "start"))
+    p.append(_cota_h(px, px + barra, py + 74, f"{total:.0f}\u00b0", "#angulo.ancora_recorrido"))
+    for i, linea in enumerate(
+        [
+            "El recorrido del \u00e1ncora es el del p\u00e9ndulo: la horquilla los ata, y de",
+            "esos 4\u00b0 salen reposo, impulso y ca\u00edda. No se suman a ellos.",
+            f"Por abajo: {rep:.1f}\u00b0 sobre un brazo de {brazo:.0f} son "
+            f"{brazo * reposo:.2f} mm,",
+            "contra los \u00b10,3 que se le piden al corte de la rueda.",
+        ]
+    ):
+        p.append(_texto(px, py + 116 + i * 15, linea, 8.5, TINTA, "start"))
 
     p.append(
-        '<rect x="34" y="520" width="832" height="46" rx="4" fill="#fff4e5" '
+        '<rect x="34" y="768" width="1112" height="46" rx="4" fill="#fff4e5" '
         'stroke="#d98324" stroke-width="1"/>'
     )
     p.append(
         _texto(
             46,
-            539,
+            787,
             "EL REPOSO Y EL IMPULSO NO EST\u00c1N EN ESTA HOJA, Y NO ES UN OLVIDO.",
             9.5,
             "#8a5200",
@@ -1757,7 +1962,7 @@ def ancora(c: Contratos) -> str:
     p.append(
         _texto(
             46,
-            555,
+            803,
             "Se buscan en el banco R2 moviendo las paletas en su ranura, y se anotan como "
             "cotas de puesta a punto en el dossier.",
             9,
@@ -1766,7 +1971,7 @@ def ancora(c: Contratos) -> str:
         )
     )
     p.append(
-        f'<rect x="34" y="584" width="832" height="52" fill="none" stroke="{TINTA}" '
+        f'<rect x="34" y="832" width="1112" height="52" fill="none" stroke="{TINTA}" '
         'stroke-width="1.2"/>'
     )
     campos = [
@@ -1775,18 +1980,19 @@ def ancora(c: Contratos) -> str:
         ("Espesor", f"{espesor:.0f} mm"),
         ("Cantidad", "1 cuerpo"),
         ("Paletas", "2, postizas"),
-        ("Conjunto", "Escape \u00b7 banco R2"),
+        ("Tablero", f"{caja_an:.0f} \u00d7 {caja_al:.0f}"),
+        ("Conjunto", "Escape \u00b7 R2"),
         ("Estado", "PENDIENTE \u00b7 R2"),
     ]
-    celda = 832 / len(campos)
+    celda = 1112 / len(campos)
     for i, (k, val) in enumerate(campos):
         bxx = 34 + i * celda
         p.append(
-            f'<path d="M{bxx:.1f} 584h{celda:.1f}v52h-{celda:.1f}z" fill="none" '
+            f'<path d="M{bxx:.1f} 832h{celda:.1f}v52h-{celda:.1f}z" fill="none" '
             f'stroke="{AUX}" stroke-width="0.6"/>'
         )
-        p.append(_texto(bxx + 10, 602, k.upper(), 7.5, AUX, "start"))
-        p.append(_texto(bxx + 10, 621, val, 10.5, TINTA, "start", "bold"))
+        p.append(_texto(bxx + 10, 850, k.upper(), 7.5, AUX, "start"))
+        p.append(_texto(bxx + 10, 869, val, 10.5, TINTA, "start", "bold"))
     p.append("</svg>")
     return "\n".join(p)
 

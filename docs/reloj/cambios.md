@@ -377,3 +377,32 @@ El reposo y el impulso **no van en ningún plano de pieza**. Las paletas son
 postizas con ranura y tornillo: se ajustan en el banco R2, se marca la posición
 buena, y entran en el dossier como **cotas de puesta a punto**. La ranura de
 8 mm da 10,2° de recorrido de ajuste, diecisiete veces el reposo buscado.
+
+
+### Lo que faltaba para poder dibujarla
+
+La primera hoja del áncora era un **esquema cinemático**, no un plano: dos
+líneas y la distancia entre centros. Sirve para entender el escape y no sirve
+para cortar nada. Seis cotas nuevas, todas del cuerpo:
+
+| Cota | Valor | Por qué |
+| --- | --- | --- |
+| `ancora_cubo_diametro` | **24** | El mismo que el de la rueda: un solo collar para las dos piezas del escape |
+| `ancora_brazo_material` | **40** | Donde acaba la MADERA, 5 mm antes del contacto. Los últimos 5 los pone la paleta |
+| `ancora_ranura_al_eje` | **32** · derivado | La ranura acaba en la punta del brazo, así que su principio es lo único que hay que marcar |
+| `ancora_hueco_a_la_rueda` | **6,6** · derivado | `entre_centros − radio − cubo/2` |
+| `ancora_caja_ancho` / `_alto` | **66,6 × 45,3** · derivados | El trozo de tablero que hay que reservar |
+
+**El brazo acaba corto a propósito**, y era lo que el dibujo no decía: si la
+madera llegase hasta el punto de contacto, la paleta no tendría nada que
+ajustar y el escape dejaría de ser regulable. Por eso hay una tercera vista,
+el canto: la paleta va **sobre la cara**, no en el canto, y eso de frente no se
+ve.
+
+### El límite de conjunto del escape
+
+`ancora_hueco_a_la_rueda` = 6,6 mm es el equivalente exacto del **hueco al
+poste** del escribiente: una cota que surge de montar dos piezas juntas y que
+**no la ve ninguna envolvente de pieza**. La rueda gira a 45 mm de su centro y
+el cubo del áncora está a 63,64 de ahí; entre el canto de una y el cubo del
+otro quedan 6,6. Tiene test, y el mínimo es 3.
