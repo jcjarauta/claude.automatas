@@ -116,6 +116,7 @@ UNIDADES: dict[str, Conversion] = {
     "s": Conversion(1.0, "s", Tipo.REFERENCIA, "", 6),
     "kg": Conversion(1.0, "kg", Tipo.REFERENCIA, "", 6),
     "N": Conversion(1.0, "N", Tipo.REFERENCIA, "", 6),
+    "kg/m3": Conversion(1.0, "kg/m3", Tipo.REFERENCIA, "", 6),
 }
 
 

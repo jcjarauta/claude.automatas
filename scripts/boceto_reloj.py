@@ -997,7 +997,207 @@ def muelle(c: Contratos) -> str:
     return "\n".join(p)
 
 
-PIEZAS = {"varilla": varilla, "lenteja": lenteja, "soporte": soporte, "muelle": muelle}
+def escuadra(c: Contratos) -> str:
+    """La pieza 1.6: la tabla del banco R1.
+
+    No es una pieza del reloj: es el utillaje que permite medir el periodo y
+    el Q antes de que exista bastidor. Se dibuja igual porque sin esa medida
+    el escape se dimensiona a ojo.
+
+    Lo que la hace util es que **respeta el contrato de anclaje**: el bloque
+    se atornilla aqui con el mismo patron con el que se atornillara al
+    bastidor, asi que pasa de uno a otro sin volver a taladrarlo.
+    """
+    b = c.contrato("banco_pendulo")
+    anc = b.valor("escuadra_ancho").en_mm
+    alt = b.valor("escuadra_alto").en_mm
+    esp = b.valor("escuadra_espesor").en_mm
+    al_canto = b.valor("escuadra_bloque_al_canto").en_mm
+    guia = b.valor("escuadra_taladro_diametro").en_mm
+    mordaza = b.valor("escuadra_mordaza_libre").en_mm
+    sep = c.valor("anclaje", "anclaje_tornillo_separacion").en_mm
+    al_datum = c.valor("anclaje", "anclaje_al_datum").en_mm
+    bl_anc = c.valor("suspension", "soporte_ancho").en_mm
+    bl_alt = c.valor("suspension", "soporte_alto").en_mm
+    fleje = c.valor("suspension", "muelle_largo").en_mm
+    empotrado = c.valor("suspension", "muelle_empotrado").en_mm
+
+    e = 1.0
+    p: list[str] = [CABEZA.format(cota=COTA, ancho=900, alto=680)]
+    p.append(_texto(34, 34, "1.6 \u00b7 ESCUADRA DEL BANCO R1", 15, TINTA, "start", "bold"))
+    p.append(
+        _texto(
+            34,
+            50,
+            "Utillaje, no pieza del reloj \u00b7 cotas le\u00eddas de docs/reloj/contratos.json",
+            9.5,
+            AUX,
+            "start",
+        )
+    )
+
+    x0, y0 = 260.0, 150.0
+    w, h = anc * e, alt * e
+    cx = x0 + w / 2
+    p.append(_texto(x0 - 70, 88, "LA TABLA \u00b7 escala 1:1", 9, TINTA, "start"))
+    p.append(_texto(x0 - 70, 101, "tablero de 18, veta a lo largo", 8, AUX, "start"))
+    p.append(
+        f'<rect x="{x0}" y="{y0}" width="{w:.1f}" height="{h:.1f}" fill="none" '
+        f'stroke="{TINTA}" stroke-width="1.4"/>'
+    )
+    # Las dos franjas de mordaza, que son lo que no puede llevar taladro.
+    for lado in (0.0, w - mordaza * e):
+        p.append(
+            f'<rect x="{x0 + lado:.1f}" y="{y0}" width="{mordaza * e:.1f}" '
+            f'height="{h:.1f}" fill="{AUX}" fill-opacity="0.15" stroke="none"/>'
+        )
+    # El bloque, de rayas: va detras y no es parte de la pieza.
+    y_canto = y0 + al_canto * e
+    p.append(
+        f'<rect x="{cx - bl_anc * e / 2:.1f}" y="{y_canto - bl_alt * e:.1f}" '
+        f'width="{bl_anc * e:.1f}" height="{bl_alt * e:.1f}" fill="{COTA}" '
+        f'fill-opacity="0.10" stroke="{COTA}" stroke-width="0.9" stroke-dasharray="4 2"/>'
+    )
+    # El fleje colgando, que es lo que se va a mirar.
+    p.append(
+        f'<rect x="{cx - 9:.1f}" y="{y_canto:.1f}" width="18" '
+        f'height="{(fleje - empotrado) * e:.1f}" fill="{COTA}" fill-opacity="0.10" '
+        f'stroke="{COTA}" stroke-width="0.9" stroke-dasharray="4 2"/>'
+    )
+    for dx in (-sep * e / 2, sep * e / 2):
+        p.append(
+            f'<circle cx="{cx + dx:.1f}" cy="{y_canto - al_datum * e:.1f}" '
+            f'r="{guia * e / 2:.2f}" fill="none" stroke="{TINTA}" stroke-width="1.2"/>'
+        )
+    p.append(
+        f'<path d="M{x0 - 10:.1f} {y_canto:.1f}H{x0 + w + 10:.1f}" stroke="{COTA}" '
+        f'stroke-width="1" stroke-dasharray="6 3"/>'
+    )
+    p.append(_texto(x0 + w + 14, y_canto + 3, "EL DATUM", 8.5, COTA, "start", "bold"))
+    p.append(_texto(x0 - 46, y_canto - bl_alt * e + 14, "el bloque, detr\u00e1s", 8, COTA, "end"))
+    p.append(_texto(cx + 16, y_canto + (fleje - empotrado) * e - 6, "el fleje", 8, COTA, "start"))
+
+    p.append(
+        _cota_h(
+            cx - sep * e / 2,
+            cx + sep * e / 2,
+            y0 - 26,
+            f"{sep:.0f}",
+            "#cota.anclaje_tornillo_separacion",
+        )
+    )
+    p.append(_cota_h(x0, x0 + w, y0 + h + 40, f"{anc:.0f}", "#cota.escuadra_ancho"))
+    p.append(
+        _cota_h(x0, x0 + mordaza * e, y0 + h + 72, f"{mordaza:.0f}", "#cota.escuadra_mordaza_libre")
+    )
+    p.append(_cota_v(y0, y0 + h, x0 - 36, f"{alt:.0f}", "#cota.escuadra_alto", desde=x0))
+    p.append(
+        _cota_v(
+            y0,
+            y_canto,
+            x0 + w + 92,
+            f"{al_canto:.0f}",
+            "#cota.escuadra_bloque_al_canto",
+            desde=x0 + w,
+            lado="der",
+        )
+    )
+    p.append(
+        _cota_v(
+            y_canto - al_datum * e,
+            y_canto,
+            x0 + w + 232,
+            f"{al_datum:.0f}",
+            "#cota.anclaje_al_datum",
+            desde=x0 + w,
+            lado="der",
+        )
+    )
+    xg = cx - sep * e / 2
+    p.append(
+        f'<path d="M{xg - guia * e / 2 - 4:.1f} {y_canto - al_datum * e:.1f}l-30 -40h-40" '
+        f'stroke="{COTA}" stroke-width="1" fill="none"/>'
+    )
+    p.append(
+        _texto(
+            xg - 62,
+            y_canto - al_datum * e - 48,
+            f"2 \u00d7 \u00d8{guia:.1f}",
+            9.5,
+            COTA,
+            "end",
+            "bold",
+        )
+    )
+    p.append(
+        _texto(
+            xg - 76, y_canto - al_datum * e - 38, "#cota.escuadra_taladro_diametro", 7.5, AUX, "end"
+        )
+    )
+
+    notas = [
+        "El tornillo ROSCA en la tabla: el agujero es gu\u00eda de 3,4, no paso de 4,2. "
+        "Si se taladra a 4,2 el bloque queda suelto y el p\u00e9ndulo baila.",
+        "Las dos franjas sombreadas son para la mordaza del banco. Si la mordaza "
+        "pisa un tornillo, la tabla se monta torcida y el datum se inclina.",
+        "Se monta con la tabla a plomo y el canto de arriba a nivel, comprobado "
+        "con un nivel de burbuja: el datum es un canto horizontal.",
+        "Lo que se mide: 100 oscilaciones -deben ser 200,0 s-, cu\u00e1ntas tarda la "
+        "amplitud en caer a la mitad, y la varilla en una balanza.",
+    ]
+    p.append(_texto(34, 450, "C\u00d3MO SE USA", 8.5, AUX, "start", "bold"))
+    for i, nota in enumerate(notas):
+        p.append(_texto(34, 468 + i * 15, f"\u00b7 {nota}", 8.5, TINTA, "start"))
+
+    p.append(
+        '<rect x="34" y="522" width="832" height="30" rx="4" fill="#fff4e5" '
+        'stroke="#d98324" stroke-width="1"/>'
+    )
+    p.append(
+        _texto(
+            46,
+            541,
+            "ES UTILLAJE, NO ENTRA EN EL RELOJ. Pero su patr\u00f3n de taladros es el del "
+            "bastidor: el bloque pasa de aqu\u00ed a la m\u00e1quina sin volver a taladrarlo.",
+            9.5,
+            "#8a5200",
+            "start",
+            "bold",
+        )
+    )
+    p.append(
+        f'<rect x="34" y="570" width="832" height="104" fill="none" stroke="{TINTA}" '
+        'stroke-width="1.2"/>'
+    )
+    campos = [
+        ("N\u00famero", "1.6"),
+        ("Pieza", "Escuadra del banco"),
+        ("Material", "Tablero"),
+        ("Espesor", f"{esp:.0f} mm"),
+        ("Cantidad", "1"),
+        ("Veta", "A lo largo"),
+        ("Conjunto", "Utillaje \u00b7 ensayo R1"),
+        ("Estado", "Lista para cortar"),
+    ]
+    for i, (k, val) in enumerate(campos):
+        bx = 34 + (i % 4) * 208
+        by = 570 + (i // 4) * 52
+        p.append(
+            f'<path d="M{bx} {by}h208v52h-208z" fill="none" stroke="{AUX}" stroke-width="0.6"/>'
+        )
+        p.append(_texto(bx + 10, by + 18, k.upper(), 7.5, AUX, "start"))
+        p.append(_texto(bx + 10, by + 37, val, 11, TINTA, "start", "bold"))
+    p.append("</svg>")
+    return "\n".join(p)
+
+
+PIEZAS = {
+    "varilla": varilla,
+    "lenteja": lenteja,
+    "soporte": soporte,
+    "muelle": muelle,
+    "escuadra": escuadra,
+}
 
 PREFIJOS = {
     "varilla": ("varilla_",),
@@ -1005,6 +1205,7 @@ PREFIJOS = {
     "vastago": ("vastago_",),
     "soporte": ("soporte_", "anclaje_"),
     "muelle": ("muelle_",),
+    "escuadra": ("escuadra_",),
 }
 """Que cotas son de cada pieza. El prefijo del nombre decide, igual que
 decide el gemelo de radio: asi se puede leer el contrato y saber de quien es
@@ -1027,6 +1228,13 @@ INTERFACES = {
         "varilla_taladro_lejos",
     ),
     "lenteja": ("vastago_diametro", "vastago_saliente", "longitud_pendulo_nominal"),
+    "escuadra": (
+        "anclaje_tornillo_separacion",
+        "anclaje_tornillo_diametro",
+        "anclaje_al_datum",
+        "soporte_ancho",
+        "soporte_alto",
+    ),
     "vastago": ("varilla_vastago_diametro", "varilla_vastago_profundidad"),
 }
 """Cotas de OTRA pieza que esta toca. Van en la tabla aparte y rotuladas,

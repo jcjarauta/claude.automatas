@@ -178,3 +178,74 @@ Y sin embargo está mal, por una razón que no es de resistencia:
 Con 32, darle la vuelta da 8 y 30. No encaja, y eso es el seguro. Lo defiende
 `test_las_dos_filas_de_taladros_no_son_simetricas`, que es el test que faltaba
 —la asimetría no la pedía nadie, así que 30 parecía inocente.
+
+
+---
+
+## C11 · la corrección que no cabe en la tuerca
+
+`core/reloj/pendulo.py` ya existe, y lo primero que ha dicho es que **la
+varilla estaba mal cortada por 13 mm**.
+
+Los 994 del contrato son la **longitud equivalente**: la del péndulo simple
+que bate 2 s. Pero en un péndulo real la varilla tiene masa repartida, y su
+masa está más arriba que la lenteja: sube menos el momento recuperador de lo
+que sube la inercia, y el conjunto **oscila más deprisa**.
+
+Con las cotas que había, el período salía **1,9874 s**: el reloj adelantaría
+**544 s al día**, nueve minutos.
+
+| | Antes | Ahora |
+| --- | --- | --- |
+| Centro de la lenteja al punto de flexión | 994 (el del péndulo simple) | **1007** · derivado por C11 |
+| `varilla_largo` | 935 | **948** |
+| Período calculado | 1,9874 s | **2,0002 s** |
+| Desvío | +544 s/día | **−8,8 s/día** |
+
+**Y lo que convierte esto en un hallazgo y no en un ajuste**: la tuerca M6 da
+±10 mm en diez vueltas, unos ±440 s/día. La corrección son 563. **No cabe.**
+Si la varilla se corta con el número del péndulo simple, el reloj no se puede
+poner en hora por mucho que se gire la tuerca. Lo defiende
+`test_la_correccion_de_c11_se_sale_del_recorrido_de_la_tuerca`.
+
+Entra una cota nueva, `varilla_densidad` = 700 kg/m³, provisional: es la masa
+de la varilla lo que mueve la corrección, así que **pesar la varilla real en R1
+cambia el largo**. Por eso la varilla se corta larga y se recorta al final.
+
+### La estimación de Q, y por qué 1.500
+
+`bench/reloj/pendulo.json`, con `medido: false`. El número que hacía falta para
+dimensionar el escape sin tener aún las piezas.
+
+| | |
+| --- | --- |
+| Q si el aire fuese la única pérdida | **11.800** |
+| Q previsto | **1.500** (rango 500–3.000) |
+| Pierde por ciclo | 27 µJ |
+| Potencia a reponer | **13,5 µW** |
+
+El cálculo del aire no sirve para predecir: sirve para saber **dónde no está el
+problema**. Con la lenteja de canto y una varilla de 8 mm, el aire daría un Q de
+casi doce mil. Lo que va a limitar es el amortiguamiento interno del fleje y el
+apriete de su mordaza, que no están en ninguna tabla. De ahí que 1.500 sea una
+estimación conservadora y no un cálculo: **equivocarse por abajo sobredimensiona
+la pesa, que es la pieza más barata de cambiar.**
+
+---
+
+## 1.6 · La escuadra del banco R1
+
+Utillaje, no pieza del reloj. Se dibuja igual porque sin ella no hay medida, y
+sin medida el escape se dimensiona a ojo.
+
+**Lo que la hace útil es que respeta el contrato de anclaje**: el bloque se
+atornilla aquí con el mismo patrón con el que se atornillará al bastidor, así
+que pasa de uno a otro sin volver a taladrarlo. Es el primer cobro del contrato
+de interfaz congelado en la 1.5.
+
+| Cota | Valor | Por qué |
+| --- | --- | --- |
+| `escuadra_taladro_diametro` | **3,4** | **Guía, no paso.** Aquí el tirafondo rosca en la madera. Taladrar a 4,2 deja el bloque suelto y el péndulo bailando |
+| `escuadra_bloque_al_canto` | **50** | Con el anclaje a 32 del datum, deja 18 mm de tablero sobre los tornillos. Con 40 quedaban 6 y el canto del tablero revienta |
+| `escuadra_mordaza_libre` | 30 | Franja sin taladros a cada lado. Si la mordaza del banco pisa un tornillo, la tabla se monta torcida y el datum se inclina |
+| `escuadra_espesor` | 18 | Más fino vibra con el péndulo y se lleva energía. Lo que se mide es el Q del péndulo, no el del banco |

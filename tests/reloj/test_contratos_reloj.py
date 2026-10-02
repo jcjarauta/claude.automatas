@@ -19,6 +19,8 @@ from pathlib import Path
 import pytest
 
 from compile.contratos import Contratos, Estado, Valor, cargar
+from core.reloj.pendulo import Pendulo
+from core.units import Kilogramos, Metros
 from scripts.exportar_variables import (
     CABECERA_ONSHAPE,
     COLUMNA_VALOR,
@@ -502,19 +504,79 @@ def test_la_descripcion_del_gemelo_dice_de_donde_sale(reloj: Contratos):
 # ---------------------------------------------------------------------------
 
 
-def test_la_cadena_del_pendulo_suma_la_longitud_nominal(reloj: Contratos):
+def test_la_cadena_del_pendulo_suma_hasta_el_centro_de_la_lenteja(reloj: Contratos):
     """Del punto de flexión del muelle al extremo de la varilla, más la
-    varilla, más lo que hay del extremo al centro de la lenteja = 994.
+    varilla, más lo que hay del extremo al centro de la lenteja.
 
-    El largo de la varilla es DERIVADO de esta suma, no una elección. Antes
-    lo era de `varilla_sobre_flexion`, que era una suposición marcada
-    PENDIENTE; la ficha del muelle la sustituyó y el largo cambió solo. Este
-    test es lo que hace que ese cambio no pueda pasar en silencio."""
-    nominal = reloj.valor("oscilador", "longitud_pendulo_nominal").en_mm
+    **La suma NO es `longitud_pendulo_nominal`.** Los 994 son la longitud
+    equivalente —la del péndulo simple que bate 2 s— y el centro de la
+    lenteja va 13 mm más abajo, porque la varilla tiene masa y acelera el
+    conjunto. Confundir las dos es el error que C11 existe para evitar.
+
+    El largo de la varilla es DERIVADO de esta suma, no una elección."""
+    centro = reloj.valor("pendulo", "lenteja_centro_a_flexion").en_mm
     flexion = reloj.valor("suspension", "muelle_flexion_a_varilla").en_mm
     largo = reloj.valor("pendulo", "varilla_largo").en_mm
-    centro = reloj.valor("lenteja", "lenteja_centro_bajo_varilla").en_mm
-    assert flexion + largo + centro == pytest.approx(nominal)
+    bajo = reloj.valor("lenteja", "lenteja_centro_bajo_varilla").en_mm
+    assert flexion + largo + bajo == pytest.approx(centro, abs=0.01)
+
+
+def test_la_lenteja_va_mas_abajo_que_la_longitud_equivalente(reloj: Contratos):
+    """C11 en una linea. Si alguien vuelve a poner el centro en 994, el reloj
+    adelanta nueve minutos al dia y la tuerca no llega a corregirlo."""
+    assert (
+        reloj.valor("pendulo", "lenteja_centro_a_flexion").en_mm
+        > reloj.valor("oscilador", "longitud_pendulo_nominal").en_mm
+    )
+
+
+def test_el_contrato_bate_dos_segundos_segun_c11(reloj: Contratos):
+    """El test que cruza el contrato con el nucleo. Monta el pendulo con las
+    cotas del JSON y comprueba que el periodo sale a 2 s dentro de lo que la
+    tuerca puede corregir."""
+    m = reloj.valor
+    largo = m("pendulo", "varilla_largo").valor
+    masa_varilla = (
+        m("pendulo", "varilla_densidad").valor
+        * largo
+        * m("pendulo", "varilla_ancho").valor
+        * m("pendulo", "varilla_espesor").valor
+    )
+    flexion = m("suspension", "muelle_flexion_a_varilla").valor
+    p = Pendulo(
+        masa_lenteja=Kilogramos(m("lenteja", "lenteja_masa").valor),
+        centro_lenteja=Metros(m("pendulo", "lenteja_centro_a_flexion").valor),
+        masa_varilla=Kilogramos(masa_varilla),
+        varilla_desde=Metros(flexion),
+        varilla_hasta=Metros(flexion + largo),
+    )
+    objetivo = m("oscilador", "periodo_pendulo").valor
+    deriva = abs(p.periodo() - objetivo) * 43200.0  # segundos al dia
+    assert deriva < 60.0, f"el contrato se desvia {deriva:.0f} s/dia del periodo pedido"
+
+
+def test_el_recorrido_de_la_tuerca_cubre_lo_que_queda(reloj: Contratos):
+    """Lo que la construccion no acierta lo tiene que poder la regulacion. Si
+    no, el reloj no se puede poner en hora por mucho que se gire la tuerca."""
+    m = reloj.valor
+    largo = m("pendulo", "varilla_largo").valor
+    masa_varilla = (
+        m("pendulo", "varilla_densidad").valor
+        * largo
+        * m("pendulo", "varilla_ancho").valor
+        * m("pendulo", "varilla_espesor").valor
+    )
+    flexion = m("suspension", "muelle_flexion_a_varilla").valor
+    p = Pendulo(
+        masa_lenteja=Kilogramos(m("lenteja", "lenteja_masa").valor),
+        centro_lenteja=Metros(m("pendulo", "lenteja_centro_a_flexion").valor),
+        masa_varilla=Kilogramos(masa_varilla),
+        varilla_desde=Metros(flexion),
+        varilla_hasta=Metros(flexion + largo),
+    )
+    deriva = abs(p.periodo() - m("oscilador", "periodo_pendulo").valor) * 43200.0
+    alcance = 10.0 * m("oscilador", "paso_tuerca_regulacion").en_mm * p.deriva_por_milimetro()
+    assert alcance > deriva * 2.0
 
 
 def test_el_punto_de_flexion_es_la_mitad_del_tramo_libre(reloj: Contratos):
@@ -857,3 +919,64 @@ def test_las_dos_filas_de_taladros_no_son_simetricas(reloj: Contratos):
         "las dos filas quedan simetricas respecto a la mitad del bloque: "
         "montado del reves da el mismo patron"
     )
+
+
+# --- 1.6 · la escuadra del banco R1 -------------------------------------
+
+
+def test_la_escuadra_respeta_el_contrato_de_anclaje(reloj: Contratos):
+    """Lo que hace util el banco: el bloque se atornilla aqui igual que se
+    atornillara al bastidor. Si la escuadra inventara su propia separacion,
+    habria que volver a taladrar el bloque al pasar de uno a otro."""
+    banco = reloj.contrato("banco_pendulo")
+    sep = reloj.valor("anclaje", "anclaje_tornillo_separacion").en_mm
+    libre = banco.valor("escuadra_mordaza_libre").en_mm
+    ancho = banco.valor("escuadra_ancho").en_mm
+    assert ancho >= sep + 2.0 * libre
+
+
+def test_el_taladro_de_la_escuadra_es_guia_y_no_paso(reloj: Contratos):
+    """El tornillo rosca en la madera de la tabla, asi que el agujero tiene
+    que ser MAS ESTRECHO que el del bloque. Igualarlos es el error que deja
+    el bloque suelto y el pendulo bailando."""
+    assert (
+        reloj.valor("banco_pendulo", "escuadra_taladro_diametro").en_mm
+        < reloj.valor("anclaje", "anclaje_tornillo_diametro").en_mm
+    )
+
+
+def test_bajo_el_bloque_cabe_el_fleje_entero(reloj: Contratos):
+    """Lo que se mira en R1 es como flexa el fleje. Si la tabla acaba antes,
+    no se ve."""
+    banco = reloj.contrato("banco_pendulo")
+    bajo_el_canto = (
+        banco.valor("escuadra_alto").en_mm - banco.valor("escuadra_bloque_al_canto").en_mm
+    )
+    fleje = (
+        reloj.valor("suspension", "muelle_largo").en_mm
+        - reloj.valor("suspension", "muelle_empotrado").en_mm
+    )
+    assert bajo_el_canto > fleje
+
+
+def test_el_bloque_cabe_en_la_escuadra_por_arriba(reloj: Contratos):
+    """El bloque sobresale hacia arriba desde su canto de apriete: tiene que
+    quedar tabla por encima para los dos tornillos de anclaje."""
+    banco = reloj.contrato("banco_pendulo")
+    assert (
+        banco.valor("escuadra_bloque_al_canto").en_mm
+        >= reloj.valor("suspension", "soporte_alto").en_mm
+    )
+
+
+def test_los_tirafondos_tienen_canto_de_sobra_por_arriba(reloj: Contratos):
+    """El taladro mas alto queda cerca del canto de arriba de la tabla, y un
+    tirafondo demasiado al borde revienta el canto del tablero en vez de
+    agarrar. La regla de taller son dos diametros y medio."""
+    banco = reloj.contrato("banco_pendulo")
+    tornillo = reloj.valor("anclaje", "anclaje_tornillo_diametro").en_mm
+    al_canto = (
+        banco.valor("escuadra_bloque_al_canto").en_mm
+        - reloj.valor("anclaje", "anclaje_al_datum").en_mm
+    )
+    assert al_canto >= 2.5 * tornillo

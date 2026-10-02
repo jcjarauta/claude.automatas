@@ -1,0 +1,36 @@
+{
+  "maquina": "reloj",
+  "ensayo": "R1 · el pendulo solo",
+  "fecha": "2026-10-02",
+  "medido": false,
+  "fuente": "core/reloj/pendulo.py sobre docs/reloj/contratos.json",
+  "porque": "Estimacion teorica para poder dimensionar el escape antes de tener las piezas. Cuando R1 cuente 100 oscilaciones y mida la caida de amplitud, estos numeros se sustituyen por los medidos y el sistema parametrico recalcula lo que cuelgue de ellos.",
+  "calculado": {
+    "masa_varilla_kg": 0.07963,
+    "masa_total_kg": 1.1116,
+    "centro_de_masas_m": 0.96989,
+    "inercia_kg_m2": 1.071504,
+    "longitud_equivalente_m": 0.99382,
+    "periodo_s": 2.000203,
+    "deriva_frente_a_2s_s_dia": 8.8,
+    "energia_a_amplitud_nominal_J": 0.0064409,
+    "deriva_por_milimetro_s_dia": 43.47
+  },
+  "estimado": {
+    "calidad_solo_por_el_aire": 11824,
+    "calidad_prevista": 1500,
+    "calidad_rango": [
+      500,
+      3000
+    ],
+    "porque_1500": "El aire da unos 12.000, asi que no es el limite: lo que manda es el amortiguamiento interno del fleje y el apriete de su mordaza, que no estan en ninguna tabla. 1.500 es el centro del rango de un pendulo de madera con suspension de fleje, y es deliberadamente conservador: equivocarse por abajo sobredimensiona la pesa, que es la pieza mas barata de cambiar.",
+    "perdida_por_ciclo_uJ": 27.0,
+    "potencia_de_mantenimiento_uW": 13.5
+  },
+  "que_mide_R1": [
+    "100 oscilaciones cronometradas: deben ser 200,0 s. Sustituye periodo_s",
+    "Cuantas oscilaciones tarda la amplitud en caer a la mitad: Q = 4,53 x ese numero",
+    "Segundos al dia por vuelta de tuerca: contrasta deriva_por_milimetro_s_dia",
+    "La varilla en una balanza: sustituye varilla_densidad, que es lo que mueve C11"
+  ]
+}

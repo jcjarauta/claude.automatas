@@ -229,10 +229,24 @@
       "porque": "La seccion de la varilla decide la rigidez y el rozamiento con el aire, que es la mitad del Q. R1 lo mide y entonces se congela",
       "valores": [
         {
-          "nombre": "varilla_largo",
-          "valor": 0.935,
+          "nombre": "varilla_densidad",
+          "valor": 700.0,
+          "unidad": "kg/m3",
+          "descripcion": "Densidad de la madera de la varilla. Haya o abedul secos. PROVISIONAL: entra en C11 por la masa de la varilla, asi que mueve la correccion de longitud; R1 la sustituye pesando",
+          "tolerancia": "se pesa la varilla real en R1"
+        },
+        {
+          "nombre": "lenteja_centro_a_flexion",
+          "valor": 1.007,
           "unidad": "m",
-          "descripcion": "DERIVADO: longitud_pendulo_nominal - muelle_flexion_a_varilla - lenteja_centro_bajo_varilla = 994 - 15 - 44. No se elige",
+          "descripcion": "DERIVADO POR C11: donde va el centro de la lenteja para batir 2 s con la inercia real de la varilla. NO son los 994 del pendulo simple: son 13 mm mas abajo",
+          "tolerancia": "+/-1, la tuerca absorbe el resto"
+        },
+        {
+          "nombre": "varilla_largo",
+          "valor": 0.948,
+          "unidad": "m",
+          "descripcion": "DERIVADO: lenteja_centro_a_flexion - muelle_flexion_a_varilla - lenteja_centro_bajo_varilla = 1007 - 15 - 44. No se elige, y el primer sumando sale de C11 y no del pendulo simple",
           "tolerancia": "+/-1, la tuerca absorbe el resto"
         },
         {
@@ -554,6 +568,56 @@
           "unidad": "adimensional",
           "descripcion": "Una vuelta por hora. Lleva la aguja de minutos y es la salida de tiempo mas util",
           "tolerancia": ""
+        }
+      ]
+    },
+    {
+      "nombre": "banco_pendulo",
+      "estado": "pendiente",
+      "congelado_el": "",
+      "porque": "Utillaje del ensayo R1, no pieza del reloj. Se dibuja igual porque sin el no hay medida, y sin medida el escape se dimensiona a ojo. Respeta el contrato de anclaje, asi que el bloque pasa del banco al bastidor sin tocar una cota",
+      "valores": [
+        {
+          "nombre": "escuadra_ancho",
+          "valor": 0.12,
+          "unidad": "m",
+          "descripcion": "Ancho de la tabla. Tres veces el bloque: lo que pide no es resistencia sino que las mordazas del banco agarren lejos de los tornillos",
+          "tolerancia": "+/-2"
+        },
+        {
+          "nombre": "escuadra_alto",
+          "valor": 0.2,
+          "unidad": "m",
+          "descripcion": "Alto de la tabla. Por debajo del bloque tiene que caber el fleje entero y el principio de la varilla, para poder mirar como flexa",
+          "tolerancia": "+/-2"
+        },
+        {
+          "nombre": "escuadra_espesor",
+          "valor": 0.018,
+          "unidad": "m",
+          "descripcion": "Tablero de 18. Mas fino vibra con el pendulo y se lleva energia: lo que se mide es el Q del pendulo, no el del banco",
+          "tolerancia": "+/-1"
+        },
+        {
+          "nombre": "escuadra_bloque_al_canto",
+          "valor": 0.05,
+          "unidad": "m",
+          "descripcion": "Del canto de arriba de la tabla al canto de apriete del bloque. Lo fija por abajo el canto libre que necesitan los tirafondos: con el anclaje a 32 del datum, 50 deja 18 mm de tablero por encima. Con 40 quedaban 6 y el canto revienta",
+          "tolerancia": "+/-1"
+        },
+        {
+          "nombre": "escuadra_taladro_diametro",
+          "valor": 0.0034,
+          "unidad": "m",
+          "descripcion": "Taladro guia para tirafondo de 4. No es paso: aqui el tornillo rosca en la madera, porque detras de la tabla no hay sitio para una tuerca",
+          "tolerancia": "broca de 3,4"
+        },
+        {
+          "nombre": "escuadra_mordaza_libre",
+          "valor": 0.03,
+          "unidad": "m",
+          "descripcion": "Franja a cada lado que queda libre de taladros, para la mordaza del banco. Si la mordaza pisa un tornillo, la tabla se monta torcida y el datum se inclina",
+          "tolerancia": "minimo"
         }
       ]
     }
