@@ -39,6 +39,70 @@
       ]
     },
     {
+      "nombre": "pendulo",
+      "estado": "pendiente",
+      "congelado_el": "",
+      "porque": "La seccion de la varilla decide la rigidez y el rozamiento con el aire, que es la mitad del Q. R1 lo mide y entonces se congela",
+      "valores": [
+        {
+          "nombre": "varilla_largo",
+          "valor": 1.08,
+          "unidad": "m",
+          "descripcion": "Largo de corte: 994 nominal + 40 sobre el punto de flexion + 46 bajo el centro de la lenteja. De esos 46, 20 son sobrante y se recortan al regular",
+          "tolerancia": "+2/0, se recorta al final"
+        },
+        {
+          "nombre": "varilla_ancho",
+          "valor": 0.015,
+          "unidad": "m",
+          "descripcion": "Compromiso: mas ancho es mas rigido y mas rozamiento con el aire, y el rozamiento baja el Q. Se decide midiendo en R1",
+          "tolerancia": "+/-0,3 de sierra"
+        },
+        {
+          "nombre": "varilla_espesor",
+          "valor": 0.008,
+          "unidad": "m",
+          "descripcion": "Espesor del liston. Con la veta a lo largo: la varilla trabaja a flexion y la humedad la mueve menos en esa direccion",
+          "tolerancia": "+/-0,3 de sierra"
+        },
+        {
+          "nombre": "varilla_sobrante",
+          "valor": 0.02,
+          "unidad": "m",
+          "descripcion": "Lo que se corta al final, cuando la regulacion fija donde va la lenteja. No se corta antes: el nominal son 994 y el definitivo lo decide el cronometro",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "varilla_sobre_flexion",
+          "valor": 0.04,
+          "unidad": "m",
+          "descripcion": "Varilla por encima del punto de flexion del muelle, para que el soporte la agarre. PENDIENTE de la ficha del muelle: el punto de flexion no esta en el amarre",
+          "tolerancia": "PENDIENTE de la ficha del muelle"
+        },
+        {
+          "nombre": "varilla_taladro_diametro",
+          "valor": 0.0042,
+          "unidad": "m",
+          "descripcion": "Paso de los dos M4 que sujetan la varilla al soporte de suspension",
+          "tolerancia": "paso, no roscado"
+        },
+        {
+          "nombre": "varilla_taladro_cerca",
+          "valor": 0.015,
+          "unidad": "m",
+          "descripcion": "Del extremo de arriba al primero de los dos taladros",
+          "tolerancia": "+/-0,3"
+        },
+        {
+          "nombre": "varilla_taladro_lejos",
+          "valor": 0.035,
+          "unidad": "m",
+          "descripcion": "Del extremo de arriba al segundo. Dos y no uno: un solo tornillo deja girar la varilla",
+          "tolerancia": "+/-0,3"
+        }
+      ]
+    },
+    {
       "nombre": "escape",
       "estado": "pendiente",
       "congelado_el": "",

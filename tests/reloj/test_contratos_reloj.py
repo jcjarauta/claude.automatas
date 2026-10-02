@@ -495,3 +495,52 @@ def test_la_descripcion_del_gemelo_dice_de_donde_sale(reloj: Contratos):
     por_nombre = {f[0]: f for f in _filas(tabla_cota(reloj)[Tipo.LENGTH])}
     assert por_nombre["eje_diametro_radio"][6].startswith("derivada de eje_diametro")
     assert por_nombre["eje_diametro_radio"][5] == por_nombre["eje_diametro"][5]
+
+
+# ---------------------------------------------------------------------------
+# La pieza 1.1, la primera que se corta
+# ---------------------------------------------------------------------------
+
+
+def test_el_largo_de_la_varilla_sale_de_la_longitud_del_pendulo(reloj: Contratos):
+    """994 nominal + 40 por encima del punto de flexión + 46 por debajo del
+    centro de la lenteja. Si esto se separa, la varilla se corta para un
+    péndulo que no es el que se va a montar."""
+    nominal = reloj.valor("oscilador", "longitud_pendulo_nominal").en_mm
+    arriba = reloj.valor("pendulo", "varilla_sobre_flexion").en_mm
+    largo = reloj.valor("pendulo", "varilla_largo").en_mm
+    assert largo == pytest.approx(nominal + arriba + 46.0)
+
+
+def test_el_sobrante_cabe_bajo_el_centro_de_la_lenteja(reloj: Contratos):
+    """Lo que se recorta al regular tiene que estar dentro de los 46 mm que
+    hay por debajo, o se recortaría material que hace falta."""
+    nominal = reloj.valor("oscilador", "longitud_pendulo_nominal").en_mm
+    arriba = reloj.valor("pendulo", "varilla_sobre_flexion").en_mm
+    largo = reloj.valor("pendulo", "varilla_largo").en_mm
+    assert reloj.valor("pendulo", "varilla_sobrante").en_mm < largo - nominal - arriba
+
+
+def test_los_dos_taladros_caben_en_el_tramo_de_arriba(reloj: Contratos):
+    """Los dos sujetan la varilla al soporte, así que tienen que quedar por
+    encima del punto de flexión: si uno cae por debajo, el tornillo pellizca
+    la parte que oscila."""
+    arriba = reloj.valor("pendulo", "varilla_sobre_flexion").en_mm
+    radio = reloj.valor("pendulo", "varilla_taladro_diametro").en_mm / 2.0
+    for clave in ("varilla_taladro_cerca", "varilla_taladro_lejos"):
+        assert reloj.valor("pendulo", clave).en_mm + radio < arriba, f"{clave} se sale"
+
+
+def test_los_taladros_no_se_comen_el_ancho_de_la_varilla(reloj: Contratos):
+    """Un taladro centrado deja pared a los lados. Con Ø4,2 en 15 de ancho
+    quedan 5,4 a cada lado, que es de sobra."""
+    ancho = reloj.valor("pendulo", "varilla_ancho").en_mm
+    taladro = reloj.valor("pendulo", "varilla_taladro_diametro").en_mm
+    assert (ancho - taladro) / 2.0 >= 3.0
+
+
+def test_los_dos_taladros_no_se_pisan(reloj: Contratos):
+    cerca = reloj.valor("pendulo", "varilla_taladro_cerca").en_mm
+    lejos = reloj.valor("pendulo", "varilla_taladro_lejos").en_mm
+    taladro = reloj.valor("pendulo", "varilla_taladro_diametro").en_mm
+    assert lejos - cerca > taladro
