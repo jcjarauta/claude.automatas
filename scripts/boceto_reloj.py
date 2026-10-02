@@ -1007,6 +1007,11 @@ def escuadra(c: Contratos) -> str:
     Lo que la hace util es que **respeta el contrato de anclaje**: el bloque
     se atornilla aqui con el mismo patron con el que se atornillara al
     bastidor, asi que pasa de uno a otro sin volver a taladrarlo.
+
+    Dos vistas, y la lateral no es decorativa: lo que esta pieza tiene que
+    dejar claro es la **pila** -tabla, bloque, fleje, placa- porque de ella
+    sale a que distancia de la tabla cuelga la varilla, y si roza, no se mide
+    el Q del pendulo sino el de la tabla.
     """
     b = c.contrato("banco_pendulo")
     anc = b.valor("escuadra_ancho").en_mm
@@ -1014,16 +1019,21 @@ def escuadra(c: Contratos) -> str:
     esp = b.valor("escuadra_espesor").en_mm
     al_canto = b.valor("escuadra_bloque_al_canto").en_mm
     guia = b.valor("escuadra_taladro_diametro").en_mm
+    t_canto = b.valor("escuadra_taladro_al_canto").en_mm
+    t_lado = b.valor("escuadra_taladro_al_lado").en_mm
     mordaza = b.valor("escuadra_mordaza_libre").en_mm
     sep = c.valor("anclaje", "anclaje_tornillo_separacion").en_mm
-    al_datum = c.valor("anclaje", "anclaje_al_datum").en_mm
     bl_anc = c.valor("suspension", "soporte_ancho").en_mm
     bl_alt = c.valor("suspension", "soporte_alto").en_mm
+    bl_esp = c.valor("suspension", "soporte_espesor").en_mm
+    placa = c.valor("suspension", "soporte_placa_espesor").en_mm
+    placa_alt = c.valor("suspension", "soporte_placa_alto").en_mm
     fleje = c.valor("suspension", "muelle_largo").en_mm
     empotrado = c.valor("suspension", "muelle_empotrado").en_mm
+    va_esp = c.valor("pendulo", "varilla_espesor").en_mm
 
     e = 1.0
-    p: list[str] = [CABEZA.format(cota=COTA, ancho=900, alto=680)]
+    p: list[str] = [CABEZA.format(cota=COTA, ancho=900, alto=700)]
     p.append(_texto(34, 34, "1.6 \u00b7 ESCUADRA DEL BANCO R1", 15, TINTA, "start", "bold"))
     p.append(
         _texto(
@@ -1036,29 +1046,28 @@ def escuadra(c: Contratos) -> str:
         )
     )
 
-    x0, y0 = 260.0, 150.0
+    # ---- vista 1, la tabla de frente -------------------------------------
+    x0, y0 = 230.0, 150.0
     w, h = anc * e, alt * e
     cx = x0 + w / 2
-    p.append(_texto(x0 - 70, 88, "LA TABLA \u00b7 escala 1:1", 9, TINTA, "start"))
-    p.append(_texto(x0 - 70, 101, "tablero de 18, veta a lo largo", 8, AUX, "start"))
+    y_taladro = y0 + t_canto * e
+    y_canto = y0 + al_canto * e
+    p.append(_texto(x0 - 56, 88, "LA TABLA \u00b7 de frente \u00b7 escala 1:1", 9, TINTA, "start"))
+    p.append(_texto(x0 - 56, 101, "tablero de 18, veta a lo largo", 8, AUX, "start"))
     p.append(
         f'<rect x="{x0}" y="{y0}" width="{w:.1f}" height="{h:.1f}" fill="none" '
         f'stroke="{TINTA}" stroke-width="1.4"/>'
     )
-    # Las dos franjas de mordaza, que son lo que no puede llevar taladro.
     for lado in (0.0, w - mordaza * e):
         p.append(
             f'<rect x="{x0 + lado:.1f}" y="{y0}" width="{mordaza * e:.1f}" '
             f'height="{h:.1f}" fill="{AUX}" fill-opacity="0.15" stroke="none"/>'
         )
-    # El bloque, de rayas: va detras y no es parte de la pieza.
-    y_canto = y0 + al_canto * e
     p.append(
         f'<rect x="{cx - bl_anc * e / 2:.1f}" y="{y_canto - bl_alt * e:.1f}" '
         f'width="{bl_anc * e:.1f}" height="{bl_alt * e:.1f}" fill="{COTA}" '
         f'fill-opacity="0.10" stroke="{COTA}" stroke-width="0.9" stroke-dasharray="4 2"/>'
     )
-    # El fleje colgando, que es lo que se va a mirar.
     p.append(
         f'<rect x="{cx - 9:.1f}" y="{y_canto:.1f}" width="18" '
         f'height="{(fleje - empotrado) * e:.1f}" fill="{COTA}" fill-opacity="0.10" '
@@ -1066,8 +1075,8 @@ def escuadra(c: Contratos) -> str:
     )
     for dx in (-sep * e / 2, sep * e / 2):
         p.append(
-            f'<circle cx="{cx + dx:.1f}" cy="{y_canto - al_datum * e:.1f}" '
-            f'r="{guia * e / 2:.2f}" fill="none" stroke="{TINTA}" stroke-width="1.2"/>'
+            f'<circle cx="{cx + dx:.1f}" cy="{y_taladro:.1f}" r="{guia * e / 2:.2f}" '
+            f'fill="none" stroke="{TINTA}" stroke-width="1.2"/>'
         )
     p.append(
         f'<path d="M{x0 - 10:.1f} {y_canto:.1f}H{x0 + w + 10:.1f}" stroke="{COTA}" '
@@ -1075,8 +1084,6 @@ def escuadra(c: Contratos) -> str:
     )
     p.append(_texto(x0 + w + 14, y_canto + 3, "EL DATUM", 8.5, COTA, "start", "bold"))
     p.append(_texto(x0 - 46, y_canto - bl_alt * e + 14, "el bloque, detr\u00e1s", 8, COTA, "end"))
-    p.append(_texto(cx + 16, y_canto + (fleje - empotrado) * e - 6, "el fleje", 8, COTA, "start"))
-
     p.append(
         _cota_h(
             cx - sep * e / 2,
@@ -1086,52 +1093,116 @@ def escuadra(c: Contratos) -> str:
             "#cota.anclaje_tornillo_separacion",
         )
     )
-    p.append(_cota_h(x0, x0 + w, y0 + h + 40, f"{anc:.0f}", "#cota.escuadra_ancho"))
     p.append(
-        _cota_h(x0, x0 + mordaza * e, y0 + h + 72, f"{mordaza:.0f}", "#cota.escuadra_mordaza_libre")
+        _cota_h(
+            x0,
+            cx - sep * e / 2,
+            y0 + h + 40,
+            f"{t_lado:.0f}",
+            "#cota.escuadra_taladro_al_lado",
+        )
+    )
+    p.append(_cota_h(x0, x0 + w, y0 + h + 72, f"{anc:.0f}", "#cota.escuadra_ancho"))
+    p.append(
+        _cota_h(
+            x0,
+            x0 + mordaza * e,
+            y0 + h + 104,
+            f"{mordaza:.0f}",
+            "#cota.escuadra_mordaza_libre",
+        )
     )
     p.append(_cota_v(y0, y0 + h, x0 - 36, f"{alt:.0f}", "#cota.escuadra_alto", desde=x0))
     p.append(
         _cota_v(
             y0,
+            y_taladro,
+            x0 + w + 96,
+            f"{t_canto:.0f}",
+            "#cota.escuadra_taladro_al_canto",
+            desde=x0 + w,
+            lado="der",
+        )
+    )
+    p.append(
+        _cota_v(
+            y0,
             y_canto,
-            x0 + w + 92,
+            x0 + w + 210,
             f"{al_canto:.0f}",
             "#cota.escuadra_bloque_al_canto",
             desde=x0 + w,
             lado="der",
         )
     )
-    p.append(
-        _cota_v(
-            y_canto - al_datum * e,
-            y_canto,
-            x0 + w + 232,
-            f"{al_datum:.0f}",
-            "#cota.anclaje_al_datum",
-            desde=x0 + w,
-            lado="der",
-        )
-    )
     xg = cx - sep * e / 2
     p.append(
-        f'<path d="M{xg - guia * e / 2 - 4:.1f} {y_canto - al_datum * e:.1f}l-30 -40h-40" '
+        f'<path d="M{xg - guia * e / 2 - 4:.1f} {y_taladro:.1f}l-30 -30h-40" '
         f'stroke="{COTA}" stroke-width="1" fill="none"/>'
     )
     p.append(
         _texto(
-            xg - 62,
-            y_canto - al_datum * e - 48,
-            f"2 \u00d7 \u00d8{guia:.1f}",
-            9.5,
-            COTA,
-            "end",
-            "bold",
+            xg - 76, y_taladro - 38, f"2 \u00d7 \u00d8{guia:.1f} pasante", 9.5, COTA, "end", "bold"
+        )
+    )
+    p.append(_texto(xg - 76, y_taladro - 28, "#cota.escuadra_taladro_diametro", 7.5, AUX, "end"))
+
+    # ---- vista 2, la pila -------------------------------------------------
+    # Lo que no se ve de frente y decide si el pendulo roza: cuanto sale
+    # hacia delante cada cosa.
+    sx = 700.0
+    p.append(_texto(sx - 40, 88, "LA PILA \u00b7 de lado \u00b7 escala 1:1", 9, TINTA, "start"))
+    p.append(_texto(sx - 40, 101, "lo que sobresale hacia delante", 8, AUX, "start"))
+    p.append(
+        f'<rect x="{sx}" y="{y0}" width="{esp * e:.1f}" height="{h:.1f}" fill="{AUX}" '
+        f'fill-opacity="0.18" stroke="{TINTA}" stroke-width="1.4"/>'
+    )
+    xb = sx + esp * e
+    p.append(
+        f'<rect x="{xb:.1f}" y="{y_canto - bl_alt * e:.1f}" width="{bl_esp * e:.1f}" '
+        f'height="{bl_alt * e:.1f}" fill="{COTA}" fill-opacity="0.10" stroke="{COTA}" '
+        f'stroke-width="1" stroke-dasharray="4 2"/>'
+    )
+    xp = xb + bl_esp * e
+    p.append(
+        f'<rect x="{xp + 1:.1f}" y="{y_canto - placa_alt * e:.1f}" width="{placa * e:.1f}" '
+        f'height="{placa_alt * e:.1f}" fill="{COTA}" fill-opacity="0.10" stroke="{COTA}" '
+        f'stroke-width="1" stroke-dasharray="4 2"/>'
+    )
+    p.append(
+        f'<path d="M{xp:.1f} {y_canto - bl_alt * e:.1f}V{y_canto + (fleje - empotrado) * e:.1f}" '
+        f'stroke="{COTA}" stroke-width="1.6"/>'
+    )
+    y_var = y_canto + (fleje - empotrado) * e
+    p.append(
+        f'<rect x="{xp - va_esp * e / 2:.1f}" y="{y_var:.1f}" width="{va_esp * e:.1f}" '
+        f'height="40" fill="none" stroke="{TINTA}" stroke-width="1.4"/>'
+    )
+    p.append(_texto(sx - 8, y0 + 16, "tabla", 8, AUX, "end"))
+    p.append(_texto(xp + 14, y_canto - bl_alt * e + 12, "bloque + placa", 8, COTA, "start"))
+    p.append(_texto(xp + 14, y_var + 26, "la varilla, al aire", 8, AUX, "start"))
+    p.append(_cota_h(sx, xb, y0 - 26, f"{esp:.0f}", "#cota.escuadra_espesor"))
+    p.append(
+        _cota_h(
+            xb,
+            xp + 1 + placa * e,
+            y0 + h + 40,
+            f"{bl_esp:.0f} + {placa:.0f}",
+            "#cota.soporte_espesor",
         )
     )
     p.append(
+        f'<path d="M{xp:.1f} {y_var + 52:.1f}H{sx:.1f}" stroke="{AUX}" stroke-width="0.6" '
+        f'stroke-dasharray="3 2"/>'
+    )
+    p.append(
         _texto(
-            xg - 76, y_canto - al_datum * e - 38, "#cota.escuadra_taladro_diametro", 7.5, AUX, "end"
+            sx - 6,
+            y_var + 55,
+            f"la varilla cuelga a {esp + bl_esp:.0f} mm de la cara de la tabla",
+            8,
+            AUX,
+            "end",
         )
     )
 
@@ -1145,18 +1216,18 @@ def escuadra(c: Contratos) -> str:
         "Lo que se mide: 100 oscilaciones -deben ser 200,0 s-, cu\u00e1ntas tarda la "
         "amplitud en caer a la mitad, y la varilla en una balanza.",
     ]
-    p.append(_texto(34, 450, "C\u00d3MO SE USA", 8.5, AUX, "start", "bold"))
+    p.append(_texto(34, 500, "C\u00d3MO SE USA", 8.5, AUX, "start", "bold"))
     for i, nota in enumerate(notas):
-        p.append(_texto(34, 468 + i * 15, f"\u00b7 {nota}", 8.5, TINTA, "start"))
+        p.append(_texto(34, 518 + i * 15, f"\u00b7 {nota}", 8.5, TINTA, "start"))
 
     p.append(
-        '<rect x="34" y="522" width="832" height="30" rx="4" fill="#fff4e5" '
+        '<rect x="34" y="572" width="832" height="30" rx="4" fill="#fff4e5" '
         'stroke="#d98324" stroke-width="1"/>'
     )
     p.append(
         _texto(
             46,
-            541,
+            591,
             "ES UTILLAJE, NO ENTRA EN EL RELOJ. Pero su patr\u00f3n de taladros es el del "
             "bastidor: el bloque pasa de aqu\u00ed a la m\u00e1quina sin volver a taladrarlo.",
             9.5,
@@ -1166,27 +1237,27 @@ def escuadra(c: Contratos) -> str:
         )
     )
     p.append(
-        f'<rect x="34" y="570" width="832" height="104" fill="none" stroke="{TINTA}" '
+        f'<rect x="34" y="620" width="832" height="52" fill="none" stroke="{TINTA}" '
         'stroke-width="1.2"/>'
     )
     campos = [
         ("N\u00famero", "1.6"),
-        ("Pieza", "Escuadra del banco"),
         ("Material", "Tablero"),
         ("Espesor", f"{esp:.0f} mm"),
         ("Cantidad", "1"),
         ("Veta", "A lo largo"),
-        ("Conjunto", "Utillaje \u00b7 ensayo R1"),
+        ("Conjunto", "Utillaje \u00b7 R1"),
         ("Estado", "Lista para cortar"),
     ]
+    celda = 832 / len(campos)
     for i, (k, val) in enumerate(campos):
-        bx = 34 + (i % 4) * 208
-        by = 570 + (i // 4) * 52
+        bx = 34 + i * celda
         p.append(
-            f'<path d="M{bx} {by}h208v52h-208z" fill="none" stroke="{AUX}" stroke-width="0.6"/>'
+            f'<path d="M{bx:.1f} 620h{celda:.1f}v52h-{celda:.1f}z" fill="none" '
+            f'stroke="{AUX}" stroke-width="0.6"/>'
         )
-        p.append(_texto(bx + 10, by + 18, k.upper(), 7.5, AUX, "start"))
-        p.append(_texto(bx + 10, by + 37, val, 11, TINTA, "start", "bold"))
+        p.append(_texto(bx + 10, 638, k.upper(), 7.5, AUX, "start"))
+        p.append(_texto(bx + 10, 657, val, 10.5, TINTA, "start", "bold"))
     p.append("</svg>")
     return "\n".join(p)
 

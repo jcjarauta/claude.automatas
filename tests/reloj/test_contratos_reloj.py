@@ -980,3 +980,32 @@ def test_los_tirafondos_tienen_canto_de_sobra_por_arriba(reloj: Contratos):
         - reloj.valor("anclaje", "anclaje_al_datum").en_mm
     )
     assert al_canto >= 2.5 * tornillo
+
+
+def test_el_taladro_de_la_escuadra_se_acota_desde_sus_propios_cantos(reloj: Contratos):
+    """El datum del pendulo es el canto de apriete del BLOQUE, que en esta
+    pieza no es ningun borde. Quien la corta solo puede medir desde los
+    cantos de la tabla, asi que las dos distancias tienen que existir y salir
+    de la cuenta, no del pulso."""
+    banco = reloj.contrato("banco_pendulo")
+    assert banco.valor("escuadra_taladro_al_canto").en_mm == pytest.approx(
+        banco.valor("escuadra_bloque_al_canto").en_mm
+        - reloj.valor("anclaje", "anclaje_al_datum").en_mm,
+        abs=0.01,
+    )
+    assert banco.valor("escuadra_taladro_al_lado").en_mm == pytest.approx(
+        (
+            banco.valor("escuadra_ancho").en_mm
+            - reloj.valor("anclaje", "anclaje_tornillo_separacion").en_mm
+        )
+        / 2.0,
+        abs=0.01,
+    )
+
+
+def test_el_taladro_cae_dentro_de_la_franja_util(reloj: Contratos):
+    """Entre las dos franjas de mordaza. Si no, la mordaza pisa el tornillo."""
+    banco = reloj.contrato("banco_pendulo")
+    assert (
+        banco.valor("escuadra_taladro_al_lado").en_mm > banco.valor("escuadra_mordaza_libre").en_mm
+    )

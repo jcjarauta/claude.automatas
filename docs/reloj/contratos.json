@@ -613,6 +613,20 @@
           "tolerancia": "broca de 3,4"
         },
         {
+          "nombre": "escuadra_taladro_al_canto",
+          "valor": 0.018,
+          "unidad": "m",
+          "descripcion": "DERIVADO: escuadra_bloque_al_canto - anclaje_al_datum = 50 - 32. Del canto de ARRIBA de la tabla a la linea de taladros. Es la que se marca con el lapiz: el datum no es un borde de esta pieza, asi que acotar desde el obliga a restar",
+          "tolerancia": "+/-0,5"
+        },
+        {
+          "nombre": "escuadra_taladro_al_lado",
+          "valor": 0.048,
+          "unidad": "m",
+          "descripcion": "DERIVADO: (escuadra_ancho - anclaje_tornillo_separacion) / 2 = (120 - 24) / 2. Del canto lateral al taladro. Centrado no es una cota",
+          "tolerancia": "+/-0,5"
+        },
+        {
           "nombre": "escuadra_mordaza_libre",
           "valor": 0.03,
           "unidad": "m",
