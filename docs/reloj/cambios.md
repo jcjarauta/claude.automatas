@@ -249,3 +249,49 @@ de interfaz congelado en la 1.5.
 | `escuadra_bloque_al_canto` | **50** | Con el anclaje a 32 del datum, deja 18 mm de tablero sobre los tornillos. Con 40 quedaban 6 y el canto del tablero revienta |
 | `escuadra_mordaza_libre` | 30 | Franja sin taladros a cada lado. Si la mordaza del banco pisa un tornillo, la tabla se monta torcida y el datum se inclina |
 | `escuadra_espesor` | 18 | Más fino vibra con el péndulo y se lleva energía. Lo que se mide es el Q del péndulo, no el del banco |
+
+
+---
+
+## Paso 2 · 2.1, la rueda de escape
+
+**C12 en el núcleo** (`core/reloj/escape.py`) antes que la pieza, porque el
+número manda sobre la geometría. Con el Q previsto de 1.500:
+
+| | |
+| --- | --- |
+| Par ideal en el eje de escape | **129 µN·m** |
+| Con rendimiento del 12 % (optimista) | 1,07 mN·m |
+| Con rendimiento del 2 % (pesimista) | **6,45 mN·m** |
+
+El ideal supone que toda la energía de la rueda llega al péndulo. En un reloj
+de madera llega entre el 2 y el 12 %, así que **el par real es entre ocho y
+cincuenta veces mayor**. El valor del cálculo no es predecir: es saber qué
+esperar del banco R2, y detectar que algo va mal si la medida se sale del
+rango. Para el tambor son cifras ridículas, y eso confirma la viabilidad.
+
+Un detalle que el núcleo obligó a corregir: **hay dos impulsos por oscilación**,
+uno por paleta, y entre los dos la rueda avanza un diente. Olvidar el dos
+duplica el par calculado.
+
+### La primera pieza cuyo contorno se genera
+
+Los treinta dientes salen del paso angular y de la inclinación: tocar
+`dientes_escape` los redibuja todos. Es la diferencia entre paramétrico de
+verdad y un dibujo con un número al lado.
+
+| Cota | Valor | Por qué |
+| --- | --- | --- |
+| `rueda_escape_diametro` | **90** | Lo elige el paso: con 30 dientes da 9,4 mm de arco, el mínimo que se corta a mano con segueta sin astillar |
+| `rueda_escape_paso_diente` | 9,42 · derivado | **Tiene envolvente propia**: ≥ 8 mm. Es la cota que decide si la rueda es fabricable |
+| `rueda_escape_altura_diente` | **7** | Más alto da más retroceso y una punta más frágil; más bajo y la paleta se sale del diente al retroceder |
+| `rueda_escape_inclinacion_diente` | **8°** | De los 12° del paso. Con 0 el diente es radial y la paleta resbala; con mucho, la punta es una astilla |
+| `rueda_escape_cubo_diametro` | **24** | Dos diámetros y medio de eje. Menos y la rueda se descentra al apretar; más y pesa de más en el eje más rápido |
+
+Es la primera pieza que usa **los tres mapas** del Variable Studio: longitudes
+en `reloj_cota`, los dos ángulos en `reloj_angulo` y el número de dientes y el
+abarque en `reloj_num`. Hasta ahora `reloj_angulo.csv` estaba vacío.
+
+**Material y altura del diente los cierra R2.** Es la única pieza del reloj con
+un modo de desgaste conocido: si el canto se marca antes de 10.000 ciclos, pasa
+a latón.

@@ -19,6 +19,7 @@ norma: esta porque el objeto de esta hoja es comprobar el enlace, no fabricar.
 from __future__ import annotations
 
 import argparse
+import math
 import sys
 from pathlib import Path
 
@@ -1262,12 +1263,290 @@ def escuadra(c: Contratos) -> str:
     return "\n".join(p)
 
 
+def rueda_escape(c: Contratos) -> str:
+    """La pieza 2.1: la rueda de escape.
+
+    La primera del reloj cuyo contorno **se genera** en vez de dibujarse: los
+    treinta dientes salen del paso angular y de la inclinacion, asi que tocar
+    `dientes_escape` los redibuja todos. Eso es lo que hace que la rueda sea
+    parametrica de verdad y no un dibujo con un numero al lado.
+    """
+    r = c.contrato("rueda_escape")
+    diam = r.valor("rueda_escape_diametro").en_mm
+    fondo = r.valor("rueda_escape_diametro_fondo").en_mm
+    altura = r.valor("rueda_escape_altura_diente").en_mm
+    paso = r.valor("rueda_escape_paso_diente").en_mm
+    espesor = r.valor("rueda_escape_espesor").en_mm
+    cubo = r.valor("rueda_escape_cubo_diametro").en_mm
+    eje = r.valor("rueda_escape_eje_diametro").en_mm
+    inclinacion = r.valor("rueda_escape_inclinacion_diente").valor
+    angular = r.valor("rueda_escape_paso_angular").valor
+    dientes = int(c.valor("escape", "dientes_escape").valor)
+    abarca = c.valor("escape", "abarque_ancora").valor
+
+    e = 1.8
+    p: list[str] = [CABEZA.format(cota=COTA, ancho=900, alto=700)]
+    p.append(_texto(34, 34, "2.1 \u00b7 RUEDA DE ESCAPE", 15, TINTA, "start", "bold"))
+    p.append(
+        _texto(
+            34,
+            50,
+            "Boceto de comprobaci\u00f3n \u00b7 cotas le\u00eddas de docs/reloj/contratos.json",
+            9.5,
+            AUX,
+            "start",
+        )
+    )
+
+    cx, cy = 300.0, 300.0
+    rp, rf = diam * e / 2.0, fondo * e / 2.0
+
+    def polar(radio: float, ang: float) -> tuple[float, float]:
+        return cx + radio * math.cos(ang), cy + radio * math.sin(ang)
+
+    # El contorno completo, diente a diente. Cada uno sale del fondo, sube a
+    # la punta inclinada en el sentido de giro y vuelve al fondo del
+    # siguiente: la cara de ataque es la corta, el dorso la larga.
+    trozos: list[str] = []
+    for i in range(dientes):
+        a0 = i * angular
+        x0, y0 = polar(rf, a0)
+        x1, y1 = polar(rp, a0 + inclinacion)
+        x2, y2 = polar(rf, a0 + angular)
+        trozos.append(f"{'M' if i == 0 else 'L'}{x0:.2f} {y0:.2f}")
+        trozos.append(f"L{x1:.2f} {y1:.2f}")
+        trozos.append(f"L{x2:.2f} {y2:.2f}")
+    p.append(f'<path d="{" ".join(trozos)}Z" fill="none" stroke="{TINTA}" stroke-width="1.4"/>')
+    for radio, trazo in ((rf, "3 3"), (cubo * e / 2.0, "4 2")):
+        p.append(
+            f'<circle cx="{cx}" cy="{cy}" r="{radio:.1f}" fill="none" stroke="{AUX}" '
+            f'stroke-width="0.8" stroke-dasharray="{trazo}"/>'
+        )
+    p.append(
+        f'<circle cx="{cx}" cy="{cy}" r="{eje * e / 2.0:.1f}" fill="none" stroke="{TINTA}" '
+        f'stroke-width="1.4"/>'
+    )
+    for ang in (0.0, math.pi / 2.0):
+        dx, dy = math.cos(ang) * (rp + 16), math.sin(ang) * (rp + 16)
+        p.append(
+            f'<path d="M{cx - dx:.1f} {cy - dy:.1f}L{cx + dx:.1f} {cy + dy:.1f}" '
+            f'stroke="{AUX}" stroke-width="0.6" stroke-dasharray="10 3 2 3"/>'
+        )
+
+    # El sector que abarca el ancora, que es de donde sale su tamano.
+    a_ini, a_fin = math.radians(-135.0), math.radians(-135.0) + abarca * angular
+    xa, ya = polar(rp, a_ini)
+    xb, yb = polar(rp, a_fin)
+    p.append(
+        f'<path d="M{cx} {cy}L{xa:.1f} {ya:.1f}A{rp:.1f} {rp:.1f} 0 0 1 {xb:.1f} {yb:.1f}Z" '
+        f'fill="{COTA}" fill-opacity="0.08" stroke="{COTA}" stroke-width="0.9" '
+        f'stroke-dasharray="5 3"/>'
+    )
+    xm, ym = polar(rp * 0.66, (a_ini + a_fin) / 2.0)
+    p.append(_texto(xm, ym, f"{abarca:g} dientes", 8.5, COTA, peso="bold"))
+    p.append(_texto(xm, ym + 11, "lo que abarca el \u00e1ncora", 7.5, COTA))
+    p.append(_texto(xm, ym + 21, "#num.abarque_ancora", 7.5, AUX))
+
+    p.append(_texto(cx - rp - 40, 92, "LA RUEDA \u00b7 escala 1,8:1", 9, TINTA, "start"))
+    p.append(
+        _texto(
+            cx - rp - 40,
+            105,
+            f"{dientes} dientes generados del paso, no dibujados",
+            8,
+            AUX,
+            "start",
+        )
+    )
+    p.append(
+        _cota_v(
+            cy - rp,
+            cy + rp,
+            cx - rp - 40,
+            f"\u00d8{diam:.0f}",
+            "#cota.rueda_escape_diametro",
+            desde=cx - rp,
+        )
+    )
+    p.append(
+        _cota_v(
+            cy - rf,
+            cy + rf,
+            cx + rp + 40,
+            f"\u00d8{fondo:.0f}",
+            "#cota.rueda_escape_diametro_fondo",
+            desde=cx + rf,
+            lado="der",
+        )
+    )
+    p.append(
+        _cota_h(
+            cx - cubo * e / 2.0,
+            cx + cubo * e / 2.0,
+            cy + rp + 56,
+            f"\u00d8{cubo:.0f}",
+            "#cota.rueda_escape_cubo_diametro",
+        )
+    )
+    p.append(
+        f'<path d="M{cx - eje * e / 2.0:.1f} {cy:.1f}l-50 60h-30" stroke="{COTA}" '
+        f'stroke-width="1" fill="none"/>'
+    )
+    p.append(
+        _texto(cx - eje * e / 2.0 - 84, cy + 56, f"\u00d8{eje:.0f} H7", 9.5, COTA, "end", "bold")
+    )
+    p.append(
+        _texto(cx - eje * e / 2.0 - 84, cy + 66, "#cota.rueda_escape_eje_diametro", 7.5, AUX, "end")
+    )
+
+    # ---- detalle del diente ----------------------------------------------
+    dx0, dy0 = 720.0, 250.0
+    f2 = 10.0
+    p.append(_texto(dx0 - 40, 92, "UN DIENTE \u00b7 escala 10:1", 9, TINTA, "start"))
+    p.append(_texto(dx0 - 40, 105, "el sentido de giro va a la derecha", 8, AUX, "start"))
+    base = paso * f2
+    alto = altura * f2
+    sesgo = math.tan(inclinacion) * alto if inclinacion else 0.0
+    p.append(
+        f'<path d="M{dx0 - base:.1f} {dy0:.1f}L{dx0 - base + sesgo:.1f} {dy0 - alto:.1f}'
+        f'L{dx0:.1f} {dy0:.1f}L{dx0 + sesgo:.1f} {dy0 - alto:.1f}L{dx0 + base:.1f} {dy0:.1f}" '
+        f'fill="none" stroke="{TINTA}" stroke-width="1.6"/>'
+    )
+    p.append(
+        f'<path d="M{dx0 - base - 20:.1f} {dy0:.1f}H{dx0 + base + 20:.1f}" stroke="{AUX}" '
+        f'stroke-width="0.8" stroke-dasharray="4 2"/>'
+    )
+    p.append(_texto(dx0 + base + 24, dy0 + 3, "el fondo", 8, AUX, "start"))
+    # El angulo se mide entre la cara de ataque y el radio, que en esta vista
+    # es la vertical. Marcarlo en la punta y no en la base es lo que hace que
+    # se entienda que lo que se inclina es la punta.
+    xr = dx0 - base
+    p.append(
+        f'<path d="M{xr:.1f} {dy0 + 14:.1f}V{dy0 - alto - 30:.1f}" stroke="{AUX}" '
+        f'stroke-width="0.6" stroke-dasharray="6 3"/>'
+    )
+    p.append(
+        f'<path d="M{xr:.1f} {dy0 - alto - 30:.1f}A30 30 0 0 1 '
+        f"{xr + 30 * math.sin(inclinacion):.1f} "
+        f'{dy0 - alto - 30 + 30 * (1 - math.cos(inclinacion)):.1f}" stroke="{COTA}" '
+        f'stroke-width="1" fill="none"/>'
+    )
+    p.append(
+        _texto(
+            xr + 8,
+            dy0 - alto - 36,
+            f"{math.degrees(inclinacion):.0f}\u00b0",
+            9.5,
+            COTA,
+            "start",
+            "bold",
+        )
+    )
+    p.append(
+        _texto(
+            xr + 8,
+            dy0 - alto - 26,
+            "#angulo.rueda_escape_inclinacion_diente",
+            7.5,
+            AUX,
+            "start",
+        )
+    )
+    p.append(_texto(xr + 4, dy0 + 16, "cara de ataque", 7.5, COTA, "start"))
+    p.append(_texto(dx0 + base / 2.0, dy0 + 16, "el dorso", 7.5, AUX))
+    p.append(
+        _cota_v(
+            dy0 - alto,
+            dy0,
+            dx0 - base - 44,
+            f"{altura:.0f}",
+            "#cota.rueda_escape_altura_diente",
+            desde=dx0 - base,
+        )
+    )
+    p.append(_cota_h(dx0 - base, dx0, dy0 + 70, f"{paso:.1f}", "#cota.rueda_escape_paso_diente"))
+    p.append(
+        _texto(
+            dx0 - base,
+            dy0 + 108,
+            "el paso es de ARCO, no de cuerda: se mide sobre el c\u00edrculo de punta",
+            8,
+            AUX,
+            "start",
+        )
+    )
+    p.append(
+        _texto(
+            dx0 - base,
+            dy0 + 122,
+            f"{math.degrees(angular):.0f}\u00b0 por diente \u00b7 "
+            "#angulo.rueda_escape_paso_angular",
+            8,
+            AUX,
+            "start",
+        )
+    )
+
+    p.append(
+        '<rect x="34" y="520" width="832" height="46" rx="4" fill="#fff4e5" '
+        'stroke="#d98324" stroke-width="1"/>'
+    )
+    p.append(
+        _texto(
+            46,
+            539,
+            "NO ES PLANTILLA DE CORTE, Y ESTA MENOS QUE NINGUNA: el perfil del diente decide el "
+            "reposo del escape.",
+            9.5,
+            "#8a5200",
+            "start",
+            "bold",
+        )
+    )
+    p.append(
+        _texto(
+            46,
+            555,
+            "El material y la altura del diente los cierra R2. Es la \u00fanica "
+            "pieza del reloj con un modo de desgaste conocido.",
+            9,
+            "#8a5200",
+            "start",
+        )
+    )
+    p.append(
+        f'<rect x="34" y="584" width="832" height="52" fill="none" stroke="{TINTA}" '
+        'stroke-width="1.2"/>'
+    )
+    campos = [
+        ("N\u00famero", "2.1"),
+        ("Material", "Abedul 4 mm"),
+        ("Espesor", f"{espesor:.0f} mm"),
+        ("Cantidad", "1"),
+        ("Dientes", f"{dientes}"),
+        ("Conjunto", "Escape \u00b7 banco R2"),
+        ("Estado", "PENDIENTE \u00b7 R2"),
+    ]
+    celda = 832 / len(campos)
+    for i, (k, val) in enumerate(campos):
+        bx = 34 + i * celda
+        p.append(
+            f'<path d="M{bx:.1f} 584h{celda:.1f}v52h-{celda:.1f}z" fill="none" '
+            f'stroke="{AUX}" stroke-width="0.6"/>'
+        )
+        p.append(_texto(bx + 10, 602, k.upper(), 7.5, AUX, "start"))
+        p.append(_texto(bx + 10, 621, val, 10.5, TINTA, "start", "bold"))
+    p.append("</svg>")
+    return "\n".join(p)
+
+
 PIEZAS = {
     "varilla": varilla,
     "lenteja": lenteja,
     "soporte": soporte,
     "muelle": muelle,
     "escuadra": escuadra,
+    "rueda_escape": rueda_escape,
 }
 
 PREFIJOS = {
@@ -1277,6 +1556,7 @@ PREFIJOS = {
     "soporte": ("soporte_", "anclaje_"),
     "muelle": ("muelle_",),
     "escuadra": ("escuadra_",),
+    "rueda_escape": ("rueda_escape_",),
 }
 """Que cotas son de cada pieza. El prefijo del nombre decide, igual que
 decide el gemelo de radio: asi se puede leer el contrato y saber de quien es
@@ -1299,6 +1579,7 @@ INTERFACES = {
         "varilla_taladro_lejos",
     ),
     "lenteja": ("vastago_diametro", "vastago_saliente", "longitud_pendulo_nominal"),
+    "rueda_escape": ("dientes_escape", "abarque_ancora", "eje_diametro", "vuelta_rueda_escape"),
     "escuadra": (
         "anclaje_tornillo_separacion",
         "anclaje_tornillo_diametro",

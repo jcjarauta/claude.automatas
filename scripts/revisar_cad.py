@@ -332,6 +332,58 @@ def _medidas_fleje_step(c: Contratos, ruta: Path) -> list[Medida]:
     return medidas
 
 
+def _medidas_escuadra_step(c: Contratos, ruta: Path) -> list[Medida]:
+    """La tabla del banco R1.
+
+    Es la unica pieza que se acota desde sus propios cantos y no desde el
+    datum del pendulo, porque el datum -el canto de apriete del bloque- no es
+    ningun borde de esta tabla. Aqui se comprueba exactamente eso.
+    """
+    b = c.contrato("banco_pendulo")
+    (ancho, alto, espesor), cilindros = _caja_y_cilindros(ruta)
+    medidas = [
+        Medida("ancho de la tabla", b.valor("escuadra_ancho").en_mm, ancho),
+        Medida("alto de la tabla", b.valor("escuadra_alto").en_mm, alto),
+        Medida("espesor de la tabla", b.valor("escuadra_espesor").en_mm, espesor),
+    ]
+    guia = b.valor("escuadra_taladro_diametro").en_mm
+    agujeros = sorted((c0 for d, c0 in cilindros if abs(d - guia) <= HOLGURA), key=lambda c0: c0[0])
+    medidas.append(Medida("taladros, cuantos", 2.0, float(len(agujeros))))
+    medidas.append(Medida("taladros, diametro", guia, guia if agujeros else None))
+    # El taladro de guia es mas estrecho que el del bloque, y confundirlos es
+    # el error que deja el tirafondo sin agarre.
+    paso = c.valor("anclaje", "anclaje_tornillo_diametro").en_mm
+    medidas.append(
+        Medida(
+            "no se taladro al paso del bloque",
+            0.0,
+            round(max(0.0, guia + HOLGURA - min((d for d, _ in cilindros), default=paso)), 2),
+        )
+    )
+    if len(agujeros) != 2:
+        return medidas
+    izq, der = agujeros
+    medidas.append(
+        Medida(
+            "separacion entre taladros",
+            c.valor("anclaje", "anclaje_tornillo_separacion").en_mm,
+            der[0] - izq[0],
+        )
+    )
+    al_lado = b.valor("escuadra_taladro_al_lado").en_mm
+    medidas.append(Medida("del canto izquierdo al taladro", al_lado, izq[0]))
+    medidas.append(Medida("del canto derecho al taladro", al_lado, ancho - der[0]))
+    # El canto de ARRIBA, que es el que se pone a nivel al montar.
+    medidas.append(
+        Medida(
+            "del canto de arriba al taladro",
+            b.valor("escuadra_taladro_al_canto").en_mm,
+            alto - izq[1],
+        )
+    )
+    return medidas
+
+
 def _medidas_soporte_step(c: Contratos, ruta: Path) -> list[Medida]:
     return _medidas_dos_taladros(
         c,
@@ -365,6 +417,7 @@ REVISORES_STEP = {
     "soporte": _medidas_soporte_step,
     "placa": _medidas_placa_step,
     "fleje": _medidas_fleje_step,
+    "escuadra": _medidas_escuadra_step,
 }
 
 

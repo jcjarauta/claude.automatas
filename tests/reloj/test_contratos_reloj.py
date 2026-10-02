@@ -19,8 +19,9 @@ from pathlib import Path
 import pytest
 
 from compile.contratos import Contratos, Estado, Valor, cargar
+from core.reloj.escape import par_con_rendimiento, par_minimo_teorico
 from core.reloj.pendulo import Pendulo
-from core.units import Kilogramos, Metros
+from core.units import Julios, Kilogramos, Metros
 from scripts.exportar_variables import (
     CABECERA_ONSHAPE,
     COLUMNA_VALOR,
@@ -1009,3 +1010,92 @@ def test_el_taladro_cae_dentro_de_la_franja_util(reloj: Contratos):
     assert (
         banco.valor("escuadra_taladro_al_lado").en_mm > banco.valor("escuadra_mordaza_libre").en_mm
     )
+
+
+# --- 2.1 · la rueda de escape -------------------------------------------
+
+
+def test_el_paso_del_diente_sale_del_diametro(reloj: Contratos):
+    r = reloj.contrato("rueda_escape")
+    dientes = reloj.valor("escape", "dientes_escape").valor
+    assert r.valor("rueda_escape_paso_diente").en_mm == pytest.approx(
+        math.pi * r.valor("rueda_escape_diametro").en_mm / dientes, abs=0.01
+    )
+
+
+def test_el_diente_se_puede_cortar_a_mano(reloj: Contratos):
+    """LA envolvente de esta pieza, y la que fija el diámetro. Por debajo de
+    8 mm de arco, la segueta no entra entre dos dientes sin astillar el
+    contrachapado, y una punta astillada cambia el reposo del escape."""
+    assert reloj.valor("rueda_escape", "rueda_escape_paso_diente").en_mm >= 8.0
+
+
+def test_el_fondo_sale_del_diametro_y_la_altura(reloj: Contratos):
+    r = reloj.contrato("rueda_escape")
+    assert r.valor("rueda_escape_diametro_fondo").en_mm == pytest.approx(
+        r.valor("rueda_escape_diametro").en_mm - 2.0 * r.valor("rueda_escape_altura_diente").en_mm,
+        abs=0.01,
+    )
+
+
+def test_el_diente_no_es_mas_alto_que_ancho(reloj: Contratos):
+    """Un diente más alto que su base es una astilla esperando a romperse, y
+    la punta del diente es justo donde apoya la paleta."""
+    r = reloj.contrato("rueda_escape")
+    base = (
+        math.pi
+        * r.valor("rueda_escape_diametro_fondo").en_mm
+        / reloj.valor("escape", "dientes_escape").valor
+    )
+    assert r.valor("rueda_escape_altura_diente").en_mm <= base
+
+
+def test_el_cubo_deja_material_alrededor_del_eje(reloj: Contratos):
+    r = reloj.contrato("rueda_escape")
+    pared = (
+        r.valor("rueda_escape_cubo_diametro").en_mm - r.valor("rueda_escape_eje_diametro").en_mm
+    ) / 2.0
+    assert pared >= 3.0
+
+
+def test_el_cubo_no_llega_al_fondo_del_diente(reloj: Contratos):
+    """Entre el cubo y el fondo del diente tiene que quedar disco: es lo que
+    aguanta el par, y en contrachapado de 4 no sobra."""
+    r = reloj.contrato("rueda_escape")
+    corona = (
+        r.valor("rueda_escape_diametro_fondo").en_mm - r.valor("rueda_escape_cubo_diametro").en_mm
+    ) / 2.0
+    assert corona >= 10.0
+
+
+def test_la_rueda_usa_el_eje_congelado(reloj: Contratos):
+    assert reloj.valor("rueda_escape", "rueda_escape_eje_diametro").en_mm == pytest.approx(
+        reloj.valor("eje", "eje_diametro").en_mm, abs=0.01
+    )
+
+
+def test_el_paso_angular_es_una_vuelta_entre_los_dientes(reloj: Contratos):
+    assert reloj.valor("rueda_escape", "rueda_escape_paso_angular").valor == pytest.approx(
+        2.0 * math.pi / reloj.valor("escape", "dientes_escape").valor, abs=1e-6
+    )
+
+
+def test_la_inclinacion_del_diente_cabe_en_su_paso(reloj: Contratos):
+    """Si la punta se inclina más de lo que mide el paso, el diente invade al
+    de al lado y deja de haber hueco donde meter la segueta."""
+    r = reloj.contrato("rueda_escape")
+    assert (
+        0.0
+        < r.valor("rueda_escape_inclinacion_diente").valor
+        < r.valor("rueda_escape_paso_angular").valor
+    )
+
+
+def test_el_par_que_pide_el_escape_cabe_de_sobra_en_la_pesa(reloj: Contratos):
+    """Cruza C12 con la previsión de la pesa: incluso con el rendimiento más
+    pesimista, el par que hace falta en el eje de escape es ridículo frente a
+    lo que da el tambor. Si esto fallara, el reloj no sería viable."""
+    perdida = 27.0e-6  # bench/reloj/pendulo.json, con Q previsto de 1.500
+    ideal = par_minimo_teorico(Julios(perdida), int(reloj.valor("escape", "dientes_escape").valor))
+    pesimista = par_con_rendimiento(ideal, rendimiento=0.02)
+    assert pesimista < 0.02, "el escape pediría más par del que un reloj de pared entrega"

@@ -415,6 +415,77 @@
       ]
     },
     {
+      "nombre": "rueda_escape",
+      "estado": "pendiente",
+      "congelado_el": "",
+      "porque": "La geometria sale del compromiso entre cortar a mano y caber en la platina, pero el material y la altura del diente los cierra R2: es la unica pieza del reloj con desgaste conocido",
+      "valores": [
+        {
+          "nombre": "rueda_escape_diametro",
+          "valor": 0.09,
+          "unidad": "m",
+          "descripcion": "Diametro de punta de diente. Lo elige el paso: con 30 dientes, 90 mm dan 9,4 mm de arco por diente, que es lo minimo que se corta a mano con una segueta sin astillar",
+          "tolerancia": "+/-0,5"
+        },
+        {
+          "nombre": "rueda_escape_paso_diente",
+          "valor": 0.0094248,
+          "unidad": "m",
+          "descripcion": "DERIVADO: pi x diametro / dientes. Es la cota que decide si la rueda se puede cortar a mano, y por eso tiene envolvente propia",
+          "tolerancia": "derivado"
+        },
+        {
+          "nombre": "rueda_escape_altura_diente",
+          "valor": 0.007,
+          "unidad": "m",
+          "descripcion": "De la punta al fondo. Mas alto da mas recorrido de retroceso y mas fragil es la punta; mas bajo y la paleta se sale del diente al retroceder",
+          "tolerancia": "+/-0,3"
+        },
+        {
+          "nombre": "rueda_escape_diametro_fondo",
+          "valor": 0.076,
+          "unidad": "m",
+          "descripcion": "DERIVADO: diametro - 2 x altura_diente. Es el circulo que se traza primero al dibujar",
+          "tolerancia": "derivado"
+        },
+        {
+          "nombre": "rueda_escape_espesor",
+          "valor": 0.004,
+          "unidad": "m",
+          "descripcion": "Contrachapado de abedul de 4. PROVISIONAL: es la unica pieza del reloj con un modo de desgaste conocido, y si el canto se marca antes de 10.000 ciclos pasa a laton",
+          "tolerancia": "+/-0,3"
+        },
+        {
+          "nombre": "rueda_escape_cubo_diametro",
+          "valor": 0.024,
+          "unidad": "m",
+          "descripcion": "Cubo alrededor del eje. Dos diametros y medio de eje: menos y la rueda se descentra al apretar, mas y pesa de mas en el eje mas rapido del reloj",
+          "tolerancia": "+/-0,5"
+        },
+        {
+          "nombre": "rueda_escape_eje_diametro",
+          "valor": 0.01,
+          "unidad": "m",
+          "descripcion": "DERIVADO: el mismo eje_diametro que el resto. Una sola varilla calibrada para todo",
+          "tolerancia": "H7, ajuste deslizante"
+        },
+        {
+          "nombre": "rueda_escape_inclinacion_diente",
+          "valor": 0.13962634015954636,
+          "unidad": "rad",
+          "descripcion": "Lo que se inclina la punta del diente en el sentido de giro. Con 0 el diente es radial y la paleta resbala; con mucho, la punta se vuelve una astilla. 8 de los 12 del paso",
+          "tolerancia": "+/-1 grado"
+        },
+        {
+          "nombre": "rueda_escape_paso_angular",
+          "valor": 0.20943951023931956,
+          "unidad": "rad",
+          "descripcion": "DERIVADO: una vuelta entre dientes_escape. Doce grados por diente",
+          "tolerancia": "derivado"
+        }
+      ]
+    },
+    {
       "nombre": "tren",
       "estado": "pendiente",
       "congelado_el": "",
