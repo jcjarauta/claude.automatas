@@ -46,10 +46,10 @@
       "valores": [
         {
           "nombre": "varilla_largo",
-          "valor": 1.08,
+          "valor": 0.99,
           "unidad": "m",
-          "descripcion": "Largo de corte: 994 nominal + 40 sobre el punto de flexion + 46 bajo el centro de la lenteja. De esos 46, 20 son sobrante y se recortan al regular",
-          "tolerancia": "+2/0, se recorta al final"
+          "descripcion": "Largo de corte: 40 sobre el punto de flexion + 950 bajo. La varilla acaba antes de la lenteja y de ahi para abajo es vastago roscado",
+          "tolerancia": "+/-1"
         },
         {
           "nombre": "varilla_ancho",
@@ -64,13 +64,6 @@
           "unidad": "m",
           "descripcion": "Espesor del liston. Con la veta a lo largo: la varilla trabaja a flexion y la humedad la mueve menos en esa direccion",
           "tolerancia": "+/-0,3 de sierra"
-        },
-        {
-          "nombre": "varilla_sobrante",
-          "valor": 0.02,
-          "unidad": "m",
-          "descripcion": "Lo que se corta al final, cuando la regulacion fija donde va la lenteja. No se corta antes: el nominal son 994 y el definitivo lo decide el cronometro",
-          "tolerancia": ""
         },
         {
           "nombre": "varilla_sobre_flexion",
@@ -99,6 +92,98 @@
           "unidad": "m",
           "descripcion": "Del extremo de arriba al segundo. Dos y no uno: un solo tornillo deja girar la varilla",
           "tolerancia": "+/-0,3"
+        },
+        {
+          "nombre": "varilla_vastago_diametro",
+          "valor": 0.0062,
+          "unidad": "m",
+          "descripcion": "Taladro en el extremo de abajo que recibe el vastago roscado M6, encolado. 6,2 para que entre con cola",
+          "tolerancia": "+0,2/0"
+        },
+        {
+          "nombre": "varilla_vastago_profundidad",
+          "valor": 0.04,
+          "unidad": "m",
+          "descripcion": "Lo que entra el vastago en la varilla. Cinco diametros de empotramiento: la union trabaja a flexion",
+          "tolerancia": "+2/0"
+        },
+        {
+          "nombre": "vastago_diametro",
+          "valor": 0.006,
+          "unidad": "m",
+          "descripcion": "Varilla roscada M6. Sobre ella corre la tuerca que sube y baja la lenteja: es el organo de regulacion",
+          "tolerancia": "M6"
+        },
+        {
+          "nombre": "vastago_largo",
+          "valor": 0.11,
+          "unidad": "m",
+          "descripcion": "40 empotrados en la varilla mas 70 salientes",
+          "tolerancia": "+/-1"
+        },
+        {
+          "nombre": "vastago_saliente",
+          "valor": 0.07,
+          "unidad": "m",
+          "descripcion": "Lo que sobresale bajo la varilla. Da +-29 mm de recorrido util a la lenteja, es decir +-21 min/dia: veinte veces lo que puede fallar el montaje",
+          "tolerancia": ""
+        }
+      ]
+    },
+    {
+      "nombre": "lenteja",
+      "estado": "pendiente",
+      "congelado_el": "",
+      "porque": "La masa y el diametro deciden el Q: mas masa perturba menos, mas diametro roza mas con el aire. R1 mide cual de las dos manda",
+      "valores": [
+        {
+          "nombre": "lenteja_masa",
+          "valor": 1.032,
+          "unidad": "kg",
+          "descripcion": "Objetivo de masa. Sale de las cotas y de las densidades, no se teclea: 969 g de plomo mas 63 de madera. Se pesa en R1",
+          "tolerancia": "+/-5 %, se pesa"
+        },
+        {
+          "nombre": "lenteja_diametro",
+          "valor": 0.1,
+          "unidad": "m",
+          "descripcion": "Compacta a proposito: el rozamiento con el aire va con el area frontal y es lo que se come el Q",
+          "tolerancia": "+/-0,5"
+        },
+        {
+          "nombre": "lenteja_espesor",
+          "valor": 0.027,
+          "unidad": "m",
+          "descripcion": "Disco plano, no lenticular. La forma de lenteja es tradicion y un torno; el disco lo hace el pivote de lijado",
+          "tolerancia": "+/-0,5"
+        },
+        {
+          "nombre": "lenteja_cavidad_diametro",
+          "valor": 0.08,
+          "unidad": "m",
+          "descripcion": "Alojamiento del plomo. Centrado, para que el centro de masas caiga en el eje",
+          "tolerancia": "+/-0,5"
+        },
+        {
+          "nombre": "lenteja_cavidad_profundidad",
+          "valor": 0.017,
+          "unidad": "m",
+          "descripcion": "Profundidad del alojamiento. Deja 5 mm de fondo y 5 de tapa",
+          "tolerancia": "+/-0,5"
+        },
+        {
+          "nombre": "lenteja_taladro_diametro",
+          "valor": 0.0065,
+          "unidad": "m",
+          "descripcion": "Pasa sobre el vastago M6 con holgura: la lenteja sube y baja con la tuerca, no se rosca",
+          "tolerancia": "+0,3/0"
+        },
+        {
+          "nombre": "lenteja_centro_bajo_varilla",
+          "valor": 0.044,
+          "unidad": "m",
+          "descripcion": "Del extremo de la varilla al centro de la lenteja, nominal. 950 + 44 = 994, que es la longitud de pendulo. Lo mueve la tuerca",
+          "tolerancia": "nominal, lo fija la regulacion"
         }
       ]
     },

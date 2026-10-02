@@ -502,23 +502,15 @@ def test_la_descripcion_del_gemelo_dice_de_donde_sale(reloj: Contratos):
 # ---------------------------------------------------------------------------
 
 
-def test_el_largo_de_la_varilla_sale_de_la_longitud_del_pendulo(reloj: Contratos):
-    """994 nominal + 40 por encima del punto de flexión + 46 por debajo del
-    centro de la lenteja. Si esto se separa, la varilla se corta para un
-    péndulo que no es el que se va a montar."""
+def test_la_cadena_del_pendulo_suma_la_longitud_nominal(reloj: Contratos):
+    """40 por encima del punto de flexión + la varilla + lo que hay del
+    extremo de la varilla al centro de la lenteja = 994. Si esto se separa,
+    la varilla se corta para un péndulo que no es el que se va a montar."""
     nominal = reloj.valor("oscilador", "longitud_pendulo_nominal").en_mm
     arriba = reloj.valor("pendulo", "varilla_sobre_flexion").en_mm
     largo = reloj.valor("pendulo", "varilla_largo").en_mm
-    assert largo == pytest.approx(nominal + arriba + 46.0)
-
-
-def test_el_sobrante_cabe_bajo_el_centro_de_la_lenteja(reloj: Contratos):
-    """Lo que se recorta al regular tiene que estar dentro de los 46 mm que
-    hay por debajo, o se recortaría material que hace falta."""
-    nominal = reloj.valor("oscilador", "longitud_pendulo_nominal").en_mm
-    arriba = reloj.valor("pendulo", "varilla_sobre_flexion").en_mm
-    largo = reloj.valor("pendulo", "varilla_largo").en_mm
-    assert reloj.valor("pendulo", "varilla_sobrante").en_mm < largo - nominal - arriba
+    centro = reloj.valor("lenteja", "lenteja_centro_bajo_varilla").en_mm
+    assert (largo - arriba) + centro == pytest.approx(nominal)
 
 
 def test_los_dos_taladros_caben_en_el_tramo_de_arriba(reloj: Contratos):
@@ -544,3 +536,102 @@ def test_los_dos_taladros_no_se_pisan(reloj: Contratos):
     lejos = reloj.valor("pendulo", "varilla_taladro_lejos").en_mm
     taladro = reloj.valor("pendulo", "varilla_taladro_diametro").en_mm
     assert lejos - cerca > taladro
+
+
+# ---------------------------------------------------------------------------
+# La pieza 1.2, la lenteja, y el vastago que la sostiene
+# ---------------------------------------------------------------------------
+
+PLOMO = 11340.0
+MADERA = 500.0
+"""kg/m³, nominales de tabla. Se sustituyen por el peso real en R1: el plomo
+fundido en casa trae huecos y la madera depende de la humedad."""
+
+
+def _masa_lenteja(reloj: Contratos) -> float:
+    """La masa que sale de las cotas. No se teclea en ningún sitio."""
+    cilindro = math.pi / 4.0
+    v_cavidad = (
+        cilindro
+        * reloj.valor("lenteja", "lenteja_cavidad_diametro").metros ** 2
+        * reloj.valor("lenteja", "lenteja_cavidad_profundidad").metros
+    )
+    v_total = (
+        cilindro
+        * reloj.valor("lenteja", "lenteja_diametro").metros ** 2
+        * reloj.valor("lenteja", "lenteja_espesor").metros
+    )
+    return v_cavidad * PLOMO + (v_total - v_cavidad) * MADERA
+
+
+def test_la_masa_de_la_lenteja_sale_de_sus_cotas(reloj: Contratos):
+    """Es el `core/solido.py` del escribiente aplicado aquí: la masa es una
+    consecuencia de la geometría, no un número aparte que pueda derivar."""
+    assert reloj.valor("lenteja", "lenteja_masa").valor == pytest.approx(
+        _masa_lenteja(reloj), rel=0.01
+    )
+
+
+def test_la_lenteja_pesa_lo_que_el_pendulo_necesita(reloj: Contratos):
+    """Alrededor de un kilo. Más ligera, el escape la perturba; más pesada,
+    el muelle de suspensión trabaja de más."""
+    assert 0.8 < reloj.valor("lenteja", "lenteja_masa").valor < 1.3
+
+
+def test_la_cavidad_del_plomo_deja_pared_fondo_y_tapa(reloj: Contratos):
+    """Si la cavidad llega al borde, el plomo se sale por un lado al vaciar."""
+    pared = (
+        reloj.valor("lenteja", "lenteja_diametro").en_mm
+        - reloj.valor("lenteja", "lenteja_cavidad_diametro").en_mm
+    ) / 2.0
+    resto = (
+        reloj.valor("lenteja", "lenteja_espesor").en_mm
+        - reloj.valor("lenteja", "lenteja_cavidad_profundidad").en_mm
+    )
+    assert pared >= 5.0, "poca pared alrededor del plomo"
+    assert resto >= 5.0, "poco fondo y tapa"
+
+
+def test_la_lenteja_pasa_sobre_el_vastago_sin_roscarse(reloj: Contratos):
+    """Sube y baja con la tuerca. Si el agujero fuera justo, rozaría y la
+    regulación dejaría de ser fina."""
+    hueco = (
+        reloj.valor("lenteja", "lenteja_taladro_diametro").en_mm
+        - reloj.valor("pendulo", "vastago_diametro").en_mm
+    )
+    assert 0.2 <= hueco <= 1.0
+
+
+def test_el_vastago_entra_en_la_varilla_lo_que_dice(reloj: Contratos):
+    dentro = reloj.valor("pendulo", "varilla_vastago_profundidad").en_mm
+    fuera = reloj.valor("pendulo", "vastago_saliente").en_mm
+    assert reloj.valor("pendulo", "vastago_largo").en_mm == pytest.approx(dentro + fuera)
+
+
+def test_el_vastago_se_empotra_cinco_diametros(reloj: Contratos):
+    """La unión trabaja a flexión: es el punto donde la varilla de madera
+    entrega el par a una varilla de 6 mm."""
+    dentro = reloj.valor("pendulo", "varilla_vastago_profundidad").en_mm
+    assert dentro >= 5.0 * reloj.valor("pendulo", "vastago_diametro").en_mm
+
+
+def test_el_taladro_del_vastago_cabe_en_el_espesor_de_la_varilla(reloj: Contratos):
+    """Un taladro de Ø6,2 en un listón de 8 deja 0,9 mm de pared a cada lado.
+    Es poco, y por eso está aquí: si el espesor baja, salta."""
+    pared = (
+        reloj.valor("pendulo", "varilla_espesor").en_mm
+        - reloj.valor("pendulo", "varilla_vastago_diametro").en_mm
+    ) / 2.0
+    assert pared >= 0.8, f"solo quedan {pared:.1f} mm de pared alrededor del vastago"
+
+
+def test_el_recorrido_de_la_tuerca_cubre_el_error_de_montaje(reloj: Contratos):
+    """El vástago saliente menos lo que ocupa la lenteja es el recorrido útil.
+    Tiene que dar al menos ±5 min/día, que es lo que puede fallar el montaje
+    mientras el punto de flexión del muelle siga sin ficha."""
+    saliente = reloj.valor("pendulo", "vastago_saliente").metros
+    espesor = reloj.valor("lenteja", "lenteja_espesor").metros
+    nominal = reloj.valor("oscilador", "longitud_pendulo_nominal").metros
+    recorrido = (saliente - espesor) / 2.0
+    segundos_por_dia = 0.5 * recorrido / nominal * 86400.0
+    assert segundos_por_dia >= 300.0, f"solo {segundos_por_dia:.0f} s/dia de margen"
