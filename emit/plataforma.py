@@ -114,6 +114,29 @@ def circulo(centro: Punto, radio: float) -> Perfil:
     return [Arco(centro, radio, 0.0, 2 * math.pi)]
 
 
+def seguidor(c: dict[str, float] | None = None) -> Perfil:
+    """La barra del seguidor: pivote, rodillo, muelle y los dos al sector.
+
+    Es una barra de dos cubos como los brazos, y lleva **cuatro** agujeros en
+    línea porque todo lo que cuelga del seguidor tira sobre el mismo eje: el
+    muelle cerca, para que su par apenas varíe; los dos tornillos del sector
+    repartidos, porque el agujero del sector es de paso y hacen falta dos
+    puntos para quitarle el giro; y el rodillo al final, a 45.
+
+    En línea y no en una brida alrededor del cubo: una brida con los
+    tornillos a 11 obligaría a un cubo de Ø28 en una pieza de 45 de largo.
+    """
+    c = contrato_mm() if c is None else c
+    largo = c["brazo_seguidor"]
+    perfil = barra(largo, c["seguidor_cubo_diametro"] / 2, c["seguidor_extremo_diametro"] / 2)
+    perfil += circulo((0.0, 0.0), c["seguidor_pivote_diametro"] / 2)
+    perfil += circulo((c["seguidor_muelle_radio"], 0.0), c["seguidor_muelle_diametro"] / 2)
+    for cota in ("seguidor_sector_cerca", "seguidor_sector_lejos"):
+        perfil += circulo((c[cota], 0.0), c["seguidor_sector_diametro"] / 2)
+    perfil += circulo((largo, 0.0), c["seguidor_rodillo_diametro"] / 2)
+    return perfil
+
+
 def disco(radio: float, agujero: float) -> Perfil:
     """Un disco con un agujero concéntrico: el sector y el tambor.
 
@@ -218,6 +241,7 @@ PERFILES = {
     "eje_pivote": lambda c: eje_pivote(c),
     "sector": lambda c: sector(c),
     "tambor": lambda c: tambor(c),
+    "seguidor": lambda c: seguidor(c),
 }
 """Las piezas prismáticas que no son barras. El resto sale de `BRAZOS`.
 
@@ -413,6 +437,30 @@ LISTADO: dict[str, Ficha] = {
         "Cilindro liso, sin pestañas. Lo que mantiene la cinta en su sitio no son las "
         "pestañas sino que los dos asientos sean coplanarios, y eso es una tolerancia y "
         "no un resalte. R8 son 160 espesores de cinta: pasa de sobra el radio mínimo.",
+    ),
+    "seguidor": Ficha(
+        "barra de dos cubos con cuatro agujeros en línea, en POM-C de 5",
+        3,
+        (
+            Variable("cota", "brazo_seguidor", "entre centros"),
+            Variable("cota", "seguidor_espesor", "espesor", en_el_perfil=False),
+            Variable("cota", "seguidor_pivote_diametro", "Ø alojamiento del casquillo", "H7"),
+            Variable("cota", "seguidor_cubo_diametro", "Ø del cubo"),
+            Variable("cota", "seguidor_extremo_diametro", "Ø del extremo"),
+            Variable("cota", "seguidor_rodillo_diametro", "Ø paso del eje del rodillo"),
+            Variable("cota", "seguidor_muelle_radio", "pivote al muelle"),
+            Variable("cota", "seguidor_muelle_diametro", "Ø anclaje del muelle"),
+            Variable("cota", "seguidor_sector_cerca", "pivote al tornillo cercano"),
+            Variable("cota", "seguidor_sector_lejos", "pivote al tornillo lejano"),
+            Variable("cota", "seguidor_sector_diametro", "Ø paso de los dos al sector"),
+        ),
+        ("plancha", "seguidor_espesor"),
+        "La misma plancha de POM-C 5 que las levas y el sector, y justo el largo útil "
+        "del casquillo GFM-0810-06, que mide 6 con 1 de valona. El muelle va cerca del "
+        "pivote a propósito: su fuerza va con 1/r y su recorrido con r, así que la "
+        "variación del par va con r². A 12 varía un 9,6 % en todo el barrido; a 30, un 60 %. "
+        "Y el sector se cala con DOS tornillos en línea con el brazo: su agujero es de "
+        "paso y no sitúa nada, y una brida con ellos a 11 pediría un cubo de Ø28.",
     ),
 }
 """Qué se teclea en cada pieza de la plataforma, y nada más.

@@ -116,7 +116,14 @@ def test_la_hoja_acota_todo_lo_que_la_ficha_declara():
         # Los radios van en la leyenda, con el nombre que pide el campo:
         # diámetro si es un agujero, radio si es un arco de contorno.
         esperadas |= {n.removesuffix("_radio") for n in f.radios} | set(f.radios)
-        dibujadas = set(re.findall(r'class="cotavar"[^>]*>[^<]*#cota\.([a-z0-9_]+)<', texto))
+        # Una leyenda puede nombrar VARIAS cotas en el mismo rótulo, cuando
+        # dos rasgos valen lo mismo: hay que sacarlas todas y no solo la
+        # última, que es lo que hacía anclar la captura al «<» de cierre.
+        dibujadas = {
+            n
+            for trozo in re.findall(r'class="cotavar"[^>]*>([^<]*)<', texto)
+            for n in re.findall(r"#cota\.([a-z0-9_]+)", trozo)
+        }
         # Una cota circular vale dibujada en cualquiera de sus dos formas: la
         # leyenda pone la que pide el campo, no la que diga la ficha.
         faltan = {

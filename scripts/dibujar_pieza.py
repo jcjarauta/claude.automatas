@@ -38,6 +38,7 @@ from emit.plataforma import (
     eje_pivote,
     mordaza,
     sector,
+    seguidor,
     tambor,
 )
 from emit.plataforma import brazo as brazo_de
@@ -55,6 +56,7 @@ PERFIL_DE = {
     "eje_pivote": eje_pivote,
     "sector": sector,
     "tambor": tambor,
+    "seguidor": seguidor,
 }
 """De dónde sale la forma de cada pieza.
 
@@ -249,14 +251,17 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
     # pila de cotas horizontales, y un rótulo de radio cruzándola se lee como
     # parte de ella.
     techo = min(oy - y1 * k, oy - 17.0) - 10.0
-    puestos: dict[str, str] = {}
+    # Clave por RADIO y no por nombre: dos cotas pueden valer lo mismo y
+    # entonces son un solo rótulo con dos nombres en la leyenda.
+    puestos: dict[float, str] = {}
     rotulos: list[tuple[float, float]] = []
     inclinaciones = (-90.0, -68.0, -112.0, -78.0, -102.0, -60.0)
     for e in perfil:
         if not isinstance(e, Arco):
             continue
         cota = _nombre_del_radio(ficha, cotas, e.radio)
-        if not cota or cota in puestos:
+        clave = next((r for r in puestos if abs(r - e.radio) <= 1e-6), e.radio)
+        if not cota or clave in puestos:
             continue
         ang = math.radians(inclinaciones[len(puestos) % len(inclinaciones)])
         cx, cy = ox + e.centro[0] * k, oy - e.centro[1] * k
@@ -271,30 +276,42 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
         d += radial(
             cx, cy, e.radio * k, ang, texto, largo=(meta - cy) / math.sin(ang) - e.radio * k
         )
-        puestos[cota] = texto
+        puestos[e.radio] = texto
         rotulos.append((xk, meta))
 
+    def _como_se_teclea(cota: str, texto: str) -> str:
+        """El nombre que pide el campo: diámetro para un círculo entero.
+
+        Se busca por VALOR y no por nombre. Quitar «_radio» funcionaba
+        mientras el gemelo se llamara así; `amplificador_sector_radio_
+        mecanizado` no lo lleva al final, se quedaba con el radio y el sector
+        salió a la mitad.
+        """
+        if not texto.startswith("Ø"):
+            return cota
+        doble = 2.0 * cotas[cota]
+        return next(
+            (
+                n
+                for n in (cota.removesuffix("_radio"), f"{cota}_diametro")
+                if n != cota and abs(cotas.get(n, 0.0) - doble) <= 1e-6
+            ),
+            cota,
+        )
+
+    # La leyenda agrupa POR VALOR y nombra TODAS las cotas que lo comparten.
+    #
+    # Dos rasgos distintos pueden medir lo mismo —en el seguidor, el paso del
+    # rodillo y los dos del sector son los tres Ø3,2— y entonces la flecha no
+    # puede decir cuál es: lo que los distingue es dónde están, y de eso se
+    # encargan las cotas de abajo. Nombrando solo al primero, la otra cota
+    # quedaba sin aparecer en la hoja y no había manera de saber que existía.
     leyenda = y + CABECERA - 4
-    for cota, texto in puestos.items():
-        # Para un círculo entero se rotula la cota que VALE el diámetro, y se
-        # busca por el valor y no por el nombre. Quitar «_radio» funcionaba
-        # mientras el gemelo se llamara así; `amplificador_sector_radio_
-        # mecanizado` no lo lleva al final, se quedaba con el radio y el
-        # sector salió a la mitad.
-        nombre = cota
-        if texto.startswith("Ø"):
-            doble = 2.0 * cotas[cota]
-            nombre = next(
-                (
-                    n
-                    for n in (cota.removesuffix("_radio"), f"{cota}_diametro")
-                    if n != cota and abs(cotas.get(n, 0.0) - doble) <= 1e-6
-                ),
-                cota,
-            )
+    for radio, texto in puestos.items():
+        cuales = [n for n in ficha.radios if abs(cotas[n] - radio) <= 1e-6]
+        nombres = " · ".join(f"#cota.{_como_se_teclea(c, texto)}" for c in cuales)
         d.append(
-            f'<text class="cotavar" x="{x + 10:.1f}" y="{leyenda:.1f}">'
-            f"{texto} → #cota.{nombre}</text>"
+            f'<text class="cotavar" x="{x + 10:.1f}" y="{leyenda:.1f}">{texto} → {nombres}</text>'
         )
         leyenda += 7
 

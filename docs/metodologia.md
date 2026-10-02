@@ -343,6 +343,7 @@ el markdown y el código se separan.
 | `eje_pivote` ×3 | barra Ø10 h6 con una cara plana, cortada a medida | Ø `#cota.brazo_eje_diametro` 10 h6 · largo `#cota.eje_pivote_largo` 45 PENDIENTE · cara plana a `#cota.brazo_chaveta` 4 · cuerda `#cota.brazo_chaveta_cuerda` 6 |
 | `sector` ×3 | disco entero de POM, sin muesca | Ø del canto `#cota.amplificador_sector_radio_mecanizado_diametro` 95,95 · espesor `#cota.amplificador_sector_espesor` 5 · Ø de paso `#cota.amplificador_sector_agujero_diametro` 16 · la cinta entra a `#angulo.amplificador_tangencia` 53,968 |
 | `tambor` ×3 | cilindro liso con agujero, sin pestañas | Ø del canto `#cota.amplificador_tambor_radio_mecanizado_diametro` 15,95 · ancho `#cota.amplificador_tambor_ancho` 6 · Ø agujero `#cota.brazo_eje_diametro` 10 H7 · abrazado `#angulo.amplificador_tambor_abrazado` 185 |
+| `seguidor` ×3 | barra de dos cubos con cuatro agujeros en línea, en POM-C de 5 | entre centros `#cota.brazo_seguidor` 45 · espesor `#cota.seguidor_espesor` 5 · Ø alojamiento del casquillo `#cota.seguidor_pivote_diametro` 10 H7 · Ø del cubo `#cota.seguidor_cubo_diametro` 16 · Ø del extremo `#cota.seguidor_extremo_diametro` 11 · Ø paso del eje del rodillo `#cota.seguidor_rodillo_diametro` 3,2 · pivote al muelle `#cota.seguidor_muelle_radio` 12 · Ø anclaje del muelle `#cota.seguidor_muelle_diametro` 3 · pivote al tornillo cercano `#cota.seguidor_sector_cerca` 22 · pivote al tornillo lejano `#cota.seguidor_sector_lejos` 38 · Ø paso de los dos al sector `#cota.seguidor_sector_diametro` 3,2 |
 
 <!-- listado:fin -->
 

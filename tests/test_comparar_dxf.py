@@ -9,6 +9,7 @@ le pasan una pieza estropeada a propósito y exigen que la cace.
 from __future__ import annotations
 
 import math
+import tempfile
 from pathlib import Path
 
 import ezdxf
@@ -271,3 +272,54 @@ def test_caza_los_dos_diametros_cambiados(tmp_path: Path):
     inf = comparar_pieza(ruta, "mordaza")
     assert not inf.cuadra
     assert any("mordaza_tornillo_diametro" in h.texto for h in inf.hallazgos)
+
+
+def test_dos_cotas_que_valen_lo_mismo_son_un_solo_grupo():
+    """**Dos rasgos del mismo tamano no se distinguen midiendo.**
+
+    En el seguidor, el paso del rodillo y los dos del sector son los tres
+    Ø3,2, y el alojamiento del casquillo y el extremo del brazo son los dos
+    Ø10. Pidiendolos por separado, cada cota se llevaba TODOS los que casan
+    y sobraba, y la siguiente no encontraba ninguno y faltaba: cuatro quejas
+    sobre un dibujo correcto, y ninguna cierta.
+
+    Lo que identifica un rasgo es donde esta, no cuanto mide, y de eso se
+    encargan `desde_datum` y `entre_centros`.
+    """
+    from emit.plataforma import escribir_dxf, seguidor
+
+    destino = Path(tempfile.mkdtemp()) / "seguidor.dxf"
+    escribir_dxf(seguidor(), destino)
+    inf = comparar(destino, "seguidor")
+    assert inf.cuadra, [h.texto for h in inf.hallazgos]
+    assert any("R1.6 ×3" in b for b in inf.bien), inf.bien
+
+    # El otro choque que tenia esta pieza —alojamiento del casquillo y extremo
+    # del brazo, los dos Ø10— se quito cambiando el extremo a Ø11, porque ahi
+    # SI hacia dano: uno es un circulo entero y el otro un arco de contorno, y
+    # la hoja los rotulaba con el mismo «R5». Los tres Ø3,2 se quedan: son el
+    # mismo paso de M3 y los distingue su posicion, que esta acotada.
+
+
+def test_la_distancia_entre_dos_centros_ya_situados_no_es_una_cota():
+    """Con cinco agujeros en linea hay **diez pares** y solo cuatro cotas.
+
+    Un centro situado desde el datum —o por un `entre_centros` medido desde
+    el— ya no pide nada mas: lo que haya entre dos situados es una resta, no
+    una cota que falte. Sin esto el seguidor sacaba seis huerfanas estando
+    entero, y seis quejas falsas esconden la verdadera.
+    """
+    from emit.plataforma import escribir_dxf, seguidor
+
+    destino = Path(tempfile.mkdtemp()) / "seguidor.dxf"
+    escribir_dxf(seguidor(), destino)
+    inf = comparar(destino, "seguidor")
+    assert not [h for h in inf.hallazgos if h.gravedad == "huerfano"], inf.hallazgos
+
+    # Pero un agujero que NO esta situado sigue cantando.
+    from emit.plataforma import circulo
+
+    suelto = seguidor() + circulo((30.0, 4.0), 1.5)
+    otro = Path(tempfile.mkdtemp()) / "suelto.dxf"
+    escribir_dxf(suelto, otro)
+    assert [h for h in comparar(otro, "seguidor").hallazgos if h.gravedad == "huerfano"]

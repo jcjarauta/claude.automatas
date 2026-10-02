@@ -199,6 +199,25 @@ FICHAS: dict[str, Ficha] = {
         cara_plana="brazo_chaveta",
         datum="brazo_eje_diametro_radio",
     ),
+    "seguidor": Ficha(
+        "barra de dos cubos con cuatro agujeros en línea: muelle, dos al sector y rodillo",
+        {
+            "seguidor_cubo_diametro_radio": 1,
+            "seguidor_extremo_diametro_radio": 1,
+            "seguidor_pivote_diametro_radio": 1,
+            "seguidor_muelle_diametro_radio": 1,
+            "seguidor_sector_diametro_radio": 2,
+            "seguidor_rodillo_diametro_radio": 1,
+        },
+        entre_centros=("brazo_seguidor",),
+        tangentes=4,
+        desde_datum=(
+            "seguidor_muelle_radio",
+            "seguidor_sector_cerca",
+            "seguidor_sector_lejos",
+        ),
+        datum="seguidor_pivote_diametro_radio",
+    ),
     "sector": Ficha(
         "disco entero con agujero de paso: la cinta no necesita muesca",
         {
@@ -374,22 +393,36 @@ def comparar(ruta: Path, pieza: str, tol: float = TOLERANCIA) -> Informe:
     circulares, segmentos = _circulares(msp), _segmentos(msp)
 
     # --- radios: cada rasgo declarado, con su recuento ---
+    #
+    # **Las cotas se agrupan POR VALOR.** Dos rasgos distintos pueden medir lo
+    # mismo y entonces no se distinguen midiendo: en el seguidor el paso del
+    # rodillo y los dos del sector son los tres Ø3,2, y el alojamiento del
+    # casquillo y el extremo del brazo son los dos Ø10. Pedirlos por separado
+    # hacía que cada cota se llevara los tres y sobrara, y a la vez que la
+    # siguiente no encontrara ninguno y faltara: cuatro quejas por un dibujo
+    # correcto. Lo que identifica un rasgo es DÓNDE está, no cuánto mide, y de
+    # eso se encargan `desde_datum` y `entre_centros`.
     pendientes = list(circulares)
+    por_valor: dict[float, list[tuple[str, int]]] = {}
     for nombre, cuantos in ficha.radios.items():
         if nombre not in cotas:
             inf.hallazgos.append(Hallazgo("contrato", f"la ficha cita «{nombre}», que no está"))
             continue
-        esperado = cotas[nombre]
+        clave = next((v for v in por_valor if abs(v - cotas[nombre]) <= tol), cotas[nombre])
+        por_valor.setdefault(clave, []).append((nombre, cuantos))
+    for esperado, cuales in por_valor.items():
+        cuantos = sum(n for _, n in cuales)
         casan = [c for c in pendientes if abs(c[1] - esperado) <= tol]
         for c in casan:
             pendientes.remove(c)
+        quien = " · ".join(f"#cota.{n}" + (f" ×{k}" if len(cuales) > 1 else "") for n, k in cuales)
         if len(casan) == cuantos:
-            inf.bien.append(f"R{esperado:g} ×{cuantos}   #cota.{nombre}")
+            inf.bien.append(f"R{esperado:g} ×{cuantos}   {quien}")
         else:
             inf.hallazgos.append(
                 Hallazgo(
                     "falta" if len(casan) < cuantos else "sobra",
-                    f"#cota.{nombre} pide {cuantos} arco(s) de R{esperado:g} y hay {len(casan)}",
+                    f"{quien} piden {cuantos} arco(s) de R{esperado:g} y hay {len(casan)}",
                 )
             )
     for centro, radio in pendientes:
@@ -402,9 +435,11 @@ def comparar(ruta: Path, pieza: str, tol: float = TOLERANCIA) -> Informe:
         )
 
     # --- del datum al centro de un rasgo ---
+    situados: list[tuple[float, float]] = [(0.0, 0.0)]
     for nombre in ficha.desde_datum:
         esperado = cotas[nombre]
         if any(abs(c[0] - esperado) <= tol and abs(c[1]) <= tol for c, _ in circulares):
+            situados.append((esperado, 0.0))
             inf.bien.append(f"centro a {esperado:g} del datum   #cota.{nombre}")
         else:
             inf.hallazgos.append(
@@ -473,26 +508,47 @@ def comparar(ruta: Path, pieza: str, tol: float = TOLERANCIA) -> Informe:
             )
 
     # --- distancias entre centros ---
+    # Un centro ya situado desde el datum no vuelve a pedir cota, y la
+    # distancia entre dos situados es DERIVADA: con cinco agujeros en línea
+    # hay diez pares y solo cuatro cotas, así que sin esto el informe saca
+    # seis huérfanas de un dibujo que está entero.
+    # Un `entre_centros` medido DESDE el datum también sitúa: el rodillo del
+    # seguidor está a 45 del pivote por `brazo_seguidor`, no por `desde_datum`,
+    # y sin esto sus tres distancias a los demás agujeros salían huérfanas.
+    for nombre in ficha.entre_centros:
+        situados.append((cotas[nombre], 0.0))
+
+    def situado(p: tuple[float, float]) -> bool:
+        return any(math.dist(p, q) <= tol for q in situados)
+
     centros = sorted({c for c, _ in circulares_sueltos})
-    distancias = [
-        math.dist(a, b)
+    pares = [
+        (a, b, math.dist(a, b))
         for i, a in enumerate(centros)
         for b in centros[i + 1 :]
         if math.dist(a, b) > tol
     ]
     for nombre in ficha.entre_centros:
         esperado = cotas[nombre]
-        casan = [d for d in distancias if abs(d - esperado) <= tol]
-        for d in casan:
-            distancias.remove(d)
+        casan = [t for t in pares if abs(t[2] - esperado) <= tol]
+        for t in casan:
+            pares.remove(t)
         if casan:
             inf.bien.append(f"entre centros {esperado:g}   #cota.{nombre}")
         else:
-            cerca = f", la más próxima {min(distancias, default=0.0):.4f}" if distancias else ""
+            cerca = min((t[2] for t in pares), default=0.0)
             inf.hallazgos.append(
-                Hallazgo("falta", f"#cota.{nombre} pide {esperado:g} entre centros{cerca}")
+                Hallazgo(
+                    "falta",
+                    f"#cota.{nombre} pide {esperado:g} entre centros"
+                    + (f", la más próxima {cerca:.4f}" if pares else ""),
+                )
             )
-    for d in distancias:
+    # Y lo que sobra solo es huérfano si alguno de los dos centros no estaba
+    # situado ya: la distancia entre dos situados es derivada, no una cota.
+    for a, b, d in pares:
+        if situado(a) and situado(b):
+            continue
         inf.hallazgos.append(Hallazgo("huerfano", f"{d:.4f} entre dos centros, sin cota"))
 
     # --- segmentos: la cuerda de la cara plana y poco más. Una tangente no

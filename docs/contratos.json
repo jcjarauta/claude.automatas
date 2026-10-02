@@ -500,6 +500,76 @@
           "unidad": "m",
           "descripcion": "Pared minima entre un agujero o la ranura y el borde del bloque",
           "tolerancia": ""
+        },
+        {
+          "nombre": "seguidor_espesor",
+          "valor": 0.005,
+          "unidad": "m",
+          "descripcion": "Espesor del seguidor: la misma plancha de POM-C 5 que las levas y el sector. Y es justo el largo util del casquillo GFM-0810-06, que mide 6 con 1 de valona",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "seguidor_pivote_diametro",
+          "valor": 0.01,
+          "unidad": "m",
+          "descripcion": "Alojamiento del casquillo igus GFM-0810-06, cuyo exterior es 10. El poste de dentro es 8",
+          "tolerancia": "H7"
+        },
+        {
+          "nombre": "seguidor_cubo_diametro",
+          "valor": 0.016,
+          "unidad": "m",
+          "descripcion": "Diametro del cubo del pivote: el alojamiento de 10 mas 3 de pared a cada lado",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "seguidor_extremo_diametro",
+          "valor": 0.011,
+          "unidad": "m",
+          "descripcion": "Diametro del extremo donde va el rodillo. El minimo seria 9,2 —el paso de 3,2 mas 3 de pared a cada lado—, y 11 se elige para NO coincidir con el alojamiento del casquillo: dos rasgos del mismo tamano se rotulan igual en la hoja, y uno es un circulo entero y el otro un arco de contorno",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "seguidor_rodillo_diametro",
+          "valor": 0.0032,
+          "unidad": "m",
+          "descripcion": "Paso del tornillo M3 que hace de eje al rodillo MR63ZZ. En POM no se clava un pasador: la interferencia se relaja por fluencia, igual que en el plato de las levas",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "seguidor_muelle_radio",
+          "valor": 0.012,
+          "unidad": "m",
+          "descripcion": "Del pivote al anclaje del muelle. Corto a proposito: la fuerza va con 1/r y el recorrido con r, asi que la VARIACION del par va con r cuadrado. A 12 el muelle hace 4,17 N y varia un 9,6 % en todo el barrido; a 30 variaria un 60 %",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "seguidor_muelle_diametro",
+          "valor": 0.003,
+          "unidad": "m",
+          "descripcion": "Agujero del anclaje del muelle",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "seguidor_sector_cerca",
+          "valor": 0.022,
+          "unidad": "m",
+          "descripcion": "Del pivote al primero de los dos tornillos que calan el sector al seguidor",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "seguidor_sector_lejos",
+          "valor": 0.038,
+          "unidad": "m",
+          "descripcion": "Del pivote al segundo. DOS tornillos y no una brida: el agujero del sector es de paso y no situa nada, asi que hacen falta dos puntos para quitarle el giro, y ponerlos en linea con el brazo evita agrandar el cubo",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "seguidor_sector_diametro",
+          "valor": 0.0032,
+          "unidad": "m",
+          "descripcion": "Paso de los dos M3 que unen sector y seguidor",
+          "tolerancia": ""
         }
       ]
     }
