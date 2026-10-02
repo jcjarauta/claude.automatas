@@ -6,7 +6,11 @@ Erik Mahieu, 2013) y con
 [*Clock and Watch Escapement Mechanics*](https://www.abbeyclock.com/EscMechanics.pdf),
 de Mark Headrick.
 
-**Esto es una propuesta, no un cambio.** Las cotas vigentes siguen en
+> **DECIDIDO el 2026-10-02: Graham, paquete intermedio.** Los puntos 1 a 6 estan
+> aplicados; el panel de cinco vistas del punto 5 sigue pendiente. Lo que sigue
+> se conserva porque explica por que, no porque este sin hacer.
+
+**Esto era una propuesta.** Las cotas vigentes siguen en
 `docs/reloj/contratos.json`. Lo que hay aquí son tres hallazgos y una decisión
 que hay que tomar antes de dibujar las paletas.
 

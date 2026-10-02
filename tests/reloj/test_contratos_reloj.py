@@ -26,7 +26,7 @@ from core.reloj.escape import (
     par_minimo_teorico,
 )
 from core.reloj.pendulo import Pendulo
-from core.units import Julios, Kilogramos, Metros
+from core.units import Julios, Kilogramos, Metros, Radianes
 from scripts.exportar_variables import (
     CABECERA_ONSHAPE,
     COLUMNA_VALOR,
@@ -401,8 +401,13 @@ def test_el_valor_se_escribe_con_su_unidad_y_sin_ceros_de_cola(reloj: Contratos)
     por_nombre = {f[0]: f[2] for f in filas[1:]}
     assert por_nombre["longitud_pendulo_nominal"] == "994 mm"
     assert por_nombre["eje_diametro"] == "10 mm"
+    # Por nombre y no por indice: el orden de los contratos cambia cuando una
+    # cota se mueve de sitio, y un test que depende del orden falla por eso y
+    # no por lo que vigila.
     angulo = list(modulo_csv.reader(tabla_onshape(reloj)[Tipo.ANGLE].strip().split("\n")))
-    assert angulo[1][2] == "2 deg"
+    por_angulo = {f[0]: f[2] for f in angulo[1:]}
+    assert por_angulo["amplitud_nominal"] == "3 deg"
+    assert por_angulo["rueda_escape_paso_angular"] == "12 deg"
 
 
 def test_la_descripcion_corta_cabe_en_una_celda_y_sigue_diciendo_algo():
@@ -1085,35 +1090,52 @@ def test_el_paso_angular_es_una_vuelta_entre_los_dientes(reloj: Contratos):
     )
 
 
-def test_la_inclinacion_del_diente_cabe_en_su_paso(reloj: Contratos):
+def test_el_socavado_cabe_en_el_paso(reloj: Contratos):
     """Si la punta se inclina más de lo que mide el paso, el diente invade al
     de al lado y deja de haber hueco donde meter la segueta."""
     r = reloj.contrato("rueda_escape")
-    assert (
-        0.0
-        < r.valor("rueda_escape_inclinacion_diente").valor
-        < r.valor("rueda_escape_paso_angular").valor
-    )
+    assert 0.0 < r.valor("rueda_escape_socavado").valor < r.valor("rueda_escape_paso_angular").valor
 
 
 def test_el_par_que_pide_el_escape_cabe_de_sobra_en_la_pesa(reloj: Contratos):
     """Cruza C12 con la previsión de la pesa: incluso con el rendimiento más
     pesimista, el par que hace falta en el eje de escape es ridículo frente a
     lo que da el tambor. Si esto fallara, el reloj no sería viable."""
-    perdida = 27.0e-6  # bench/reloj/pendulo.json, con Q previsto de 1.500
+    # La pérdida sale del péndulo del contrato y no de un número tecleado: la
+    # amplitud la mueve al cuadrado, y con 27 µJ escritos a mano este test
+    # seguiría pasando después de subirla.
+    m = reloj.valor
+    largo = m("pendulo", "varilla_largo").valor
+    masa_varilla = (
+        m("pendulo", "varilla_densidad").valor
+        * largo
+        * m("pendulo", "varilla_ancho").valor
+        * m("pendulo", "varilla_espesor").valor
+    )
+    flexion = m("suspension", "muelle_flexion_a_varilla").valor
+    pendulo = Pendulo(
+        masa_lenteja=Kilogramos(m("lenteja", "lenteja_masa").valor),
+        centro_lenteja=Metros(m("pendulo", "lenteja_centro_a_flexion").valor),
+        masa_varilla=Kilogramos(masa_varilla),
+        varilla_desde=Metros(flexion),
+        varilla_hasta=Metros(flexion + largo),
+    )
+    perdida = pendulo.perdida_por_ciclo(
+        Radianes(m("ancora", "amplitud_nominal").valor), calidad=1500.0
+    )
     ideal = par_minimo_teorico(Julios(perdida), int(reloj.valor("escape", "dientes_escape").valor))
     pesimista = par_con_rendimiento(ideal, rendimiento=0.02)
     assert pesimista < 0.02, "el escape pediría más par del que un reloj de pared entrega"
 
 
-def test_la_inclinacion_del_diente_desplaza_la_punta_poco(reloj: Contratos):
+def test_el_socavado_desplaza_la_punta_poco(reloj: Contratos):
     """La cota es el ángulo de la CARA con el radio, no un ángulo central, y
     confundirlos da dos dientes distintos: con 8° de cara la punta se mueve
     1 mm de arco; leído como ángulo central se movería 6, y la cara saldría a
     44° del radio en vez de a 8. Este test fija la lectura."""
     r = reloj.contrato("rueda_escape")
     altura = r.valor("rueda_escape_altura_diente").en_mm
-    desplaza = altura * math.tan(r.valor("rueda_escape_inclinacion_diente").valor)
+    desplaza = altura * math.tan(r.valor("rueda_escape_socavado").valor)
     assert desplaza < r.valor("rueda_escape_paso_diente").en_mm / 4.0
 
 
@@ -1164,17 +1186,54 @@ def test_el_eje_del_ancora_no_cae_dentro_de_la_rueda(reloj: Contratos):
 
 def test_el_recorrido_del_ancora_es_el_del_pendulo(reloj: Contratos):
     assert reloj.valor("ancora", "ancora_recorrido").valor == pytest.approx(
-        2.0 * reloj.valor("oscilador", "amplitud_nominal").valor, abs=1e-6
+        2.0 * reloj.valor("ancora", "amplitud_nominal").valor, abs=1e-6
     )
 
 
-def test_el_reposo_cabe_en_el_recorrido_con_sitio_para_el_impulso(reloj: Contratos):
-    """LA envolvente del escape. Los dos reposos salen del mismo presupuesto
-    angular que el impulso: si se llevan más de la mitad, no queda recorrido
-    para empujar y el reloj se para."""
-    recorrido = reloj.valor("ancora", "ancora_recorrido").valor
-    reposo = reloj.valor("ancora", "ancora_reposo").valor
-    assert 0.0 < 2.0 * reposo < recorrido / 2.0
+def test_el_presupuesto_angular_cierra(reloj: Contratos):
+    """LA envolvente del escape, y la que estaba mal planteada.
+
+    El barrido se reparte en cuatro, no en dos: reposo, impulso, caída y
+    **arco suplementario**. Ese último es el tramo en que el diente apoya en
+    el ARCO de reposo, centrado en el eje del áncora: el péndulo sigue girando
+    sin mover la rueda. En un retroceso ese tramo no existe y la rueda
+    retrocede, y esa es la diferencia entre los dos escapes.
+
+    La envolvente anterior repartía el barrido entre reposo e impulso como si
+    el suplementario no existiera, y por eso daba un reposo de 0,6°, la mitad
+    de lo que recomienda cualquier fuente."""
+    a = reloj.contrato("ancora")
+    partes = sum(
+        a.valor(k).valor
+        for k in ("ancora_reposo", "ancora_impulso", "ancora_caida", "ancora_suplementario")
+    )
+    assert partes == pytest.approx(a.valor("ancora_recorrido").valor, abs=1e-6)
+
+
+def test_queda_arco_suplementario_de_colchon(reloj: Contratos):
+    """El suplementario es lo que absorbe que la pesa varíe. Sin él, cualquier
+    cambio de rozamiento mueve la amplitud, y la amplitud mueve la marcha por
+    error circular."""
+    assert math.degrees(reloj.valor("ancora", "ancora_suplementario").valor) >= 1.0
+
+
+def test_el_trabajo_cabe_en_el_barrido(reloj: Contratos):
+    a = reloj.contrato("ancora")
+    trabajo = sum(a.valor(k).valor for k in ("ancora_reposo", "ancora_impulso", "ancora_caida"))
+    assert trabajo < a.valor("ancora_recorrido").valor
+
+
+def test_los_dos_arcos_de_reposo_difieren_en_el_impulso(reloj: Contratos):
+    """Lo que hace deadbeat a un Graham son dos radios, uno por paleta,
+    centrados en el eje del áncora y separados por la profundidad del impulso.
+    Si fuesen iguales no habría plano que empujar; si no fuesen arcos, la
+    rueda retrocedería."""
+    a = reloj.contrato("ancora")
+    prof = a.valor("ancora_impulso_profundidad").en_mm
+    brazo = a.valor("ancora_brazo").en_mm
+    assert prof == pytest.approx(brazo * a.valor("ancora_impulso").valor, abs=0.01)
+    assert a.valor("ancora_arco_entrada").en_mm == pytest.approx(brazo - prof / 2.0, abs=0.01)
+    assert a.valor("ancora_arco_salida").en_mm == pytest.approx(brazo + prof / 2.0, abs=0.01)
 
 
 def test_un_reposo_de_cero_no_es_un_escape(reloj: Contratos):
@@ -1276,3 +1335,52 @@ def test_el_ancora_y_la_rueda_comparten_collar(reloj: Contratos):
     assert reloj.valor("ancora", "ancora_cubo_diametro").en_mm == pytest.approx(
         reloj.valor("rueda_escape", "rueda_escape_cubo_diametro").en_mm, abs=0.01
     )
+
+
+def test_el_diente_se_define_con_tres_angulos(reloj: Contratos):
+    """Socavado, ángulo incluido y espesor de punta. La demostración de
+    Wolfram los parametriza por separado y tiene razón: dicen cosas distintas
+    y los tres hacen falta para cortar el diente."""
+    r = reloj.contrato("rueda_escape")
+    for clave in (
+        "rueda_escape_socavado",
+        "rueda_escape_angulo_incluido",
+        "rueda_escape_espesor_punta",
+    ):
+        assert r.valor(clave).valor > 0.0
+
+
+def test_la_punta_del_diente_no_es_un_filo(reloj: Contratos):
+    """Medio grado de espesor a radio 45 son 0,39 mm de material, y es justo
+    donde apoya la paleta. Dibujar la punta afilada promete un filo que el
+    contrachapado no da."""
+    r = reloj.contrato("rueda_escape")
+    radio = r.valor("rueda_escape_diametro").en_mm / 2.0
+    assert radio * r.valor("rueda_escape_espesor_punta").valor >= 0.3
+
+
+def test_los_tres_angulos_del_diente_caben_en_el_paso(reloj: Contratos):
+    """Socavado y espesor de punta se reparten el paso angular con el hueco
+    por donde entra la segueta. Si se lo comen entero, no hay hueco."""
+    r = reloj.contrato("rueda_escape")
+    gastado = r.valor("rueda_escape_espesor_punta").valor + math.atan(
+        r.valor("rueda_escape_altura_diente").en_mm
+        * math.tan(r.valor("rueda_escape_socavado").valor)
+        / (r.valor("rueda_escape_diametro").en_mm / 2.0)
+    )
+    assert gastado < r.valor("rueda_escape_paso_angular").valor / 2.0
+
+
+def test_el_fondo_relativo_sale_de_los_dos_diametros(reloj: Contratos):
+    r = reloj.contrato("rueda_escape")
+    assert r.valor("rueda_escape_fondo_relativo").valor == pytest.approx(
+        r.valor("rueda_escape_diametro_fondo").en_mm / r.valor("rueda_escape_diametro").en_mm,
+        abs=0.001,
+    )
+
+
+def test_la_rueda_lleva_radios_y_no_es_un_disco(reloj: Contratos):
+    """Este es el eje más rápido del reloj: la masa que se le quite vale por
+    el cuadrado de la velocidad en la inercia que hay que vencer."""
+    radios = reloj.valor("rueda_escape", "rueda_escape_radios").valor
+    assert radios in (3.0, 4.0, 5.0, 6.0)

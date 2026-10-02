@@ -28,13 +28,6 @@
           "unidad": "m",
           "descripcion": "M6: una vuelta son 1 mm, es decir unos 43 s/dia",
           "tolerancia": "M6 de catalogo"
-        },
-        {
-          "nombre": "amplitud_nominal",
-          "valor": 0.034906585,
-          "unidad": "rad",
-          "descripcion": "Unos 2 grados a cada lado. Mas amplitud sube el error circular",
-          "tolerancia": "se mide en R1"
         }
       ]
     },
@@ -470,10 +463,10 @@
           "tolerancia": "H7, ajuste deslizante"
         },
         {
-          "nombre": "rueda_escape_inclinacion_diente",
+          "nombre": "rueda_escape_socavado",
           "valor": 0.13962634015954636,
           "unidad": "rad",
-          "descripcion": "Angulo de la CARA DE ATAQUE con el radio, medido EN LA PUNTA entre la cuerda punta-fondo y la direccion radial. No es un angulo central: con 8 grados y un diente de 7, la punta se desplaza 0,98 mm de arco, que a radio 45 son 1,36 grados de centro. Con 0 la cara es radial y la paleta resbala; con mucho, la punta se vuelve astilla",
+          "descripcion": "SOCAVADO: angulo de la cara de ataque con el radio, medido en la punta entre la cuerda punta-fondo y la direccion radial. No es un angulo central: con 8 grados y un diente de 7, la punta se desplaza 0,98 mm de arco, que a radio 45 son 1,486 grados de centro. Con 0 la cara es radial y la paleta resbala",
           "tolerancia": "+/-1 grado"
         },
         {
@@ -489,6 +482,34 @@
           "unidad": "adimensional",
           "descripcion": "La rueda es un disco plano y simetrico en espesor: darle la vuelta invierte hacia donde miran los dientes. No es un defecto, es el ajuste -si el escape no engancha, se voltea- pero obliga a declarar desde donde se mira. CONVENIO: los dientes se inclinan en el sentido de giro VISTO DESDE LA ESFERA, que es horario",
           "tolerancia": "convenio, no se mide"
+        },
+        {
+          "nombre": "rueda_escape_angulo_incluido",
+          "valor": 0.4014257279586958,
+          "unidad": "rad",
+          "descripcion": "Angulo de la PUNTA del diente, entre la cara de ataque y el dorso. Con el socavado y el espesor de punta define el diente entero: son tres cotas y no una",
+          "tolerancia": "+/-2 grados"
+        },
+        {
+          "nombre": "rueda_escape_espesor_punta",
+          "valor": 0.008726646259971648,
+          "unidad": "rad",
+          "descripcion": "Espesor de la punta, como angulo central. LA PUNTA NO ES UN FILO: medio grado a radio 45 son 0,39 mm de material, y es justo donde apoya la paleta. Dibujarla afilada promete un filo que el contrachapado no da",
+          "tolerancia": "+/-0,2 grados"
+        },
+        {
+          "nombre": "rueda_escape_fondo_relativo",
+          "valor": 0.844444,
+          "unidad": "adimensional",
+          "descripcion": "DERIVADO: diametro_fondo / diametro. El fondo como FRACCION y no en milimetros: asi cambiar el diametro de la rueda no rompe la proporcion del diente",
+          "tolerancia": "derivado"
+        },
+        {
+          "nombre": "rueda_escape_radios",
+          "valor": 3.0,
+          "unidad": "adimensional",
+          "descripcion": "Radios de la rueda. No es decoracion: este es el eje mas rapido del reloj y la masa que se le quite vale por el cuadrado de la velocidad en la inercia que hay que vencer",
+          "tolerancia": "3, 4, 5 o 6"
         }
       ]
     },
@@ -498,6 +519,13 @@
       "congelado_el": "",
       "porque": "La geometria del cuerpo es derivada y cierra sola, pero el reposo y el impulso NO se dibujan: se buscan en el banco R2 con las paletas postizas y se anotan como cotas de puesta a punto. Es la unica pieza del reloj que se termina ajustando y no cortando",
       "valores": [
+        {
+          "nombre": "amplitud_nominal",
+          "valor": 0.05235987755982989,
+          "unidad": "rad",
+          "descripcion": "Semiamplitud del pendulo. SALE DEL ESCAPE y no del oscilador: el barrido del ancora es dos veces esta, y de el tienen que caber reposo, impulso, caida y el arco suplementario. Con 2 grados no cabian: el reposo quedaba a dos veces el error de sierra. Subirla cuesta energia al cuadrado -de 13,5 a 30 uW- y error circular, que es constante si la amplitud lo es",
+          "tolerancia": "la fija el escape, no se elige"
+        },
         {
           "nombre": "ancora_entre_centros",
           "valor": 0.06364,
@@ -521,16 +549,16 @@
         },
         {
           "nombre": "ancora_recorrido",
-          "valor": 0.06981317,
+          "valor": 0.10471975511965978,
           "unidad": "rad",
           "descripcion": "DERIVADO: dos veces la amplitud. La horquilla ata ancora y pendulo, asi que el ancora barre lo que barre el pendulo. Son 4 grados, y ESE es todo el presupuesto que hay para repartir entre reposo, impulso y caida",
           "tolerancia": "lo fija el pendulo"
         },
         {
           "nombre": "ancora_reposo",
-          "valor": 0.010471975511965976,
+          "valor": 0.026179938779914945,
           "unidad": "rad",
-          "descripcion": "Lo que el diente apoya en la paleta antes de empezar a empujar. Lo aprietan dos limites por lados opuestos: por arriba, los dos reposos no pueden pasar de la mitad del recorrido o no queda angulo para impulsar; por abajo, el reposo tiene que ser mayor que el error de sierra de la rueda -0,6 grados sobre un brazo de 45 son 0,47 mm, contra los +/-0,3 que se le piden al corte-. No se corta: se ajusta moviendo la paleta en su ranura, y lo busca R2",
+          "descripcion": "Lo que el diente apoya en el arco antes de empezar a empujar. El suelo lo pone el ERROR DE SIERRA de la rueda: 1,5 grados sobre un brazo de 45 son 1,18 mm, casi cuatro veces los +/-0,3 que se le piden al corte. Por debajo hay dientes que no llegan a apoyar y el escape se dispara solo en esos. No se corta: se ajusta moviendo la paleta en su ranura, y lo busca R2",
           "tolerancia": "PUESTA A PUNTO · la busca R2"
         },
         {
@@ -608,6 +636,48 @@
           "valor": 0.045284,
           "unidad": "m",
           "descripcion": "DERIVADO: brazo_material x cos(45) + cubo/2 + brazo_ancho/2. Lo que hay que reservar a lo alto, del canto de arriba del cubo a la punta de los brazos",
+          "tolerancia": "derivado"
+        },
+        {
+          "nombre": "ancora_impulso",
+          "valor": 0.03490658503988659,
+          "unidad": "rad",
+          "descripcion": "Angulo que recorre la paleta empujada por el diente. Es el unico tramo del barrido en que entra energia; el resto del ciclo el pendulo va solo",
+          "tolerancia": "PUESTA A PUNTO · la busca R2"
+        },
+        {
+          "nombre": "ancora_caida",
+          "valor": 0.013089969389957472,
+          "unidad": "rad",
+          "descripcion": "Lo que cae el diente libre desde que suelta una paleta hasta que apoya en la otra. Energia perdida, asi que la minima que no agarrote",
+          "tolerancia": "PUESTA A PUNTO · la busca R2"
+        },
+        {
+          "nombre": "ancora_suplementario",
+          "valor": 0.030543261909900768,
+          "unidad": "rad",
+          "descripcion": "DERIVADO: barrido - reposo - impulso - caida. Lo que el pendulo sigue girando con el diente apoyado en el ARCO de reposo, sin mover la rueda ni recibir nada. Es gratis, y es lo que distingue un Graham de un retroceso: en un retroceso este tramo no existe y la rueda retrocede. Tambien es el colchon que absorbe que la pesa varie",
+          "tolerancia": "derivado · minimo 1 grado"
+        },
+        {
+          "nombre": "ancora_arco_entrada",
+          "valor": 0.044213,
+          "unidad": "m",
+          "descripcion": "DERIVADO: brazo - brazo x impulso / 2. Radio del arco de reposo de la paleta de entrada, CENTRADO EN EL EJE DEL ANCORA. Que sea un arco y no un plano es lo que hace el escape deadbeat: el diente desliza sin mover la rueda",
+          "tolerancia": "+/-0,1 · critica"
+        },
+        {
+          "nombre": "ancora_arco_salida",
+          "valor": 0.045786,
+          "unidad": "m",
+          "descripcion": "DERIVADO: brazo + brazo x impulso / 2. El de la paleta de salida. Los dos arcos difieren en el plano de impulso, que es lo que el diente empuja",
+          "tolerancia": "+/-0,1 · critica"
+        },
+        {
+          "nombre": "ancora_impulso_profundidad",
+          "valor": 0.001571,
+          "unidad": "m",
+          "descripcion": "DERIVADO: brazo x impulso. Lo que baja la paleta entre el principio y el final del impulso, y la diferencia entre los dos arcos",
           "tolerancia": "derivado"
         }
       ]

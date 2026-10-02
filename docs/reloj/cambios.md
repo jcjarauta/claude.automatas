@@ -406,3 +406,91 @@ poste** del escribiente: una cota que surge de montar dos piezas juntas y que
 **no la ve ninguna envolvente de pieza**. La rueda gira a 45 mm de su centro y
 el cubo del áncora está a 63,64 de ahí; entre el canto de una y el cubo del
 otro quedan 6,6. Tiene test, y el mínimo es 3.
+
+
+---
+
+## El escape pasa a Graham, y con él la amplitud
+
+Decidido el 2026-10-02 tras cotejar con la demostración de Wolfram y con
+Headrick. El detalle está en `docs/reloj/escape-propuesta.md`; aquí lo que
+cambió y por qué.
+
+### Un contrato congelado se ha tocado, y hay que decirlo
+
+`amplitud_nominal` estaba dentro de `oscilador`, que es **congelado**. La regla
+9 de `CLAUDE.md` obliga a pararse y avisar. Se ha hecho, y además la cota **ha
+salido de ahí**: no era de ese contrato.
+
+> `oscilador` es la raíz de la cadena causal: el periodo se **elige** y de él
+> salen la longitud y la vuelta de la rueda. La amplitud no es raíz, **la
+> impone el escape**: el barrido del áncora es dos veces la amplitud, y de él
+> tienen que caber reposo, impulso, caída y arco suplementario.
+
+Ahora vive en `ancora`, que está pendiente, que es donde puede moverse cuando
+R2 mida. `periodo_pendulo` y `longitud_pendulo_nominal` siguen congelados.
+
+### La envolvente que estaba mal planteada
+
+`test_el_reposo_cabe_en_el_recorrido_con_sitio_para_el_impulso` repartía el
+barrido entre reposo e impulso. Eso vale para un retroceso y **no para un
+Graham**:
+
+> En un deadbeat la cara de reposo es un **arco centrado en el eje del
+> áncora**. Mientras el diente apoya ahí, el áncora gira sin mover la rueda y
+> sin recibir nada. Ese tramo —el **arco suplementario**— es gratis, y es
+> exactamente lo que distingue los dos escapes.
+
+El presupuesto correcto es `reposo + impulso + caída + suplementario = barrido`,
+y lo comprueba `test_el_presupuesto_angular_cierra`.
+
+### El paquete intermedio
+
+| | Antes | Ahora |
+| --- | --- | --- |
+| Amplitud | ±2° | **±3°** |
+| Barrido del áncora | 4° | **6°** |
+| Reposo | 0,6° | **1,5°** · 3,9× el error de sierra |
+| Impulso | no existía | **2,0°** |
+| Caída | no existía | **0,75°** |
+| Arco suplementario | no existía | **1,75°** de colchón |
+| Energía por ciclo (Q 1.500) | 27 µJ | **60,7 µJ** |
+| Potencia a reponer | 13,5 µW | **30,3 µW** |
+
+**Lo que fija el reposo no es el barrido: es el error de sierra.** 1,5° sobre un
+brazo de 45 son 1,18 mm, casi cuatro veces los ±0,3 que se le piden al corte de
+la rueda. Por debajo hay dientes que no llegan a apoyar y el escape se dispara
+solo en esos.
+
+Y lo que cuesta subir la amplitud **no es la energía** —30 µW siguen siendo nada
+frente a los 318 de la pesa prevista— sino **error circular**, que es constante
+si la amplitud lo es. Con deadbeat lo es, y ese es el argumento circular que
+cierra: el Graham se paga con amplitud y la amplitud se sostiene porque es
+Graham.
+
+### Los dos arcos que hacen el deadbeat
+
+| | |
+| --- | --- |
+| `ancora_arco_entrada` | **44,21 mm** |
+| `ancora_arco_salida` | **45,79 mm** |
+| `ancora_impulso_profundidad` | 1,57 mm |
+
+Son los dos radios de las caras de reposo, **centrados en el eje del áncora**, y
+difieren exactamente en la profundidad del impulso. Headrick da el mismo par
+para su ejemplo —5,69" y 6,31" sobre un brazo de 3"— y esa coincidencia es la
+comprobación de que la construcción es la buena.
+
+### El diente pasa de un ángulo a tres
+
+| Cota | Valor | Qué dice |
+| --- | --- | --- |
+| `rueda_escape_socavado` | 8° | Lo que la cara de ataque se inclina del radio. Antes se llamaba `inclinacion_diente` |
+| `rueda_escape_angulo_incluido` | **23°** | El ángulo de la punta, entre cara y dorso |
+| `rueda_escape_espesor_punta` | **0,5°** | **La punta no es un filo**: medio grado a radio 45 son 0,39 mm, y es justo donde apoya la paleta |
+| `rueda_escape_fondo_relativo` | 0,844 · derivado | El fondo como fracción: cambiar el diámetro ya no rompe la proporción |
+| `rueda_escape_radios` | **3** | La rueda deja de ser un disco. Es el eje más rápido del reloj |
+
+Que el socavado coincidiera en 8° con el `undercut angle` de la demostración,
+después de la corrección de esta mañana, es una validación cruzada que no
+esperaba.

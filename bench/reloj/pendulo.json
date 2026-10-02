@@ -4,7 +4,9 @@
   "fecha": "2026-10-02",
   "medido": false,
   "fuente": "core/reloj/pendulo.py sobre docs/reloj/contratos.json",
-  "porque": "Estimacion teorica para poder dimensionar el escape antes de tener las piezas. Cuando R1 cuente 100 oscilaciones y mida la caida de amplitud, estos numeros se sustituyen por los medidos y el sistema parametrico recalcula lo que cuelgue de ellos.",
+  "porque": "Estimacion teorica para dimensionar el escape antes de tener las piezas. Cuando R1 cuente 100 oscilaciones y mida la caida de amplitud, estos numeros se sustituyen por los medidos y el sistema parametrico recalcula lo que cuelgue de ellos.",
+  "amplitud_grados": 3.0,
+  "nota_amplitud": "Recalculado tras pasar a escape Graham: la amplitud sube de 2 a 3 grados porque el reposo tiene que superar el error de sierra de la rueda. La energia va con el cuadrado, asi que todo lo de abajo se multiplica por 2,25.",
   "calculado": {
     "masa_varilla_kg": 0.07963,
     "masa_total_kg": 1.1116,
@@ -13,19 +15,19 @@
     "longitud_equivalente_m": 0.99382,
     "periodo_s": 2.000203,
     "deriva_frente_a_2s_s_dia": 8.8,
-    "energia_a_amplitud_nominal_J": 0.0064409,
+    "energia_a_amplitud_nominal_J": 0.0144902,
     "deriva_por_milimetro_s_dia": 43.47
   },
   "estimado": {
-    "calidad_solo_por_el_aire": 11824,
+    "calidad_solo_por_el_aire": 7882,
     "calidad_prevista": 1500,
     "calidad_rango": [
       500,
       3000
     ],
-    "porque_1500": "El aire da unos 12.000, asi que no es el limite: lo que manda es el amortiguamiento interno del fleje y el apriete de su mordaza, que no estan en ninguna tabla. 1.500 es el centro del rango de un pendulo de madera con suspension de fleje, y es deliberadamente conservador: equivocarse por abajo sobredimensiona la pesa, que es la pieza mas barata de cambiar.",
-    "perdida_por_ciclo_uJ": 27.0,
-    "potencia_de_mantenimiento_uW": 13.5
+    "porque_1500": "El aire da casi ocho mil, asi que no es el limite: lo que manda es el amortiguamiento interno del fleje y el apriete de su mordaza, que no estan en ninguna tabla. 1.500 es el centro del rango de un pendulo de madera con suspension de fleje, y es deliberadamente conservador: equivocarse por abajo sobredimensiona la pesa, que es la pieza mas barata de cambiar.",
+    "perdida_por_ciclo_uJ": 60.7,
+    "potencia_de_mantenimiento_uW": 30.3
   },
   "que_mide_R1": [
     "100 oscilaciones cronometradas: deben ser 200,0 s. Sustituye periodo_s",

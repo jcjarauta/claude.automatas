@@ -1279,7 +1279,11 @@ def rueda_escape(c: Contratos) -> str:
     espesor = r.valor("rueda_escape_espesor").en_mm
     cubo = r.valor("rueda_escape_cubo_diametro").en_mm
     eje = r.valor("rueda_escape_eje_diametro").en_mm
-    inclinacion = r.valor("rueda_escape_inclinacion_diente").valor
+    socavado = r.valor("rueda_escape_socavado").valor
+    incluido = r.valor("rueda_escape_angulo_incluido").valor
+    espesor_punta = r.valor("rueda_escape_espesor_punta").valor
+    radios = int(r.valor("rueda_escape_radios").valor)
+    ancho_radio = 8.0
     angular = r.valor("rueda_escape_paso_angular").valor
     dientes = int(c.valor("escape", "dientes_escape").valor)
     abarca = c.valor("escape", "abarque_ancora").valor
@@ -1307,25 +1311,39 @@ def rueda_escape(c: Contratos) -> str:
     # El contorno completo, diente a diente. Cada uno sale del fondo, sube a
     # la punta inclinada en el sentido de giro y vuelve al fondo del
     # siguiente: la cara de ataque es la corta, el dorso la larga.
-    # La inclinacion es el angulo de la CARA con el radio, no un angulo
-    # central: la punta se desplaza `altura x tan(inclinacion)` de arco, que
-    # con 8 grados es 1 mm y no 6. Leerla como angulo central daba una cara a
-    # 44 grados del radio, que es otro diente.
-    desvio = altura * e * math.tan(inclinacion) / rp
+    # El diente con los tres angulos de Graham, no con uno. El SOCAVADO
+    # inclina la cara de ataque respecto del radio; el ESPESOR DE PUNTA da el
+    # plano de la punta -que no es un filo: medio grado son 0,39 mm, y es
+    # justo donde apoya la paleta-; el resto lo cierra el dorso.
+    desvio = altura * e * math.tan(socavado) / rp
+    media = espesor_punta / 2.0
     trozos: list[str] = []
     for i in range(dientes):
         a0 = i * angular
         x0, y0 = polar(rf, a0)
-        x1, y1 = polar(rp, a0 + angular - desvio)
-        x2, y2 = polar(rf, a0 + angular)
+        x1, y1 = polar(rp, a0 + angular - desvio - media)
+        x2, y2 = polar(rp, a0 + angular - desvio + media)
+        x3, y3 = polar(rf, a0 + angular)
         trozos.append(f"{'M' if i == 0 else 'L'}{x0:.2f} {y0:.2f}")
         trozos.append(f"L{x1:.2f} {y1:.2f}")
         trozos.append(f"L{x2:.2f} {y2:.2f}")
+        trozos.append(f"L{x3:.2f} {y3:.2f}")
     p.append(f'<path d="{" ".join(trozos)}Z" fill="none" stroke="{TINTA}" stroke-width="1.4"/>')
     for radio, trazo in ((rf, "3 3"), (cubo * e / 2.0, "4 2")):
         p.append(
             f'<circle cx="{cx}" cy="{cy}" r="{radio:.1f}" fill="none" stroke="{AUX}" '
             f'stroke-width="0.8" stroke-dasharray="{trazo}"/>'
+        )
+    # Los radios: este es el eje mas rapido del reloj y la masa que se le
+    # quite vale por el cuadrado de la velocidad.
+    for k in range(radios):
+        ang = k * 2.0 * math.pi / radios + math.pi / 6.0
+        x1, y1 = polar(cubo * e / 2.0, ang)
+        x2, y2 = polar(rf - 3, ang)
+        p.append(
+            f'<path d="M{x1:.1f} {y1:.1f}L{x2:.1f} {y2:.1f}" stroke="{TINTA}" '
+            f'stroke-width="{ancho_radio * e:.1f}" stroke-linecap="round" fill="none" '
+            f'opacity="0.35"/>'
         )
     p.append(
         f'<circle cx="{cx}" cy="{cy}" r="{eje * e / 2.0:.1f}" fill="none" stroke="{TINTA}" '
@@ -1435,10 +1453,13 @@ def rueda_escape(c: Contratos) -> str:
     # El dorso sube despacio desde el fondo hasta casi el siguiente fondo; la
     # cara cae en vertical, inclinada `inclinacion` del radio. Es el mismo
     # diente que genera la vista de planta, visto desenrollado.
-    sesgo = math.tan(inclinacion) * alto
+    sesgo = math.tan(socavado) * alto
+    punta = espesor_punta * rp / e * f2
     p.append(
-        f'<path d="M{dx0 - base:.1f} {dy0:.1f}L{dx0 - sesgo:.1f} {dy0 - alto:.1f}'
-        f"L{dx0:.1f} {dy0:.1f}L{dx0 + base - sesgo:.1f} {dy0 - alto:.1f}"
+        f'<path d="M{dx0 - base:.1f} {dy0:.1f}L{dx0 - sesgo - punta:.1f} {dy0 - alto:.1f}'
+        f"L{dx0 - sesgo:.1f} {dy0 - alto:.1f}L{dx0:.1f} {dy0:.1f}"
+        f"L{dx0 + base - sesgo - punta:.1f} {dy0 - alto:.1f}"
+        f"L{dx0 + base - sesgo:.1f} {dy0 - alto:.1f}"
         f'L{dx0 + base:.1f} {dy0:.1f}" fill="none" stroke="{TINTA}" stroke-width="1.6"/>'
     )
     p.append(
@@ -1456,15 +1477,15 @@ def rueda_escape(c: Contratos) -> str:
     )
     p.append(
         f'<path d="M{xr:.1f} {dy0 - alto - 34:.1f}A34 34 0 0 0 '
-        f"{xr - 34 * math.sin(inclinacion):.1f} "
-        f'{dy0 - alto - 34 + 34 * (1 - math.cos(inclinacion)):.1f}" stroke="{COTA}" '
+        f"{xr - 34 * math.sin(socavado):.1f} "
+        f'{dy0 - alto - 34 + 34 * (1 - math.cos(socavado)):.1f}" stroke="{COTA}" '
         f'stroke-width="1" fill="none"/>'
     )
     p.append(
         _texto(
             xr - 8,
             dy0 - alto - 40,
-            f"{math.degrees(inclinacion):.0f}\u00b0 de la cara al radio",
+            f"{math.degrees(socavado):.0f}\u00b0 socavado",
             9.5,
             COTA,
             "end",
@@ -1475,7 +1496,7 @@ def rueda_escape(c: Contratos) -> str:
         _texto(
             xr - 8,
             dy0 - alto - 30,
-            "#angulo.rueda_escape_inclinacion_diente",
+            "#angulo.rueda_escape_socavado",
             7.5,
             AUX,
             "end",
@@ -1498,7 +1519,9 @@ def rueda_escape(c: Contratos) -> str:
         _texto(
             dx0 - base,
             dy0 + 108,
-            "el paso es de ARCO, no de cuerda: se mide sobre el c\u00edrculo de punta",
+            f"punta de {espesor_punta * (diam / 2.0):.2f} mm \u00b7 "
+            f"{math.degrees(incluido):.0f}\u00b0 de \u00e1ngulo incluido \u00b7 "
+            f"{radios} radios",
             8,
             AUX,
             "start",
@@ -1508,8 +1531,7 @@ def rueda_escape(c: Contratos) -> str:
         _texto(
             dx0 - base,
             dy0 + 122,
-            f"{math.degrees(angular):.0f}\u00b0 por diente \u00b7 "
-            "#angulo.rueda_escape_paso_angular",
+            "#angulo.rueda_escape_espesor_punta \u00b7 #num.rueda_escape_radios",
             8,
             AUX,
             "start",
