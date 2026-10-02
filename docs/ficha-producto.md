@@ -65,7 +65,7 @@ está congelado en `docs/contratos.md`.
 | Brazos del cinco barras | 4 | Latón o contrachapado |
 | Seguidores | 3 | Contrachapado o latón |
 | Manivela | 1 | Brazo de latón + pomo de madera (fabricada) |
-| Volante | 1 | Disco de latón Ø48 × 6, 92 g (torneado) |
+| Volante | 1 | Disco de latón Ø104 × 6 aligerado con 6 agujeros de Ø24, 294 g (cortado) |
 
 ### 2c. Comercial
 
@@ -128,22 +128,22 @@ suba, está en la sección siguiente.
 | Muelles de compresión RS PRO 751-540 | 3 | 1,51 | 4,54 |
 | Contrachapado de abedul 9 mm | 1 | 4,43 | 4,43 |
 | Postes de pivote, inox Ø8 h6 | 3 | 1,21 | 3,63 |
-| Volante, material (rodaja de latón Ø50) | 1 | 2,75 | 2,75 |
+| Volante, material (disco de plancha de latón Ø104 × 6) | 1 | 5,57 | 5,57 |
 | Casquillos igus GFM-0810-06 | 3 | 0,74 | 2,21 |
 | Rodamientos del árbol, 6800-2Z | 2 | 0,69 | 1,38 |
 | Tornillería inox A2 | 20 | 0,04 | 0,80 |
 | Árbol de levas, Ø10 h6 rectificado | 1 | 0,47 | 0,47 |
 | Pasadores de índice DIN 6325 Ø3 | 3 | 0,14 | 0,42 |
 | Acabado Osmo 3062 | 1 | 0,30 | 0,30 |
-| **Plataforma** | | | **85,66** |
+| **Plataforma** | | | **88,48** |
 
 ### 3c. El total, y lo que dice
 
 | | € |
 | --- | --- |
 | Cartucho | 38,08 |
-| Plataforma | 85,66 |
-| **Material y compras de un escribiente** | **123,74** |
+| Plataforma | 88,48 |
+| **Material y compras de un escribiente** | **126,56** |
 
 Son **55 € más** de lo que decía la estimación anterior de 60-65 €, y la
 diferencia no es que algo haya subido: es que antes faltaban el corte, los

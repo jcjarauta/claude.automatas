@@ -249,13 +249,14 @@
     },
     {
       "concepto": "Volante, material",
-      "referencia": "rodaja de redondo de latón Ø50, paso de corte 8 mm",
+      "referencia": "disco de plancha de latón Ø104 x 6, cortado con las levas",
       "proveedor": "Randrade",
       "cantidad": 1,
-      "precio": 2.27,
+      "precio": 4.6,
       "iva_incluido": false,
-      "verificado": true,
-      "url": "https://randrade.com/laton/299-barra-laton-redonda.html"
+      "verificado": false,
+      "url": "https://randrade.com/laton/300-plancha-laton.html",
+      "pedir": "precio del disco Ø104 x 6 cortado: 294 g de laton a unos 14 €/kg más el corte. Lo presupuestado antes era una rodaja de Ø50, que da el 20 % de la inercia que pide el peor caso de referencia: no era un volante, era una arandela"
     },
     {
       "concepto": "Portaminas de 2 mm",

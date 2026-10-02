@@ -20,7 +20,7 @@ from pathlib import Path
 
 from compile.conjunto import montar
 from compile.coste import PrecioCerrado, cargar_precios, valorar
-from compile.energia import Accionamiento, analizar
+from compile.energia import Accionamiento, analizar, relacion_del_contrato, rpm_del_arbol
 from compile.escribiente import Escribiente, compilar
 from compile.informe import escribir_informe, resumen
 from compile.tolerancias import presupuesto_de_error
@@ -63,12 +63,20 @@ def main(argv: list[str] | None = None) -> int:
     partes.add_argument("entrada", type=Path, help="JSON con la escritura, en mm")
     partes.add_argument("--out", type=Path, default=Path("build"), help="carpeta de salida")
     partes.add_argument("--muestras", type=int, default=720, help="muestras por vuelta")
-    partes.add_argument("--rpm", type=float, default=30.0, help="a cuánto se piensa girar")
+    # Los dos por defecto salen del CONTRATO y no de un literal: la máquina
+    # lleva reductor 3:1 y se gira a 90 rpm en la manivela, y con 1:1 y 30
+    # el informe de cada pedido pedía un volante que ya está decidido.
+    partes.add_argument(
+        "--rpm",
+        type=float,
+        default=rpm_del_arbol(),
+        help="a cuánto gira el ÁRBOL; por defecto lo que dice el contrato",
+    )
     partes.add_argument(
         "--relacion-manivela",
         type=float,
-        default=1.0,
-        help="vueltas de manivela por vuelta del árbol",
+        default=relacion_del_contrato(),
+        help="vueltas de manivela por vuelta del árbol; por defecto, el contrato",
     )
     partes.add_argument("--sin-dxf", action="store_true", help="solo papel")
     partes.add_argument(

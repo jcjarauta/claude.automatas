@@ -22,11 +22,13 @@ para prometerle a nadie un par concreto.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 import numpy as np
 from pydantic import BaseModel, ConfigDict, Field
 
+from compile.contratos import cargar
 from compile.escribiente import SEGUIDORES, Compilacion
 from core.cam.curves import derivada_ciclica
 from core.energy.budget import CargaSeguidor, PresupuestoPar, presupuesto
@@ -40,8 +42,30 @@ from core.energy.flywheel import (
     vueltas_por_minuto,
 )
 from core.energy.humano import Manivela, Transmision, relacion_minima
-from core.units import TAU, Inercia, Julios, KgM2, Radianes
+from core.solido import densidad_de, descontar_taladro, inercia_de_disco
+from core.units import TAU, Inercia, Julios, KgM2, Metros, Radianes
 from core.verdict import Incidencia, Veredicto
+
+
+def relacion_del_contrato() -> float:
+    """La reducción del contrato. Leerla aquí y no copiarla es la regla de
+    siempre: un número en dos sitios es un número que va a divergir."""
+    return float(cargar().valor("bastidor", "reductor_relacion").valor)
+
+
+def rpm_del_arbol() -> float:
+    """A cuánto gira el ÁRBOL, que es lo que mide `vueltas_por_minuto`.
+
+    El contrato guarda a cuánto gira la **mano**, que es lo que se decide y
+    lo que dimensiona el volante; el árbol va tantas veces más despacio como
+    diga la reducción. Con 90 en la manivela y 3:1, la frase se escribe en
+    dos segundos."""
+    c = cargar()
+    return (
+        float(c.valor("accionamiento", "manivela_vueltas_por_minuto").valor)
+        / relacion_del_contrato()
+    )
+
 
 MARGEN_DE_PAR = 1.3
 """Cuánto tiene que sobrar el par disponible sobre el pedido. Girar una
@@ -55,8 +79,10 @@ class Accionamiento(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     manivela: Manivela = Field(default_factory=Manivela)
-    transmision: Transmision = Field(default_factory=Transmision)
-    vueltas_por_minuto: float = Field(default=30.0, gt=0.0, le=300.0)
+    transmision: Transmision = Field(
+        default_factory=lambda: Transmision(relacion=relacion_del_contrato())
+    )
+    vueltas_por_minuto: float = Field(default_factory=lambda: rpm_del_arbol(), gt=0.0, le=300.0)
     """A cuánto se piensa girar. No cambia lo que se escribe —el programa es
     función de θ— pero decide cuánta inercia hace falta para que se note
     suave y cuánto pesa el término inercial del par."""
@@ -64,9 +90,13 @@ class Accionamiento(BaseModel):
     carga: CargaSeguidor = Field(default_factory=CargaSeguidor)
     """La misma para los tres seguidores mientras no haya medidas propias.
     Está referida al **eje del seguidor**, no al del brazo."""
-    inercia_en_la_manivela: Inercia = KgM2(0.0)
+    inercia_en_la_manivela: Inercia = Field(default_factory=lambda: inercia_del_volante())
     """Lo que ya gira en el eje rápido: el piñón, la manivela y el volante si
-    se pone ahí. Cuenta multiplicado por la relación al cuadrado."""
+    se pone ahí. Cuenta multiplicado por la relación al cuadrado.
+
+    Por defecto, **el volante que dice el contrato**. Con cero, el informe de
+    cada pedido pedía un volante que ya está decidido y dibujado, y un
+    documento que contradice al contrato es peor que no tenerlo."""
     inercia_en_el_arbol: Inercia = KgM2(0.0)
     """Lo que ya gira en el eje de levas además del cartucho: la rueda grande
     de la reducción. Cuenta tal cual."""
@@ -99,6 +129,35 @@ class Energia:
     relacion_minima: float | None
     """La relación de manivela más pequeña que cubre el par pedido, o `None`
     si ni con la máxima llega."""
+
+
+def inercia_del_volante() -> KgM2:
+    """Lo que da el volante del contrato, desde su geometría.
+
+    **Es la única cota de la máquina que no es un encaje sino un
+    requisito.** El diámetro del volante no lo decide nada que lo toque: lo
+    decide esto, así que la cuenta vive en el compilador y un test la cruza
+    contra lo que pide C7. Si alguien lo achica porque se ve grande, salta.
+
+    Disco macizo menos los seis aligeramientos, con Steiner. `core/solido.py`
+    pone las dos fórmulas; aquí solo se leen las cotas.
+    """
+    c = cargar()
+    diametro = float(c.valor("accionamiento", "volante_diametro").metros)
+    espesor = float(c.valor("accionamiento", "volante_espesor").metros)
+    agujero = float(c.valor("accionamiento", "volante_aligeramiento_diametro").metros)
+    al_centro = float(c.valor("accionamiento", "volante_aligeramiento_al_centro").metros)
+    reparto = c.valor("accionamiento", "volante_aligeramiento_reparto").radianes
+    densidad = densidad_de("latón")
+
+    inercia = float(inercia_de_disco(diametro / 2.0, espesor, densidad))
+    cuantos = round(TAU / reparto)
+    for i in range(cuantos):
+        angulo = reparto * i
+        centro = (Metros(al_centro * math.cos(angulo)), Metros(al_centro * math.sin(angulo)))
+        _, polar = descontar_taladro(np.empty((0, 2)), centro, Metros(agujero))
+        inercia -= polar * espesor * densidad
+    return KgM2(inercia)
 
 
 def analizar(

@@ -237,6 +237,19 @@ FICHAS: dict[str, Ficha] = {
         cara_plana_angulo="brazo_chaveta_angulo",
         datum="brazo_eje_diametro_radio",
     ),
+    "volante": Ficha(
+        "disco de latón aligerado con seis agujeros y el agujero en D de la manivela",
+        {
+            "volante_diametro_radio": 1,
+            "brazo_eje_diametro_radio": 1,
+            "volante_aligeramiento_diametro_radio": 6,
+        },
+        segmentos={"brazo_chaveta_cuerda": 1},
+        polares=(("volante_aligeramiento_al_centro", "volante_aligeramiento_reparto", 6),),
+        cara_plana="brazo_chaveta",
+        cara_plana_angulo="brazo_chaveta_angulo",
+        datum="brazo_eje_diametro_radio",
+    ),
     "platina_levas": Ficha(
         "disco de contrachapado con los seis agujeros del mecanismo",
         {

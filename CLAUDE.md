@@ -526,6 +526,17 @@ falla si el esquema versionado se queda atrás.
   `alto_de_leyenda` reservando el sitio: abajo está la pila de cotas
   horizontales y un radio que la cruza se lee como parte de ella.
 
+- **Dimensionar sobre el demo.** El volante salió de `demo/hola.json` y se
+  habría quedado un **tercio corto**: «firma», que es un trazo cursivo
+  largo, pide 3,62 × 10⁻⁴ kg·m² contra los 2,28 de «hola». Los casos de
+  referencia de `tests/casos.py` existen justo para esto —cada uno tensa una
+  cosa distinta— y una cota que depende del pedido se dimensiona contra
+  **todos**, no contra el que se tiene abierto.
+
+  Lo mismo valió para el precio: `bench/precios.json` presupuestaba una
+  rodaja de latón de Ø50 que da el **20 %** de la inercia que hace falta. Un
+  precio puesto sobre una pieza que nadie había calculado.
+
 - **Dos agujeros cambiados de sitio se ven perfectos.** La platina volvió
   dos veces con el tercer poste y el pivote izquierdo cada uno en el sitio
   del otro: el Ø8 a -58,407° y el Ø10 a -120°, cuando era al revés. Cada
@@ -966,30 +977,47 @@ Los números de C6, C7 y C9 sobre el cartucho de «hola»:
 Sobra un factor cuarenta. **El par nunca ha sido el problema**, y por eso la
 relación mínima de manivela que exige el par es 1:1.
 
-Lo que aprieta es la **suavidad**. La energía de fluctuación son 6,5 mJ, y
-para que la velocidad no varíe más de un 15 % a 30 vueltas por minuto hacen
-falta 44 × 10⁻⁴ kg·m²: un disco de acero de 3,3 kg. Inaceptable en una pieza
-de sobremesa.
+Lo que aprieta es la **suavidad**, y los números de aquí están **medidos
+hoy** (2026-10-02) con `compile/energia.py`, no copiados de una nota: la
+sección anterior decía 44 × 10⁻⁴ y un disco de 92 g, y ninguno de los dos
+reproducía desde que el cartucho cambió a 6:1.
 
-La inercia necesaria va con 1/ω², así que el volante se pone **en el eje
-rápido**. Con reductor de 3:1 y 60 vueltas por minuto de manivela, el mismo
-trabajo lo hace un disco de **75 g**.
+La inercia que hace falta **en el eje donde va el volante** es ΔE/(Cs·ω²), y
+ω es la de **ese** eje. Puesto en la manivela, depende solo de a cuánto gire
+la mano: **la relación no entra**. Con 90 rpm en la manivela y Cs = 15 %:
 
-**Ese es el motivo de llevar reductor: no el par, el volante.** Y de paso
-sube la velocidad del árbol, que vuelve a bajar la inercia necesaria.
+| | ΔE | Volante en la manivela |
+| --- | --- | --- |
+| «hola» | 3,4 mJ | 2,28 × 10⁻⁴ kg·m² |
+| «puntos» | 4,8 mJ | 3,33 × 10⁻⁴ |
+| **«firma»** | **5,2 mJ** | **3,62 × 10⁻⁴** |
 
-### Y el volante no es el engranaje grande
+**Dimensionar sobre el demo deja el volante un tercio corto.** «firma» —un
+trazo cursivo largo— pide un 59 % más que «hola», y es justo el pedido más
+probable. Lo defiende `test_el_volante_del_contrato_cubre_el_peor_caso_de_
+referencia`.
 
-En una reducción de 3:1 la manivela es el eje **rápido**, así que lleva el
-piñón; la rueda grande va en el árbol de levas, que es el lento. Poner ahí la
-masa cuesta la relación al cuadrado:
+**Entonces, ¿para qué el reductor?** No para el par, que sobra por cuarenta,
+y tampoco para encoger el volante a igualdad de manivela: a 60 rpm de mano
+el volante sale igual con 1:1 que con 3:1 (algo peor, incluso, porque el
+cartucho cuenta dividido por la relación al cuadrado). Sirve para **separar
+las dos velocidades**: la mano gira deprisa —que es lo que baja el volante—
+y el árbol despacio, que es lo que deja ver cómo se escribe la frase. Con
+3:1 y 90 rpm, el árbol va a 30 y la frase tarda dos segundos.
 
-| Dónde | Disco de latón de 6 mm que hace falta |
-| --- | --- |
-| En el árbol de levas | Ø88 mm, **313 g** |
-| En el eje de la manivela | Ø48 mm, **92 g** |
+### El volante que hay, y lo que no es el engranaje grande
 
-Una rueda Z60 de módulo 1 en latón macizo aporta 0,65 × 10⁻⁴ kg·m² de los
-5,5 que hacen falta: **ayuda un 12 %, no es el volante**. `Accionamiento`
+**Ø104 × 6 en latón, aligerado con seis agujeros de Ø24 a 30 del centro:
+4,51 × 10⁻⁴ kg·m² y 294 g**, un 24 % por encima del peor caso. Aligerado
+porque la inercia vive en el borde: los seis agujeros quitan 100 g y solo un
+9 % de inercia. Cala con la misma cara plana que los brazos, sobre la misma
+barra Ø10 h6, y sin prisionero: un taladro radial no sale de una plancha
+cortada. Está en el contrato, en el grupo `accionamiento`, y es la **única
+cota de la máquina que no sale de un encaje sino de un requisito**.
+
+La rueda Z60 va en el árbol, que es el lento, así que su inercia cuenta tal
+cual y no multiplicada: **ayuda poco, no es el volante**. `Accionamiento`
 tiene `inercia_en_el_arbol` e `inercia_en_la_manivela` para contarlas, y la
-segunda entra multiplicada por la relación al cuadrado.
+segunda entra multiplicada por la relación al cuadrado; por defecto trae el
+volante del contrato, para que el informe de un pedido no pida uno que ya
+está dibujado.

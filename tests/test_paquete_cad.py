@@ -393,7 +393,11 @@ def test_cada_cota_circular_tiene_sus_dos_formas(paquete: Path):
     # y lo que se teclea es el diámetro, y `platina_pivote_al_arbol` dejó de
     # llamarse radio porque es una DISTANCIA. La primera suma un gemelo, la
     # segunda quita uno que no servía para nada: 29 y no 30.
-    assert gemelos == 29, f"esperaba 29 cotas circulares con gemelo, hay {gemelos}"
+    #
+    # Y 31 con el volante, que trae dos círculos enteros: su contorno y los
+    # seis aligeramientos. El resto de sus cotas son las del brazo —cala con
+    # la misma cara plana sobre la misma barra Ø10 h6—, así que no suman.
+    assert gemelos == 31, f"esperaba 31 cotas circulares con gemelo, hay {gemelos}"
 
 
 def test_el_gemelo_dice_que_es_derivado(paquete: Path):

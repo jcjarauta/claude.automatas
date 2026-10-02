@@ -186,14 +186,32 @@ def informe(
             f"{float(energia.inercia_necesaria) * 1e4:.1f} × 10⁻⁴ kg·m²",
             f"- La aporta el cartucho: "
             f"{float(energia.inercia_del_cartucho) * 1e4:.1f} × 10⁻⁴ kg·m²",
-            f"- **Volante que falta, puesto en el eje de la manivela: "
-            f"{volante * 1e4:.1f} × 10⁻⁴ kg·m²** — un disco de acero de 50 mm de "
-            f"radio y {disco * 1000:.0f} g",
-            "",
-            "Puesto en el árbol haría falta la relación al cuadrado veces más. Ahí está"
-            " el motivo de llevar reductor aunque el par sobre.",
-            "",
+            f"- Y lo que ya gira además del cartucho: "
+            f"{(float(energia.inercia_disponible) - float(energia.inercia_del_cartucho)) * 1e4:.1f}"
+            f" × 10⁻⁴ kg·m², sobre todo el volante del contrato",
         ]
+        # **Cuando no falta nada, no se pide nada.** Con el volante ya
+        # decidido y dibujado, «falta un disco de 0 g» no es una frase: el
+        # informe de un pedido no puede contradecir al contrato.
+        lineas += (
+            [
+                f"- **Volante que falta, puesto en el eje de la manivela: "
+                f"{volante * 1e4:.1f} × 10⁻⁴ kg·m²** — un disco de acero de 50 mm de "
+                f"radio y {disco * 1000:.0f} g",
+                "",
+                "Puesto en el árbol haría falta la relación al cuadrado veces más: el"
+                " volante va en el eje rápido, que es el de la manivela.",
+            ]
+            if volante > 0.0
+            else [
+                "",
+                "**No falta volante**: el del contrato cubre esta frase. La inercia que"
+                " hace falta en el eje donde va el volante es ΔE/(Cs·ω²) y depende solo"
+                " de a cuánto gire ESE eje, así que lo que la baja es girar más deprisa"
+                " la mano, no la reducción.",
+            ]
+        )
+        lineas += [""]
 
     if presupuesto is not None:
         lineas += [

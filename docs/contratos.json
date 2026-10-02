@@ -663,6 +663,56 @@
           "tolerancia": ""
         }
       ]
+    },
+    {
+      "nombre": "accionamiento",
+      "estado": "pendiente",
+      "congelado_el": "",
+      "porque": "La suavidad, no el par. El par sobra por un factor cuarenta; lo que decide el tamaño del volante es la energia de fluctuacion del ciclo y a cuanto gire el eje donde esta montado. Dimensionado contra el PEOR caso de referencia, «firma», que pide un 59 % mas que «hola»: sobre el demo se habria quedado un tercio corto",
+      "valores": [
+        {
+          "nombre": "manivela_vueltas_por_minuto",
+          "valor": 90.0,
+          "unidad": "adimensional",
+          "descripcion": "A cuanto se gira la manivela. Con la reduccion 3:1 el arbol va a 30 y la frase se escribe en 2 s. NO cambia lo que se escribe —el programa es funcion de theta— pero es lo unico que decide cuanto volante hace falta: la inercia necesaria en el eje donde va el volante es dE/(Cs*w^2) y depende SOLO de a cuanto gire ese eje, no de la relacion",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "volante_diametro",
+          "valor": 0.104,
+          "unidad": "m",
+          "descripcion": "Diametro exterior del volante, en el eje de la manivela. Sale de cubrir los 3,62e-4 kg*m2 que pide «firma» a 90 rpm con un 24 % de margen. Va en DIAMETRO: el contorno es un circulo entero",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "volante_espesor",
+          "valor": 0.006,
+          "unidad": "m",
+          "descripcion": "Plancha de laton de 6, cortada como las levas",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "volante_aligeramiento_diametro",
+          "valor": 0.024,
+          "unidad": "m",
+          "descripcion": "Los seis agujeros que vacian el centro. La inercia vive en el borde, asi que quitar masa de dentro cuesta poca inercia y ahorra laton: 294 g en vez de los 394 del disco macizo del mismo diametro",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "volante_aligeramiento_al_centro",
+          "valor": 0.03,
+          "unidad": "m",
+          "descripcion": "Del eje al centro de cada aligeramiento. Deja 10 mm de pared al borde y 6 al cubo de Ø24, y 7,4 mm entre agujeros",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "volante_aligeramiento_reparto",
+          "valor": 1.047197551197,
+          "unidad": "rad",
+          "descripcion": "Seis agujeros repartidos a 60 grados, desde +X",
+          "tolerancia": ""
+        }
+      ]
     }
   ]
 }

@@ -41,6 +41,7 @@ from emit.plataforma import (
     sector,
     seguidor,
     tambor,
+    volante,
 )
 from emit.plataforma import _numero as numero
 from emit.plataforma import brazo as brazo_de
@@ -60,6 +61,7 @@ PERFIL_DE = {
     "tambor": tambor,
     "seguidor": seguidor,
     "platina_levas": platina_levas,
+    "volante": volante,
 }
 """De dónde sale la forma de cada pieza.
 
@@ -278,6 +280,10 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
     techo = min(oy - y1 * k, oy - 17.0) - 10.0
     # Clave por RADIO y no por nombre: dos cotas pueden valer lo mismo y
     # entonces son un solo rótulo con dos nombres en la leyenda.
+    ocupado_a_la_derecha = 0.0
+    """Hasta dónde llega por la derecha un rótulo de polares. La pila de
+    cotas verticales empieza más allá: si no, el «Ø24 · 30» del volante
+    aterriza encima de la cuerda de la chaveta."""
     puestos: dict[float, str] = {}
     rotulos: list[tuple[float, float, float]] = []
     """Caja de cada rótulo ya puesto: (nivel, x0, x1)."""
@@ -429,12 +435,33 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
         # los tres se lee como tres cotas distintas.
         marca = f"{cuantos}× " if cuantos > 1 else ""
         ang_r = math.atan2(centros[0][1], centros[0][0])
-        fuera = math.hypot(*centros[0]) * k + 12.0
+        # Fuera del CONTORNO, no fuera del agujero. Los del volante caen al
+        # 58 % del radio, así que «el agujero más doce» dejaba el rótulo
+        # dentro de la pieza y encima de la pila de cotas verticales.
+        envolvente = max(
+            [math.hypot(*e.centro) + e.radio for e in perfil if isinstance(e, Arco)]
+            + [math.hypot(*centros[0])]
+        )
+        fuera = envolvente * k + 12.0
         ancla = "start" if math.cos(ang_r) > 0.3 else "end" if math.cos(ang_r) < -0.3 else "middle"
         # En DOS líneas: de una sola, el rótulo del pivote derecho medía 67 px
         # y se salía de la tarjeta por la izquierda. Partido por el «·» que
         # separa el agujero de su ángulo, ninguna pasa de 35.
         tx, ty = ox + math.cos(ang_r) * fuera, oy - math.sin(ang_r) * fuera
+        # El primer rayo se prolonga hasta el número: un rótulo que no toca
+        # lo que describe hay que emparejarlo de cabeza, y de ahí salen los
+        # errores que este bucle existe para evitar.
+        d.append(
+            f'<line class="eje" x1="{ox + centros[0][0] * k:.2f}" '
+            f'y1="{oy - centros[0][1] * k:.2f}" x2="{tx:.2f}" y2="{ty:.2f}"/>'
+        )
+        if ancla == "start":
+            ocupado_a_la_derecha = max(
+                ocupado_a_la_derecha,
+                tx
+                + 2.9
+                * max(len(f"{cual}{numero(c[cota_r])}"), len(f"{marca}{numero(grados)}°{lado}")),
+            )
         for i, linea in enumerate(
             (f"{cual}{numero(c[cota_r])}", f"{marca}{numero(grados)}°{lado}")
         ):
@@ -505,8 +532,8 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
         ]
         nivel += 12
 
-    # Y las verticales, a la derecha.
-    lado = derecha + 22
+    # Y las verticales, a la derecha de todo lo demás.
+    lado = max(derecha, ocupado_a_la_derecha) + 22
     for cota, _ in ficha.segmentos.items():
         iguales = _verticales(perfil, cotas[cota])
         if not iguales:

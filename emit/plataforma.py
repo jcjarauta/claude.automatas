@@ -225,6 +225,34 @@ def platina_levas(c: dict[str, float] | None = None) -> Perfil:
     return perfil
 
 
+def volante(c: dict[str, float] | None = None) -> Perfil:
+    """El volante del eje de la manivela: un disco aligerado con seis
+    agujeros y el mismo agujero en D que cala los brazos.
+
+    **La única pieza cuya cota no es un encaje, es un requisito.** Su
+    diámetro no lo decide nada que toque: lo decide la inercia que hace
+    falta para que la manivela no vaya a tirones, y por eso lo vigila un
+    test contra C7 y no contra un ajuste.
+
+    Va aligerado porque la inercia vive en el borde: seis agujeros de Ø24
+    quitan 100 g de latón y solo un 9 % de inercia.
+
+    Cala igual que un brazo, con la cara plana de la barra Ø10 h6. No lleva
+    prisionero: un taladro radial no sale de una plancha cortada, y la cara
+    plana ya existe en los otros tres sitios de la máquina.
+    """
+    c = contrato_mm() if c is None else c
+    perfil = circulo((0.0, 0.0), c["volante_diametro"] / 2)
+    perfil += agujero_en_d((0.0, 0.0), c["brazo_eje_diametro"] / 2, c["brazo_chaveta"])
+    # `contrato_mm` deja los ángulos en radianes: aquí no se divide por nada.
+    for i in range(6):
+        t = c["volante_aligeramiento_reparto"] * i
+        r = c["volante_aligeramiento_al_centro"]
+        centro = (r * math.cos(t), r * math.sin(t))
+        perfil += circulo(centro, c["volante_aligeramiento_diametro"] / 2)
+    return perfil
+
+
 def ranura(centro: Punto, largo: float, radio: float) -> Perfil:
     """Una ranura recta: dos semicírculos y sus dos tangentes, horizontal.
 
@@ -307,6 +335,7 @@ PERFILES = {
     "tambor": lambda c: tambor(c),
     "seguidor": lambda c: seguidor(c),
     "platina_levas": lambda c: platina_levas(c),
+    "volante": lambda c: volante(c),
 }
 """Las piezas prismáticas que no son barras. El resto sale de `BRAZOS`.
 
@@ -507,6 +536,33 @@ LISTADO: dict[str, Ficha] = {
         "Cilindro liso, sin pestañas. Lo que mantiene la cinta en su sitio no son las "
         "pestañas sino que los dos asientos sean coplanarios, y eso es una tolerancia y "
         "no un resalte. R8 son 160 espesores de cinta: pasa de sobra el radio mínimo.",
+    ),
+    "volante": Ficha(
+        "disco de latón aligerado, en el eje de la manivela",
+        1,
+        (
+            Variable("cota", "volante_diametro", "Ø del disco"),
+            Variable("cota", "volante_espesor", "espesor", en_el_perfil=False),
+            Variable("cota", "brazo_eje_diametro", "Ø del eje", "H7"),
+            Variable("cota", "brazo_chaveta", "cara plana a"),
+            Variable("cota", "brazo_chaveta_cuerda", "cuerda"),
+            Variable("cota", "volante_aligeramiento_diametro", "Ø de cada aligeramiento"),
+            Variable("cota", "volante_aligeramiento_al_centro", "del eje a cada aligeramiento"),
+            Variable("angulo", "volante_aligeramiento_reparto", "entre aligeramientos"),
+            Variable(
+                "num",
+                "manivela_vueltas_por_minuto",
+                "a cuánto se gira (no se dibuja)",
+                en_el_perfil=False,
+            ),
+        ),
+        ("plancha", "volante_espesor"),
+        "La única pieza cuyo diámetro no lo decide un encaje sino un REQUISITO: la inercia "
+        "que hace falta para que la manivela no vaya a tirones. Dimensionado contra el peor "
+        "caso de referencia —«firma», que pide un 59 % más que «hola»— y no contra el demo. "
+        "Aligerado porque la inercia vive en el borde: seis agujeros de Ø24 quitan 100 g de "
+        "latón y solo un 9 % de inercia. Cala con la misma cara plana que los brazos, sin "
+        "prisionero: un taladro radial no sale de una plancha cortada.",
     ),
     "platina_levas": Ficha(
         "disco de contrachapado con los seis agujeros del mecanismo",
