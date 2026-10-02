@@ -40,10 +40,18 @@ class Cambio:
     altas: list[str] = field(default_factory=list)
     bajas: list[str] = field(default_factory=list)
     distintas: list[tuple[str, str, str]] = field(default_factory=list)
+    renombradas: list[tuple[str, str]] = field(default_factory=list)
+    """Una que se va y otra que llega con el MISMO valor.
+
+    Se separa de las altas y las bajas porque no cuesta lo mismo. Una alta no
+    rompe nada: la cota nueva se teclea cuando toque. Un renombrado **rompe en
+    silencio todo croquis que ya usara el nombre viejo**, y el croquis se ve
+    bien hasta que se abre.
+    """
 
     @property
     def hay(self) -> bool:
-        return bool(self.altas or self.bajas or self.distintas)
+        return bool(self.altas or self.bajas or self.distintas or self.renombradas)
 
 
 def _filas(texto: str) -> dict[str, str]:
@@ -73,8 +81,17 @@ def pendientes(paquete: Path) -> list[Cambio]:
             # caso de la primera vez; a partir de ahí se guarda y hay detalle.
             cambio.altas = sorted(ahora)
         else:
-            cambio.altas = sorted(ahora.keys() - antes.keys())
-            cambio.bajas = sorted(antes.keys() - ahora.keys())
+            altas = sorted(ahora.keys() - antes.keys())
+            bajas = sorted(antes.keys() - ahora.keys())
+            # Emparejar por VALOR lo que se va con lo que llega: eso es un
+            # renombrado, y es el único cambio que rompe un croquis ya hecho.
+            for ida in list(bajas):
+                gemela = next((n for n in altas if ahora[n] == antes[ida]), None)
+                if gemela is not None:
+                    cambio.renombradas.append((ida, gemela))
+                    bajas.remove(ida)
+                    altas.remove(gemela)
+            cambio.altas, cambio.bajas = altas, bajas
             cambio.distintas = [
                 (n, antes[n], ahora[n])
                 for n in sorted(ahora.keys() & antes.keys())
@@ -102,6 +119,11 @@ def informe(cambios: list[Cambio], mapas: dict[str, tuple[str, str]]) -> str:
         lineas.append(f"| `{c.archivo}.csv` | `#{mapa}` | `{factor}` |")
     for c in cambios:
         lineas += ["", f"## `{c.archivo}.csv`", ""]
+        for viejo_n, nuevo_n in c.renombradas:
+            lineas.append(
+                f"- **RENOMBRADA** `{viejo_n}` → `{nuevo_n}` — reteclea a mano toda "
+                "cota que usara la vieja: el croquis no avisa hasta que se abre"
+            )
         for n in c.altas:
             lineas.append(f"- **nueva** `{n}`")
         for n in c.bajas:

@@ -474,6 +474,22 @@ falla si el esquema versionado se queda atrás.
   y el test del catálogo la leen de ahí. La regla general: **en la hoja va lo
   que se teclea, no lo que se mide**, y cuando no coinciden, el derivado sale
   también.
+- **Renombrar una cota DESPUÉS de entregarla rompe el croquis en silencio.**
+  Entregué `seguidor_sector_lejos`, se importó y se acotó con ella, y a la
+  vuelta siguiente la renombré a `union_sector_seguidor_lejos` —correcto: la
+  miden las dos piezas—. El croquis siguió viéndose bien hasta que se abrió y
+  salió la cota en rojo.
+
+  **Un alta no cuesta nada y un renombrado cuesta reteclear**, así que no son
+  el mismo renglón del informe: `csv_pendientes` empareja por valor lo que se
+  va con lo que llega y lo nombra «RENOMBRADA». Y el informe solo ve lo que
+  `docs/importado.json` tenga marcado: si se importa y no se marca, las bajas
+  no aparecen y son justo las peligrosas.
+
+  La regla: **el nombre se discute antes de entregar la cota, no después.**
+  Una vez entregada, renombrarla es una operación con coste para el que
+  dibuja, y hay que decirlo al entregar el CSV.
+
 - **El gemelo no sirve de nada si la hoja rotula el otro.** Los dos gemelos
   del cabestrante existían desde hacía días, y aun así el sector y el tambor
   se dibujaron **los dos a la mitad el mismo día**: la hoja ponía

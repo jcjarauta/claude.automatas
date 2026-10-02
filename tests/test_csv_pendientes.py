@@ -8,6 +8,7 @@ falte una fila cuesta una pieza.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -114,3 +115,46 @@ def test_el_estado_guarda_el_contenido_y_no_solo_el_hash():
     datos = json.loads(IMPORTADO.read_text(encoding="utf-8"))["archivos"]
     for nombre, v in datos.items():
         assert v.get("contenido"), f"{nombre}: sin contenido no hay detalle posible"
+
+
+def test_un_renombrado_se_separa_de_un_alta_porque_no_cuesta_lo_mismo(tmp_path: Path):
+    """**Un alta no rompe nada; un renombrado rompe en silencio.**
+
+    Paso: entregue `seguidor_sector_lejos`, Juan Carlos la importo y acoto con
+    ella, y a la vuelta siguiente la renombre a `union_sector_seguidor_lejos`
+    porque la miden las dos piezas. El informe lo contaba como un alta mas
+    entre diecisiete, y el croquis se ve bien hasta que se abre y sale la cota
+    en rojo.
+
+    Emparejando por VALOR lo que se va con lo que llega, el renombrado se
+    nombra como lo que es y dice que hay que reteclear.
+    """
+    antes = "a,1.0000,mm,x,pendiente,,una\nvieja,2.0000,mm,x,pendiente,,otra\n"
+    ahora = "a,1.0000,mm,x,pendiente,,una\nnueva,2.0000,mm,x,pendiente,,otra\n"
+    (tmp_path / "variables_cota.csv").write_text(ahora, encoding="utf-8")
+
+    guardado = {
+        "archivos": {
+            "variables_cota": {
+                "sha256": hashlib.sha256(antes.encode()).hexdigest(),
+                "contenido": antes,
+                "fecha": "2026-10-02",
+            }
+        }
+    }
+    ruta = tmp_path / "importado.json"
+    ruta.write_text(json.dumps(guardado), encoding="utf-8")
+
+    import scripts.csv_pendientes as cp
+
+    antiguo, cp.IMPORTADO = cp.IMPORTADO, ruta
+    try:
+        cambios = cp.pendientes(tmp_path)
+    finally:
+        cp.IMPORTADO = antiguo
+
+    assert len(cambios) == 1
+    assert cambios[0].renombradas == [("vieja", "nueva")]
+    assert not cambios[0].altas, "un renombrado no es un alta"
+    assert not cambios[0].bajas, "ni una baja suelta"
+    assert "RENOMBRADA" in cp.informe(cambios, {"variables_cota": ("cota", "1 mm")})
