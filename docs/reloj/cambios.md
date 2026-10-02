@@ -541,3 +541,62 @@ construye— y **el engrane**, con el áncora puesta y los dos arcos de reposo
 dibujados con su radio. Ese tercer panel es el que explica para qué sirve el
 perfil: el diente apoya en un arco centrado en el eje del áncora, y por eso la
 rueda no se mueve.
+
+## 2026-10-02 · La medida entre dientes: 12°, y qué lee un pie de rey
+
+Pregunta directa: *¿la medida entre dientes es 360 / 30 = 12°?* **Sí.** Es
+`rueda_escape_paso_angular`, y es también la suma de los cuatro ángulos de
+centro que reparten el diente:
+
+```
+retraso del dorso   2,39°
+espesor de la punta  0,50°
+adelanto de la cara  1,25°
+hueco                7,86°
+                    ------
+                    12,00°
+```
+
+El problema es que **ese 12 solo se podía deducir sumando**. No estaba acotado
+en ningún sitio. Ahora se traza como cota angular en el panel del diente,
+rotulada `12° = 360 / 30`, para que el que dibuja no tenga que reconstruirla.
+
+### Un pie de rey no mide un arco
+
+Al bajarlo a milímetros aparece una distinción que importa en el taller:
+
+| | |
+| --- | --- |
+| Paso de **arco** sobre el círculo de punta | 9,4248 mm |
+| **Cuerda** entre dos puntas contiguas | 9,4076 mm |
+| Diferencia | 0,0172 mm = **0,18 %** |
+
+El arco es lo que calcula el compilador; la cuerda es lo que mide una
+herramienta, que apoya en dos puntos y va en línea recta. Confundirlas mete un
+sesgo del 0,18 % en cada lectura, siempre en el mismo sentido.
+
+### La verificación salta cinco dientes: 45,00 mm
+
+Medir 9,41 mm con un pie de rey deja un error de lectura del 0,5 % —del orden
+del triple de la diferencia que se acaba de discutir—, así que no sirve para
+verificar nada. La medida buena **salta dientes**, que es lo mismo que ya se
+hace con el patrón de la impresora y por el mismo motivo: el instrumento tiene
+que ser más fino que el error que se busca.
+
+Con 30 dientes sale un número redondo y no por casualidad:
+
+> **Cinco pasos son 60°, y la cuerda de 60° vale exactamente el radio.**
+
+Así que la cuerda sobre cinco dientes es **45,00 mm**, el radio de punta clavado,
+sin decimales que copiar mal. El error de lectura baja al 0,11 %.
+
+Queda declarada como `rueda_escape_cuerda_cinco`, con tolerancia
+`+/-0,2 · VERIFICACION` —no es una cota que se fabrique, es una que se
+comprueba— y escrita en la hoja en un bloque VERIFICAR aparte, para que no se
+confunda con las que hay que trazar. La cuerda entre dientes contiguos va
+también al contrato (`rueda_escape_cuerda_diente`) porque es el número que
+alguien va a medir de todos modos, y es mejor que esté dicho que no.
+
+Tres tests lo defienden: que la cuerda no es el paso de arco, que la
+verificación salta cinco dientes, y que con treinta dientes ese salto vale el
+radio.

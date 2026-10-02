@@ -1450,3 +1450,38 @@ def test_el_diente_no_invade_al_de_al_lado(reloj: Contratos):
 def test_los_radios_dejan_pasar_el_cubo(reloj: Contratos):
     r = reloj.contrato("rueda_escape")
     assert r.valor("rueda_escape_radio_ancho").en_mm < r.valor("rueda_escape_cubo_diametro").en_mm
+
+
+def test_la_cuerda_entre_dientes_no_es_el_paso_de_arco(reloj: Contratos):
+    """Lo que mide un pie de rey es la CUERDA, no el arco. A este tamaño la
+    diferencia es 0,17 décimas y da igual; al escalar la rueda, no."""
+    r = reloj.contrato("rueda_escape")
+    radio = r.valor("rueda_escape_diametro").en_mm / 2.0
+    cuerda = r.valor("rueda_escape_cuerda_diente").en_mm
+    assert cuerda == pytest.approx(
+        2.0 * radio * math.sin(r.valor("rueda_escape_paso_angular").valor / 2.0), abs=0.01
+    )
+    assert cuerda < r.valor("rueda_escape_paso_diente").en_mm
+
+
+def test_la_medida_de_verificacion_salta_cinco_dientes(reloj: Contratos):
+    """LA medida con la que se comprueba una rueda cortada: el error de
+    lectura del pie de rey se reparte entre cinco dientes en vez de caer sobre
+    uno, y pasa del 0,5 % al 0,11 %."""
+    r = reloj.contrato("rueda_escape")
+    radio = r.valor("rueda_escape_diametro").en_mm / 2.0
+    assert r.valor("rueda_escape_cuerda_cinco").en_mm == pytest.approx(
+        2.0 * radio * math.sin(5.0 * r.valor("rueda_escape_paso_angular").valor / 2.0), abs=0.01
+    )
+
+
+def test_con_treinta_dientes_la_verificacion_vale_el_radio(reloj: Contratos):
+    """Cinco pasos de 12° son 60° exactos, y la cuerda de 60° vale el radio.
+    Que la medida de comprobación salga en 45,000 clavados no es casualidad:
+    es lo que hace que se pueda cantar de memoria en el taller."""
+    r = reloj.contrato("rueda_escape")
+    if reloj.valor("escape", "dientes_escape").valor != 30.0:
+        pytest.skip("la coincidencia es propia de 30 dientes")
+    assert r.valor("rueda_escape_cuerda_cinco").en_mm == pytest.approx(
+        r.valor("rueda_escape_diametro").en_mm / 2.0, abs=0.01
+    )

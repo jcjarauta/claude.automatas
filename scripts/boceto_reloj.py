@@ -1290,6 +1290,8 @@ def rueda_escape(c: Contratos) -> str:
     hueco = r.valor("rueda_escape_hueco_angular").valor
     radios = int(r.valor("rueda_escape_radios").valor)
     ancho_radio = r.valor("rueda_escape_radio_ancho").en_mm
+    cuerda = r.valor("rueda_escape_cuerda_diente").en_mm
+    cuerda5 = r.valor("rueda_escape_cuerda_cinco").en_mm
     dientes = int(c.valor("escape", "dientes_escape").valor)
     abarca = c.valor("escape", "abarque_ancora").valor
     entre = a.valor("ancora_entre_centros").en_mm
@@ -1514,6 +1516,22 @@ def rueda_escape(c: Contratos) -> str:
             f'<path d="M{x1:.1f} {y1:.1f}L{x2:.1f} {y2:.1f}" stroke="{AUX}" stroke-width="0.6" '
             f'stroke-dasharray="8 3 2 3"/>'
         )
+    # El paso, dibujado y no solo sumado: es la primera pregunta que hace
+    # cualquiera al ver la rueda, y la respuesta es 360 entre los dientes.
+    x1, y1 = pol2(rp2 + 34, base)
+    x2, y2 = pol2(rp2 + 34, base + angular)
+    p.append(
+        f'<path d="M{x1:.1f} {y1:.1f}A{rp2 + 34:.1f} {rp2 + 34:.1f} 0 0 1 {x2:.1f} {y2:.1f}" '
+        f'fill="none" stroke="{COTA}" stroke-width="1.2" marker-start="url(#f)" '
+        f'marker-end="url(#f)"/>'
+    )
+    xm, ym = pol2(rp2 + 48, base + angular / 2.0)
+    p.append(
+        _texto(
+            xm, ym, f"{math.degrees(angular):.0f}\u00b0 = 360 / {dientes}", 10, COTA, peso="bold"
+        )
+    )
+    p.append(_texto(xm, ym + 11, "#angulo.rueda_escape_paso_angular", 7.5, AUX))
     p.append(
         _texto(
             640,
@@ -1584,6 +1602,39 @@ def rueda_escape(c: Contratos) -> str:
         p.append(_texto(656, 414 + i * 16, f"{grados:5.1f}\u00b0", 9.5, COTA, "start", "bold"))
         p.append(_texto(710, 414 + i * 16, rotulo, 8.5, TINTA, "start"))
         p.append(_texto(850, 414 + i * 16, clave, 7.5, AUX, "start"))
+    p.append(
+        _texto(
+            640,
+            510,
+            f"VERIFICAR: {cuerda5:.2f} mm de punta a punta saltando CINCO dientes.",
+            9,
+            COTA,
+            "start",
+            "bold",
+        )
+    )
+    p.append(
+        _texto(
+            640,
+            524,
+            f"Cinco pasos son 60\u00b0 y la cuerda de 60\u00b0 vale el radio. Entre dos puntas "
+            f"contiguas son {cuerda:.2f},",
+            8.5,
+            TINTA,
+            "start",
+        )
+    )
+    p.append(
+        _texto(
+            640,
+            538,
+            "que no es el paso de arco: el pie de rey mide la CUERDA. "
+            "#cota.rueda_escape_cuerda_cinco",
+            8.5,
+            TINTA,
+            "start",
+        )
+    )
     p.append(
         _texto(
             640,

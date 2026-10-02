@@ -545,6 +545,20 @@
           "unidad": "m",
           "descripcion": "Ancho de cada radio de la rueda. Ocho milimetros en contrachapado de 4 aguantan de sobra el par y quitan casi toda la masa del disco",
           "tolerancia": "+/-0,5"
+        },
+        {
+          "nombre": "rueda_escape_cuerda_diente",
+          "valor": 0.0094076,
+          "unidad": "m",
+          "descripcion": "DERIVADO: 2 x radio_punta x sen(paso/2). CUERDA entre dos puntas contiguas, que es lo que lee un pie de rey. No es el paso de arco: son 9,408 contra 9,425, un 0,18 % menos. A este tamano da igual, pero confundirlos al escalar la rueda no",
+          "tolerancia": "+/-0,1"
+        },
+        {
+          "nombre": "rueda_escape_cuerda_cinco",
+          "valor": 0.045,
+          "unidad": "m",
+          "descripcion": "DERIVADO: la cuerda saltando CINCO dientes. Cinco pasos son 60 grados exactos y la cuerda de 60 grados vale el radio: 45,000 mm clavados. Es LA medida de verificacion de la rueda, porque el error de lectura del pie de rey se reparte entre cinco dientes en vez de caer sobre uno: 0,11 % en vez de 0,5",
+          "tolerancia": "+/-0,2 · VERIFICACION"
         }
       ]
     },
