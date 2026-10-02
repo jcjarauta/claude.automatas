@@ -1,0 +1,201 @@
+{
+  "version": "0.1.0",
+  "fecha": "2026-10-02",
+  "maquina": "reloj",
+  "contratos": [
+    {
+      "nombre": "oscilador",
+      "estado": "congelado",
+      "congelado_el": "2026-10-02",
+      "porque": "El periodo es la raiz de la cadena causal: de el salen la longitud, la vuelta de la rueda de escape y la altura de la caja",
+      "valores": [
+        {
+          "nombre": "periodo_pendulo",
+          "valor": 2.0,
+          "unidad": "s",
+          "descripcion": "Pendulo de segundos: bate el segundo, periodo completo de 2 s",
+          "tolerancia": "regulable con la tuerca"
+        },
+        {
+          "nombre": "longitud_pendulo_nominal",
+          "valor": 0.994,
+          "unidad": "m",
+          "descripcion": "Del punto de flexion del muelle al centro de masas. Valor de pendulo simple; C11 lo corrige por la inercia real",
+          "tolerancia": "+/- 10 mm de recorrido en la tuerca"
+        },
+        {
+          "nombre": "paso_tuerca_regulacion",
+          "valor": 0.001,
+          "unidad": "m",
+          "descripcion": "M6: una vuelta son 1 mm, es decir unos 43 s/dia",
+          "tolerancia": "M6 de catalogo"
+        },
+        {
+          "nombre": "amplitud_nominal",
+          "valor": 0.035,
+          "unidad": "rad",
+          "descripcion": "Unos 2 grados a cada lado. Mas amplitud sube el error circular",
+          "tolerancia": "se mide en R1"
+        }
+      ]
+    },
+    {
+      "nombre": "escape",
+      "estado": "pendiente",
+      "congelado_el": null,
+      "porque": "La geometria se congela cuando el banco de escape (R2) diga con que reposo e impulso arranca de verdad",
+      "valores": [
+        {
+          "nombre": "dientes_escape",
+          "valor": 30.0,
+          "unidad": "adimensional",
+          "descripcion": "30 dientes por 2 s dan una vuelta por minuto: aguja de segundos directa",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "vuelta_rueda_escape",
+          "valor": 60.0,
+          "unidad": "s",
+          "descripcion": "dientes_escape x periodo_pendulo. Un diente escapa por oscilacion completa",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "abarque_ancora",
+          "valor": 7.5,
+          "unidad": "adimensional",
+          "descripcion": "Dientes que abarca el ancora: dientes_escape/4 + 0,5",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "ancora_paletas_postizas",
+          "valor": 1.0,
+          "unidad": "adimensional",
+          "descripcion": "Las paletas se atornillan con ranura y se ajustan tras cortar. No es una cota, es una decision de diseno",
+          "tolerancia": ""
+        }
+      ]
+    },
+    {
+      "nombre": "tren",
+      "estado": "pendiente",
+      "congelado_el": null,
+      "porque": "El modulo y el numero de dientes dependen del par medido en R2. Hasta entonces son una propuesta",
+      "valores": [
+        {
+          "nombre": "relacion_escape_a_central",
+          "valor": 60.0,
+          "unidad": "adimensional",
+          "descripcion": "De 1 vuelta/min a 1 vuelta/hora, en dos parejas rueda-pinon",
+          "tolerancia": "exacta, sin redondeo"
+        },
+        {
+          "nombre": "relacion_tren_esfera",
+          "valor": 12.0,
+          "unidad": "adimensional",
+          "descripcion": "De la aguja de minutos a la de horas",
+          "tolerancia": "exacta"
+        },
+        {
+          "nombre": "modulo_dentado",
+          "valor": 0.002,
+          "unidad": "m",
+          "descripcion": "Propuesta. El suelo lo pone la separacion entre pernos del pinon de linterna",
+          "tolerancia": "a decidir en R3"
+        },
+        {
+          "nombre": "pernos_minimos_pinon",
+          "valor": 8.0,
+          "unidad": "adimensional",
+          "descripcion": "Menos de 8 pernos da un engrane brusco y mucha variacion de par",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "diametro_perno_linterna",
+          "valor": 0.003,
+          "unidad": "m",
+          "descripcion": "Varilla calibrada. La separacion entre centros debe ser al menos el doble",
+          "tolerancia": "h7"
+        }
+      ]
+    },
+    {
+      "nombre": "energia",
+      "estado": "pendiente",
+      "congelado_el": null,
+      "porque": "La masa de la pesa NO se calcula: sale del par minimo medido en el banco de escape (R2)",
+      "valores": [
+        {
+          "nombre": "autonomia_horas",
+          "valor": 30.0,
+          "unidad": "h",
+          "descripcion": "Primera generacion. Ocho dias piden una rueda mas y un tambor mayor",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "caida_disponible",
+          "valor": 1.0,
+          "unidad": "m",
+          "descripcion": "Lo que hay entre el reloj colgado y el suelo",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "ramales_polea",
+          "valor": 2.0,
+          "unidad": "adimensional",
+          "descripcion": "Polea 2:1: la cuerda mide el doble que la caida y la pesa pide el doble de masa",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "diametro_tambor",
+          "valor": 0.085,
+          "unidad": "m",
+          "descripcion": "Derivado: longitud_cuerda / (pi x vueltas_tambor)",
+          "tolerancia": "sale del calculo"
+        },
+        {
+          "nombre": "masa_pesa",
+          "valor": 0.0,
+          "unidad": "kg",
+          "descripcion": "SIN MEDIR. Se rellena con el resultado de R2. Un cero aqui significa que nadie lo sabe todavia",
+          "tolerancia": "pendiente de R2"
+        }
+      ]
+    },
+    {
+      "nombre": "eje",
+      "estado": "congelado",
+      "congelado_el": "2026-10-02",
+      "porque": "Es el contrato que convierte el reloj en organo temporal: lo que otra maquina se encuentra si se cuelga de el",
+      "valores": [
+        {
+          "nombre": "eje_diametro",
+          "valor": 0.01,
+          "unidad": "m",
+          "descripcion": "El mismo que el arbol del escribiente: varilla calibrada corriente y rodamiento barato",
+          "tolerancia": "h7"
+        },
+        {
+          "nombre": "eje_sentido_horario",
+          "valor": 1.0,
+          "unidad": "adimensional",
+          "descripcion": "Horario visto desde la esfera, theta creciente. Igual que el escribiente",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "eje_programa_vueltas_por_hora",
+          "valor": 0.0416666667,
+          "unidad": "adimensional",
+          "descripcion": "Una vuelta cada 24 h. Montado y sin uso: es la puerta reservada para el acople",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "eje_central_vueltas_por_hora",
+          "valor": 1.0,
+          "unidad": "adimensional",
+          "descripcion": "Una vuelta por hora. Lleva la aguja de minutos y es la salida de tiempo mas util",
+          "tolerancia": ""
+        }
+      ]
+    }
+  ]
+}
