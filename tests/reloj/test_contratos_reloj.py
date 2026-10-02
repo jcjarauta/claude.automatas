@@ -23,6 +23,8 @@ from scripts.exportar_variables import (
     CABECERA_ONSHAPE,
     COLUMNA_VALOR,
     COLUMNAS_COTA,
+    FACTOR_ONSHAPE,
+    NOMBRE_MAPA,
     UNIDADES,
     Tipo,
     conversion_de,
@@ -32,7 +34,6 @@ from scripts.exportar_variables import (
     descripcion_corta,
     featurescript,
     gemelo,
-    indice_de_filas,
     tabla_cota,
     tabla_onshape,
 )
@@ -410,47 +411,72 @@ def test_la_descripcion_corta_cabe_en_una_celda_y_sigue_diciendo_algo():
 
 
 # ---------------------------------------------------------------------------
-# El CSV que importa Onshape por indice de celda
+# Los CSV que Onshape importa como MAPA, uno por tipo
 # ---------------------------------------------------------------------------
 
 
-def _filas_cota(contratos: Contratos) -> list[list[str]]:
+def _filas(texto: str) -> list[list[str]]:
     import csv as modulo_csv
 
-    return list(modulo_csv.reader(tabla_cota(contratos).strip().split("\n")))
+    return list(modulo_csv.reader(texto.strip().split("\n")))
 
 
-def test_el_csv_de_cotas_no_lleva_cabecera(reloj: Contratos):
-    """Onshape indexa las filas desde 0. Una cabecera correría todas las
-    variables una posición y cada enlace apuntaría a la de al lado, que es un
-    error que no da ningún aviso: la cota existe y es un número plausible."""
-    filas = _filas_cota(reloj)
-    assert filas[0][0] != COLUMNAS_COTA[0]
-    assert filas[0][0] == "longitud_pendulo_nominal"
+def test_hay_un_fichero_por_tipo_y_cada_uno_lleva_solo_el_suyo(reloj: Contratos):
+    """Tres ficheros y no uno porque **el factor de conversión es por
+    variable**: el mapa de longitudes se importa con factor 1 mm y el de
+    ángulos con 1 deg. Mezclados no hay factor que valga para los dos."""
+    tablas = tabla_cota(reloj)
+    assert set(tablas) == {Tipo.LENGTH, Tipo.ANGLE, Tipo.NUMBER}
+    unidades = {tipo: {f[2] for f in _filas(texto)} for tipo, texto in tablas.items()}
+    assert unidades[Tipo.LENGTH] == {"mm"}
+    assert unidades[Tipo.ANGLE] == {"deg"}
+    assert unidades[Tipo.NUMBER] == {""}
 
 
-def test_el_csv_de_cotas_tiene_siete_columnas_y_el_valor_en_la_uno(reloj: Contratos):
+def test_cada_tipo_tiene_su_factor_y_su_nombre_de_mapa():
+    assert FACTOR_ONSHAPE[Tipo.LENGTH] == "1 mm"
+    assert FACTOR_ONSHAPE[Tipo.ANGLE] == "1 deg"
+    assert NOMBRE_MAPA[Tipo.LENGTH] == "cota"
+    assert set(NOMBRE_MAPA) == {Tipo.LENGTH, Tipo.ANGLE, Tipo.NUMBER}
+
+
+def test_las_claves_del_mapa_no_se_repiten(reloj: Contratos):
+    """Se importa como mapa con la clave en la columna 0. Dos filas con la
+    misma clave y una gana en silencio."""
+    for tipo, texto in tabla_cota(reloj).items():
+        claves = [f[0] for f in _filas(texto)]
+        assert len(claves) == len(set(claves)), f"clave repetida en {tipo}"
+
+
+def test_ningun_fichero_lleva_cabecera(reloj: Contratos):
+    """La clave sale de la columna 0, así que una cabecera metería una
+    entrada llamada «nombre» en el mapa."""
+    for texto in tabla_cota(reloj).values():
+        assert _filas(texto)[0][0] != COLUMNAS_COTA[0]
+
+
+def test_siete_columnas_y_el_valor_en_la_uno(reloj: Contratos):
     """Las mismas siete y en el mismo orden que el fichero del escribiente,
     para que el índice de columna sea el mismo en las dos máquinas."""
-    filas = _filas_cota(reloj)
-    assert {len(f) for f in filas} == {7}
-    assert filas[0][COLUMNA_VALOR] == "994.0000"
+    for texto in tabla_cota(reloj).values():
+        filas = _filas(texto)
+        assert {len(f) for f in filas} == {7}
+    cotas = {f[0]: f[COLUMNA_VALOR] for f in _filas(tabla_cota(reloj)[Tipo.LENGTH])}
+    assert cotas["longitud_pendulo_nominal"] == "994.0000"
 
 
-def test_el_csv_de_cotas_no_lleva_magnitudes_de_referencia(reloj: Contratos):
-    nombres = {f[0] for f in _filas_cota(reloj)}
+def test_no_se_cuela_ninguna_magnitud_de_referencia(reloj: Contratos):
+    claves = {f[0] for texto in tabla_cota(reloj).values() for f in _filas(texto)}
     for nombre in ("masa_pesa", "periodo_pendulo", "autonomia", "tension_cuerda_techo"):
-        assert nombre not in nombres
+        assert nombre not in claves
 
 
 def test_cada_diametro_lleva_su_radio_detras_y_al_reves(reloj: Contratos):
-    filas = _filas_cota(reloj)
+    filas = _filas(tabla_cota(reloj)[Tipo.LENGTH])
     por_nombre = {f[0]: f for f in filas}
     assert por_nombre["eje_diametro"][COLUMNA_VALOR] == "10.0000"
     assert por_nombre["eje_diametro_radio"][COLUMNA_VALOR] == "5.0000"
     assert por_nombre["tambor_diametro_radio"][COLUMNA_VALOR] == "42.5000"
-    # El gemelo va justo detrás de su original, como en el fichero del
-    # escribiente: leyendo el CSV se ve de dónde sale cada uno.
     nombres = [f[0] for f in filas]
     assert nombres[nombres.index("eje_diametro") + 1] == "eje_diametro_radio"
 
@@ -466,14 +492,6 @@ def test_el_gemelo_se_decide_por_el_nombre_y_no_por_el_significado():
 
 
 def test_la_descripcion_del_gemelo_dice_de_donde_sale(reloj: Contratos):
-    por_nombre = {f[0]: f for f in _filas_cota(reloj)}
+    por_nombre = {f[0]: f for f in _filas(tabla_cota(reloj)[Tipo.LENGTH])}
     assert por_nombre["eje_diametro_radio"][6].startswith("derivada de eje_diametro")
-    # Y hereda la tolerancia, que es la misma cota vista del otro modo.
     assert por_nombre["eje_diametro_radio"][5] == por_nombre["eje_diametro"][5]
-
-
-def test_el_indice_de_filas_empieza_en_cero_y_no_salta(reloj: Contratos):
-    indice = indice_de_filas(reloj)
-    assert indice[0][0] == 0
-    assert [i for i, _, _ in indice] == list(range(len(indice)))
-    assert indice[0][1] == "longitud_pendulo_nominal"

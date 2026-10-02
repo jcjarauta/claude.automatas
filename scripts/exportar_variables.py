@@ -313,13 +313,46 @@ def gemelo(nombre: str, valor: float) -> tuple[str, float] | None:
     return None
 
 
-def tabla_cota(contratos: Contratos) -> str:
-    """El fichero que se sube a Onshape y del que tiran las variables.
+FACTOR_ONSHAPE = {
+    Tipo.LENGTH: "1 mm",
+    Tipo.ANGLE: "1 deg",
+    Tipo.NUMBER: "(sin factor)",
+}
+"""Lo que se teclea en la casilla «Factor de conversion» del dialogo.
+
+El CSV lleva el numero ya convertido -994, no 0,994-, asi que el factor solo
+le pone la unidad: 994 x 1 mm. **Es por variable**, y de ahi que haga falta un
+fichero por tipo: un mapa con longitudes y angulos mezclados no tiene un solo
+factor que valga para los dos.
+"""
+
+NOMBRE_MAPA = {Tipo.LENGTH: "cota", Tipo.ANGLE: "angulo", Tipo.NUMBER: "num"}
+"""Como se llama el mapa dentro de Onshape. En el CAD se escribe
+`#cota.eje_diametro`, asi que el nombre corto se lee mejor en cada boceto."""
+
+
+def tabla_cota(contratos: Contratos) -> dict[Tipo, str]:
+    """Un fichero por tipo, para importarlos como mapas.
+
+    **Un solo Variable Studio con tres variables, no veintitres.** Onshape
+    sabe leer el CSV entero como un **mapa** -fila «Todos los valores», tipo
+    de resultado «Mapa», clave en la columna 0- y entonces en el CAD se
+    escribe `#cota.eje_diametro`.
+
+    Eso quita de en medio el indice de fila, que era el punto fragil: con
+    indices, anadir una variable corre todas las de abajo y cada enlace pasa a
+    apuntar a la de al lado. Ese error no da ningun aviso, porque la cota
+    existe y el numero es plausible. Con clave por nombre, anadir una variable
+    no toca a ninguna otra.
+
+    Y hacen falta tres ficheros y no uno porque **el factor de conversion es
+    por variable**: el mapa de longitudes se importa con factor 1 mm y el de
+    angulos con 1 deg. Mezclados no hay factor que valga para los dos.
 
     Solo lo que dimensiona: una masa o un periodo no se acotan, y si estan en
-    el fichero alguien acabara enlazando una variable a esa fila.
+    el fichero alguien acabara leyendo esa clave desde un boceto.
     """
-    cuerpo: list[list[str]] = []
+    reparto: dict[Tipo, list[list[str]]] = {}
     for contrato in contratos.contratos:
         for valor in contrato.valores:
             cifra, conversion = convertir(valor)
@@ -334,6 +367,7 @@ def tabla_cota(contratos: Contratos) -> str:
                 valor.tolerancia,
                 valor.descripcion,
             ]
+            cuerpo = reparto.setdefault(conversion.tipo, [])
             cuerpo.append(fila)
             par = gemelo(valor.nombre, valor.valor * conversion.factor)
             if par is not None and conversion.tipo is Tipo.LENGTH:
@@ -349,18 +383,7 @@ def tabla_cota(contratos: Contratos) -> str:
                         f"derivada de {valor.nombre} \u2014 {valor.descripcion}",
                     ]
                 )
-    return _escribir_csv_sin_cabecera(cuerpo)
-
-
-def indice_de_filas(contratos: Contratos) -> list[tuple[int, str, str]]:
-    """Que fila le toca a cada variable, para configurar la importacion."""
-    filas = tabla_cota(contratos).strip().split("\n")
-    import csv as lector
-
-    return [
-        (i, campos[0], f"{campos[1]} {campos[2]}".strip())
-        for i, campos in enumerate(lector.reader(filas))
-    ]
+    return {tipo: _escribir_csv_sin_cabecera(cuerpo) for tipo, cuerpo in reparto.items()}
 
 
 CABECERA_ONSHAPE = ["Nombre", "Tipo de variable", "Valor", "Descripcion"]
@@ -468,7 +491,10 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     if opciones.cota:
-        tablas = {f"{maquina}_cota.csv": tabla_cota(contratos)}
+        tablas = {
+            f"{maquina}_{NOMBRE_MAPA[tipo]}.csv": texto
+            for tipo, texto in tabla_cota(contratos).items()
+        }
     elif opciones.onshape:
         tablas = {
             f"onshape-{maquina}-{tipo.value.lower()}.csv": texto
