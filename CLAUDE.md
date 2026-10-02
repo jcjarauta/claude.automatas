@@ -62,7 +62,8 @@ uv run python scripts/dibujar_plano_brazos.py       # plano con vistas y cotas d
 uv run python scripts/plantillas_demo.py      # plantillas 1:1 de muestra
 uv run python scripts/regenerar_golden.py     # SOLO si el cambio es intencionado
 
-uv run python scripts/comparar_dxf.py pieza.dxf  # cruzar un DXF contra el contrato
+uv run python scripts/comparar_dxf.py pieza.dxf   # cruzar el croquis contra el contrato
+uv run python scripts/comparar_dxf.py pieza.step  # y el sólido: lo mismo MÁS el espesor
 uv run python scripts/listado_piezas.py --escribir  # el listado de docs/metodologia.md §2d
 uv run python scripts/dibujar_pieza.py mordaza --out build/mordaza.svg  # el boceto de una pieza
 
@@ -524,6 +525,24 @@ falla si el esquema versionado se queda atrás.
   Los rótulos de radio van ahora a una banda **encima** de la planta, con
   `alto_de_leyenda` reservando el sitio: abajo está la pila de cotas
   horizontales y un radio que la cruza se lee como parte de ella.
+
+- **Dos agujeros cambiados de sitio se ven perfectos.** La platina volvió
+  dos veces con el tercer poste y el pivote izquierdo cada uno en el sitio
+  del otro: el Ø8 a -58,407° y el Ø10 a -120°, cuando era al revés. Cada
+  agujero llevaba su radio y su diámetro correctos, así que no había nada
+  raro que mirar —seis agujeros en un disco, todos redondos y todos del
+  tamaño que toca—, y la segunda vez volvió igual después de corregir otra
+  cosa.
+
+  Lo que lo invitaba: a 0,62:1 un Ø8 y un Ø10 se distinguen en un píxel, y
+  la hoja ponía los diámetros en una leyenda y las polares en otra, así que
+  **nada decía qué agujero era cada uno**. Ahora el rótulo de cada grupo
+  polar lleva su diámetro delante: «Ø8 · 71,063 · 3× 120°».
+
+  Y el informe dice **qué hay en su lugar**, no solo que falta: «pide el 3
+  de 3, un centro a 71,0634 y 240°, y lo más cerca hay un Ø10 a 2,85 mm».
+  Con «el peor se queda a 2,85 mm» hay que reconstruir a mano cuál de los
+  cuatro agujeros es.
 
 - **Un ángulo negativo no se puede teclear.** La herramienta de ángulo mide
   una magnitud: `#angulo.platina_pivote_angulo_izquierdo` vale -58,407 y el

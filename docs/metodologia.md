@@ -251,9 +251,15 @@ El bucle, por pieza:
 | 3. **Comprobar** | la persona | que Onshape diga **totalmente definida** |
 | 4. **Devolver** | la persona | exporta el croquis a DXF y lo pasa |
 | 5. **Comparar** | `scripts/comparar_dxf.py` | lo cruza contra el contrato y dice qué falta, qué sobra y dónde está puesta |
+| 6. **Extruir y volver a pasar** | la persona · el mismo script | exporta el sólido a STEP y lo pasa otra vez: es lo único que comprueba el **espesor** |
 
 Si el paso 5 falla, se corrige y se vuelve al 2. Si hace falta tocar una cota,
 se toca el **contrato** —nunca el croquis a mano— y se regenera.
+
+El paso 6 no sustituye al 5, va detrás: el croquis se comprueba **antes** de
+extruir, que es cuando arreglarlo es gratis. Lo que añade el STEP es el
+espesor, que no viaja en un contorno; un perfil correcto extruido a lo que el
+CAD tuviera por defecto es una pieza que se ve bien y no entra en la pila.
 
 Los cuatro artefactos del paso 1 no son opcionales y no se reparten: el DXF da
 la forma, la tabla da lo que se teclea, el boceto da el porqué y las vistas, y

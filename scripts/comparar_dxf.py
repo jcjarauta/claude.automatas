@@ -1,6 +1,16 @@
-"""Contrasta un DXF contra `docs/contratos.json`, venga de donde venga.
+"""Contrasta un DXF o un STEP contra `docs/contratos.json`, venga de donde venga.
 
     uv run python scripts/comparar_dxf.py pieza.dxf
+    uv run python scripts/comparar_dxf.py pieza.step
+
+**El nombre se queda**: está en CLAUDE.md, en la metodología y en la memoria
+de quien lo teclea, y renombrarlo cuesta más de lo que aclara.
+
+Los dos archivos dicen cosas distintas y por eso se miran los dos. El DXF es
+el croquis, y llega antes: se comprueba ANTES de extruir, que es cuando
+arreglarlo es gratis. El STEP es el sólido, llega después y trae una cosa que
+el croquis no tiene, **el espesor**: un contorno correcto extruido a lo que
+tuviera el CAD por defecto es una pieza que no entra en la pila.
 
 Mide el archivo —radios, distancias entre centros, longitudes, tangencias— y
 lo cruza contra la **ficha** de la pieza, que declara qué rasgos tiene que
@@ -34,6 +44,7 @@ import argparse
 import itertools
 import json
 import math
+import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -42,6 +53,7 @@ import ezdxf
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from emit.plataforma import LISTADO
 from scripts.acotar import CONTRATOS, MM
 
 TOLERANCIA = 1e-3
@@ -418,6 +430,96 @@ def _segmentos(msp) -> list[tuple[tuple[float, float], tuple[float, float]]]:
     return _fundir(salida)
 
 
+def _unidad_del_step(texto: str) -> float:
+    """A cuántos milímetros equivale la unidad del archivo.
+
+    **Se lee, no se supone.** Onshape exporta en metros y la mitad de los CAD
+    en milímetros: dar por hecho uno de los dos multiplica toda la pieza por
+    mil sin un solo aviso, que es la trampa de las unidades con otro
+    disfraz. Si el archivo declara algo que no es un SI de longitud —una
+    pulgada convertida, por ejemplo— se para, porque un factor inventado es
+    peor que no leer el archivo.
+    """
+    for prefijo in re.findall(
+        r"LENGTH_UNIT\(\)[^;]*?SI_UNIT\(([^,]+),\.METRE\.\)|SI_UNIT\(([^,]+),\.METRE\.\)"
+        r"[^;]*?LENGTH_UNIT\(\)",
+        texto,
+    ):
+        p = (prefijo[0] or prefijo[1]).strip()
+        if p in ("$", ""):
+            return 1000.0
+        if p == ".MILLI.":
+            return 1.0
+        if p == ".CENTI.":
+            return 10.0
+        raise ValueError(f"el STEP mide en {p}METRE y no sé a cuánto equivale")
+    raise ValueError("el STEP no declara una unidad de longitud del SI")
+
+
+def leer_step(ruta: Path, tol: float = TOLERANCIA):
+    """Los círculos y los segmentos de UNA cara del sólido, más su espesor.
+
+    Un sólido extruido trae cada rasgo dos veces, arriba y abajo, así que se
+    compara **una sola cara** y lo que las separa es el espesor. La cara que
+    se elige es la que tenga más rasgos: en una pieza con un rebaje las dos
+    no son iguales, y la que manda es la que describe el contorno entero.
+
+    Sale con una expresión regular y sin kernel a propósito: leer un STEP
+    entero pide los 800 MB de OCCT, que son dependencia opcional, y lo que
+    hace falta aquí son centros y radios.
+    """
+    texto = ruta.read_text(encoding="utf-8", errors="replace")
+    factor = _unidad_del_step(texto)
+    puntos = {
+        i: tuple(float(v) for v in xyz.split(","))
+        for i, xyz in re.findall(r"#(\d+)\s*=\s*CARTESIAN_POINT\('[^']*',\(([^)]*)\)\)", texto)
+    }
+    ejes = dict(re.findall(r"#(\d+)\s*=\s*AXIS2_PLACEMENT_3D\('[^']*',#(\d+)", texto))
+    vertices = dict(re.findall(r"#(\d+)\s*=\s*VERTEX_POINT\('[^']*',#(\d+)\)", texto))
+    rectas = set(re.findall(r"#(\d+)\s*=\s*LINE\(", texto))
+
+    circulos: list[tuple[float, tuple[float, float, float]]] = []
+    for eje, radio in re.findall(r"#\d+\s*=\s*CIRCLE\('[^']*',#(\d+),([\d.eE+-]+)\)", texto):
+        if eje not in ejes or ejes[eje] not in puntos:
+            continue
+        circulos.append((float(radio) * factor, puntos[ejes[eje]]))
+
+    segmentos: list[tuple[tuple[float, float, float], tuple[float, float, float]]] = []
+    for v1, v2, curva in re.findall(r"#\d+\s*=\s*EDGE_CURVE\('[^']*',#(\d+),#(\d+),#(\d+),", texto):
+        if curva not in rectas or v1 not in vertices or v2 not in vertices:
+            continue
+        segmentos.append((puntos[vertices[v1]], puntos[vertices[v2]]))
+
+    zs = [c[1][2] for c in circulos] + [p[2] for s in segmentos for p in s]
+    if not zs:
+        raise ValueError("el STEP no trae ni un círculo ni una arista recta")
+    espesor = (max(zs) - min(zs)) * factor
+
+    def cuantos(z: float) -> int:
+        return sum(abs(c[1][2] * factor - z) <= tol for c in circulos) + sum(
+            abs(a[2] * factor - z) <= tol and abs(b[2] * factor - z) <= tol for a, b in segmentos
+        )
+
+    cara = max(sorted({round(z * factor, 6) for z in zs}), key=lambda z: (cuantos(z), z))
+    en_la_cara = lambda p: abs(p[2] * factor - cara) <= tol  # noqa: E731
+    circulares = [
+        ((round(c[0] * factor, 9), round(c[1] * factor, 9)), r)
+        for r, c in circulos
+        if en_la_cara(c)
+    ]
+    planos = [
+        ((a[0] * factor, a[1] * factor), (b[0] * factor, b[1] * factor))
+        for a, b in segmentos
+        if en_la_cara(a) and en_la_cara(b)
+    ]
+    # Se cuenta lo de UNA cara: un sólido trae cada rasgo dos veces y
+    # «14 CIRCLE» en un disco de seis agujeros invita a buscar el error donde
+    # no está.
+    planos = _fundir(planos)
+    entidades = {"CIRCLE": len(circulares)} | ({"LINE": len(planos)} if planos else {})
+    return entidades, circulares, planos, espesor
+
+
 def _tangente(a, b, circulares, tol) -> list[float]:
     """Si los dos extremos del segmento se apoyan en sendos círculos y es
     perpendicular al radio en los dos, es una tangente exterior.
@@ -444,13 +546,31 @@ def comparar(ruta: Path, pieza: str, tol: float = TOLERANCIA) -> Informe:
     if pieza not in FICHAS:
         raise KeyError(f"no hay ficha de «{pieza}». Hay: {', '.join(sorted(FICHAS))}")
     ficha, cotas = FICHAS[pieza], cotas_en_mm()
-    doc = ezdxf.readfile(str(ruta))
-    msp = doc.modelspace()
     inf = Informe(archivo=ruta.name, pieza=pieza)
-    for e in msp:
-        inf.entidades[e.dxftype()] = inf.entidades.get(e.dxftype(), 0) + 1
+    espesor: float | None = None
+    if ruta.suffix.lower() in (".step", ".stp"):
+        inf.entidades, circulares, segmentos, espesor = leer_step(ruta, tol)
+    else:
+        doc = ezdxf.readfile(str(ruta))
+        msp = doc.modelspace()
+        for e in msp:
+            inf.entidades[e.dxftype()] = inf.entidades.get(e.dxftype(), 0) + 1
+        circulares, segmentos = _circulares(msp), _segmentos(msp)
 
-    circulares, segmentos = _circulares(msp), _segmentos(msp)
+    # --- el espesor, que es lo que el croquis no puede traer ---
+    if espesor is not None:
+        clase, cota = LISTADO[pieza].solido
+        esperado = cotas[cota]
+        if abs(espesor - esperado) <= tol:
+            inf.bien.append(f"{clase} de {esperado:g}   #cota.{cota}")
+        else:
+            inf.hallazgos.append(
+                Hallazgo(
+                    "falta",
+                    f"#cota.{cota} pide {esperado:g} de {clase} y el sólido mide "
+                    f"{espesor:.4f}: el contorno puede estar bien y la pieza no entrar",
+                )
+            )
 
     # --- radios: cada rasgo declarado, con su recuento ---
     #
@@ -514,22 +634,40 @@ def comparar(ruta: Path, pieza: str, tol: float = TOLERANCIA) -> Informe:
         angulo = angulos_en_rad()[cota_a]
         cuales = [angulo * i for i in range(cuantos)] if cuantos > 1 else [angulo]
         esperados = [(radio * math.cos(t), radio * math.sin(t)) for t in cuales]
-        lejos = max(
-            min(math.dist(e, c) for c, _ in circulares) if circulares else 1e9 for e in esperados
-        )
-        if lejos <= tol:
-            for e in esperados:
-                situados.append(e)
+        faltan = [
+            (i, t, e)
+            for i, (t, e) in enumerate(zip(cuales, esperados, strict=True))
+            if not any(math.dist(e, c) <= tol for c, _ in circulares)
+        ]
+        # Los que SÍ están quedan situados aunque el grupo falle: si no, los
+        # dos postes buenos salían luego como centros huérfanos y el informe
+        # acusaba de sobrar a lo único que estaba bien.
+        sin_sitio = {i for i, _, _ in faltan}
+        situados.extend(e for i, e in enumerate(esperados) if i not in sin_sitio)
+        if not faltan:
             inf.bien.append(
                 f"{cuantos} centro(s) a {radio:g} y {math.degrees(angulo):g}°"
                 f"   #cota.{cota_r} · #angulo.{cota_a}"
             )
-        else:
+        for i, t, e in faltan:
+            # **Decir qué hay en su lugar, no solo que falta.** La platina
+            # volvió dos veces con el tercer poste y el pivote izquierdo
+            # cambiados de sitio, y «el peor se queda a 2,85 mm» obliga a
+            # reconstruir a mano cuál de los cuatro agujeros es. Con el
+            # diámetro de lo más cercano, el informe dice el error: donde va
+            # un Ø8 hay un Ø10.
+            cerca = min(circulares, key=lambda c: math.dist(e, c[0]), default=None)
+            vecino = (
+                f", y lo más cerca hay un Ø{2 * cerca[1]:g} a {math.dist(e, cerca[0]):.4f} mm"
+                if cerca
+                else ""
+            )
+            cual = f" el {i + 1} de {cuantos}," if cuantos > 1 else ""
             inf.hallazgos.append(
                 Hallazgo(
                     "falta",
-                    f"#cota.{cota_r} con #angulo.{cota_a} pide {cuantos} centro(s) en polares"
-                    f" y el peor se queda a {lejos:.4f} mm",
+                    f"#cota.{cota_r} con #angulo.{cota_a} pide{cual} un centro a "
+                    f"{radio:g} y {math.degrees(t):g}° y no hay ninguno{vecino}",
                 )
             )
 
@@ -633,10 +771,19 @@ def comparar(ruta: Path, pieza: str, tol: float = TOLERANCIA) -> Informe:
             )
     # Y lo que sobra solo es huérfano si alguno de los dos centros no estaba
     # situado ya: la distancia entre dos situados es derivada, no una cota.
-    for a, b, d in pares:
-        if situado(a) and situado(b):
-            continue
-        inf.hallazgos.append(Hallazgo("huerfano", f"{d:.4f} entre dos centros, sin cota"))
+    #
+    # **Un centro sin situar se dice UNA vez, no una por pareja.** Con los
+    # agujeros en polares, un grupo que falla deja tres centros sueltos y la
+    # cuenta de parejas saca catorce líneas de ruido que tapan las dos que
+    # importan. Y la queja buena no es «hay una distancia de 122,51 que no
+    # está en el contrato», es «este agujero no lo sitúa nada».
+    sueltos_de_centro = sorted(
+        {a for a, b, _ in pares if not situado(a)} | {b for a, b, _ in pares if not situado(b)}
+    )
+    for c in sueltos_de_centro:
+        inf.hallazgos.append(
+            Hallazgo("huerfano", f"un centro en ({c[0]:.4f}, {c[1]:.4f}) que no sitúa ninguna cota")
+        )
 
     # --- segmentos: la cuerda de la cara plana y poco más. Una tangente no
     # es una cota, la coloca la propia tangencia, así que se aparta antes.
@@ -794,16 +941,16 @@ def informe(inf: Informe) -> str:
         if inf.cuadra
         else f"  {len(inf.hallazgos)} cosa(s) que no cuadran",
         "",
-        "  El DXF no lleva las restricciones: comprueba en el CAD que la pieza",
-        "  sale «totalmente definida». Un croquis exacto y suelto se ve bien y",
-        "  se mueve luego.",
+        "  Ni el DXF ni el STEP llevan las restricciones: comprueba en el CAD",
+        "  que el croquis sale «totalmente definida». Uno exacto y suelto se ve",
+        "  bien y se mueve luego.",
     ]
     return "\n".join(lineas) + "\n"
 
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("dxf", type=Path, nargs="+")
+    p.add_argument("dxf", type=Path, nargs="+", help="DXF del croquis o STEP del sólido")
     p.add_argument("--pieza", choices=sorted(FICHAS), help="por defecto, la que mejor cuadre")
     p.add_argument("--tol", type=float, default=TOLERANCIA, help="en mm")
     op = p.parse_args(argv)

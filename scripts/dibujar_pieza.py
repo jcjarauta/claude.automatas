@@ -402,6 +402,18 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
         if grados < 0.0:
             teclea, grados, lado = f"{cota_a}_positivo", -grados, " bajo +X"
         cuantos = len(centros)
+        # **El diámetro va DELANTE del ángulo.** A 0,62:1 un Ø8 y un Ø10 se
+        # distinguen en un píxel, y con los diámetros en una leyenda y las
+        # polares en otra nada decía qué agujero era cada uno: la platina
+        # volvió dos veces con el tercer poste y el pivote izquierdo
+        # cambiados de sitio, cada uno con su radio correcto y el dibujo
+        # perfecto. El rótulo que sitúa un agujero tiene que decir cuál es.
+        cerca = min(
+            (e for e in perfil if isinstance(e, Arco)),
+            key=lambda e: math.dist(e.centro, centros[0]),
+            default=None,
+        )
+        cual = f"Ø{2 * cerca.radio:g} · " if cerca else ""
         for cx_, cy_ in centros:
             d.append(
                 f'<line class="eje" x1="{ox:.2f}" y1="{oy:.2f}" '
@@ -419,14 +431,20 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
         ang_r = math.atan2(centros[0][1], centros[0][0])
         fuera = math.hypot(*centros[0]) * k + 12.0
         ancla = "start" if math.cos(ang_r) > 0.3 else "end" if math.cos(ang_r) < -0.3 else "middle"
-        d.append(
-            f'<text class="cotatx" x="{ox + math.cos(ang_r) * fuera:.2f}" '
-            f'y="{oy - math.sin(ang_r) * fuera + 2:.2f}" style="text-anchor:{ancla}">'
-            f"{numero(c[cota_r])} · {marca}{numero(grados)}°{lado}</text>"
-        )
+        # En DOS líneas: de una sola, el rótulo del pivote derecho medía 67 px
+        # y se salía de la tarjeta por la izquierda. Partido por el «·» que
+        # separa el agujero de su ángulo, ninguna pasa de 35.
+        tx, ty = ox + math.cos(ang_r) * fuera, oy - math.sin(ang_r) * fuera
+        for i, linea in enumerate(
+            (f"{cual}{numero(c[cota_r])}", f"{marca}{numero(grados)}°{lado}")
+        ):
+            d.append(
+                f'<text class="cotatx" x="{tx:.2f}" y="{ty - 1.2 + 6.5 * i:.2f}" '
+                f'style="text-anchor:{ancla}">{linea}</text>'
+            )
         d.append(
             f'<text class="cotavar" x="{x + 10:.1f}" y="{leyenda:.1f}">'
-            f"{numero(c[cota_r])} · {marca}{numero(grados)}°{lado} → "
+            f"{cual}{numero(c[cota_r])} · {marca}{numero(grados)}°{lado} → "
             f"#cota.{cota_r} · #angulo.{teclea}</text>"
         )
         leyenda += 7
