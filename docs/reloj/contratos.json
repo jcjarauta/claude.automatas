@@ -459,7 +459,7 @@
           "nombre": "rueda_escape_cubo_diametro",
           "valor": 0.024,
           "unidad": "m",
-          "descripcion": "Cubo alrededor del eje. Dos diametros y medio de eje: menos y la rueda se descentra al apretar, mas y pesa de mas en el eje mas rapido del reloj",
+          "descripcion": "Asiento del collar que aprieta la rueda contra el eje. NO SE CORTA: en un disco plano de 4 mm no hay cubo que tornear, es la zona que el collar pisa y que por eso no lleva radios ni aligeramientos",
           "tolerancia": "+/-0,5"
         },
         {
@@ -473,7 +473,7 @@
           "nombre": "rueda_escape_inclinacion_diente",
           "valor": 0.13962634015954636,
           "unidad": "rad",
-          "descripcion": "Lo que se inclina la punta del diente en el sentido de giro. Con 0 el diente es radial y la paleta resbala; con mucho, la punta se vuelve una astilla. 8 de los 12 del paso",
+          "descripcion": "Angulo de la CARA DE ATAQUE con el radio, medido EN LA PUNTA entre la cuerda punta-fondo y la direccion radial. No es un angulo central: con 8 grados y un diente de 7, la punta se desplaza 0,98 mm de arco, que a radio 45 son 1,36 grados de centro. Con 0 la cara es radial y la paleta resbala; con mucho, la punta se vuelve astilla",
           "tolerancia": "+/-1 grado"
         },
         {
@@ -482,6 +482,13 @@
           "unidad": "rad",
           "descripcion": "DERIVADO: una vuelta entre dientes_escape. Doce grados por diente",
           "tolerancia": "derivado"
+        },
+        {
+          "nombre": "rueda_escape_vuelco_cambia_el_sentido",
+          "valor": 1.0,
+          "unidad": "adimensional",
+          "descripcion": "La rueda es un disco plano y simetrico en espesor: darle la vuelta invierte hacia donde miran los dientes. No es un defecto, es el ajuste -si el escape no engancha, se voltea- pero obliga a declarar desde donde se mira. CONVENIO: los dientes se inclinan en el sentido de giro VISTO DESDE LA ESFERA, que es horario",
+          "tolerancia": "convenio, no se mide"
         }
       ]
     },

@@ -1099,3 +1099,21 @@ def test_el_par_que_pide_el_escape_cabe_de_sobra_en_la_pesa(reloj: Contratos):
     ideal = par_minimo_teorico(Julios(perdida), int(reloj.valor("escape", "dientes_escape").valor))
     pesimista = par_con_rendimiento(ideal, rendimiento=0.02)
     assert pesimista < 0.02, "el escape pediría más par del que un reloj de pared entrega"
+
+
+def test_la_inclinacion_del_diente_desplaza_la_punta_poco(reloj: Contratos):
+    """La cota es el ángulo de la CARA con el radio, no un ángulo central, y
+    confundirlos da dos dientes distintos: con 8° de cara la punta se mueve
+    1 mm de arco; leído como ángulo central se movería 6, y la cara saldría a
+    44° del radio en vez de a 8. Este test fija la lectura."""
+    r = reloj.contrato("rueda_escape")
+    altura = r.valor("rueda_escape_altura_diente").en_mm
+    desplaza = altura * math.tan(r.valor("rueda_escape_inclinacion_diente").valor)
+    assert desplaza < r.valor("rueda_escape_paso_diente").en_mm / 4.0
+
+
+def test_el_vuelco_de_la_rueda_esta_declarado(reloj: Contratos):
+    """Un disco plano se puede montar del revés y los dientes miran al otro
+    lado. Que no se pueda impedir no significa que no haya que decirlo: sin
+    convenio de desde dónde se mira, el dibujo no tiene sentido de giro."""
+    assert reloj.valor("rueda_escape", "rueda_escape_vuelco_cambia_el_sentido").valor == 1.0

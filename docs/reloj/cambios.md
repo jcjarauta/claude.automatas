@@ -295,3 +295,38 @@ abarque en `reloj_num`. Hasta ahora `reloj_angulo.csv` estaba vacío.
 **Material y altura del diente los cierra R2.** Es la única pieza del reloj con
 un modo de desgaste conocido: si el canto se marca antes de 10.000 ciclos, pasa
 a latón.
+
+
+### La inclinación del diente significaba dos cosas, y el STEP lo destapó
+
+El primer STEP de la rueda trajo la cara del diente a **6,75°** del radio y el
+contrato dice 8. La causa no es el dibujo: es que **la cota admitía dos
+lecturas y mi propia hoja usaba las dos a la vez.**
+
+- La vista de planta la generaba como **ángulo central**: punta desplazada 8°
+  de centro, que a radio 45 son **6,3 mm de arco** y una cara a **44° del
+  radio**. Otro diente.
+- La vista de detalle la dibujaba como **ángulo de la cara con el radio**, que
+  es la lectura correcta y la que siguió el CAD.
+
+Arreglado el generador y fijada la lectura en la descripción: **el ángulo se
+mide en la punta, entre la cuerda punta-fondo y la dirección radial.** Con 8° y
+un diente de 7 mm, el desplazamiento de la punta es 0,98 mm de arco, que a
+radio 45 son **1,486° de ángulo central** — el dibujo tiene 1,250.
+
+### Y una cosa que un disco plano no puede llevar dentro
+
+La rueda es simétrica en espesor, así que **darle la vuelta invierte hacia
+dónde miran los dientes** y no hay geometría que lo impida. No es un defecto:
+es el ajuste —si el escape no engancha, se voltea—. Pero obliga a declarar el
+convenio, porque sin él el dibujo no tiene sentido de giro:
+
+> Los dientes se inclinan en el sentido de giro **visto desde la esfera**.
+
+Va en el contrato como `rueda_escape_vuelco_cambia_el_sentido`, en la hoja como
+flecha de giro y rótulo «VISTA DESDE LA ESFERA», y en la banda de aviso.
+
+El `rueda_escape_cubo_diametro` tampoco es geometría: en un disco plano de 4 mm
+no hay cubo que tornear. Es el **asiento del collar** que aprieta la rueda
+contra el eje, y la descripción lo dice ahora para que nadie lo busque en el
+STEP.

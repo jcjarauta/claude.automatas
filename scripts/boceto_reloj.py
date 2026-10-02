@@ -1307,11 +1307,16 @@ def rueda_escape(c: Contratos) -> str:
     # El contorno completo, diente a diente. Cada uno sale del fondo, sube a
     # la punta inclinada en el sentido de giro y vuelve al fondo del
     # siguiente: la cara de ataque es la corta, el dorso la larga.
+    # La inclinacion es el angulo de la CARA con el radio, no un angulo
+    # central: la punta se desplaza `altura x tan(inclinacion)` de arco, que
+    # con 8 grados es 1 mm y no 6. Leerla como angulo central daba una cara a
+    # 44 grados del radio, que es otro diente.
+    desvio = altura * e * math.tan(inclinacion) / rp
     trozos: list[str] = []
     for i in range(dientes):
         a0 = i * angular
         x0, y0 = polar(rf, a0)
-        x1, y1 = polar(rp, a0 + inclinacion)
+        x1, y1 = polar(rp, a0 + angular - desvio)
         x2, y2 = polar(rf, a0 + angular)
         trozos.append(f"{'M' if i == 0 else 'L'}{x0:.2f} {y0:.2f}")
         trozos.append(f"L{x1:.2f} {y1:.2f}")
@@ -1347,12 +1352,33 @@ def rueda_escape(c: Contratos) -> str:
     p.append(_texto(xm, ym + 11, "lo que abarca el \u00e1ncora", 7.5, COTA))
     p.append(_texto(xm, ym + 21, "#num.abarque_ancora", 7.5, AUX))
 
+    # Sin decir desde donde se mira, un disco plano no tiene sentido de giro:
+    # volteado, los dientes miran al otro lado.
+    ra = rp + 30
+    p.append(
+        f'<path d="M{cx + ra * math.cos(math.radians(-60)):.1f} '
+        f"{cy + ra * math.sin(math.radians(-60)):.1f}A{ra:.1f} {ra:.1f} 0 0 1 "
+        f"{cx + ra * math.cos(math.radians(-20)):.1f} "
+        f'{cy + ra * math.sin(math.radians(-20)):.1f}" stroke="{COTA}" stroke-width="1.4" '
+        f'fill="none" marker-end="url(#f)"/>'
+    )
+    p.append(
+        _texto(
+            cx + ra * math.cos(math.radians(-40)) + 10,
+            cy + ra * math.sin(math.radians(-40)),
+            "giro",
+            8,
+            COTA,
+            "start",
+            "bold",
+        )
+    )
     p.append(_texto(cx - rp - 40, 92, "LA RUEDA \u00b7 escala 1,8:1", 9, TINTA, "start"))
     p.append(
         _texto(
             cx - rp - 40,
             105,
-            f"{dientes} dientes generados del paso, no dibujados",
+            f"{dientes} dientes generados del paso \u00b7 VISTA DESDE LA ESFERA",
             8,
             AUX,
             "start",
@@ -1406,11 +1432,14 @@ def rueda_escape(c: Contratos) -> str:
     p.append(_texto(dx0 - 40, 105, "el sentido de giro va a la derecha", 8, AUX, "start"))
     base = paso * f2
     alto = altura * f2
-    sesgo = math.tan(inclinacion) * alto if inclinacion else 0.0
+    # El dorso sube despacio desde el fondo hasta casi el siguiente fondo; la
+    # cara cae en vertical, inclinada `inclinacion` del radio. Es el mismo
+    # diente que genera la vista de planta, visto desenrollado.
+    sesgo = math.tan(inclinacion) * alto
     p.append(
-        f'<path d="M{dx0 - base:.1f} {dy0:.1f}L{dx0 - base + sesgo:.1f} {dy0 - alto:.1f}'
-        f'L{dx0:.1f} {dy0:.1f}L{dx0 + sesgo:.1f} {dy0 - alto:.1f}L{dx0 + base:.1f} {dy0:.1f}" '
-        f'fill="none" stroke="{TINTA}" stroke-width="1.6"/>'
+        f'<path d="M{dx0 - base:.1f} {dy0:.1f}L{dx0 - sesgo:.1f} {dy0 - alto:.1f}'
+        f"L{dx0:.1f} {dy0:.1f}L{dx0 + base - sesgo:.1f} {dy0 - alto:.1f}"
+        f'L{dx0 + base:.1f} {dy0:.1f}" fill="none" stroke="{TINTA}" stroke-width="1.6"/>'
     )
     p.append(
         f'<path d="M{dx0 - base - 20:.1f} {dy0:.1f}H{dx0 + base + 20:.1f}" stroke="{AUX}" '
@@ -1420,40 +1449,40 @@ def rueda_escape(c: Contratos) -> str:
     # El angulo se mide entre la cara de ataque y el radio, que en esta vista
     # es la vertical. Marcarlo en la punta y no en la base es lo que hace que
     # se entienda que lo que se inclina es la punta.
-    xr = dx0 - base
+    xr = dx0
     p.append(
-        f'<path d="M{xr:.1f} {dy0 + 14:.1f}V{dy0 - alto - 30:.1f}" stroke="{AUX}" '
+        f'<path d="M{xr:.1f} {dy0 + 14:.1f}V{dy0 - alto - 34:.1f}" stroke="{AUX}" '
         f'stroke-width="0.6" stroke-dasharray="6 3"/>'
     )
     p.append(
-        f'<path d="M{xr:.1f} {dy0 - alto - 30:.1f}A30 30 0 0 1 '
-        f"{xr + 30 * math.sin(inclinacion):.1f} "
-        f'{dy0 - alto - 30 + 30 * (1 - math.cos(inclinacion)):.1f}" stroke="{COTA}" '
+        f'<path d="M{xr:.1f} {dy0 - alto - 34:.1f}A34 34 0 0 0 '
+        f"{xr - 34 * math.sin(inclinacion):.1f} "
+        f'{dy0 - alto - 34 + 34 * (1 - math.cos(inclinacion)):.1f}" stroke="{COTA}" '
         f'stroke-width="1" fill="none"/>'
     )
     p.append(
         _texto(
-            xr + 8,
-            dy0 - alto - 36,
-            f"{math.degrees(inclinacion):.0f}\u00b0",
+            xr - 8,
+            dy0 - alto - 40,
+            f"{math.degrees(inclinacion):.0f}\u00b0 de la cara al radio",
             9.5,
             COTA,
-            "start",
+            "end",
             "bold",
         )
     )
     p.append(
         _texto(
-            xr + 8,
-            dy0 - alto - 26,
+            xr - 8,
+            dy0 - alto - 30,
             "#angulo.rueda_escape_inclinacion_diente",
             7.5,
             AUX,
-            "start",
+            "end",
         )
     )
-    p.append(_texto(xr + 4, dy0 + 16, "cara de ataque", 7.5, COTA, "start"))
-    p.append(_texto(dx0 + base / 2.0, dy0 + 16, "el dorso", 7.5, AUX))
+    p.append(_texto(xr - 6, dy0 + 16, "cara de ataque", 7.5, COTA, "end"))
+    p.append(_texto(dx0 + base / 2.0, dy0 + 16, "el dorso, que no toca", 7.5, AUX))
     p.append(
         _cota_v(
             dy0 - alto,
@@ -1507,8 +1536,8 @@ def rueda_escape(c: Contratos) -> str:
         _texto(
             46,
             555,
-            "El material y la altura del diente los cierra R2. Es la \u00fanica "
-            "pieza del reloj con un modo de desgaste conocido.",
+            "Un disco plano se monta del rev\u00e9s sin que se note y los dientes miran "
+            "al otro lado: si el escape no engancha, se voltea la rueda.",
             9,
             "#8a5200",
             "start",

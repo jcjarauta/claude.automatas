@@ -20,6 +20,7 @@ mide la geometria que salio del dibujo y la cruza con la cota del contrato.
 from __future__ import annotations
 
 import argparse
+import math
 import re
 import sys
 from dataclasses import dataclass
@@ -384,6 +385,87 @@ def _medidas_escuadra_step(c: Contratos, ruta: Path) -> list[Medida]:
     return medidas
 
 
+def _medidas_rueda_escape_step(c: Contratos, ruta: Path) -> list[Medida]:
+    """La rueda de escape: diametros, dientes y la inclinacion de la cara.
+
+    Lo que no se puede medir aqui es hacia que lado miran los dientes, y no
+    por falta de datos: la rueda es un disco plano y simetrico en espesor, asi
+    que su sentido solo existe cuando se decide que cara mira a la esfera.
+    Eso es convenio de montaje, no geometria, y va en el contrato.
+    """
+    r = c.contrato("rueda_escape")
+    ent = _entidades(ruta)
+    puntos = [
+        p for p in (_numeros(a) for t, a in ent.values() if t == "CARTESIAN_POINT") if len(p) == 3
+    ]
+    mm = 1000.0
+    cx = (min(p[0] for p in puntos) + max(p[0] for p in puntos)) / 2.0
+    cy = (min(p[1] for p in puntos) + max(p[1] for p in puntos)) / 2.0
+    espesor = (max(p[2] for p in puntos) - min(p[2] for p in puntos)) * mm
+
+    def polar(p: list[float]) -> tuple[float, float]:
+        return (
+            math.hypot(p[0] - cx, p[1] - cy) * mm,
+            math.degrees(math.atan2(p[1] - cy, p[0] - cx)) % 360.0,
+        )
+
+    punta = r.valor("rueda_escape_diametro").en_mm / 2.0
+    fondo = r.valor("rueda_escape_diametro_fondo").en_mm / 2.0
+    medidas = [
+        Medida("diametro de punta", punta * 2.0, max(polar(p)[0] for p in puntos) * 2.0),
+        Medida("espesor", r.valor("rueda_escape_espesor").en_mm, espesor),
+    ]
+    puntas = sorted({round(polar(p)[1], 2) for p in puntos if abs(polar(p)[0] - punta) < 0.05})
+    fondos = sorted({round(polar(p)[1], 2) for p in puntos if abs(polar(p)[0] - fondo) < 0.05})
+    dientes = c.valor("escape", "dientes_escape").valor
+    medidas.append(Medida("dientes", dientes, float(len(puntas))))
+    medidas.append(Medida("fondos", dientes, float(len(fondos))))
+    medidas.append(
+        Medida(
+            "diametro de fondo",
+            fondo * 2.0,
+            fondo * 2.0 if fondos else None,
+        )
+    )
+    if len(puntas) < 2 or not fondos:
+        return medidas
+
+    paso = (puntas[1] - puntas[0]) % 360.0
+    medidas.append(
+        Medida(
+            "paso angular, grados",
+            math.degrees(r.valor("rueda_escape_paso_angular").valor),
+            paso,
+        )
+    )
+    # La cara va de la punta al fondo mas cercano. Su angulo con el radio es
+    # LA cota del diente, y es la que se confunde con un angulo central.
+    t = puntas[0]
+    cerca = min(fondos, key=lambda f: min(abs(f - t), 360.0 - abs(f - t)))
+    arco = math.radians(min(abs(cerca - t), 360.0 - abs(cerca - t)))
+    tangencial = fondo * math.sin(arco)
+    radial = punta - fondo * math.cos(arco)
+    medidas.append(
+        Medida(
+            "inclinacion de la cara, grados",
+            math.degrees(r.valor("rueda_escape_inclinacion_diente").valor),
+            math.degrees(math.atan2(tangencial, radial)),
+        )
+    )
+    eje = r.valor("rueda_escape_eje_diametro").en_mm
+    agujeros = [
+        float(a.split(",")[-1]) * 2.0 * mm for t_, a in ent.values() if t_ == "CYLINDRICAL_SURFACE"
+    ]
+    medidas.append(
+        Medida(
+            "taladro del eje",
+            eje,
+            next((d for d in agujeros if abs(d - eje) <= HOLGURA), None),
+        )
+    )
+    return medidas
+
+
 def _medidas_soporte_step(c: Contratos, ruta: Path) -> list[Medida]:
     return _medidas_dos_taladros(
         c,
@@ -418,6 +500,7 @@ REVISORES_STEP = {
     "placa": _medidas_placa_step,
     "fleje": _medidas_fleje_step,
     "escuadra": _medidas_escuadra_step,
+    "rueda_escape": _medidas_rueda_escape_step,
 }
 
 
