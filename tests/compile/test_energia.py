@@ -310,3 +310,24 @@ def test_el_demo_solo_no_habria_bastado_para_dimensionarlo():
         e, _ = analizar(compilacion, montaje.inercia, acc)
         pide[nombre] = float(e.volante_en_la_manivela)
     assert pide["firma"] > 1.4 * pide["hola"]
+
+
+def test_la_manivela_del_contrato_es_la_que_supone_c9():
+    """**El radio de la manivela vivía en un docstring.**
+
+    `Manivela.par_maximo` vale 4 N·m «con una manivela de 100 mm empujando
+    con unos 40 N», y esos 100 mm no estaban en ninguna parte: ni en el
+    contrato, ni en una pieza, ni en un test. Un número que decide una
+    longitud de verdad y que nadie cruzaba con nada.
+
+    Ahora `manivela_entre_centros` está en el contrato y esto comprueba que los dos
+    dicen lo mismo: si alguien acorta la manivela sin bajar el par, el
+    modelo pasa a suponer una mano más fuerte de lo que es.
+    """
+    radio = float(cargar().valor("accionamiento", "manivela_entre_centros").metros)
+    fuerza = float(Manivela().par_maximo) / radio
+    assert fuerza == pytest.approx(40.0, abs=0.5), (
+        f"con manivela_entre_centros = {radio * 1000:.0f} mm, los "
+        f"{float(Manivela().par_maximo):g} N·m de C9 suponen {fuerza:.0f} N "
+        f"en la mano, y la referencia son 40"
+    )

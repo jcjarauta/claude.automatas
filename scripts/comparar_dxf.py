@@ -215,6 +215,21 @@ FICHAS: dict[str, Ficha] = {
         cara_plana_angulo="brazo_chaveta_angulo",
         datum="brazo_eje_diametro_radio",
     ),
+    "manivela": Ficha(
+        "como el proximal pero más larga: el pomo donde iría la biela",
+        {
+            "brazo_cubo_diametro_radio": 1,
+            "brazo_extremo_diametro_radio": 1,
+            "brazo_eje_diametro_radio": 1,
+            "brazo_perno_diametro_radio": 1,
+        },
+        entre_centros=("manivela_entre_centros",),
+        segmentos={"brazo_chaveta_cuerda": 1},
+        tangentes=4,
+        cara_plana="brazo_chaveta",
+        cara_plana_angulo="brazo_chaveta_angulo",
+        datum="brazo_eje_diametro_radio",
+    ),
     "mordaza": Ficha(
         "bloque, tornillo de apriete y ranura: el calaje vive aquí",
         {

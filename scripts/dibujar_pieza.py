@@ -55,6 +55,7 @@ PERFIL_DE = {
     "brazo_proximal": lambda c: brazo_de("brazo_proximal", c),
     "brazo_distal": lambda c: brazo_de("brazo_distal", c),
     "palanca_lapiz": lambda c: brazo_de("palanca_lapiz", c),
+    "manivela": lambda c: brazo_de("manivela", c),
     "mordaza": mordaza,
     "eje_pivote": eje_pivote,
     "sector": sector,

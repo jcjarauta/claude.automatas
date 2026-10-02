@@ -711,6 +711,13 @@
           "unidad": "rad",
           "descripcion": "Seis agujeros repartidos a 60 grados, desde +X",
           "tolerancia": ""
+        },
+        {
+          "nombre": "manivela_entre_centros",
+          "valor": 0.1,
+          "unidad": "m",
+          "descripcion": "Del eje de la manivela al centro del pomo —lo que la literatura llama radio de manivela—. NO se llama «radio» a proposito: no es el radio de ningun circulo que se dibuje, y con ese nombre el exportador le sacaria un gemelo de Ø200 que no mide nada. No es una eleccion de dibujo: es el numero que hace que los 4 N*m de par_maximo de C9 signifiquen 40 N en la mano, que es lo que empuja un adulto sin esforzarse. Vivia en un docstring de core/energy/humano.py y por eso no lo comprobaba nadie. La manivela es, por lo demas, UN BRAZO MAS: misma pletina de laton de 3, mismo cubo, mismo agujero en D y mismo perno de 6 en el extremo",
+          "tolerancia": ""
         }
       ]
     }

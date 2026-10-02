@@ -134,6 +134,16 @@ def test_la_hoja_acota_todo_lo_que_la_ficha_declara():
         assert not faltan, f"{pieza}: en la tabla pero sin acotar en el dibujo: {sorted(faltan)}"
 
 
+def test_el_porque_de_una_ficha_no_lleva_markdown():
+    """La hoja es un SVG, no un markdown: unos asteriscos puestos para
+    resaltar salen impresos tal cual —«**Un brazo más.**»— y lo que iba a
+    destacar queda peor que sin nada. Para eso están las mayúsculas, que es
+    lo que usan las demás fichas."""
+    for pieza, ficha in LISTADO.items():
+        assert "**" not in ficha.porque, f"{pieza}: el porqué lleva markdown"
+        assert "`" not in ficha.porque, f"{pieza}: el porqué lleva markdown"
+
+
 def test_una_pieza_simetrica_lo_dice_en_el_dibujo():
     """A lo alto no hay cota que sitúe el contorno, hay una simetría. Si no
     se dibuja, el que acota tiene que deducirla, y deducir es de donde salen

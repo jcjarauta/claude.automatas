@@ -348,6 +348,10 @@ BRAZOS = {
     "brazo_proximal": ("brazo_proximal", True),
     "brazo_distal": ("brazo_distal", False),
     "palanca_lapiz": ("brazo_palanca", True),
+    # La manivela es un brazo más: la misma pletina con otro largo, el
+    # mismo agujero en D y el mismo perno de Ø6 en el extremo, que aquí
+    # lleva el pomo en vez de una biela. Lo único suyo es cuánto mide.
+    "manivela": ("manivela_entre_centros", True),
 }
 
 
@@ -536,6 +540,28 @@ LISTADO: dict[str, Ficha] = {
         "Cilindro liso, sin pestañas. Lo que mantiene la cinta en su sitio no son las "
         "pestañas sino que los dos asientos sean coplanarios, y eso es una tolerancia y "
         "no un resalte. R8 son 160 espesores de cinta: pasa de sobra el radio mínimo.",
+    ),
+    "manivela": Ficha(
+        "barra de dos cubos en pletina de latón, como los brazos",
+        1,
+        (
+            Variable("cota", "manivela_entre_centros", "entre centros"),
+            Variable("cota", "brazo_espesor", "espesor", en_el_perfil=False),
+            Variable("cota", "brazo_eje_diametro", "Ø eje", "H7"),
+            Variable("cota", "brazo_perno_diametro", "Ø del pomo", "H7"),
+            Variable("cota", "brazo_cubo_diametro_radio", "R del cubo del eje"),
+            Variable("cota", "brazo_extremo_diametro_radio", "R del extremo"),
+            Variable("cota", "brazo_chaveta", "cara plana a"),
+            Variable("cota", "brazo_chaveta_cuerda", "cuerda"),
+            Variable("angulo", "brazo_chaveta_angulo", "girada"),
+        ),
+        ("plancha", "brazo_espesor"),
+        "UN BRAZO MÁS: misma pletina, mismo cubo, mismo agujero en D y mismo perno de "
+        "Ø6 en el extremo —que aquí lleva el pomo en vez de una biela—: lo único suyo es "
+        "cuánto mide. Y eso tampoco es una elección de dibujo: 100 mm es lo que hace que "
+        "los 4 N·m de C9 signifiquen 40 N en la mano, que es lo que empuja un adulto sin "
+        "esforzarse. NO lleva calaje: la manivela se cala donde se quiera, que para eso se "
+        "gira. Va en el eje rápido, con el piñón Z20 y el volante.",
     ),
     "volante": Ficha(
         "disco de latón aligerado, en el eje de la manivela",
