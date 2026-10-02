@@ -296,3 +296,53 @@ def test_el_tiempo_cuadra_con_el_volumen_arrancado():
 
     assert por_recorrido > por_volumen, "el acabado tiene que costar algo"
     assert por_recorrido < 2.5 * por_volumen, "y no puede costar más que el desbaste entero"
+
+
+def test_una_compra_que_da_para_varias_maquinas_no_se_cobra_entera():
+    """**La cinta se cobraba cuatro veces, y era un 10 % del total.**
+
+    La linea es un metro de fleje de 20 mm de ancho. Hendido a 5 da cuatro
+    tiras y un canal gasta 332 mm: ese metro rinde doce canales, cuatro
+    maquinas. Se cobraba entero porque la ficha decia «hendido a 10 para los
+    tres canales», de cuando la cinta media 10 de ancho.
+
+    `rinde` declara el rendimiento en vez de dividir el precio a mano: cada
+    linea sigue siendo el precio de catalogo con su URL, que es lo que
+    permite volver a leerlo el ano que viene.
+    """
+    from compile.coste import Linea, cargar_precios
+
+    entera = Linea(concepto="x", precio=100.0, iva_incluido=True, url="http://x")
+    cuatro = Linea(concepto="x", precio=100.0, iva_incluido=True, url="http://x", rinde=4.0)
+    assert entera.importe == pytest.approx(100.0)
+    assert cuatro.importe == pytest.approx(25.0)
+
+    cinta = next(x for x in cargar_precios().plataforma if x.concepto.startswith("Cinta"))
+    assert cinta.rinde == 4.0
+    assert cinta.importe == pytest.approx(15.11 * 1.21 / 4.0, abs=0.01)
+
+
+def test_la_ficha_de_producto_suma_lo_mismo_que_el_compilador():
+    """**Dos listas del mismo despiece, contrastadas.**
+
+    `docs/ficha-producto.md` lleva la tabla de la plataforma a mano y el
+    compilador la calcula de `bench/precios.json`. Nadie las cruzaba, y la
+    tabla llevaba 81,09 sin la cinta mientras el compilador decia 99,37 con
+    ella cobrada cuatro veces: **dos numeros mal, y cada uno tapaba al otro**.
+
+    Es la leccion del repo con otro disfraz: lo que aparece en una lista y
+    falta en la otra es siempre algo.
+    """
+    import re
+
+    from compile.coste import cargar_precios
+
+    raiz = Path(__file__).resolve().parent.parent.parent
+    doc = (raiz / "docs" / "ficha-producto.md").read_text(encoding="utf-8")
+    fila = re.search(r"\|\s*\*\*Plataforma\*\*\s*\|\s*\|\s*\|\s*\*\*([\d,]+)\*\*\s*\|", doc)
+    assert fila, "la ficha de producto ya no trae el total de la plataforma"
+    escrito = float(fila.group(1).replace(",", "."))
+    calculado = sum(linea.importe for linea in cargar_precios().plataforma)
+    assert escrito == pytest.approx(calculado, abs=0.02), (
+        f"la ficha dice {escrito:.2f} y el compilador {calculado:.2f}"
+    )

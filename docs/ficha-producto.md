@@ -124,6 +124,7 @@ suba, está en la sección siguiente.
 | Portaminas Staedtler 780 C | 1 | 8,98 | 8,98 |
 | Rodillos y pivotes, MR63ZZ | 7 | 1,19 | 8,33 |
 | Anillo de apriete del lápiz | 1 | 6,81 | 6,81 |
+| Cinta del amplificador, fleje 1.4310 0,05 × 5 | 1 | 4,57 | 4,57 |
 | Muelles de compresión RS PRO 751-540 | 3 | 1,51 | 4,54 |
 | Contrachapado de abedul 9 mm | 1 | 4,43 | 4,43 |
 | Postes de pivote, inox Ø8 h6 | 3 | 1,21 | 3,63 |
@@ -134,15 +135,15 @@ suba, está en la sección siguiente.
 | Árbol de levas, Ø10 h6 rectificado | 1 | 0,47 | 0,47 |
 | Pasadores de índice DIN 6325 Ø3 | 3 | 0,14 | 0,42 |
 | Acabado Osmo 3062 | 1 | 0,30 | 0,30 |
-| **Plataforma** | | | **81,09** |
+| **Plataforma** | | | **85,66** |
 
 ### 3c. El total, y lo que dice
 
 | | € |
 | --- | --- |
 | Cartucho | 38,08 |
-| Plataforma | 81,09 |
-| **Material y compras de un escribiente** | **119,17** |
+| Plataforma | 85,66 |
+| **Material y compras de un escribiente** | **123,74** |
 
 Son **55 € más** de lo que decía la estimación anterior de 60-65 €, y la
 diferencia no es que algo haya subido: es que antes faltaban el corte, los

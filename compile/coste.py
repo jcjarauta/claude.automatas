@@ -254,10 +254,28 @@ class Linea(BaseModel):
     url: str = Field(min_length=1)
     pedir: str | None = None
     """Qué hay que preguntar si el precio no está verificado."""
+    rinde: float = Field(default=1.0, gt=0.0)
+    """Cuántas máquinas sirve UNA unidad de compra.
+
+    Lo normal es 1: se compra un rodamiento y se monta un rodamiento. Pero
+    hay líneas donde la unidad mínima de compra da para varias máquinas, y
+    entonces cobrarla entera infla el coste sin que se vea.
+
+    Pasó con la cinta: la línea es un metro de fleje de 20 mm de ancho, y
+    decía «hendido a 10 para los tres canales», de cuando la cinta medía 10.
+    A 5 de ancho salen cuatro tiras y un canal gasta 332 mm, así que ese
+    metro rinde **doce canales, cuatro máquinas**. Se cobraba entero: 18,28 €
+    por máquina en vez de 4,57, un 10 % del total.
+
+    **Se declara el rendimiento, no se divide el precio a mano.** Dividirlo
+    rompe la regla del fichero —cada línea es el precio de catálogo con su
+    URL, para poder volver a leerlo— y deja el porqué fuera del dato.
+    """
 
     @property
     def importe(self) -> float:
-        return con_iva(self.precio, iva_incluido=self.iva_incluido) * self.cantidad
+        bruto = con_iva(self.precio, iva_incluido=self.iva_incluido) * self.cantidad
+        return bruto / self.rinde
 
 
 class Precios(BaseModel):
