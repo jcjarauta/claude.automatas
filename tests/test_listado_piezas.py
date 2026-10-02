@@ -106,6 +106,8 @@ def test_toda_cota_que_el_perfil_resuelve_la_comprueba_el_comparador():
             comprobadas.add(f.ranura[0])
         if f.voladizo:
             comprobadas.add(f.voladizo)
+        if f.retranqueo:
+            comprobadas.add(f.retranqueo)
         comprobadas |= set(f.desde_datum)
         # Un agujero en polares lo sitúan DOS cotas, y el comparador las mira
         # las dos: la distancia al centro y el ángulo desde +X.

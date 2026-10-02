@@ -305,6 +305,105 @@ dibujar el tambor, que es la pieza a la que afecta.
 
 ---
 
+## Contrato de base · PENDIENTE
+
+La tabla de nogal. La **planta está cerrada** y la **altura no**, y por eso el
+grupo entero está pendiente: todo lo vertical cuelga de `base_al_plato`, que
+no se puede decidir hasta saber cómo se sujeta el portaminas.
+
+### El marco de la base es el del cinco barras
+
+La máquina no tenía frente declarado. Lo tiene de balde: el centro de la caja
+de escritura cae a **240° exactos** del árbol en el marco de la leva, porque
+la caja está sobre el eje +Y del cinco barras y ese marco está girado 150°.
+Visto desde el cinco barras, entonces, todo sale simétrico:
+
+| | x | y |
+| --- | --- | --- |
+| árbol | 0 | −32,451 |
+| pivotes del cinco barras | ±60 | 0 |
+| postes de seguidor | ±61,543 y 0 | −35,532 y +71,063 |
+| plato Ø170 | ±85 | −117,45 … +52,55 |
+| caja de escritura | ±40 | 85 … 115 |
+
+Es lo que convierte la base en un rectángulo centrado en vez de una tabla con
+la máquina de medio lado. **No hace falta cota para ello**: la base se sitúa
+en el conjunto por sus tres agujeros, que son los de los platos.
+
+### La planta la cierran el plato y la tarjeta
+
+Nada más. Por detrás manda el plato —85 de radio—, por delante el borde
+lejano del papel, y a los lados el plato otra vez. Con **10 mm de nogal a las
+cuatro puntas** salen **190 × 275 × 25**.
+
+`docs/ficha-producto.md` decía «210 × 160 mm de base»: se escribió antes de
+saber dónde cae el papel y el fondo se queda **115 mm corto**. Eso mueve la
+línea del nogal, que se presupuestaba a 13 bases por tabla de 2 m.
+
+El papel es un **A7 apaisado**, 105 × 74, centrado en la caja de escritura y
+no en la tabla. Deja 12,5 a los lados de los 80 de la caja, 22 delante y
+detrás de los 30, y su borde cercano queda a 10,45 del canto del plato: si
+entrara por debajo, la tarjeta no se podría poner ni quitar sin mover la
+máquina.
+
+### Los postes bajan hasta la base y hacen de pata
+
+No hay pilar. Es el mismo argumento que hizo del tercer plato la misma pieza:
+un pilar propio obligaría al plato 1 a llevar tres agujeros que los otros dos
+no tienen, y los tres platos dejarían de ser intercambiables.
+
+A cambio el poste crece. Y de paso se acaba el «70 de antes», que era un
+número heredado con el vano entre platos escondido dentro:
+
+```
+poste_largo 195 = 15 empotrado en el nogal
+                + 75 base_al_plato      <- PENDIENTE
+                + 27 tres platos de 9
+                + 58 poste_vano
+                + 20 reductor_bahia
+```
+
+`poste_vano` es nuevo y es lo que antes no estaba declarado: dentro van la
+pila de 19 sobre 2 de holgura, el seguidor y el sector hasta 33, y los 25 que
+se lleva la cinta con sus dos mordazas.
+
+Los tres agujeros de la base son el patrón de los platos visto desde otro
+datum. Aquí no hay árbol que poner en el origen, así que el datum es un poste
+y el siguiente va sobre +X; como los tres están a 120° del árbol, el
+triángulo es **equilátero** y se acota con un lado y 60°. Son agujeros
+**ciegos**, 15 de los 25, para que no asome el acero por debajo.
+
+### Por dónde pasa la mano
+
+Tres números que salieron al cerrar la planta y que conviene tener delante:
+
+- El **volante** gira entero dentro de la tabla. Son 294 g de latón al
+  alcance de una manga.
+- El **pomo de la manivela** se sale **19 mm por la izquierda**, y por detrás
+  le sobran 19.
+- En su paso de delante, la manivela cruza **29 mm sobre la tarjeta**, a unos
+  190 mm de altura.
+
+No choca con nada. Lo que hace es que la mano pase una vez por vuelta sobre
+lo escrito, y que la máquina no se pueda arrimar a una pared por la
+izquierda. Viene de que el eje de la manivela se colocó en el marco de la
+**leva** —a −90° allí— sin mirar dónde cae eso visto desde quien escribe: en
+el marco de la base queda a **120°**, arriba y a la izquierda. Ponerlo a −90°
+del marco de la base lo dejaría atrás y simétrico, y **costaría redibujar la
+platina, que ya está entregada**. El número está escrito para que esa
+decisión se tome con él delante.
+
+### Lo que falta
+
+`base_al_plato` son **75 provisionales**, elegidos porque con ellos el plato
+3 acaba a 180 y la máquina mide los 200 de alto que dice la ficha, dejando
+unos 60 mm de portaminas por debajo del varillaje. El número de verdad sale
+de cómo se sujeta el lápiz, que es la decisión que sigue abierta. Con él se
+cierran de golpe `poste_largo`, el largo de los tres separadores que apoyan
+el plato 1 y `eje_pivote_largo`, que lleva desde el principio con 45.
+
+---
+
 ## Registro de cambios
 
 | Fecha | Contrato | Cambio | Motivo |
@@ -328,3 +427,8 @@ dibujar el tambor, que es la pieza a la que afecta.
 | 2026-10-01 | Bastidor | **El calaje pasa a vivir en la mordaza de la cinta**, no mecanizado en el eje | 1 mm de error en la longitud de la cinta son 21,6 mm en la punta, y un fleje anclado a mano no tiene esa longitud a la décima. Mecanizado el error sería invisible y permanente; ajustable es visible y se comprueba con la hoja de trazo patrón |
 | 2026-10-01 | Bastidor | **Añadida la mordaza**: bloque, M3 de apriete, M4 de fijación y ranura de 6 de recorrido | Agarra por rozamiento y no por arrastre porque la cinta no se arrolla a menos de 5 mm de radio. El recorrido lo da el deslizamiento y la tensión el tirón: un tornillo tensor no hace las dos cosas, son 241 a 1 entre lo que hay que mover y lo que hay que sujetar |
 | 2026-10-01 | Bastidor | **El eje de pivote se queda sin ángulo**: barra Ø10 h6 con una cara plana, igual en los tres | Consecuencia de lo anterior. No es una decisión, es lo que sobra |
+| 2026-10-02 | **Accionamiento** | Añadido el grupo: volante Ø104 × 6 aligerado, manivela de 100 entre centros, 90 rpm y bahía del reductor de 20 | El volante no se había calculado nunca. Dimensionado contra «firma», que pide 3,62 × 10⁻⁴ kg·m² frente a los 2,28 de «hola»: sobre el demo se habría quedado un tercio corto |
+| 2026-10-02 | Bastidor | **Añadido el séptimo agujero de la platina** y `poste_largo` de 70 a 105 | El eje de la manivela estaba en voladizo. Con un Ø19 más a 28 del árbol y 90° bajo +X, los TRES platos son la misma pieza y el tercero lo apoya |
+| 2026-10-02 | Bastidor | `platina_radio` → **`platina_diametro`**, `platina_pivote_radio` → `platina_pivote_al_arbol` | El contorno es un círculo entero y la herramienta de círculo acota el diámetro. Renombradas ANTES de entregarlas, que es cuando sale gratis |
+| 2026-10-02 | **Base** | Añadido el grupo: 190 × 275 × 25 de nogal, tres agujeros ciegos de Ø8 en triángulo equilátero y la tarjeta A7 | La planta la cierran el plato por detrás y el papel por delante, con 10 mm a cada punta. Los 210 × 160 de la ficha se quedaban 115 mm cortos de fondo |
+| 2026-10-02 | Bastidor | **Añadido `poste_vano`** y `poste_largo` de 105 a **195**, derivado de la cadena entera | El poste baja hasta la base y hace de pata, así que no hace falta pilar y los tres platos siguen siendo la misma pieza. Y el «70 de antes» llevaba dentro, sin declarar, el vano entre el plato 1 y el plato 2 |

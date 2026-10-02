@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "fecha": "2026-09-30",
+  "fecha": "2026-10-02",
   "contratos": [
     {
       "nombre": "eje",
@@ -586,11 +586,18 @@
           "tolerancia": "h6"
         },
         {
-          "nombre": "poste_largo",
-          "valor": 0.105,
+          "nombre": "poste_vano",
+          "valor": 0.058,
           "unidad": "m",
-          "descripcion": "Largo del poste. Atraviesa los tres planos de leva —que es por lo que su casquillo es el obstaculo que mide el hueco— y ahora tambien el tercer plato: 70 de antes + 9 de plato + 20 de bahia del reductor = 99, redondeado a 105 por el margen de montaje",
+          "descripcion": "Hueco libre entre la cara alta del plato 1 y la baja del plato 2. Dentro van la pila, el plano de seguidores, el sector y las dos mordazas de su cinta: 19 de pila sobre 2 de holgura, el seguidor y el sector hasta 33, y 25 que se lleva la cinta con sus anclajes. Estaba escondido dentro del «70 de antes» de poste_largo, que era un numero sin derivacion",
           "tolerancia": ""
+        },
+        {
+          "nombre": "poste_largo",
+          "valor": 0.195,
+          "unidad": "m",
+          "descripcion": "Largo del poste. Ya no sostiene solo el bastidor: baja hasta la base y es la pata de la maquina, asi que los tres platos siguen siendo la misma pieza y no hace falta ningun pilar. Derivada: base_poste_empotrado 15 + base_al_plato 75 + tres platos 27 + poste_vano 58 + reductor_bahia 20. PENDIENTE mientras lo este base_al_plato",
+          "tolerancia": "PENDIENTE"
         },
         {
           "nombre": "rodamiento_arbol_alojamiento_diametro",
@@ -731,6 +738,104 @@
           "valor": -1.5707963267948966,
           "unidad": "rad",
           "descripcion": "Donde cae el eje de la manivela alrededor del arbol, a reductor_entre_ejes (28). DETRAS del todo, en el sentido contrario al papel: el accionamiento entero se queda fuera de la zona de escritura y la manivela es igual de comoda para diestros y zurdos, que en un taller ocupacional importa. Es ademas el sector libre mas ancho, entre el poste de 240 y el pivote de 301,6. Negativo, asi que se teclea su gemelo en positivo y el agujero va bajo +X",
+          "tolerancia": ""
+        }
+      ]
+    },
+    {
+      "nombre": "base",
+      "estado": "pendiente",
+      "porque": "La planta la cierra la geometria que ya existe: el plato por detras y el papel por delante. La ALTURA no, y por eso el grupo esta pendiente: base_al_plato sale de como se sujeta el portaminas, que es lo que falta por decidir",
+      "valores": [
+        {
+          "nombre": "base_ancho",
+          "valor": 0.19,
+          "unidad": "m",
+          "descripcion": "Ancho de la tabla de nogal. Lo fija el plato, que es lo mas ancho que hay: Ø170 mas 10 de nogal a cada lado",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "base_fondo",
+          "valor": 0.275,
+          "unidad": "m",
+          "descripcion": "Fondo de la tabla. Del canto trasero del plato al borde lejano del papel, con 10 de margen a cada punta. La ficha de producto decia 160 y se queda 115 corta",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "base_espesor",
+          "valor": 0.025,
+          "unidad": "m",
+          "descripcion": "Nogal americano macizo de 25, el del despiece",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "base_arbol_al_borde_trasero",
+          "valor": 0.095,
+          "unidad": "m",
+          "descripcion": "Del arbol al borde de atras. Son los 85 de radio del plato mas 10 de nogal: es lo que situa la maquina sobre la tabla",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "base_al_plato",
+          "valor": 0.075,
+          "unidad": "m",
+          "descripcion": "Hueco libre de la cara alta de la base a la cara baja del plato 1. PENDIENTE: lo fija cuanto portaminas cuelga por debajo del varillaje. Con 75 el plato 3 acaba a 180 y la maquina mide los 200 de la ficha",
+          "tolerancia": "PENDIENTE"
+        },
+        {
+          "nombre": "base_poste_empotrado",
+          "valor": 0.015,
+          "unidad": "m",
+          "descripcion": "Lo que cada poste entra en el nogal. Agujero ciego: la base no se taladra de parte a parte para que no se vea el acero por abajo",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "base_entre_postes",
+          "valor": 0.1230853362513283,
+          "unidad": "m",
+          "descripcion": "Lado del triangulo de los tres postes. Derivada de poste_radio_al_arbol por raiz de tres: los tres estan a 120 grados, asi que el triangulo es equilatero y la base se acota con un lado y un angulo en vez de con tres polares",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "base_postes_angulo",
+          "valor": 1.0471975511965976,
+          "unidad": "rad",
+          "descripcion": "Angulo del tercer poste desde la linea de los otros dos. Vale 60 porque el triangulo es equilatero, y no es una eleccion",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "base_poste_al_borde_izquierdo",
+          "valor": 0.03345733187433585,
+          "unidad": "m",
+          "descripcion": "Del poste datum al borde izquierdo. Derivada de base_ancho y poste_radio_al_arbol: es lo que se teclea para situar el rectangulo, porque el ancho se mide entre bordes y el datum es un agujero",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "base_poste_al_borde_trasero",
+          "valor": 0.05946832399100001,
+          "unidad": "m",
+          "descripcion": "Del poste datum al borde de atras. Derivada de base_arbol_al_borde_trasero y poste_radio_al_arbol, por lo mismo",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "papel_ancho",
+          "valor": 0.105,
+          "unidad": "m",
+          "descripcion": "Ancho de la tarjeta: un A7 apaisado. Deja 12,5 de margen a cada lado de la caja de escritura, que mide 80",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "papel_fondo",
+          "valor": 0.074,
+          "unidad": "m",
+          "descripcion": "Fondo de la tarjeta. Deja 22 delante y detras de los 30 de la caja, y el borde cercano queda a 10,5 del canto del plato",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "papel_al_arbol",
+          "valor": 0.1324508232,
+          "unidad": "m",
+          "descripcion": "Del arbol al centro de la tarjeta, que es el centro de la caja de escritura. Derivada de brazo_origen y caja_centro_y: la tarjeta se centra en lo que se escribe, no en la tabla",
           "tolerancia": ""
         }
       ]

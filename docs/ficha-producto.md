@@ -27,7 +27,7 @@ un minuto.
 | Precio de venta objetivo | 150 – 400 € |
 | Volumen | 20 – 100 unidades al año |
 | Fabricación | Taller ocupacional de Arrels Fundació, Barcelona |
-| Tamaño aproximado | 210 × 160 mm de base, unos 200 mm de alto |
+| Tamaño aproximado | **190 × 275 mm** de base, unos 200 mm de alto |
 
 ### Lo que ya existe y compite
 
@@ -60,7 +60,7 @@ está congelado en `docs/contratos.md`.
 
 | Pieza | Cant. | Material |
 | --- | --- | --- |
-| Base | 1 | Nogal americano macizo 25 mm |
+| Base | 1 | Nogal americano macizo 25 mm, 190 × 275 |
 | Bastidor y soportes | — | Contrachapado de abedul 9 mm |
 | Brazos del cinco barras | 4 | Latón o contrachapado |
 | Seguidores | 3 | Contrachapado o latón |
@@ -77,7 +77,7 @@ está congelado en `docs/contratos.md`.
 | Pasador de índice | 3 | **DIN 6325 Ø3 × 16** m6 | [esutil.es](https://www.esutil.es/pasador-din-6325-cilindrico-templado-de-acero-b53d0/) | 0,14 |
 | Separador de pila | 6 | **RS 224-0382**, latón Ø3,2 × Ø6 × 2 | [RS España](https://es.rs-online.com/web/p/espaciadores/2240382) | 0,19 |
 | Casquillo de pivote | 3 | **igus GFM-0810-06**, valona Ø15 × 1 | [RS España](https://es.rs-online.com/web/p/plain-bearings/2692707) | 0,61 *(neto)* |
-| Poste de pivote | 3 | Eje inox X46Cr13 Ø8 h6, 105 mm | [Dold Mechatronik](https://www.dold-mechatronik.de/) | ~1,00 *(sin IVA ni portes)* |
+| Poste de pivote | 3 | Eje inox X46Cr13 Ø8 h6, **195 mm** (baja hasta la base y hace de pata) | [Dold Mechatronik](https://www.dold-mechatronik.de/) | ~1,00 *(sin IVA ni portes)* |
 | Rueda Z60 **m0,7** latón, Ø ext 43,4 | 1 | **Mädler 26206000** | [Mädler](https://www.maedler.de/article/26206000) | 12,30 (50 ud, neto) |
 | Piñón Z20 **m0,7** latón, Ø ext 15,4 | 1 | **Mädler 26202000** | [Mädler](https://www.maedler.de/article/26202000) | 8,89 (50 ud, neto) |
 | Muelle del seguidor | 3 | **RS PRO 751-540**, k = 0,44 N/mm, Fmáx 19,5 N | [RS España](https://es.rs-online.com/web/p/muelles-de-compresion/0751540) | 1,25 *(neto, pack de 5)* |
@@ -120,7 +120,7 @@ suba, está en la sección siguiente.
 | --- | --- | --- | --- |
 | Rueda del reductor, Mädler m0,7 Z60 latón | 1 | 14,88 | 14,88 |
 | Piñón del reductor, Mädler m0,7 Z20 latón | 1 | 10,76 | 10,76 |
-| Base de nogal americano 25 mm | 1 | 10,39 | 10,39 |
+| Base de nogal americano 25 mm, 190 × 275 | 1 | 19,30 | 19,30 |
 | Portaminas Staedtler 780 C | 1 | 8,98 | 8,98 |
 | Rodillos y pivotes, MR63ZZ | 7 | 1,19 | 8,33 |
 | Anillo de apriete del lápiz | 1 | 6,81 | 6,81 |
@@ -135,17 +135,23 @@ suba, está en la sección siguiente.
 | Árbol de levas, Ø10 h6 rectificado | 1 | 0,47 | 0,47 |
 | Pasadores de índice DIN 6325 Ø3 | 3 | 0,14 | 0,42 |
 | Acabado Osmo 3062 | 1 | 0,30 | 0,30 |
-| **Plataforma** | | | **88,48** |
+| **Plataforma** | | | **97,39** |
+
+La **base casi dobla** su línea, de 10,39 a 19,30: al cerrar la planta pasó
+de 154 a 275 mm de fondo, así que una tabla de 2 m da 7 bases y no 13. El
+precio del material no ha cambiado; lo que ha cambiado es cuántas salen.
+Falta confirmar que la tabla da los 190 de ancho, y por eso la línea está
+sin verificar.
 
 ### 3c. El total, y lo que dice
 
 | | € |
 | --- | --- |
 | Cartucho | 38,08 |
-| Plataforma | 88,48 |
-| **Material y compras de un escribiente** | **126,56** |
+| Plataforma | 97,39 |
+| **Material y compras de un escribiente** | **135,47** |
 
-Son **55 € más** de lo que decía la estimación anterior de 60-65 €, y la
+Son **70 € más** de lo que decía la estimación anterior de 60-65 €, y la
 diferencia no es que algo haya subido: es que antes faltaban el corte, los
 muelles, los casquillos, los postes, el portaminas y el material del
 volante, y que la mitad de los precios estaban en neto.

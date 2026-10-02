@@ -334,6 +334,36 @@ def eje_pivote(c: dict[str, float] | None = None) -> Perfil:
     ]
 
 
+def base(c: dict[str, float] | None = None) -> Perfil:
+    """La tabla de nogal: un rectángulo y los tres agujeros de los postes.
+
+    **El datum es el poste 1 y el siguiente va sobre +X.** Los tres postes
+    forman un triángulo equilátero —están a 120° del árbol— así que la pieza
+    se acota con un lado y un ángulo de 60 en vez de con tres polares, y el
+    agujero del árbol, que es el datum de los platos, aquí no existe: en la
+    base no hay nada en el centro.
+
+    La planta sale de dos cosas que ya estaban: el plato por detrás y la
+    tarjeta por delante, con 10 mm de nogal a cada punta. La altura no sale
+    de aquí, y por eso `base_al_plato` está pendiente.
+
+    **Los postes bajan hasta la base y hacen de pata.** No hay pilar: es el
+    mismo argumento que hizo del tercer plato la misma pieza. A cambio el
+    poste pasa de 105 a 195 y la base lleva su patrón de agujeros, que es
+    el de los platos visto desde otro datum.
+    """
+    c = contrato_mm() if c is None else c
+    lado, radio = c["base_entre_postes"], c["poste_eje_diametro"] / 2
+    izquierdo, trasero = c["base_poste_al_borde_izquierdo"], c["base_poste_al_borde_trasero"]
+    centro = (-izquierdo + c["base_ancho"] / 2, -trasero + c["base_fondo"] / 2)
+    perfil = rectangulo(centro, c["base_ancho"], c["base_fondo"])
+    perfil += circulo((0.0, 0.0), radio)
+    perfil += circulo((lado, 0.0), radio)
+    t = c["base_postes_angulo"]
+    perfil += circulo((lado * math.cos(t), lado * math.sin(t)), radio)
+    return perfil
+
+
 PERFILES = {
     "mordaza": lambda c: mordaza(c),
     "eje_pivote": lambda c: eje_pivote(c),
@@ -342,6 +372,7 @@ PERFILES = {
     "seguidor": lambda c: seguidor(c),
     "platina_levas": lambda c: platina_levas(c),
     "volante": lambda c: volante(c),
+    "base": lambda c: base(c),
 }
 """Las piezas prismáticas que no son barras. El resto sale de `BRAZOS`.
 
@@ -595,6 +626,34 @@ LISTADO: dict[str, Ficha] = {
         "Aligerado porque la inercia vive en el borde: seis agujeros de Ø24 quitan 100 g de "
         "latón y solo un 9 % de inercia. Cala con la misma cara plana que los brazos, sin "
         "prisionero: un taladro radial no sale de una plancha cortada.",
+    ),
+    "base": Ficha(
+        "tabla de nogal con los tres agujeros de los postes",
+        1,
+        (
+            Variable("cota", "base_ancho", "ancho"),
+            Variable("cota", "base_fondo", "fondo"),
+            Variable("cota", "base_espesor", "espesor", en_el_perfil=False),
+            Variable("cota", "poste_eje_diametro", "Ø de cada poste", "H7"),
+            Variable("cota", "base_entre_postes", "entre postes"),
+            Variable("angulo", "base_postes_angulo", "el tercero a"),
+            Variable("cota", "base_poste_al_borde_izquierdo", "datum al borde izquierdo"),
+            Variable("cota", "base_poste_al_borde_trasero", "datum al borde de atrás"),
+            Variable("cota", "base_poste_empotrado", "fondo del agujero ciego", en_el_perfil=False),
+        ),
+        ("plancha", "base_espesor"),
+        "La planta la cierran dos cosas que ya existían: el plato Ø170 por detrás y la "
+        "tarjeta A7 por delante, con 10 mm de nogal a cada punta. Por eso mide 275 de "
+        "fondo y no los 160 de la ficha de producto, que se escribió antes de saber "
+        "dónde cae el papel. "
+        "Los tres agujeros son el patrón de los platos visto desde otro datum: aquí no "
+        "hay árbol que poner en el origen, así que el datum es un poste y el siguiente "
+        "va sobre +X. Como los tres están a 120 grados del árbol, el triángulo es "
+        "equilátero y se acota con un lado y 60 grados. "
+        "Los agujeros son CIEGOS, 15 de los 25: la base no se taladra de parte a parte "
+        "para que no asome el acero por debajo. "
+        "Lo que esta tabla todavía no sabe es a qué altura queda el plato 1: "
+        "base_al_plato son 75 provisionales y de ahí cuelga el largo del poste.",
     ),
     "platina_levas": Ficha(
         "disco de contrachapado con los siete agujeros del mecanismo",

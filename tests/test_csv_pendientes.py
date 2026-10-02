@@ -158,3 +158,83 @@ def test_un_renombrado_se_separa_de_un_alta_porque_no_cuesta_lo_mismo(tmp_path: 
     assert not cambios[0].altas, "un renombrado no es un alta"
     assert not cambios[0].bajas, "ni una baja suelta"
     assert "RENOMBRADA" in cp.informe(cambios, {"variables_cota": ("cota", "1 mm")})
+
+
+def test_con_dos_candidatas_al_mismo_valor_manda_el_nombre(tmp_path: Path):
+    """**Emparejar por valor no basta en cuanto el contrato crece.**
+
+    Pasó al cerrar la base: `poste_diametro` valía 15 y se renombró a
+    `poste_obstaculo_diametro`, y en el mismo paquete entró
+    `base_poste_empotrado`, que también vale 15. El informe emparejó la
+    alfabéticamente primera y mandó reteclear dos cotas que no tienen nada
+    que ver.
+
+    Mandar a reteclear una cota que está bien es peor que no decir nada: el
+    que dibuja va al croquis, no encuentra nada roto y a la siguiente deja
+    de leer el renglón.
+    """
+    antes = "poste_diametro,15.0000,mm,x,pendiente,,el obstaculo\n"
+    ahora = (
+        "base_poste_empotrado,15.0000,mm,x,pendiente,,lo que entra en el nogal\n"
+        "poste_obstaculo_diametro,15.0000,mm,x,pendiente,,el obstaculo\n"
+    )
+    (tmp_path / "variables_cota.csv").write_text(ahora, encoding="utf-8")
+    (tmp_path / "importado.json").write_text(
+        json.dumps(
+            {
+                "archivos": {
+                    "variables_cota": {
+                        "sha256": hashlib.sha256(antes.encode()).hexdigest(),
+                        "contenido": antes,
+                        "fecha": "2026-10-02",
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    import scripts.csv_pendientes as cp
+
+    antiguo, cp.IMPORTADO = cp.IMPORTADO, tmp_path / "importado.json"
+    try:
+        cambios = cp.pendientes(tmp_path)
+    finally:
+        cp.IMPORTADO = antiguo
+
+    assert cambios[0].renombradas == [("poste_diametro", "poste_obstaculo_diametro")]
+    assert cambios[0].altas == ["base_poste_empotrado"], "la otra es un alta, no media renombrada"
+
+
+def test_sin_una_palabra_en_comun_entre_varias_no_hay_renombrado(tmp_path: Path):
+    """Y si ninguna candidata se parece, no se elige ninguna. Un renombrado
+    conserva de qué habla la cota; dos nombres ajenos que coinciden en el
+    número son dos cotas distintas."""
+    antes = "poste_diametro,15.0000,mm,x,pendiente,,el obstaculo\n"
+    ahora = "caja_alto,15.0000,mm,x,pendiente,,una\nmuelle_hilo,15.0000,mm,x,pendiente,,otra\n"
+    (tmp_path / "variables_cota.csv").write_text(ahora, encoding="utf-8")
+    (tmp_path / "importado.json").write_text(
+        json.dumps(
+            {
+                "archivos": {
+                    "variables_cota": {
+                        "sha256": hashlib.sha256(antes.encode()).hexdigest(),
+                        "contenido": antes,
+                        "fecha": "2026-10-02",
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    import scripts.csv_pendientes as cp
+
+    antiguo, cp.IMPORTADO = cp.IMPORTADO, tmp_path / "importado.json"
+    try:
+        cambios = cp.pendientes(tmp_path)
+    finally:
+        cp.IMPORTADO = antiguo
+
+    assert not cambios[0].renombradas
+    assert cambios[0].bajas == ["poste_diametro"]

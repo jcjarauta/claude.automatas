@@ -116,6 +116,15 @@ class Ficha:
     ella el bloque se puede dibujar centrado entre los tornillos —que es lo
     natural y lo que estaba mal— y la ranura se sale por el extremo.
     """
+    retranqueo: str = ""
+    """Del datum al borde más lejano del contorno, hacia -Y.
+
+    Es `voladizo` en el otro eje, y hace falta por lo mismo: la base es la
+    primera pieza que no es simétrica respecto del eje X de su datum, así
+    que el ancho y el fondo dicen cuánto mide la tabla y ninguna de las dos
+    dice dónde cae el agujero dentro de ella. Con las dos, el rectángulo
+    queda situado y el patrón de postes no se puede dibujar desplazado.
+    """
     polares: tuple[tuple[str, str, int], ...] = ()
     """Agujeros situados en POLARES: (cota del radio, cota del ángulo, cuántos).
 
@@ -264,6 +273,16 @@ FICHAS: dict[str, Ficha] = {
         cara_plana="brazo_chaveta",
         cara_plana_angulo="brazo_chaveta_angulo",
         datum="brazo_eje_diametro_radio",
+    ),
+    "base": Ficha(
+        "tabla de nogal con los tres agujeros de los postes, en triángulo equilátero",
+        {"poste_eje_diametro_radio": 3},
+        segmentos={"base_ancho": 2, "base_fondo": 2},
+        desde_datum=("base_entre_postes",),
+        polares=(("base_entre_postes", "base_postes_angulo", 1),),
+        voladizo="base_poste_al_borde_izquierdo",
+        retranqueo="base_poste_al_borde_trasero",
+        datum="poste_eje_diametro_radio",
     ),
     "platina_levas": Ficha(
         "disco de contrachapado con los siete agujeros del mecanismo",
@@ -734,6 +753,25 @@ def comparar(ruta: Path, pieza: str, tol: float = TOLERANCIA) -> Informe:
                     "falta",
                     f"#cota.{ficha.voladizo} pide el borde a {-esperado:+g} del datum "
                     f"y está a {min(bordes):+g}: el contorno no está donde dice el contrato",
+                )
+            )
+
+    if ficha.retranqueo:
+        esperado = cotas[ficha.retranqueo]
+        bordes = [min(a[1], b[1]) for a, b in segmentos if abs(a[1] - b[1]) <= tol]
+        if not bordes:
+            inf.hallazgos.append(
+                Hallazgo("falta", f"#cota.{ficha.retranqueo}: no hay ningún borde horizontal")
+            )
+        elif abs(min(bordes) + esperado) <= tol:
+            inf.bien.append(f"borde de atrás a {esperado:g} del datum   #cota.{ficha.retranqueo}")
+        else:
+            inf.hallazgos.append(
+                Hallazgo(
+                    "falta",
+                    f"#cota.{ficha.retranqueo} pide el borde de atrás a {-esperado:+g} del "
+                    f"datum y está a {min(bordes):+g}: el contorno no está donde dice el "
+                    "contrato",
                 )
             )
 

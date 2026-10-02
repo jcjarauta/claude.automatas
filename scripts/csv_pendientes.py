@@ -24,6 +24,7 @@ import argparse
 import csv as _csv
 import hashlib
 import json
+import os
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -63,6 +64,31 @@ def estado() -> dict[str, dict[str, object]]:
     return dict(json.loads(IMPORTADO.read_text(encoding="utf-8"))["archivos"])
 
 
+def _la_mas_parecida(viejo: str, candidatas: list[str]) -> str | None:
+    """De los nombres que valen lo mismo, el que de verdad es el renombrado.
+
+    Con UNA candidata no hay nada que decidir: el valor la empareja y ya
+    está, que es como funcionaba y funcionaba bien.
+
+    Con varias manda el nombre: gana la que comparte más palabras con la
+    vieja y, a igualdad, más prefijo. Un renombrado conserva de qué habla la
+    cota —`platina_radio` pasó a `platina_diametro`, `seguidor_sector_lejos`
+    a `union_sector_seguidor_lejos`—. Si ninguna comparte una palabra, no se
+    elige: dos nombres sin nada en común que coinciden en el número son dos
+    cotas distintas, y mandar a reteclear una cota que está bien es peor que
+    callarse.
+    """
+    if len(candidatas) <= 1:
+        return candidatas[0] if candidatas else None
+
+    def parecido(n: str) -> tuple[int, int]:
+        comunes = len(set(viejo.split("_")) & set(n.split("_")))
+        return comunes, len(os.path.commonprefix([viejo, n]))
+
+    mejor = max(candidatas, key=parecido)
+    return mejor if parecido(mejor)[0] else None
+
+
 def pendientes(paquete: Path) -> list[Cambio]:
     """Los archivos que difieren de lo que hay en Onshape, con el detalle."""
     dentro, salida = estado(), []
@@ -85,8 +111,20 @@ def pendientes(paquete: Path) -> list[Cambio]:
             bajas = sorted(antes.keys() - ahora.keys())
             # Emparejar por VALOR lo que se va con lo que llega: eso es un
             # renombrado, y es el único cambio que rompe un croquis ya hecho.
+            #
+            # **Por valor no basta cuando hay varios candidatos**, y los hay
+            # en cuanto el contrato crece: el día que `poste_diametro` (15)
+            # se renombró a `poste_obstaculo_diametro`, entró a la vez
+            # `base_poste_empotrado`, que también vale 15, y el informe
+            # emparejó el alfabéticamente primero. Decir «RENOMBRADA» de dos
+            # cotas que no tienen nada que ver manda a reteclear cotas que
+            # están bien, que es peor que no decir nada.
+            #
+            # Así que entre los que valen lo mismo manda el NOMBRE, y si
+            # ninguno comparte una palabra con el que se va, no es un
+            # renombrado: es una baja y un alta que coinciden en el número.
             for ida in list(bajas):
-                gemela = next((n for n in altas if ahora[n] == antes[ida]), None)
+                gemela = _la_mas_parecida(ida, [n for n in altas if ahora[n] == antes[ida]])
                 if gemela is not None:
                     cambio.renombradas.append((ida, gemela))
                     bajas.remove(ida)

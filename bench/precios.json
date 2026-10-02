@@ -271,13 +271,14 @@
     },
     {
       "concepto": "Base de nogal americano macizo 25 mm",
-      "referencia": "tabla cepillada, 13 bases por tabla de 2 m",
+      "referencia": "tabla cepillada, 7 bases por tabla de 2 m: la base pasó de 154 a 275 de fondo al cerrar la planta (2026-10-02). Falta confirmar que la tabla da los 190 de ancho",
       "proveedor": "Woodna / Esteba",
       "cantidad": 1,
-      "precio": 10.39,
+      "precio": 19.3,
       "iva_incluido": true,
-      "verificado": true,
-      "url": "https://woodna.es/"
+      "verificado": false,
+      "url": "https://woodna.es/",
+      "pedir": "precio de la tabla cepillada de 2 m y su ANCHO útil: la base pide 190 y antes medía 154, así que la tabla da 7 bases y no 13. Si el ancho se queda corto hay que alistonar, que es otra operación y otro precio"
     },
     {
       "concepto": "Contrachapado de abedul 9 mm, bastidor y soportes",

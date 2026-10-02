@@ -34,6 +34,7 @@ from emit.plataforma import (
     Arco,
     Perfil,
     Segmento,
+    base,
     contrato_mm,
     eje_pivote,
     mordaza,
@@ -63,6 +64,7 @@ PERFIL_DE = {
     "seguidor": seguidor,
     "platina_levas": platina_levas,
     "volante": volante,
+    "base": base,
 }
 """De dónde sale la forma de cada pieza.
 
@@ -246,9 +248,18 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
         max(hueco - pila - leyenda_alto - 24, 20.0) / max(y1 - y0, 1e-6),
         7.0,
     )
+    # `ox`, `oy` son el (0, 0) de la PIEZA en la hoja, no el centro de su
+    # caja, y por eso el alto y el ancho se miden contra `y1`/`x1` y no
+    # contra la semicaja. Mientras todas las piezas tuvieron el datum en el
+    # centro las dos cuentas daban lo mismo —una barra, un disco y la
+    # mordaza son simétricos respecto de su datum— y la diferencia no se
+    # veía. La base es la primera que no lo es: su datum es un poste y queda
+    # a 59 de un borde y a 216 del otro, así que la planta subía 43 mm sobre
+    # su sitio, se metía debajo de la leyenda y dejaba un hueco igual de
+    # grande por abajo.
     ox = x + ancho / 2 - ((x0 + x1) / 2) * k
-    oy = y + CABECERA + 16 + leyenda_alto + (y1 - (y0 + y1) / 2) * k
-    abajo, derecha = oy + (y1 - (y0 + y1) / 2) * k, ox + (x1 - (x0 + x1) / 2) * k
+    oy = y + CABECERA + 16 + leyenda_alto + y1 * k
+    abajo, derecha = oy - y0 * k, ox + x1 * k
 
     d = [
         f'<text class="vista" x="{x + ancho / 2:.1f}" y="{y + 12:.1f}">'
@@ -557,6 +568,21 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
         d.append(
             f'<text class="cotavar" x="{lado + 5:.2f}" y="{(ya + yb) / 2:.2f}" '
             f'transform="rotate(-90 {lado + 5:.2f} {(ya + yb) / 2:.2f})">#cota.{cota}</text>'
+        )
+        lado += 22
+
+    if ficha.retranqueo:
+        # Del datum al borde de atrás: es `voladizo` en el otro eje y va en
+        # la columna vertical porque es una distancia en Y. Sin ella el
+        # rectángulo se dibuja centrado entre los postes, que es lo natural,
+        # y la máquina se va 23 mm hacia atrás sobre la tabla.
+        ya, yb = oy, oy - y0 * k
+        d.extend([auxiliar(ox, ya, lado + 3, ya), auxiliar(ox, yb, lado + 3, yb)])
+        d.extend(cota_v(min(ya, yb), max(ya, yb), lado, f"{cotas[ficha.retranqueo]:g}"))
+        d.append(
+            f'<text class="cotavar" x="{lado + 5:.2f}" y="{(ya + yb) / 2:.2f}" '
+            f'transform="rotate(-90 {lado + 5:.2f} {(ya + yb) / 2:.2f})">'
+            f"#cota.{ficha.retranqueo}</text>"
         )
         lado += 22
     return d

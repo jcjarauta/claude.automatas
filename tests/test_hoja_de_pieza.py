@@ -111,6 +111,8 @@ def test_la_hoja_acota_todo_lo_que_la_ficha_declara():
             esperadas.add(f.ranura[0])
         if f.voladizo:
             esperadas.add(f.voladizo)
+        if f.retranqueo:
+            esperadas.add(f.retranqueo)
         esperadas |= set(f.desde_datum)
         esperadas.add(LISTADO[pieza].solido[1])
         # Los radios van en la leyenda, con el nombre que pide el campo:
@@ -340,3 +342,48 @@ def test_un_rasgo_repetido_dice_cuantos_hay_en_la_flecha():
     assert "#cota.seguidor_rodillo_diametro ×1" in texto
     # Y lo que solo aparece una vez no lleva recuento, que seria ruido.
     assert "1× " not in texto
+
+
+def test_la_leyenda_de_arriba_no_se_mete_dentro_del_dibujo():
+    """**La banda de arriba tiene que quedar ENCIMA de la planta, y eso se
+    mide en la hoja, no en la fórmula que la coloca.**
+
+    `ox`, `oy` son el (0, 0) de la pieza en la hoja, pero el alto reservado
+    se medía contra la SEMICAJA, como si el datum estuviera siempre en el
+    centro. En una barra, un disco o la mordaza lo está —son simétricos
+    respecto de su datum— así que las dos cuentas daban lo mismo y la
+    diferencia no existía.
+
+    La base es la primera pieza que no lo es: su datum es un poste y queda a
+    59 de un borde y a 216 del otro. La planta subía 43 mm sobre su sitio y
+    el segundo renglón de la leyenda salía escrito sobre el borde de la
+    tabla, con el mismo aspecto inocente que tenía el «R2» de la mordaza.
+
+    Se mide sobre el SVG y no sobre las variables que lo colocan: una
+    comprobación que modela el render y no mira lo que el render mira no es
+    que no cace nada, es que dice que todo está bien.
+    """
+    svg = hoja()
+    # Los renglones de la leyenda son los únicos `cotavar` con flecha: los
+    # demás son rótulos de cota, que sí van pegados al dibujo a propósito.
+    leyenda = [
+        float(y)
+        for y, texto in re.findall(r'<text class="cotavar"[^>]*y="([0-9.]+)"[^>]*>([^<]*)', svg)
+        if "→" in texto
+    ]
+    assert leyenda, "la hoja ya no trae leyenda: el test se ha quedado sin objeto"
+
+    dibujo = [float(y) for y in re.findall(r'<line class="contorno"[^>]*y1="([0-9.]+)"', svg)]
+    dibujo += [
+        float(cy) - float(r)
+        for cy, r in re.findall(r'<circle class="contorno"[^>]*cy="([0-9.]+)" r="([0-9.]+)"', svg)
+    ]
+    assert dibujo
+
+    # Cada renglón tiene que estar por encima de TODO lo que se dibuja
+    # debajo de él en su propio panel. Como los paneles se apilan, basta con
+    # exigir que ningún renglón caiga dentro de los 3 mm que rodean una
+    # línea de contorno: un solape real son décimas, no milímetros.
+    for y in leyenda:
+        cerca = [t for t in dibujo if abs(t - y) < 3.0]
+        assert not cerca, f"un renglón de leyenda a y={y} se monta sobre el contorno {cerca}"

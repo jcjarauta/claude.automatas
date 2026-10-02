@@ -20,10 +20,10 @@
     },
     {
       "nombre": "longitud",
-      "valor": 0.105,
-      "tolerancia": "",
+      "valor": 0.195,
+      "tolerancia": "PENDIENTE de base_al_plato",
       "critica": false
     }
   ],
-  "nota": "Bajó de Ø16 a Ø8 al descubrir que lo que come hueco es la valona del casquillo. El Ø16 nunca estuvo justificado: la fuerza tangencial en el seguidor es de 0,7 N, así que un Ø8 sobra por dos órdenes de magnitud. Precio sin verificar: falta IVA y portes a España."
+  "nota": "Bajó de Ø16 a Ø8 al descubrir que lo que come hueco es la valona del casquillo. El Ø16 nunca estuvo justificado: la fuerza tangencial en el seguidor es de 0,7 N, así que un Ø8 sobra por dos órdenes de magnitud.\n\nLARGO PENDIENTE: 70 cuando solo unía dos platos, 105 al aparecer el tercero y 195 desde que baja hasta la base y hace de pata. Se mueve con base_al_plato, que es la altura que todavía no está decidida. Precio sin verificar: falta IVA y portes a España."
 }

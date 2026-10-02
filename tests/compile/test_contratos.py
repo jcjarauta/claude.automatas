@@ -383,8 +383,188 @@ def test_la_bahia_del_reductor_cabe_lo_que_se_apila_dentro():
     )
 
 
-def test_el_poste_llega_a_los_tres_platos():
-    """Pasó de 70 a 105 al añadir el tercer plato. El número no es libre: es
-    lo que medía antes más un plato más la bahía."""
+def test_el_poste_es_la_cadena_vertical_entera_y_no_un_numero_heredado():
+    """**El poste ya no sostiene el bastidor: es la pata de la máquina.**
+
+    Valió 70 cuando unía dos platos, 105 al aparecer el tercero y 195 desde
+    que baja hasta la base. Los dos primeros eran números heredados —«70 de
+    antes»— y dentro de ellos vivía sin declarar el vano entre el plato 1 y
+    el plato 2, que es donde van la pila, los seguidores, el sector y la
+    cinta. Ahora cada sumando es una cota y el largo es su suma.
+
+    Que los tres platos sigan siendo la misma pieza es la consecuencia: si
+    la base se sujetara con pilares propios, el plato 1 llevaría tres
+    agujeros que los otros dos no tienen.
+    """
     c = contrato_mm()
-    assert c["poste_largo"] >= 70.0 + c["platina_espesor"] + c["reductor_bahia"]
+    cadena = (
+        c["base_poste_empotrado"]
+        + c["base_al_plato"]
+        + 3 * c["platina_espesor"]
+        + c["poste_vano"]
+        + c["reductor_bahia"]
+    )
+    assert c["poste_largo"] == pytest.approx(cadena, abs=1e-9), (
+        f"poste_largo dice {c['poste_largo']:g} y la cadena da {cadena:g}"
+    )
+    # Y el vano tiene que tragarse lo que lleva dentro, que es lo que el
+    # número heredado no garantizaba.
+    dentro = 2.0 + c["pila_altura"] + c["seguidor_espesor"] + c["amplificador_sector_espesor"]
+    assert c["poste_vano"] >= dentro, (
+        f"el vano mide {c['poste_vano']:g} y dentro se apilan {dentro:g}"
+    )
+
+
+def _postes_en_el_marco_de_la_base(c: dict[str, float]) -> list[tuple[float, float]]:
+    """Los tres postes alrededor del árbol, con +Y hacia el papel.
+
+    El marco de la base es el del cinco barras, y el de la leva está girado
+    `brazo_orientacion` respecto de él: por eso los postes, que en el marco
+    de la leva van a 0, 120 y 240, aquí caen a -150, -30 y +90. El de +90
+    es el de delante, en el eje de simetría.
+    """
+    giro = c["brazo_origen_giro"]
+    return [
+        (
+            c["poste_radio_al_arbol"] * math.cos(c["poste_reparto"] * i - giro),
+            c["poste_radio_al_arbol"] * math.sin(c["poste_reparto"] * i - giro),
+        )
+        for i in range(3)
+    ]
+
+
+def test_el_marco_de_la_base_es_el_del_cinco_barras_y_sale_simetrico():
+    """**La máquina no tenía frente declarado**, y lo tiene de balde.
+
+    El centro de la caja de escritura cae a 240° exactos del árbol en el
+    marco de la leva, porque la caja está sobre el eje +Y del cinco barras y
+    ese marco está girado 150°. Visto desde el cinco barras, entonces, el
+    árbol queda sobre el eje de simetría y todo lo demás sale por parejas:
+    los dos pivotes a ±60, dos postes atrás y uno delante.
+
+    Es lo que convierte la base en un rectángulo centrado y no en una tabla
+    con la máquina de medio lado.
+    """
+    c = contrato_mm()
+    giro = c["brazo_origen_giro"]
+    # El árbol, en el marco del cinco barras.
+    arbol = (
+        math.cos(giro) * -c["brazo_origen_x"] + math.sin(giro) * -c["brazo_origen_y"],
+        -math.sin(giro) * -c["brazo_origen_x"] + math.cos(giro) * -c["brazo_origen_y"],
+    )
+    assert arbol[0] == pytest.approx(0.0, abs=1e-5), f"el árbol se va {arbol[0]:.4f} del eje"
+    assert arbol[1] < 0.0, "el árbol tiene que quedar DETRÁS de la línea de pivotes"
+    assert c["caja_centro_y"] - arbol[1] == pytest.approx(c["papel_al_arbol"], abs=1e-6)
+
+    postes = _postes_en_el_marco_de_la_base(c)
+    delante = [p for p in postes if p[1] > 0.0]
+    assert len(delante) == 1, "tiene que haber UN poste delante y dos detrás"
+    assert delante[0][0] == pytest.approx(0.0, abs=1e-9)
+    detras = sorted(p for p in postes if p[1] <= 0.0)
+    assert detras[0][0] == pytest.approx(-detras[1][0], abs=1e-9)
+    assert detras[0][1] == pytest.approx(detras[1][1], abs=1e-9)
+
+
+def test_los_tres_agujeros_de_la_base_son_un_triangulo_equilatero():
+    """La base no tiene árbol que poner en el origen, así que su datum es un
+    poste. Como los tres están a 120° del árbol, el triángulo es equilátero y
+    se acota con **un lado y 60°** en vez de con tres polares: tres números
+    menos que teclear y ninguno que pueda contradecir a otro."""
+    c = contrato_mm()
+    postes = _postes_en_el_marco_de_la_base(c)
+    lados = [math.dist(postes[i], postes[(i + 1) % 3]) for i in range(3)]
+    for lado in lados:
+        assert lado == pytest.approx(c["base_entre_postes"], abs=1e-9)
+    assert c["base_entre_postes"] == pytest.approx(
+        c["poste_radio_al_arbol"] * math.sqrt(3.0), abs=1e-9
+    )
+    assert c["base_postes_angulo"] == pytest.approx(math.radians(60.0), abs=1e-12)
+
+
+def test_la_base_deja_diez_milimetros_de_nogal_alrededor_de_todo():
+    """**La planta la cierran el plato por detrás y la tarjeta por delante.**
+
+    No es un rectángulo elegido: es lo que ocupa la máquina más un margen
+    igual a las cuatro puntas. Y de paso deja dicho que los 210 × 160 de la
+    ficha de producto se escribieron antes de saber dónde cae el papel: el
+    fondo se queda 115 mm corto.
+    """
+    c = contrato_mm()
+    margen = 10.0
+    r = c["platina_diametro"] / 2.0
+    # A los lados manda el plato; delante, la tarjeta; detrás, el plato.
+    assert c["base_ancho"] / 2.0 - r >= margen
+    assert c["base_arbol_al_borde_trasero"] - r >= margen
+    delantero = c["base_fondo"] - c["base_arbol_al_borde_trasero"]
+    assert delantero - (c["papel_al_arbol"] + c["papel_fondo"] / 2.0) >= margen
+    assert c["base_ancho"] / 2.0 - c["papel_ancho"] / 2.0 >= margen
+
+
+def test_la_tarjeta_cabe_la_caja_de_escritura_y_no_pisa_el_plato():
+    """El papel se centra en lo que se escribe, no en la tabla. Un A7
+    apaisado deja 12,5 a los lados de los 80 de la caja y 22 delante y
+    detrás de los 30, y su borde cercano queda fuera del plato: si entrara
+    debajo, la tarjeta no se podría poner ni quitar sin mover la máquina."""
+    c = contrato_mm()
+    assert c["papel_ancho"] > c["caja_ancho"]
+    assert c["papel_fondo"] > c["caja_alto"]
+    cerca = c["papel_al_arbol"] - c["papel_fondo"] / 2.0
+    assert cerca - c["platina_diametro"] / 2.0 >= 10.0, (
+        f"la tarjeta se mete bajo el plato: le faltan {cerca - c['platina_diametro'] / 2.0:.2f} mm"
+    )
+
+
+def test_la_base_situa_su_contorno_desde_el_poste_datum():
+    """Ancho y fondo dicen cuánto mide la tabla y **ninguno dice dónde cae el
+    agujero dentro de ella**. Es la lección de `mordaza_voladizo` en las dos
+    direcciones: el rectángulo se puede dibujar centrado entre los postes —que
+    es lo natural— y entonces la máquina se va 23 mm hacia atrás sin que el
+    dibujo enseñe nada raro."""
+    c = contrato_mm()
+    postes = _postes_en_el_marco_de_la_base(c)
+    datum = min(postes)  # el de atrás a la izquierda, que es el del origen
+    assert c["base_poste_al_borde_izquierdo"] == pytest.approx(
+        c["base_ancho"] / 2.0 + datum[0], abs=1e-9
+    )
+    assert c["base_poste_al_borde_trasero"] == pytest.approx(
+        c["base_arbol_al_borde_trasero"] + datum[1], abs=1e-9
+    )
+
+
+def test_la_planta_dice_por_donde_pasa_la_mano():
+    """**El volante queda dentro de la tabla y la manivela no, y eso es un
+    dato de la planta, no un defecto.**
+
+    El eje de la manivela está a 28 del árbol y, en el marco de la base, a
+    120°: ni atrás ni en el eje, sino arriba a la izquierda. Es la
+    consecuencia de haberlo colocado en el marco de la LEVA —a -90° allí— sin
+    que nadie mirara dónde cae eso visto desde quien escribe.
+
+    De ahí salen tres números que conviene tener delante antes de poner la
+    máquina en una mesa: el volante gira entero dentro de la tabla, el pomo
+    de la manivela se sale 19 mm por la izquierda, y en su paso de delante
+    cruza 29 mm sobre la tarjeta, a 190 mm de altura. No choca con nada; lo
+    que hace es que la mano pase por encima de lo escrito una vez por vuelta.
+
+    Moverlo a -90° del marco de la BASE lo dejaría atrás y simétrico, y
+    costaría redibujar la platina, que ya está entregada. El número está aquí
+    para que esa decisión se tome con él delante y no por sorpresa.
+    """
+    c = contrato_mm()
+    giro, t = c["brazo_origen_giro"], c["platina_manivela_angulo"]
+    eje = (
+        c["reductor_entre_ejes"] * math.cos(t - giro),
+        c["reductor_entre_ejes"] * math.sin(t - giro),
+    )
+    media, atras = c["base_ancho"] / 2.0, -c["base_arbol_al_borde_trasero"]
+
+    # El volante, entero dentro: son 294 g de latón al alcance de una manga.
+    assert eje[1] - c["volante_diametro"] / 2.0 > atras
+    assert abs(eje[0]) + c["volante_diametro"] / 2.0 < media
+
+    # La manivela, no, y por dónde.
+    r = c["manivela_entre_centros"]
+    assert -(eje[0] - r) - media == pytest.approx(19.0, abs=0.5)
+    assert (eje[1] - r) - atras == pytest.approx(19.2, abs=0.5)
+    sobre_la_tarjeta = (eje[1] + r) - (c["papel_al_arbol"] - c["papel_fondo"] / 2.0)
+    assert sobre_la_tarjeta == pytest.approx(28.8, abs=0.5)

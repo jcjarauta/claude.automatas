@@ -881,6 +881,36 @@ falla si el esquema versionado se queda atrás.
   comprobaciones, y la de rasgos entre sí se escribe a mano: la ranura son dos
   arcos que no se tocan, y lo que hay entre ellos es la ranura y no una pared,
   así que deducir los tramos del perfil se equivoca.
+- **Un datum que no está en el centro mueve el dibujo entero, y la hoja
+  sigue saliendo.** La planta de una hoja se coloca por su `(0, 0)` de
+  pieza, pero el alto reservado se medía contra la **semicaja**, como si el
+  datum estuviera siempre centrado. En una barra, un disco o la mordaza lo
+  está —son simétricos respecto de su datum— así que las dos cuentas daban
+  lo mismo y la diferencia no existía. La base es la primera que no lo es:
+  su datum es un poste y queda a 59 de un borde y a 216 del otro, así que
+  la planta subía **43 mm** sobre su sitio, el segundo renglón de la
+  leyenda salía escrito encima del borde de la tabla y abajo quedaba un
+  hueco igual de grande.
+
+  Es la familia del `text-anchor`: una comprobación que modela el render
+  tiene que **mirar lo que el render mira**. Lo cierra
+  `test_la_leyenda_de_arriba_no_se_mete_dentro_del_dibujo`, que lee el SVG
+  y no las variables que lo colocan, y distingue los renglones de leyenda
+  de los rótulos de cota porque solo los primeros llevan flecha.
+
+- **Emparejar por valor funciona hasta que hay dos candidatos.** El informe
+  de reimportación llama RENOMBRADA a la cota que se va y a la que llega
+  con el mismo número. Al cerrar la base, `poste_diametro` (15) se renombró
+  a `poste_obstaculo_diametro` y en el mismo paquete entró
+  `base_poste_empotrado`, que también vale 15: emparejó la alfabéticamente
+  primera y mandó reteclear dos cotas que no tienen nada que ver.
+
+  **Mandar a reteclear una cota que está bien es peor que no decir nada**,
+  porque el que dibuja va al croquis, no encuentra nada roto y a la
+  siguiente deja de leer el renglón. Con una sola candidata el valor
+  decide, como antes; con varias manda el nombre —palabras en común y
+  luego prefijo— y si ninguna comparte una palabra no se elige ninguna.
+
 - **Fase.** Un cartucho montado desfasado escribe basura. La marca física y la
   verificación van en el dossier, no solo en el código.
 
@@ -967,6 +997,39 @@ Se calculaba como la media de los ángulos del ciclo, que da la leva más
 pequeña posible. Pero la media depende de por dónde escriba el cliente —3,3°
 de recorrido entre frases, 5 mm de trazo desplazado— y eso obligaba a calar
 el brazo en cada pedido.
+
+### La base, y el marco que la máquina no tenía
+
+La planta está cerrada; la altura no. Todo lo vertical cuelga de
+`base_al_plato`, **75 provisionales**, que no se puede decidir hasta saber
+cómo se sujeta el portaminas.
+
+**El marco de la base es el del cinco barras.** El centro de la caja de
+escritura cae a 240° exactos del árbol en el marco de la leva —la caja está
+sobre el eje +Y del cinco barras y ese marco va girado 150°—, así que visto
+desde ahí todo sale simétrico: el árbol en (0, −32,451), los pivotes a ±60,
+dos postes atrás y uno delante en (0, +38,61). No hace falta cota: la base
+se sitúa por sus tres agujeros, que son los de los platos.
+
+**La planta la cierran el plato por detrás y la tarjeta por delante**, con
+10 mm de nogal a las cuatro puntas: 190 × 275 × 25. La ficha de producto
+decía 210 × 160 y se quedaba **115 mm corta de fondo**; eso casi dobla la
+línea del nogal, porque una tabla de 2 m da 7 bases y no 13.
+
+**Los postes bajan hasta la base y hacen de pata.** Mismo argumento que el
+tercer plato: un pilar propio obligaría al plato 1 a llevar agujeros que los
+otros dos no tienen. `poste_largo` pasa a 195 y se deriva de la cadena
+entera, que acaba con el «70 de antes» y saca a la luz `poste_vano`, los
+58 mm entre el plato 1 y el plato 2 donde van la pila, los seguidores, el
+sector y la cinta.
+
+**Por dónde pasa la mano**: el volante gira entero dentro de la tabla, pero
+el pomo de la manivela se sale 19 mm por la izquierda y cruza 29 mm sobre la
+tarjeta, a 190 de altura. Viene de haber colocado el eje de la manivela en
+el marco de la **leva** —a −90° allí, que son 120° en el de la base— sin
+mirar dónde cae eso visto desde quien escribe. No choca con nada; la máquina
+no se arrima a una pared por la izquierda. Corregirlo costaría redibujar la
+platina, que ya está entregada.
 
 ### El cartucho es una sola pieza lógica
 
