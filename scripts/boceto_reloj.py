@@ -528,13 +528,14 @@ def soporte(c: Contratos) -> str:
     sep = c.valor("suspension", "soporte_tornillo_separacion").en_mm
     canto = c.valor("suspension", "soporte_tornillo_al_canto").en_mm
     lado = c.valor("suspension", "soporte_tornillo_al_lado").en_mm
+    al_datum = c.valor("anclaje", "anclaje_al_datum").en_mm
     libre = c.valor("suspension", "muelle_largo_libre").en_mm
     flexion = c.valor("suspension", "muelle_flexion_a_varilla").en_mm
     mu_anc = c.valor("suspension", "muelle_ancho").en_mm
     va_esp = c.valor("pendulo", "varilla_espesor").en_mm
 
     e = 2.0
-    p: list[str] = [CABEZA.format(cota=COTA, ancho=1020, alto=570)]
+    p: list[str] = [CABEZA.format(cota=COTA, ancho=1200, alto=570)]
     p.append(_texto(34, 34, "1.4 \u00b7 SOPORTE DE SUSPENSI\u00d3N", 15, TINTA, "start", "bold"))
     p.append(
         _texto(
@@ -580,6 +581,11 @@ def soporte(c: Contratos) -> str:
         f'stroke="{TINTA}" stroke-width="1.4"/>'
     )
     p += taladros(cxm, yt)
+    # Los dos de arriba son los que amarran el bloque al bastidor. Misma
+    # broca, misma separacion y misma linea vertical que los de abajo: una
+    # plantilla de taladrado y no dos.
+    y_anclaje = y0 + h - al_datum * e
+    p += taladros(cxm, y_anclaje)
     p.append(
         _cota_h(
             cxm - sep * e / 2,
@@ -589,6 +595,18 @@ def soporte(c: Contratos) -> str:
             "#cota.soporte_tornillo_separacion",
         )
     )
+    p.append(
+        _cota_v(
+            y_anclaje,
+            y0 + h,
+            x0 + w + 158,
+            f"{al_datum:.0f}",
+            "#cota.anclaje_al_datum",
+            desde=x0 + w,
+            lado="der",
+        )
+    )
+    p.append(_texto(x0 + w + 10, y_anclaje + 18, "AL BASTIDOR", 8.5, COTA, "start", "bold"))
     p.append(
         _cota_h(
             x0,
@@ -612,15 +630,15 @@ def soporte(c: Contratos) -> str:
             lado="der",
         )
     )
-    xd, yd = cxm + sep * e / 2, yt - 4
+    xd, yd = cxm + sep * e / 2, y_anclaje - 4
     p.append(
-        f'<path d="M{xd:.1f} {yd:.1f}l20 -44h20" stroke="{COTA}" stroke-width="1" fill="none"/>'
+        f'<path d="M{xd:.1f} {yd:.1f}l26 -26h34" stroke="{COTA}" stroke-width="1" fill="none"/>'
     )
-    p.append(_texto(xd + 44, yd - 48, f"2 \u00d7 \u00d8{tor:.1f}", 9.5, COTA, "start", "bold"))
-    p.append(_texto(xd + 44, yd - 38, "#cota.soporte_tornillo_diametro", 7.5, AUX, "start"))
+    p.append(_texto(xd + 64, yd - 30, f"4 \u00d7 \u00d8{tor:.1f}", 9.5, COTA, "start", "bold"))
+    p.append(_texto(xd + 64, yd - 20, "#cota.soporte_tornillo_diametro", 7.5, AUX, "start"))
 
     # ---- vista 2, la placa de apriete ------------------------------------
-    px, pw, ph = 400.0, placa_anc * e, placa_alt * e
+    px, pw, ph = 520.0, placa_anc * e, placa_alt * e
     py = y0 + h - ph  # al ras del canto de apriete, que es el datum
     pcx = px + pw / 2
     p.append(_texto(px, 92, "LA PLACA \u00b7 escala 2:1", 9, TINTA, "start"))
@@ -644,7 +662,7 @@ def soporte(c: Contratos) -> str:
     )
 
     # ---- vista 3, el montaje --------------------------------------------
-    sx = 700.0
+    sx = 860.0
     p.append(
         _texto(sx - 60, 92, "EL MONTAJE \u00b7 vista lateral \u00b7 escala 2:1", 9, TINTA, "start")
     )
@@ -719,7 +737,7 @@ def soporte(c: Contratos) -> str:
         )
     )
 
-    ancho_hoja = 1020 - 68
+    ancho_hoja = 1200 - 68
     p.append(
         f'<rect x="34" y="390" width="{ancho_hoja}" height="30" rx="4" fill="#fff4e5" '
         'stroke="#d98324" stroke-width="1"/>'
@@ -748,7 +766,7 @@ def soporte(c: Contratos) -> str:
         ("Cantidad", "1 bloque + 1 placa"),
         ("Veta", "A lo ancho"),
         ("Conjunto", "P\u00e9ndulo \u00b7 tanda 1"),
-        ("Estado", "PENDIENTE \u00b7 sin anclaje"),
+        ("Estado", "Anclaje congelado"),
     ]
     celda = ancho_hoja / 4
     for i, (k, v) in enumerate(campos):
@@ -764,13 +782,228 @@ def soporte(c: Contratos) -> str:
     return "\n".join(p)
 
 
-PIEZAS = {"varilla": varilla, "lenteja": lenteja, "soporte": soporte}
+def muelle(c: Contratos) -> str:
+    """La pieza 1.3: el fleje de suspension.
+
+    La unica de la tanda que no es de madera, y la unica cuyo dibujo manda
+    sobre donde NO se puede taladrar. El fleje se rompe por donde flexa, asi
+    que sus dos agujeros tienen que caer enteros en el tramo que solo tira.
+    """
+    v = c.contrato("suspension")
+    largo = v.valor("muelle_largo").en_mm
+    ancho = v.valor("muelle_ancho").en_mm
+    espesor = v.valor("muelle_espesor").en_mm
+    empotrado = v.valor("muelle_empotrado").en_mm
+    libre = v.valor("muelle_largo_libre").en_mm
+    solape = v.valor("muelle_solape").en_mm
+    flexion = v.valor("muelle_flexion_a_varilla").en_mm
+    taladro = v.valor("muelle_taladro_diametro").en_mm
+    cerca = v.valor("muelle_taladro_cerca").en_mm
+    lejos = v.valor("muelle_taladro_lejos").en_mm
+
+    e = 2.0
+    p: list[str] = [CABEZA.format(cota=COTA, ancho=760, alto=680)]
+    p.append(_texto(34, 34, "1.3 \u00b7 FLEJE DE SUSPENSI\u00d3N", 15, TINTA, "start", "bold"))
+    p.append(
+        _texto(
+            34,
+            50,
+            "Boceto de comprobaci\u00f3n \u00b7 cotas le\u00eddas de docs/reloj/contratos.json",
+            9.5,
+            AUX,
+            "start",
+        )
+    )
+
+    x0, y0 = 200.0, 140.0
+    w, h = ancho * e, largo * e
+    cx = x0 + w / 2
+    y_empotrado = y0 + empotrado * e
+    y_libre = y_empotrado + libre * e
+    p.append(_texto(x0 - 56, 92, "EL FLEJE \u00b7 escala 2:1", 9, TINTA, "start"))
+    p.append(
+        _texto(x0 - 56, 105, f"espesor {espesor:.1f} \u00b7 #cota.muelle_espesor", 8, AUX, "start")
+    )
+
+    # Las tres zonas, sombreadas: lo que hace util este dibujo no es el
+    # contorno -es una tira- sino donde empieza y acaba cada tramo.
+    for y_ini, y_fin, relleno in (
+        (y0, y_empotrado, 0.18),
+        (y_empotrado, y_libre, 0.0),
+        (y_libre, y0 + h, 0.18),
+    ):
+        p.append(
+            f'<rect x="{x0}" y="{y_ini:.1f}" width="{w:.1f}" height="{y_fin - y_ini:.1f}" '
+            f'fill="{AUX}" fill-opacity="{relleno}" stroke="none"/>'
+        )
+    p.append(
+        f'<rect x="{x0}" y="{y0}" width="{w:.1f}" height="{h:.1f}" fill="none" '
+        f'stroke="{TINTA}" stroke-width="1.4"/>'
+    )
+    for y_corte in (y_empotrado, y_libre):
+        p.append(
+            f'<path d="M{x0:.1f} {y_corte:.1f}H{x0 + w:.1f}" stroke="{AUX}" stroke-width="0.8" '
+            f'stroke-dasharray="4 2"/>'
+        )
+    for y_taladro in (y0 + cerca * e, y0 + lejos * e):
+        p.append(
+            f'<circle cx="{cx:.1f}" cy="{y_taladro:.1f}" r="{taladro * e / 2:.2f}" fill="none" '
+            f'stroke="{TINTA}" stroke-width="1.2"/>'
+        )
+
+    p.append(_texto(x0 + w + 8, y0 + 22, "dentro del soporte", 8, AUX, "start"))
+    p.append(
+        _texto(
+            x0 + w + 8,
+            y_libre - 5,
+            "FLEXA \u00b7 aqu\u00ed no se taladra",
+            8.5,
+            COTA,
+            "start",
+            "bold",
+        )
+    )
+    p.append(_texto(x0 + w + 8, y_libre + 52, "sobre la varilla", 8, AUX, "start"))
+
+    # El punto de flexion, que es de donde cuelgan los 994 y no esta en
+    # ningun canto de ninguna pieza.
+    y_flexion = y_empotrado + flexion * e
+    p.append(
+        f'<path d="M{x0 - 4:.1f} {y_flexion:.1f}H{x0 + w + 6:.1f}" stroke="{COTA}" '
+        f'stroke-width="1" stroke-dasharray="6 3"/>'
+    )
+    p.append(_texto(x0 + w + 8, y_flexion + 3, "punto de flexi\u00f3n", 8.5, COTA, "start", "bold"))
+
+    p.append(_cota_v(y0, y_empotrado, 170, f"{empotrado:.0f}", "#cota.muelle_empotrado", desde=x0))
+    p.append(
+        _cota_v(y_empotrado, y_libre, 170, f"{libre:.0f}", "#cota.muelle_largo_libre", desde=x0)
+    )
+    p.append(_cota_v(y_libre, y0 + h, 170, f"{solape:.0f}", "#cota.muelle_solape", desde=x0))
+    p.append(
+        _cota_v(
+            y0,
+            y0 + cerca * e,
+            x0 + w + 106,
+            f"{cerca:.0f}",
+            "#cota.muelle_taladro_cerca",
+            desde=x0 + w,
+            lado="der",
+        )
+    )
+    p.append(
+        _cota_v(
+            y0,
+            y0 + lejos * e,
+            x0 + w + 236,
+            f"{lejos:.0f}",
+            "#cota.muelle_taladro_lejos",
+            desde=x0 + w,
+            lado="der",
+        )
+    )
+    p.append(
+        _cota_v(
+            y0,
+            y0 + h,
+            x0 + w + 366,
+            f"{largo:.0f}",
+            "#cota.muelle_largo",
+            desde=x0 + w,
+            lado="der",
+        )
+    )
+    p.append(_cota_h(x0, x0 + w, y0 + h + 40, f"{ancho:.0f}", "#cota.muelle_ancho"))
+    p.append(
+        f'<path d="M{cx - taladro * e / 2 - 4:.1f} {y0 + lejos * e + 3:.1f}l-20 20h-30" '
+        f'stroke="{COTA}" stroke-width="1" fill="none"/>'
+    )
+    p.append(
+        _texto(
+            cx - taladro * e / 2 - 58,
+            y0 + lejos * e + 19,
+            f"2 \u00d7 \u00d8{taladro:.1f}",
+            9.5,
+            COTA,
+            "end",
+            "bold",
+        )
+    )
+    p.append(
+        _texto(
+            cx - taladro * e / 2 - 58,
+            y0 + lejos * e + 29,
+            "#cota.muelle_taladro_diametro",
+            7.5,
+            AUX,
+            "end",
+        )
+    )
+
+    notas = [
+        "Se corta de una galga de espesores o de una regla de acero. "
+        "No hace falta proveedor ni plazo.",
+        "Con tijera de chapa, no con tijera de papel: la de papel lo riza, "
+        "y un fleje rizado flexa torcido.",
+        "Los dos taladros se hacen con la varilla puesta, de una pasada: as\u00ed "
+        "caen donde caigan, pero los dos coinciden.",
+        "Arandela ancha bajo cada cabeza. Contra la varilla no hay placa, y "
+        "una cabeza de M4 sobre un fleje de 0,1 lo pellizca y lo desgarra.",
+        "Sin rebabas en los cantos del tramo libre. Una rebaba es una entalla, "
+        "y ah\u00ed es donde el fleje trabaja.",
+    ]
+    p.append(_texto(34, 412, "C\u00d3MO SE CORTA", 8.5, AUX, "start", "bold"))
+    for i, nota in enumerate(notas):
+        p.append(_texto(34, 430 + i * 15, f"\u00b7 {nota}", 8.5, TINTA, "start"))
+
+    p.append(
+        '<rect x="34" y="506" width="692" height="30" rx="4" fill="#fff4e5" '
+        'stroke="#d98324" stroke-width="1"/>'
+    )
+    p.append(
+        _texto(
+            46,
+            525,
+            "NO TALADRAR EN EL TRAMO LIBRE. Un agujero donde el fleje flexa es la "
+            "l\u00ednea por la que va a romper; donde solo tira, no pasa nada.",
+            9.5,
+            "#8a5200",
+            "start",
+            "bold",
+        )
+    )
+    p.append(
+        f'<rect x="34" y="554" width="692" height="104" fill="none" stroke="{TINTA}" '
+        'stroke-width="1.2"/>'
+    )
+    campos = [
+        ("N\u00famero", "1.3"),
+        ("Pieza", "Fleje de suspensi\u00f3n"),
+        ("Material", "Acero de muelle"),
+        ("Espesor", f"{espesor:.1f} mm"),
+        ("Cantidad", "1 \u00b7 y una de repuesto"),
+        ("Veta", "No aplica"),
+        ("Conjunto", "P\u00e9ndulo \u00b7 tanda 1"),
+        ("Estado", "PENDIENTE \u00b7 lo mide R1"),
+    ]
+    for i, (k, val) in enumerate(campos):
+        bx = 34 + (i % 4) * 173
+        by = 554 + (i // 4) * 52
+        p.append(
+            f'<path d="M{bx} {by}h173v52h-173z" fill="none" stroke="{AUX}" stroke-width="0.6"/>'
+        )
+        p.append(_texto(bx + 10, by + 18, k.upper(), 7.5, AUX, "start"))
+        p.append(_texto(bx + 10, by + 37, val, 11, TINTA, "start", "bold"))
+    p.append("</svg>")
+    return "\n".join(p)
+
+
+PIEZAS = {"varilla": varilla, "lenteja": lenteja, "soporte": soporte, "muelle": muelle}
 
 PREFIJOS = {
     "varilla": ("varilla_",),
     "lenteja": ("lenteja_",),
     "vastago": ("vastago_",),
-    "soporte": ("soporte_",),
+    "soporte": ("soporte_", "anclaje_"),
     "muelle": ("muelle_",),
 }
 """Que cotas son de cada pieza. El prefijo del nombre decide, igual que
@@ -787,6 +1020,8 @@ INTERFACES = {
     "soporte": ("muelle_ancho", "muelle_espesor", "muelle_largo_libre"),
     "muelle": (
         "soporte_tornillo_al_canto",
+        "soporte_placa_alto",
+        "varilla_taladro_diametro",
         "varilla_ancho",
         "varilla_taladro_cerca",
         "varilla_taladro_lejos",

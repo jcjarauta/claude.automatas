@@ -90,5 +90,72 @@ placa no se ve en la frontal del bloque, y era justo donde faltaban cotas. El
 fleje desaparece de la vista frontal: quedaba detrás y lo único que hacía era
 tapar el sitio donde van las cotas de los taladros.
 
-**Queda PENDIENTE el anclaje al bastidor**, que es la pieza 1.5 y la primera
-cota del reloj que toca algo que todavía no existe.
+---
+
+## 1.3 · El fleje de suspensión
+
+La única pieza de la tanda que no es de madera, y la última en tener boceto.
+Dibujarla obligó a declarar tres cosas que estaban implícitas en una
+descripción y por tanto no las vigilaba nadie.
+
+| Cota | Valor | Qué estaba implícito |
+| --- | --- | --- |
+| `muelle_empotrado` | **20 mm** | «20 dentro del soporte», escrito en la descripción de `muelle_largo`. Una descripción no es una cota: no se puede cruzar con `soporte_placa_alto` |
+| `muelle_solape` | **40 mm** | Igual. Y es la que tiene que cubrir los taladros de la varilla |
+| `muelle_largo` | 90 mm, ahora **derivada** | Era un número suelto. Ahora es `empotrado + libre + solape`, con un test que lo exige |
+| `muelle_taladro_cerca` / `_lejos` | **65 / 85 mm** (derivadas) | Los taladros existían en la varilla y no en el fleje, que es la pieza que se puede estropear |
+
+### El fleje sí se taladra, y hacía falta decir dónde no
+
+El contrato del soporte dice, y es verdad, que *taladrar un fleje de 0,1 es
+crear la línea por donde va a romper*. Por eso los tornillos del bloque pasan
+a los lados. Pero la varilla mide 15 de ancho y el fleje 12: ahí abajo los
+tornillos **tienen** que pasar por el fleje.
+
+No es una contradicción. Es una distinción que faltaba:
+
+> **El fleje se rompe donde flexa, no donde tira.**
+
+En el tramo libre, un agujero es una entalla en la zona de máxima tensión
+alterna. En los 40 mm que solapan la varilla el fleje está muerto: aguanta
+12 N sobre 1,2 mm², unos **10 MPa**, contra los 1.500 del acero de muelle.
+
+La regla queda escrita en la hoja —«NO TALADRAR EN EL TRAMO LIBRE»— y
+defendida por `test_el_fleje_se_taladra_solo_donde_no_flexa`, que comprueba que
+los dos agujeros caen enteros, radio incluido, por debajo del tramo libre.
+
+**Y una cosa que no es cota pero va en la lista de compra:** arandela ancha
+bajo cada cabeza. Contra la varilla no hay placa que reparta, y una cabeza de
+M4 apoyada en 0,1 mm de acero lo pellizca.
+
+---
+
+## 1.5 · El anclaje al bastidor
+
+**No es una pieza. Es un contrato de interfaz, y por eso se puede cerrar hoy.**
+
+El bastidor es el paso 6 y no existe. La tentación era dejar el soporte
+PENDIENTE hasta entonces, y es el orden equivocado: el péndulo es la raíz de la
+cadena causal y no puede esperar a la última pieza.
+
+La salida es **invertir la dependencia**. El anclaje declara su patrón y lo
+congela; el bastidor, cuando se dibuje, tendrá que respetarlo.
+
+| Cota | Valor | De dónde sale |
+| --- | --- | --- |
+| `anclaje_tornillo_diametro` | 4,2 (derivada) | La misma broca que el muelle. Cuatro agujeros en el bloque y un solo cambio de herramienta: ninguno |
+| `anclaje_tornillo_separacion` | 24 (derivada) | La misma que el muelle, así que los cuatro caen en dos líneas verticales y la plantilla de taladrado es una |
+| `anclaje_tornillo_al_lado` | 6 (derivada) | `(soporte_ancho − separación) / 2` |
+| **`anclaje_al_datum`** | **32 mm** | **Es la cota del contrato.** Del canto de apriete a la línea de anclaje |
+
+Está arriba del todo a propósito: el péndulo cuelga por delante del bastidor,
+así que el bloque tiende a volcar, se apoya por el canto de abajo y **tira** de
+los tornillos. Puestos abajo, trabajarían a arrancamiento con poco brazo.
+
+**Qué desbloquea.** El banco R1 se puede montar ya: el bloque se atornilla a
+una tabla con este mismo patrón, y el día que haya bastidor se atornilla al
+bastidor sin cambiar una cota.
+
+**Qué sigue sin decidirse, y es correcto.** A qué altura queda el datum sobre
+el eje del áncora. Esa cota es del bastidor, sale del paso 6 y **no está en el
+contrato porque no se sabe**. Ponerle un número ahora sería inventárselo.

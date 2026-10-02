@@ -66,6 +66,20 @@
           "tolerancia": "+/-0,5"
         },
         {
+          "nombre": "muelle_empotrado",
+          "valor": 0.02,
+          "unidad": "m",
+          "descripcion": "Lo que queda apretado entre el bloque y la placa, contado desde el canto de apriete hacia arriba. Menos de 15 y el fleje se sale tirando; mas y el tornillo de anclaje le pisa",
+          "tolerancia": "+/-1"
+        },
+        {
+          "nombre": "muelle_solape",
+          "valor": 0.04,
+          "unidad": "m",
+          "descripcion": "Lo que solapa la varilla. Tiene que cubrir los dos taladros de sujecion con material de sobra",
+          "tolerancia": "+/-1"
+        },
+        {
           "nombre": "muelle_flexion_a_varilla",
           "valor": 0.015,
           "unidad": "m",
@@ -76,8 +90,29 @@
           "nombre": "muelle_largo",
           "valor": 0.09,
           "unidad": "m",
-          "descripcion": "Largo total del fleje: 30 libres mas 20 dentro del soporte y 40 solapando la varilla",
+          "descripcion": "DERIVADO: muelle_empotrado + muelle_largo_libre + muelle_solape = 20 + 30 + 40. Es la tira que se corta, y es lo unico que se mide al cortarla",
           "tolerancia": "+/-1"
+        },
+        {
+          "nombre": "muelle_taladro_diametro",
+          "valor": 0.0042,
+          "unidad": "m",
+          "descripcion": "DERIVADO: el mismo que varilla_taladro_diametro. Los tres -fleje, varilla y placa- se taladran de una pasada",
+          "tolerancia": "paso, no roscado"
+        },
+        {
+          "nombre": "muelle_taladro_cerca",
+          "valor": 0.065,
+          "unidad": "m",
+          "descripcion": "DERIVADO: empotrado + libre + varilla_taladro_cerca = 20 + 30 + 15. Medido desde el extremo de ARRIBA del fleje, que es por donde se corta a medida",
+          "tolerancia": "+/-0,3"
+        },
+        {
+          "nombre": "muelle_taladro_lejos",
+          "valor": 0.085,
+          "unidad": "m",
+          "descripcion": "DERIVADO: empotrado + libre + varilla_taladro_lejos = 20 + 30 + 35. Deja 2,9 mm de fleje por debajo, que es poco pero sobra: ahi el fleje no flexa, solo tira",
+          "tolerancia": "+/-0,3"
         },
         {
           "nombre": "soporte_ancho",
@@ -148,6 +183,42 @@
           "unidad": "m",
           "descripcion": "Del canto de apriete a la linea de tornillos. El canto es el datum: de ahi empieza a contar el largo libre",
           "tolerancia": "+/-0,3"
+        }
+      ]
+    },
+    {
+      "nombre": "anclaje",
+      "estado": "congelado",
+      "congelado_el": "2026-10-02",
+      "porque": "Es un contrato de INTERFAZ, no de pieza: dice que patron de taladros tendra que respetar el bastidor cuando se dibuje en el paso 6. Congelarlo ahora invierte la dependencia -el bastidor espera al pendulo, no al reves- y es lo que permite montar el banco R1 sin tener bastidor",
+      "valores": [
+        {
+          "nombre": "anclaje_tornillo_diametro",
+          "valor": 0.0042,
+          "unidad": "m",
+          "descripcion": "DERIVADO: el mismo que soporte_tornillo_diametro. Una sola broca para los cuatro agujeros del bloque: en un taller ocupacional cambiar de broca es cambiar de error",
+          "tolerancia": "paso, no roscado"
+        },
+        {
+          "nombre": "anclaje_tornillo_separacion",
+          "valor": 0.024,
+          "unidad": "m",
+          "descripcion": "DERIVADO: la misma que soporte_tornillo_separacion. Los cuatro taladros caen en dos lineas verticales, asi que la plantilla es una y no dos",
+          "tolerancia": "+/-0,3"
+        },
+        {
+          "nombre": "anclaje_tornillo_al_lado",
+          "valor": 0.006,
+          "unidad": "m",
+          "descripcion": "DERIVADO: (soporte_ancho - anclaje_tornillo_separacion) / 2",
+          "tolerancia": "+/-0,3"
+        },
+        {
+          "nombre": "anclaje_al_datum",
+          "valor": 0.032,
+          "unidad": "m",
+          "descripcion": "Del canto de apriete a la linea de tornillos de anclaje. ES LA COTA DEL CONTRATO: el bastidor taladra a esta distancia de donde quiera que ponga el canto de apriete, y de ahi cuelgan los 994. Arriba del todo para que el momento de vuelco tire de los tornillos y no los pele",
+          "tolerancia": "+/-0,5"
         }
       ]
     },

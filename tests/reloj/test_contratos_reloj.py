@@ -715,3 +715,128 @@ def test_la_placa_no_sobresale_del_bloque(reloj: Contratos):
         reloj.valor("suspension", "soporte_placa_alto").en_mm
         <= reloj.valor("suspension", "soporte_alto").en_mm
     )
+
+
+# --- 1.3 · el fleje -----------------------------------------------------
+
+
+def test_el_largo_del_fleje_es_la_suma_de_sus_tres_zonas(reloj: Contratos):
+    """Empotrado, libre y solape. El largo no se elige: es lo que miden las
+    tres juntas, y si alguna se mueve la tira se corta a otra medida."""
+    v = reloj.contrato("suspension")
+    suma = (
+        v.valor("muelle_empotrado").en_mm
+        + v.valor("muelle_largo_libre").en_mm
+        + v.valor("muelle_solape").en_mm
+    )
+    assert v.valor("muelle_largo").en_mm == pytest.approx(suma, abs=0.01)
+
+
+def test_los_taladros_del_fleje_caen_sobre_los_de_la_varilla(reloj: Contratos):
+    """Se taladran de una pasada, fleje y varilla juntos. Si las dos cotas no
+    salen de la misma cuenta, el fleje se taladra en el sitio equivocado y ya
+    no hay forma de arreglarlo: un agujero de mas en un fleje de 0,1 lo
+    inutiliza."""
+    v = reloj.contrato("suspension")
+    hasta_la_varilla = v.valor("muelle_empotrado").en_mm + v.valor("muelle_largo_libre").en_mm
+    for del_fleje, de_la_varilla in (
+        ("muelle_taladro_cerca", "varilla_taladro_cerca"),
+        ("muelle_taladro_lejos", "varilla_taladro_lejos"),
+    ):
+        assert v.valor(del_fleje).en_mm == pytest.approx(
+            hasta_la_varilla + reloj.valor("pendulo", de_la_varilla).en_mm, abs=0.01
+        ), del_fleje
+
+
+def test_el_fleje_se_taladra_solo_donde_no_flexa(reloj: Contratos):
+    """LA regla del fleje. Un agujero donde el muelle flexa es la linea por
+    la que va a romper; donde solo tira, no pasa nada: la carga son 12 N
+    sobre 1,2 mm2, unos 10 MPa frente a los 1.500 del acero de muelle.
+
+    Asi que los dos taladros tienen que caer enteros por debajo del tramo
+    libre, con su radio incluido."""
+    v = reloj.contrato("suspension")
+    muerto = v.valor("muelle_empotrado").en_mm + v.valor("muelle_largo_libre").en_mm
+    radio = v.valor("muelle_taladro_diametro").en_mm / 2.0
+    assert v.valor("muelle_taladro_cerca").en_mm - radio >= muerto
+
+
+def test_el_ultimo_taladro_deja_fleje_por_debajo(reloj: Contratos):
+    v = reloj.contrato("suspension")
+    radio = v.valor("muelle_taladro_diametro").en_mm / 2.0
+    sobra = v.valor("muelle_largo").en_mm - v.valor("muelle_taladro_lejos").en_mm - radio
+    assert sobra >= 2.0
+
+
+def test_el_taladro_del_fleje_deja_material_a_los_lados(reloj: Contratos):
+    v = reloj.contrato("suspension")
+    ancho = v.valor("muelle_ancho").en_mm
+    taladro = v.valor("muelle_taladro_diametro").en_mm
+    assert (ancho - taladro) / 2.0 >= 3.0
+
+
+def test_la_placa_cubre_todo_el_tramo_empotrado(reloj: Contratos):
+    """Si la placa se queda corta, el fleje empieza a flexar donde acaba la
+    placa y el tramo libre deja de ser el que dice el contrato."""
+    v = reloj.contrato("suspension")
+    assert v.valor("soporte_placa_alto").en_mm >= v.valor("muelle_empotrado").en_mm
+
+
+def test_el_fleje_no_se_corta_mas_corto_que_la_varilla_que_tapa(reloj: Contratos):
+    """El solape tiene que cubrir el taladro de abajo de la varilla."""
+    v = reloj.contrato("suspension")
+    radio = reloj.valor("pendulo", "varilla_taladro_diametro").en_mm / 2.0
+    assert (
+        v.valor("muelle_solape").en_mm
+        >= reloj.valor("pendulo", "varilla_taladro_lejos").en_mm + radio
+    )
+
+
+# --- 1.5 · el anclaje al bastidor ---------------------------------------
+
+
+def test_el_anclaje_usa_la_misma_broca_que_el_muelle(reloj: Contratos):
+    """Cuatro agujeros en el bloque y una sola broca. Cambiar de broca a
+    mitad de una pieza es una ocasion de equivocarse que no aporta nada."""
+    assert reloj.valor("anclaje", "anclaje_tornillo_diametro").en_mm == pytest.approx(
+        reloj.valor("suspension", "soporte_tornillo_diametro").en_mm, abs=0.01
+    )
+
+
+def test_los_cuatro_taladros_del_bloque_caen_en_dos_lineas(reloj: Contratos):
+    """Misma separacion y misma distancia al canto lateral que los del
+    muelle: la plantilla de taladrado es una, no dos."""
+    for del_anclaje, del_muelle in (
+        ("anclaje_tornillo_separacion", "soporte_tornillo_separacion"),
+        ("anclaje_tornillo_al_lado", "soporte_tornillo_al_lado"),
+    ):
+        assert reloj.valor("anclaje", del_anclaje).en_mm == pytest.approx(
+            reloj.valor("suspension", del_muelle).en_mm, abs=0.01
+        ), del_anclaje
+
+
+def test_el_anclaje_cabe_en_el_bloque(reloj: Contratos):
+    """Por arriba: tiene que quedar pared entre el taladro y el canto."""
+    alto = reloj.valor("suspension", "soporte_alto").en_mm
+    datum = reloj.valor("anclaje", "anclaje_al_datum").en_mm
+    radio = reloj.valor("anclaje", "anclaje_tornillo_diametro").en_mm / 2.0
+    assert alto - datum - radio >= 3.0
+
+
+def test_el_anclaje_no_pisa_la_placa_ni_el_fleje(reloj: Contratos):
+    """La cabeza del tornillo de anclaje queda en la cara de delante, que es
+    donde van la placa y el fleje. Si se solapan, el bloque no asienta."""
+    datum = reloj.valor("anclaje", "anclaje_al_datum").en_mm
+    radio = reloj.valor("anclaje", "anclaje_tornillo_diametro").en_mm / 2.0
+    for estorbo in ("soporte_placa_alto", "muelle_empotrado"):
+        assert datum - radio >= reloj.valor("suspension", estorbo).en_mm, estorbo
+
+
+def test_el_anclaje_esta_por_encima_de_la_mitad_del_bloque(reloj: Contratos):
+    """El peso del pendulo cuelga por delante del bastidor, asi que el bloque
+    tiende a volcar: se apoya por el canto de abajo y tira de los tornillos.
+    Puestos abajo, el tornillo trabaja a arrancamiento con poco brazo."""
+    assert (
+        reloj.valor("anclaje", "anclaje_al_datum").en_mm
+        > reloj.valor("suspension", "soporte_alto").en_mm / 2.0
+    )

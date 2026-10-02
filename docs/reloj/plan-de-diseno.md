@@ -125,6 +125,50 @@ se cronometran 100 oscilaciones, que deben ser 200,0 s.
 **Qué desbloquea.** El Q medido, que dice cuánta energía hay que reponer por
 oscilación. Sin ese número, el ángulo de impulso del escape es una suposición.
 
+
+### Paso 1 cerrado · lo que se encontró dibujando
+
+Dibujar las cinco piezas del péndulo dejó dos hallazgos que no estaban en el
+plan, y los dos son del tipo que solo aparece dibujando.
+
+**El fleje se taladra, y no pasa nada — pero solo en un sitio.** El contrato
+decía, con razón, que *taladrar un fleje de 0,1 es crear la línea por donde va
+a romper*, y por eso los tornillos del soporte pasan a los lados. Pero la
+varilla tiene 15 mm de ancho y el fleje 12: por ahí abajo los tornillos no
+caben a los lados, tienen que pasar por el fleje.
+
+No es una contradicción, es una distinción que faltaba: **el fleje se rompe
+donde flexa, no donde tira.** En el tramo libre un agujero es una entalla en
+la zona de máxima tensión alterna. En los 40 mm que solapan la varilla, el
+fleje está muerto: aguanta 12 N sobre 1,2 mm², unos **10 MPa**, frente a los
+1.500 del acero de muelle. Un agujero ahí no lo nota.
+
+Así que los dos taladros están, son derivados de los de la varilla —se hacen
+de una pasada, con la varilla puesta— y hay una envolvente que exige que caigan
+enteros, con su radio, por debajo del tramo libre.
+
+**El anclaje al bastidor no es una pieza: es un contrato.** El bastidor es el
+paso 6 y no existe, así que la tentación era dejar el soporte PENDIENTE hasta
+entonces. Es el orden equivocado: el péndulo es la raíz de la cadena y no puede
+esperar a la última pieza.
+
+La salida es **invertir la dependencia**. El anclaje declara su patrón de
+taladros —dos más en el mismo bloque, con la misma broca, la misma separación y
+la misma línea vertical que los del muelle— y lo congela. El bastidor, cuando
+se dibuje, tendrá que respetarlo. El número que lleva la obligación es
+`anclaje_al_datum`: del canto de apriete a la línea de tornillos. El bastidor
+decide **a qué altura** pone esa línea; lo que no decide es la distancia de ahí
+al datum del péndulo.
+
+Eso es además lo que permite montar el banco R1 ya: el bloque se atornilla a
+una tabla con el mismo patrón, y cuando haya bastidor se atornilla al bastidor
+sin cambiar nada.
+
+**Lo que sigue sin decidirse, y es correcto que siga así:** a qué altura queda
+el datum sobre el eje del áncora. Esa cota es del bastidor, sale del paso 6, y
+no está en el contrato porque no se sabe. Ponerle un número ahora sería
+inventárselo, que es exactamente lo que este plan existe para evitar.
+
 ---
 
 ## Paso 2 · El escape

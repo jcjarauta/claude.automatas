@@ -7,6 +7,11 @@ lo es del escribiente.
 
 Fecha de este estado: **2026-10-02**. Rama: `reloj`.
 
+**Tanda 1 cerrada en dibujo**: varilla, lenteja, fleje, soporte y placa
+tienen contrato, cotas, boceto y envolventes. No se corta nada hasta que R1
+mida el periodo: el largo de la varilla es derivado y el punto de flexion
+del fleje es todavia una aproximacion.
+
 | Si buscas | Ve a |
 | --- | --- |
 | Cómo se diseña, se prueba y se documenta | `docs/reloj/metodologia.md` |
