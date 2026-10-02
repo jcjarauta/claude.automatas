@@ -131,8 +131,8 @@ def seguidor(c: dict[str, float] | None = None) -> Perfil:
     perfil = barra(largo, c["seguidor_cubo_diametro"] / 2, c["seguidor_extremo_diametro"] / 2)
     perfil += circulo((0.0, 0.0), c["seguidor_pivote_diametro"] / 2)
     perfil += circulo((c["seguidor_muelle_radio"], 0.0), c["seguidor_muelle_diametro"] / 2)
-    for cota in ("seguidor_sector_cerca", "seguidor_sector_lejos"):
-        perfil += circulo((c[cota], 0.0), c["seguidor_sector_diametro"] / 2)
+    for cota in ("union_sector_seguidor_cerca", "union_sector_seguidor_lejos"):
+        perfil += circulo((c[cota], 0.0), c["union_sector_seguidor_diametro"] / 2)
     perfil += circulo((largo, 0.0), c["seguidor_rodillo_diametro"] / 2)
     return perfil
 
@@ -150,10 +150,25 @@ def disco(radio: float, agujero: float) -> Perfil:
 
 
 def sector(c: dict[str, float] | None = None) -> Perfil:
+    """El disco del cabestrante, con los dos agujeros que lo calan al seguidor.
+
+    **Dos círculos no eran la pieza entera.** Se dio por buena cuando sector y
+    seguidor eran lo único dibujado de su lado, y su agujero central es de
+    PASO —libra la valona de Ø15— así que no sujeta ni orienta nada: sin estos
+    dos tornillos el sector gira suelto sobre el casquillo y la relación 6:1
+    no llega al brazo.
+
+    Y al ponerlos, el disco **gana una orientación** que antes no tenía. Eso
+    cambia su datum: ya hay un «centro siguiente» sobre +X, así que se ancla
+    como las demás y no por el caso de los rasgos concéntricos.
+    """
     c = contrato_mm() if c is None else c
-    return disco(
+    perfil = disco(
         c["amplificador_sector_radio_mecanizado"], c["amplificador_sector_agujero_diametro"]
     )
+    for cota in ("union_sector_seguidor_cerca", "union_sector_seguidor_lejos"):
+        perfil += circulo((c[cota], 0.0), c["union_sector_seguidor_diametro"] / 2)
+    return perfil
 
 
 def tambor(c: dict[str, float] | None = None) -> Perfil:
@@ -411,18 +426,23 @@ LISTADO: dict[str, Ficha] = {
         "del brazo, para que encajen.",
     ),
     "sector": Ficha(
-        "disco entero de POM, sin muesca",
+        "disco de POM sin muesca, con los dos tornillos que lo calan al seguidor",
         3,
         (
             Variable("cota", "amplificador_sector_radio_mecanizado_diametro", "Ø del canto"),
             Variable("cota", "amplificador_sector_espesor", "espesor", en_el_perfil=False),
             Variable("cota", "amplificador_sector_agujero_diametro", "Ø de paso"),
             Variable("angulo", "amplificador_tangencia", "la cinta entra a", en_el_perfil=False),
+            Variable("cota", "union_sector_seguidor_cerca", "centro al tornillo cercano"),
+            Variable("cota", "union_sector_seguidor_lejos", "centro al tornillo lejano"),
+            Variable("cota", "union_sector_seguidor_diametro", "Ø paso de los dos al seguidor"),
         ),
         ("plancha", "amplificador_sector_espesor"),
-        "Disco entero, sin muesca: la cinta abraza el lado OPUESTO al tambor, así que "
-        "en el lado libre no hay nada que librar, y una muesca le pondría orientación a "
-        "una pieza que siendo un disco con un agujero no la tiene.",
+        "Disco entero, sin muesca: la cinta abraza el lado OPUESTO al tambor, así que en "
+        "el lado libre no hay nada que librar. Lo que sí le pone orientación son los DOS "
+        "tornillos que lo calan al seguidor, y hacen falta: su agujero central es de paso "
+        "—libra la valona de Ø15— y no sujeta ni orienta nada, así que sin ellos el disco "
+        "gira suelto sobre el casquillo y la relación 6:1 no llega al brazo.",
     ),
     "tambor": Ficha(
         "cilindro liso con agujero, sin pestañas",
@@ -450,9 +470,9 @@ LISTADO: dict[str, Ficha] = {
             Variable("cota", "seguidor_rodillo_diametro", "Ø paso del eje del rodillo"),
             Variable("cota", "seguidor_muelle_radio", "pivote al muelle"),
             Variable("cota", "seguidor_muelle_diametro", "Ø anclaje del muelle"),
-            Variable("cota", "seguidor_sector_cerca", "pivote al tornillo cercano"),
-            Variable("cota", "seguidor_sector_lejos", "pivote al tornillo lejano"),
-            Variable("cota", "seguidor_sector_diametro", "Ø paso de los dos al sector"),
+            Variable("cota", "union_sector_seguidor_cerca", "pivote al tornillo cercano"),
+            Variable("cota", "union_sector_seguidor_lejos", "pivote al tornillo lejano"),
+            Variable("cota", "union_sector_seguidor_diametro", "Ø paso de los dos al sector"),
         ),
         ("plancha", "seguidor_espesor"),
         "La misma plancha de POM-C 5 que las levas y el sector, y justo el largo útil "

@@ -551,24 +551,24 @@
           "tolerancia": ""
         },
         {
-          "nombre": "seguidor_sector_cerca",
+          "nombre": "union_sector_seguidor_cerca",
           "valor": 0.022,
           "unidad": "m",
-          "descripcion": "Del pivote al primero de los dos tornillos que calan el sector al seguidor",
+          "descripcion": "Del centro al primero de los dos tornillos que calan el sector al seguidor. Se llama «union» y no «seguidor» porque la miden LAS DOS piezas: una cota de junta nombrada por uno de sus dos lados invita a cambiarla en una sola",
           "tolerancia": ""
         },
         {
-          "nombre": "seguidor_sector_lejos",
+          "nombre": "union_sector_seguidor_lejos",
           "valor": 0.038,
           "unidad": "m",
-          "descripcion": "Del pivote al segundo. DOS tornillos y no una brida: el agujero del sector es de paso y no situa nada, asi que hacen falta dos puntos para quitarle el giro, y ponerlos en linea con el brazo evita agrandar el cubo",
+          "descripcion": "Del centro al segundo. DOS tornillos y no una brida: el agujero del sector es de paso y no situa nada, asi que hacen falta dos puntos para quitarle el giro",
           "tolerancia": ""
         },
         {
-          "nombre": "seguidor_sector_diametro",
+          "nombre": "union_sector_seguidor_diametro",
           "valor": 0.0032,
           "unidad": "m",
-          "descripcion": "Paso de los dos M3 que unen sector y seguidor",
+          "descripcion": "Paso de los dos M3 que unen sector y seguidor, el mismo en las dos piezas",
           "tolerancia": ""
         }
       ]

@@ -254,7 +254,24 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
     # Clave por RADIO y no por nombre: dos cotas pueden valer lo mismo y
     # entonces son un solo rótulo con dos nombres en la leyenda.
     puestos: dict[float, str] = {}
-    rotulos: list[tuple[float, float]] = []
+    rotulos: list[tuple[float, float, float]] = []
+    """Caja de cada rótulo ya puesto: (nivel, x0, x1)."""
+
+    def caja_del_rotulo(xk: float, ang: float, texto: str) -> tuple[float, float]:
+        """Dónde cae de verdad el texto, con el mismo anclaje que `radial`.
+
+        Comprobar la separación entre los finales de directriz no basta: con
+        anclaje a un lado el texto se extiende hacia fuera, así que dos knees
+        separados pueden solaparse igual. Esto mide lo que mide el test.
+        """
+        ux = math.cos(ang)
+        ancho = len(texto) * 2.9
+        if ux < -0.2:
+            return xk - 2.0 - ancho, xk - 2.0
+        if ux > 0.2:
+            return xk + 2.0, xk + 2.0 + ancho
+        return xk - ancho / 2, xk + ancho / 2
+
     inclinaciones = (-90.0, -68.0, -112.0, -78.0, -102.0, -60.0)
     for e in perfil:
         if not isinstance(e, Arco):
@@ -265,19 +282,27 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
             continue
         ang = math.radians(inclinaciones[len(puestos) % len(inclinaciones)])
         cx, cy = ox + e.centro[0] * k, oy - e.centro[1] * k
+        lleno = abs(e.hasta - e.desde - 2 * math.pi) < 1e-9
+        texto = f"Ø{2 * e.radio:g}" if lleno else f"R{e.radio:g}"
+        # La separación que hace falta la deciden los DOS textos, no un número
+        # fijo: con 22 px valía para «R8» y no para «Ø95.95», que ya mide 20.
         meta = techo
         while True:
             xk = cx + ((meta - cy) / math.sin(ang)) * math.cos(ang)
-            if all(abs(xk - px) > 22.0 for px, py in rotulos if abs(py - meta) < 1.0):
+            x0, x1 = caja_del_rotulo(xk, ang, texto)
+            if all(
+                x1 + 3.0 < a or b + 3.0 < x0 for nivel, a, b in rotulos if abs(nivel - meta) < 7.0
+            ):
                 break
-            meta -= 8.0
-        lleno = abs(e.hasta - e.desde - 2 * math.pi) < 1e-9
-        texto = f"Ø{2 * e.radio:g}" if lleno else f"R{e.radio:g}"
+            # 12 y no 8: `radial` sube el número 2,4 cuando la directriz es
+            # vertical y lo baja 1,9 cuando sale de lado, así que dos niveles
+            # separados 8 acaban con los textos a 3,7 y se tocan igual.
+            meta -= 12.0
         d += radial(
             cx, cy, e.radio * k, ang, texto, largo=(meta - cy) / math.sin(ang) - e.radio * k
         )
         puestos[e.radio] = texto
-        rotulos.append((xk, meta))
+        rotulos.append((meta, x0, x1))
 
     def _como_se_teclea(cota: str, texto: str) -> str:
         """El nombre que pide el campo: diámetro para un círculo entero.
