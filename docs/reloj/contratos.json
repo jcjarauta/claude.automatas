@@ -109,7 +109,7 @@
           "tolerancia": ""
         },
         {
-          "nombre": "diametro_perno_linterna",
+          "nombre": "perno_linterna_diametro",
           "valor": 0.003,
           "unidad": "m",
           "descripcion": "Varilla calibrada. La separacion entre centros debe ser al menos el doble",
@@ -166,7 +166,7 @@
           "tolerancia": "derivada"
         },
         {
-          "nombre": "diametro_tambor",
+          "nombre": "tambor_diametro",
           "valor": 0.085,
           "unidad": "m",
           "descripcion": "Derivado: longitud_cuerda / (pi x vueltas_tambor)",

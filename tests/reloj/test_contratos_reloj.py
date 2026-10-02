@@ -21,6 +21,8 @@ import pytest
 from compile.contratos import Contratos, Estado, Valor, cargar
 from scripts.exportar_variables import (
     CABECERA_ONSHAPE,
+    COLUMNA_VALOR,
+    COLUMNAS_COTA,
     UNIDADES,
     Tipo,
     conversion_de,
@@ -29,6 +31,9 @@ from scripts.exportar_variables import (
     csv_por_tipo,
     descripcion_corta,
     featurescript,
+    gemelo,
+    indice_de_filas,
+    tabla_cota,
     tabla_onshape,
 )
 
@@ -162,7 +167,7 @@ def test_el_tambor_da_la_cuerda_en_las_vueltas_que_dice(reloj: Contratos):
     antes de la autonomía prometida o la cuerda sobra y se enreda."""
     cuerda = reloj.valor("energia", "longitud_cuerda").metros
     vueltas = reloj.valor("energia", "vueltas_tambor").valor
-    diametro = reloj.valor("energia", "diametro_tambor").metros
+    diametro = reloj.valor("energia", "tambor_diametro").metros
     assert math.pi * diametro * vueltas == pytest.approx(cuerda, rel=5e-3)
 
 
@@ -402,3 +407,73 @@ def test_la_descripcion_corta_cabe_en_una_celda_y_sigue_diciendo_algo():
     largo = descripcion_corta("palabra " * 40)
     assert len(largo) <= 70
     assert largo.endswith("\u2026")
+
+
+# ---------------------------------------------------------------------------
+# El CSV que importa Onshape por indice de celda
+# ---------------------------------------------------------------------------
+
+
+def _filas_cota(contratos: Contratos) -> list[list[str]]:
+    import csv as modulo_csv
+
+    return list(modulo_csv.reader(tabla_cota(contratos).strip().split("\n")))
+
+
+def test_el_csv_de_cotas_no_lleva_cabecera(reloj: Contratos):
+    """Onshape indexa las filas desde 0. Una cabecera correría todas las
+    variables una posición y cada enlace apuntaría a la de al lado, que es un
+    error que no da ningún aviso: la cota existe y es un número plausible."""
+    filas = _filas_cota(reloj)
+    assert filas[0][0] != COLUMNAS_COTA[0]
+    assert filas[0][0] == "longitud_pendulo_nominal"
+
+
+def test_el_csv_de_cotas_tiene_siete_columnas_y_el_valor_en_la_uno(reloj: Contratos):
+    """Las mismas siete y en el mismo orden que el fichero del escribiente,
+    para que el índice de columna sea el mismo en las dos máquinas."""
+    filas = _filas_cota(reloj)
+    assert {len(f) for f in filas} == {7}
+    assert filas[0][COLUMNA_VALOR] == "994.0000"
+
+
+def test_el_csv_de_cotas_no_lleva_magnitudes_de_referencia(reloj: Contratos):
+    nombres = {f[0] for f in _filas_cota(reloj)}
+    for nombre in ("masa_pesa", "periodo_pendulo", "autonomia", "tension_cuerda_techo"):
+        assert nombre not in nombres
+
+
+def test_cada_diametro_lleva_su_radio_detras_y_al_reves(reloj: Contratos):
+    filas = _filas_cota(reloj)
+    por_nombre = {f[0]: f for f in filas}
+    assert por_nombre["eje_diametro"][COLUMNA_VALOR] == "10.0000"
+    assert por_nombre["eje_diametro_radio"][COLUMNA_VALOR] == "5.0000"
+    assert por_nombre["tambor_diametro_radio"][COLUMNA_VALOR] == "42.5000"
+    # El gemelo va justo detrás de su original, como en el fichero del
+    # escribiente: leyendo el CSV se ve de dónde sale cada uno.
+    nombres = [f[0] for f in filas]
+    assert nombres[nombres.index("eje_diametro") + 1] == "eje_diametro_radio"
+
+
+def test_el_gemelo_se_decide_por_el_nombre_y_no_por_el_significado():
+    """`taladro_eje` también es un diámetro y no lleva gemelo. Lo que decide
+    no es lo que la cota es, sino cómo se llama: así se puede leer el fichero
+    y saber cuáles hay sin conocer la pieza."""
+    assert gemelo("eje_diametro", 10.0) == ("eje_diametro_radio", 5.0)
+    assert gemelo("radio_base", 55.0) == ("radio_base_diametro", 110.0)
+    assert gemelo("taladro_eje", 10.0) is None
+    assert gemelo("cinta_espesor", 0.05) is None
+
+
+def test_la_descripcion_del_gemelo_dice_de_donde_sale(reloj: Contratos):
+    por_nombre = {f[0]: f for f in _filas_cota(reloj)}
+    assert por_nombre["eje_diametro_radio"][6].startswith("derivada de eje_diametro")
+    # Y hereda la tolerancia, que es la misma cota vista del otro modo.
+    assert por_nombre["eje_diametro_radio"][5] == por_nombre["eje_diametro"][5]
+
+
+def test_el_indice_de_filas_empieza_en_cero_y_no_salta(reloj: Contratos):
+    indice = indice_de_filas(reloj)
+    assert indice[0][0] == 0
+    assert [i for i, _, _ in indice] == list(range(len(indice)))
+    assert indice[0][1] == "longitud_pendulo_nominal"

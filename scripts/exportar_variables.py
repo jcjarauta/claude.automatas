@@ -244,6 +244,12 @@ def filas(contratos: Contratos) -> list[list[str]]:
     return salida
 
 
+def _escribir_csv_sin_cabecera(cuerpo: list[list[str]]) -> str:
+    buffer = io.StringIO()
+    modulo_csv.writer(buffer, lineterminator="\n").writerows(cuerpo)
+    return buffer.getvalue()
+
+
 def _escribir_csv(cabecera: list[str], cuerpo: list[list[str]]) -> str:
     buffer = io.StringIO()
     escritor = modulo_csv.writer(buffer, lineterminator="\n")
@@ -274,6 +280,87 @@ def csv_por_tipo(contratos: Contratos) -> dict[Tipo, str]:
     for fila in filas(contratos):
         reparto.setdefault(Tipo(fila[3]), []).append(fila)
     return {tipo: _escribir_csv(CABECERA_CSV, cuerpo) for tipo, cuerpo in reparto.items()}
+
+
+COLUMNAS_COTA = ["nombre", "valor", "unidad", "contrato", "estado", "tolerancia", "descripcion"]
+"""Las siete del formato que importa Onshape por indice de celda.
+
+**No lleva cabecera.** La fila 0 es la primera variable, porque el dialogo de
+importacion indexa desde 0 y una cabecera correria todas las filas una
+posicion. El valor esta siempre en la columna 1.
+"""
+
+COLUMNA_VALOR = 1
+
+
+def gemelo(nombre: str, valor: float) -> tuple[str, float] | None:
+    """La misma cota expresada del otro modo: radio si es diametro, y al reves.
+
+    El CAD acota unas veces por radio y otras por diametro, y la mitad o el
+    doble se hacen de cabeza. Hacerlo de cabeza es donde se cuela el error, y
+    ademas deja la cota fuera del contrato: si alguien teclea 5 porque el eje
+    es de 10, ese 5 ya no se entera de que el eje cambie.
+
+    La regla es por nombre y no por significado, a proposito: `taladro_eje`
+    tambien es un diametro y no lleva gemelo, porque lo que decide no es lo
+    que la cota ES sino como se llama. Asi se puede leer el fichero y saber
+    cuales hay sin conocer la pieza.
+    """
+    if "diametro" in nombre:
+        return f"{nombre}_radio", valor / 2.0
+    if "radio" in nombre:
+        return f"{nombre}_diametro", valor * 2.0
+    return None
+
+
+def tabla_cota(contratos: Contratos) -> str:
+    """El fichero que se sube a Onshape y del que tiran las variables.
+
+    Solo lo que dimensiona: una masa o un periodo no se acotan, y si estan en
+    el fichero alguien acabara enlazando una variable a esa fila.
+    """
+    cuerpo: list[list[str]] = []
+    for contrato in contratos.contratos:
+        for valor in contrato.valores:
+            cifra, conversion = convertir(valor)
+            if not conversion.tipo.dimensiona:
+                continue
+            fila = [
+                valor.nombre,
+                cifra,
+                conversion.simbolo,
+                contrato.nombre,
+                contrato.estado.value,
+                valor.tolerancia,
+                valor.descripcion,
+            ]
+            cuerpo.append(fila)
+            par = gemelo(valor.nombre, valor.valor * conversion.factor)
+            if par is not None and conversion.tipo is Tipo.LENGTH:
+                nombre_gemelo, valor_gemelo = par
+                cuerpo.append(
+                    [
+                        nombre_gemelo,
+                        f"{valor_gemelo:.{conversion.decimales}f}",
+                        conversion.simbolo,
+                        contrato.nombre,
+                        contrato.estado.value,
+                        valor.tolerancia,
+                        f"derivada de {valor.nombre} \u2014 {valor.descripcion}",
+                    ]
+                )
+    return _escribir_csv_sin_cabecera(cuerpo)
+
+
+def indice_de_filas(contratos: Contratos) -> list[tuple[int, str, str]]:
+    """Que fila le toca a cada variable, para configurar la importacion."""
+    filas = tabla_cota(contratos).strip().split("\n")
+    import csv as lector
+
+    return [
+        (i, campos[0], f"{campos[1]} {campos[2]}".strip())
+        for i, campos in enumerate(lector.reader(filas))
+    ]
 
 
 CABECERA_ONSHAPE = ["Nombre", "Tipo de variable", "Valor", "Descripcion"]
@@ -345,6 +432,11 @@ def main(argv: list[str] | None = None) -> int:
     partes.add_argument("--out", type=Path, default=None, help="carpeta donde escribir")
     partes.add_argument("--csv", action="store_true", help="CSV en vez de FeatureScript")
     partes.add_argument(
+        "--cota",
+        action="store_true",
+        help="el CSV que se sube a Onshape y del que tiran las variables importadas",
+    )
+    partes.add_argument(
         "--onshape",
         action="store_true",
         help="la hoja con la forma de la tabla del Variable Studio, un fichero por tipo",
@@ -375,7 +467,9 @@ def main(argv: list[str] | None = None) -> int:
         print("--por-tipo solo tiene sentido con --csv", file=sys.stderr)
         return 2
 
-    if opciones.onshape:
+    if opciones.cota:
+        tablas = {f"{maquina}_cota.csv": tabla_cota(contratos)}
+    elif opciones.onshape:
         tablas = {
             f"onshape-{maquina}-{tipo.value.lower()}.csv": texto
             for tipo, texto in tabla_onshape(contratos).items()

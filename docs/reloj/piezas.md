@@ -61,7 +61,7 @@ Solo las de **nivel 0** se teclean.
 | `relacion_tren` | `3600 / vuelta_rueda_escape` | 60:1 |
 | `vueltas_tambor` | `autonomia / periodo_rueda_grande` | 7,5 |
 | `longitud_cuerda` | `caida_disponible × ramales_polea` | 2,0 m |
-| `diametro_tambor` | `longitud_cuerda / (π · vueltas_tambor)` | 85 mm |
+| `tambor_diametro` | `longitud_cuerda / (π · vueltas_tambor)` | 85 mm |
 
 ### Nivel 2 · El compilador propone, la envolvente juzga
 
@@ -155,7 +155,7 @@ al escape y cuánto se pierde por el camino.
 | 3.1 | **Platinas (×2)** | `distancias_entre_centros` | **Taladradas apiladas**, plantilla de taladrado |
 | 3.2 | Pilares (×4) | Ancho de la rueda más holgura | Listón a medida |
 | 3.3 | Rueda grande | `dientes`, `modulo` | Plantilla, pivote de lijado |
-| 3.4 | Tambor | `diametro_tambor`, `longitud_cuerda` | Torneado o discos apilados |
+| 3.4 | Tambor | `tambor_diametro`, `longitud_cuerda` | Torneado o discos apilados |
 | 3.5 | Trinquete y cliquet | Par en la rueda grande | Plantilla |
 | 3.6 | Muelle del cliquet | — | Comercial o fleje |
 | 3.7 | Rueda central | `dientes`, `modulo` | Plantilla |
