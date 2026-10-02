@@ -159,3 +159,22 @@ bastidor sin cambiar una cota.
 **Qué sigue sin decidirse, y es correcto.** A qué altura queda el datum sobre
 el eje del áncora. Esa cota es del bastidor, sale del paso 6 y **no está en el
 contrato porque no se sabe**. Ponerle un número ahora sería inventárselo.
+
+### Por qué 32 y no 30
+
+El primer STEP del bloque trajo los taladros de anclaje a **30** del canto de
+apriete, que es lo que sale solo al dibujar: con la fila del muelle a 10 y el
+bloque de 40, poner la otra a 30 deja el boceto simétrico y se acota de una
+pasada. **Pasa todas las envolventes** —7,9 mm de pared arriba, 3,9 sobre la
+placa— y por eso no saltó nada.
+
+Y sin embargo está mal, por una razón que no es de resistencia:
+
+> Con 10 y 30 en un bloque de 40, **el patrón de los cuatro taladros es
+> simétrico respecto a la mitad**. El bloque se puede montar del revés y los
+> agujeros coinciden igual. Nadie lo ve en el taladro, y el canto de apriete
+> acaba arriba: el datum se va al otro extremo del bloque.
+
+Con 32, darle la vuelta da 8 y 30. No encaja, y eso es el seguro. Lo defiende
+`test_las_dos_filas_de_taladros_no_son_simetricas`, que es el test que faltaba
+—la asimetría no la pedía nadie, así que 30 parecía inocente.

@@ -207,6 +207,27 @@ def _caja_y_cilindros(
     return caja, cilindros  # type: ignore[return-value]
 
 
+def _filas_de_taladros(
+    cilindros: list[tuple[float, list[float]]], diametro: float
+) -> list[tuple[float, list[list[float]]]]:
+    """Agrupa los taladros en filas por su distancia al canto de apriete.
+
+    El canto de apriete es el de abajo, y es el datum del pendulo. Agrupar
+    por ahi es lo que permite comprobar las dos filas del bloque -la del
+    muelle y la del anclaje- sin saber de antemano cuantas hay.
+    """
+    filas: dict[float, list[list[float]]] = {}
+    for d, centro in cilindros:
+        if abs(d - diametro) > HOLGURA:
+            continue
+        # `_caja_y_cilindros` ya devuelve el centro referido al minimo de
+        # cada eje, es decir al canto de apriete. No hay que volver a sumarle
+        # nada: hacerlo daba 30 donde habia 10 y pasaba por error del dibujo.
+        al_canto = round(centro[1], 2)
+        filas.setdefault(al_canto, []).append(centro)
+    return sorted((y, sorted(cs, key=lambda c0: c0[0])) for y, cs in filas.items())
+
+
 def _medidas_dos_taladros(
     c: Contratos,
     ruta: Path,
@@ -214,12 +235,16 @@ def _medidas_dos_taladros(
     clave_ancho: str,
     clave_alto: str,
     clave_espesor: str,
+    esperadas: list[tuple[str, str, str]],
 ) -> list[Medida]:
-    """Una plancha rectangular con los dos tornillos del muelle.
+    """Una plancha rectangular con filas de dos tornillos.
 
     El bloque y la placa son la misma comprobacion con otras tres cotas: se
     taladran juntos, asi que si no dan lo mismo es que no se taladraron
-    juntos. La unica diferencia es el alto y el espesor.
+    juntos. La diferencia es cuantas filas lleva cada uno.
+
+    `esperadas` son las filas, de abajo arriba: rotulo, contrato y clave de
+    la distancia al canto de apriete.
     """
     v = c.contrato("suspension")
     (ancho, alto, espesor), cilindros = _caja_y_cilindros(ruta)
@@ -230,37 +255,95 @@ def _medidas_dos_taladros(
     ]
 
     tornillo = v.valor("soporte_tornillo_diametro").en_mm
-    agujeros = sorted(
-        (c0 for d, c0 in cilindros if abs(d - tornillo) <= HOLGURA), key=lambda c0: c0[0]
+    filas = _filas_de_taladros(cilindros, tornillo)
+    medidas.append(Medida("filas de taladros", float(len(esperadas)), float(len(filas))))
+    medidas.append(
+        Medida(
+            "taladros, diametro",
+            tornillo,
+            tornillo if any(abs(d - tornillo) <= HOLGURA for d, _ in cilindros) else None,
+        )
     )
-    medidas.append(Medida("taladros del muelle, cuantos", 2.0, float(len(agujeros))))
-    medidas.append(Medida("taladro, diametro", tornillo, tornillo if agujeros else None))
+    al_lado = v.valor("soporte_tornillo_al_lado").en_mm
+    sep = v.valor("soporte_tornillo_separacion").en_mm
+
+    for i, (titulo, contrato, clave) in enumerate(esperadas):
+        esperado = c.valor(contrato, clave).en_mm
+        if i >= len(filas):
+            medidas.append(Medida(f"{titulo}, al canto de apriete", esperado, None))
+            continue
+        al_canto, agujeros = filas[i]
+        medidas.append(Medida(f"{titulo}, al canto de apriete", esperado, al_canto))
+        medidas.append(Medida(f"{titulo}, cuantos", 2.0, float(len(agujeros))))
+        if len(agujeros) != 2:
+            continue
+        izq, der = agujeros
+        medidas.append(Medida(f"{titulo}, separacion", sep, der[0] - izq[0]))
+        # A los dos cantos y no a uno: con uno solo, un par bien separado
+        # pero descentrado pasaria, y es el error que descoloca la placa.
+        medidas.append(Medida(f"{titulo}, al canto izquierdo", al_lado, izq[0]))
+        medidas.append(Medida(f"{titulo}, al canto derecho", al_lado, ancho - der[0]))
+    return medidas
+
+
+def _medidas_fleje_step(c: Contratos, ruta: Path) -> list[Medida]:
+    """El fleje. Lo que se comprueba aqui y en ninguna otra pieza es que los
+    dos agujeros caen en el tramo muerto: en el libre serian la entalla por
+    la que rompe."""
+    v = c.contrato("suspension")
+    (ancho, largo, espesor), cilindros = _caja_y_cilindros(ruta)
+    medidas = [
+        Medida("ancho del fleje", v.valor("muelle_ancho").en_mm, ancho),
+        Medida("largo del fleje", v.valor("muelle_largo").en_mm, largo),
+        Medida("espesor del fleje", v.valor("muelle_espesor").en_mm, espesor),
+    ]
+    taladro = v.valor("muelle_taladro_diametro").en_mm
+    agujeros = sorted(
+        (c0 for d, c0 in cilindros if abs(d - taladro) <= HOLGURA), key=lambda c0: c0[1]
+    )
+    medidas.append(Medida("taladros, cuantos", 2.0, float(len(agujeros))))
+    medidas.append(Medida("taladros, diametro", taladro, taladro if agujeros else None))
     if len(agujeros) != 2:
         return medidas
 
-    izq, der = agujeros
+    # Una tira no dice cual es su extremo de arriba. Lo dice el contrato: las
+    # dos cotas se miden desde el que entra en el soporte, y la pareja solo
+    # encaja por un lado.
+    cerca = v.valor("muelle_taladro_cerca").en_mm
+    lejos = v.valor("muelle_taladro_lejos").en_mm
+    desde_abajo = sorted(c0[1] for c0 in agujeros)
+    desde_arriba = sorted(largo - y for y in desde_abajo)
+    arriba = abs(desde_arriba[0] - cerca) + abs(desde_arriba[1] - lejos)
+    abajo = abs(desde_abajo[0] - cerca) + abs(desde_abajo[1] - lejos)
+    medido = desde_arriba if arriba <= abajo else desde_abajo
+    medidas.append(Medida("taladro cerca, al extremo de arriba", cerca, medido[0]))
+    medidas.append(Medida("taladro lejos, al extremo de arriba", lejos, medido[1]))
+    for titulo, c0 in zip(("cerca", "lejos"), agujeros, strict=True):
+        medidas.append(Medida(f"taladro {titulo}, al eje del ancho", ancho / 2.0, c0[0]))
+
+    muerto = v.valor("muelle_empotrado").en_mm + v.valor("muelle_largo_libre").en_mm
     medidas.append(
         Medida(
-            "separacion entre taladros",
-            v.valor("soporte_tornillo_separacion").en_mm,
-            der[0] - izq[0],
+            "el primer taladro empieza pasado el tramo libre",
+            0.0,
+            round(max(0.0, muerto - (medido[0] - taladro / 2.0)), 2),
         )
     )
-    # Se mide a los dos cantos: con uno solo, un par de taladros descentrado
-    # pero bien separado pasaria. Y es justo el error que deja la placa sin
-    # coincidir con el bloque.
-    al_lado = v.valor("soporte_tornillo_al_lado").en_mm
-    medidas.append(Medida("del canto izquierdo al taladro", al_lado, izq[0]))
-    medidas.append(Medida("del canto derecho al taladro", al_lado, ancho - der[0]))
-    # El canto de apriete es el de abajo, y es el datum del pendulo entero.
-    al_canto = v.valor("soporte_tornillo_al_canto").en_mm
-    medidas.append(Medida("del canto de apriete al taladro", al_canto, min(izq[1], alto - izq[1])))
     return medidas
 
 
 def _medidas_soporte_step(c: Contratos, ruta: Path) -> list[Medida]:
     return _medidas_dos_taladros(
-        c, ruta, "el bloque", "soporte_ancho", "soporte_alto", "soporte_espesor"
+        c,
+        ruta,
+        "el bloque",
+        "soporte_ancho",
+        "soporte_alto",
+        "soporte_espesor",
+        [
+            ("taladros del muelle", "suspension", "soporte_tornillo_al_canto"),
+            ("taladros del anclaje", "anclaje", "anclaje_al_datum"),
+        ],
     )
 
 
@@ -272,6 +355,7 @@ def _medidas_placa_step(c: Contratos, ruta: Path) -> list[Medida]:
         "soporte_placa_ancho",
         "soporte_placa_alto",
         "soporte_placa_espesor",
+        [("taladros del muelle", "suspension", "soporte_tornillo_al_canto")],
     )
 
 
@@ -280,6 +364,7 @@ REVISORES_STEP = {
     "varilla": _medidas_varilla_step,
     "soporte": _medidas_soporte_step,
     "placa": _medidas_placa_step,
+    "fleje": _medidas_fleje_step,
 }
 
 

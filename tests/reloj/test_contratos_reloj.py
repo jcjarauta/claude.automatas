@@ -840,3 +840,20 @@ def test_el_anclaje_esta_por_encima_de_la_mitad_del_bloque(reloj: Contratos):
         reloj.valor("anclaje", "anclaje_al_datum").en_mm
         > reloj.valor("suspension", "soporte_alto").en_mm / 2.0
     )
+
+
+def test_las_dos_filas_de_taladros_no_son_simetricas(reloj: Contratos):
+    """Si las dos filas estan a la misma distancia de sus cantos, el bloque
+    se puede montar del reves y el patron de taladros es identico. Nadie lo
+    ve en el taladro, y el canto de apriete acaba arriba: el datum del
+    pendulo se va al otro extremo y el reloj no da la hora.
+
+    Con 10 y 32 en un bloque de 40, darle la vuelta da 8 y 30. No encaja, y
+    eso es el seguro."""
+    alto = reloj.valor("suspension", "soporte_alto").en_mm
+    muelle = reloj.valor("suspension", "soporte_tornillo_al_canto").en_mm
+    anclaje = reloj.valor("anclaje", "anclaje_al_datum").en_mm
+    assert abs(muelle + anclaje - alto) >= 2.0, (
+        "las dos filas quedan simetricas respecto a la mitad del bloque: "
+        "montado del reves da el mismo patron"
+    )
