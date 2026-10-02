@@ -490,6 +490,16 @@ class Ficha:
     Se escribe mirando la sección: primero la cara de abajo, luego la de
     arriba, y después lo que atraviesa.
     """
+    material: str = ""
+    """De qué es y en qué formato se compra.
+
+    No es para dibujarla: es para el despiece del dossier y para la lista de
+    la compra. La `forma` ya lo menciona de pasada, en prosa, y una lista de
+    materiales sacada de una prosa es una lista escrita a mano con pasos de
+    por medio.
+    """
+    proceso: str = ""
+    """Cómo se saca la pieza del material. Decide quién la hace y dónde."""
 
 
 def _barra_calada(
@@ -499,6 +509,8 @@ def _barra_calada(
     porque: str,
     montaje: str = "",
     eje: str = "brazo",
+    material: str = "",
+    proceso: str = "",
 ) -> Ficha:
     """El proximal y la palanca son la misma pieza con otra longitud, así que
     su lista de variables se escribe una vez. Repetirla era la forma segura
@@ -521,6 +533,8 @@ def _barra_calada(
         ("plancha", "brazo_espesor"),
         porque,
         montaje,
+        material,
+        proceso,
     )
 
 
@@ -538,6 +552,8 @@ LISTADO: dict[str, Ficha] = {
             "plana y se aprieta con un collar por debajo. El derecho es este mismo volteado, "
             "así que queda un milímetro más abajo: los dos proximales se cruzan."
         ),
+        material="latón, pletina de 3",
+        proceso="corte + taladro",
     ),
     "brazo_distal": Ficha(
         "barra de dos cubos **iguales** en pletina de latón",
@@ -557,6 +573,8 @@ LISTADO: dict[str, Ficha] = {
             "pernos de Ø6: codo por un lado, punta por el otro. No cala nada, así que se monta "
             "en cualquier sentido."
         ),
+        material="latón, pletina de 3",
+        proceso="corte + taladro",
     ),
     "palanca_lapiz": _barra_calada(
         "brazo_palanca",
@@ -571,6 +589,8 @@ LISTADO: dict[str, Ficha] = {
             "a media altura de levantamiento: ese es el calaje."
         ),
         eje="balancin",
+        material="latón, pletina de 3",
+        proceso="corte + taladro",
     ),
     "mordaza": Ficha(
         "bloque con un tornillo que aprieta y una ranura que cala",
@@ -599,6 +619,8 @@ LISTADO: dict[str, Ficha] = {
             "cinta entra entre el bloque y el sector, y el M3 la aprieta contra el canto. Dos "
             "por cinta, una en cada anclaje, justo por fuera de los puntos de tangencia."
         ),
+        material="latón, pletina de 6",
+        proceso="fresado",
     ),
     "eje_pivote": Ficha(
         "barra Ø10 h6 con una cara plana, cortada a medida",
@@ -619,6 +641,8 @@ LISTADO: dict[str, Ficha] = {
             "cabestrante, cuya cara alta queda a 33,5 del plato. Un circlip a cada punta. La "
             "cara plana mira al otro cubo del brazo y es lo único que fija el calaje."
         ),
+        material="acero W10 h6 rectificado",
+        proceso="corte a medida + fresado de la cara plana",
     ),
     "sector": Ficha(
         "disco de POM sin muesca, con los dos tornillos que lo calan al seguidor",
@@ -644,6 +668,8 @@ LISTADO: dict[str, Ficha] = {
             "que quedar coplanario con el del tambor dentro de 0,2 mm: eso es lo que sustituye "
             "a las pestañas."
         ),
+        material="POM-C negro, plancha de 5",
+        proceso="fresado CNC",
     ),
     "tambor": Ficha(
         "cilindro liso con agujero, sin pestañas",
@@ -662,6 +688,8 @@ LISTADO: dict[str, Ficha] = {
             "Cala en el eje de pivote por encima del plato 1, enfrentado al sector de su canal. "
             "La cinta lo abraza 185 grados y se ancla en el sector, no aquí."
         ),
+        material="latón, barra de Ø16",
+        proceso="torneado",
     ),
     "manivela": Ficha(
         "barra de dos cubos en pletina de latón, como los brazos",
@@ -689,6 +717,8 @@ LISTADO: dict[str, Ficha] = {
             "plana y lleva el pomo en el perno del extremo. Es lo único que sobresale por "
             "arriba."
         ),
+        material="latón, pletina de 3 + pomo de madera",
+        proceso="corte + taladro",
     ),
     "volante": Ficha(
         "disco de latón aligerado, en el eje de la manivela",
@@ -720,6 +750,8 @@ LISTADO: dict[str, Ficha] = {
             "Entre los dos rodamientos del eje de la manivela, en la bahía del reductor, junto "
             "al piñón. Cala por la cara plana y no lleva prisionero."
         ),
+        material="latón, plancha de 6",
+        proceso="corte + taladro",
     ),
     "base": Ficha(
         "tabla de nogal con los tres agujeros de los postes",
@@ -753,6 +785,8 @@ LISTADO: dict[str, Ficha] = {
             "agujeros ciegos de 15, y sobre ella apoyan los soportes de la mesa del papel. La "
             "tarjeta va suelta encima de la mesa."
         ),
+        material="nogal americano macizo de 25",
+        proceso="corte + taladro ciego",
     ),
     "balancin": Ficha(
         "barra de dos cubos diminuta, en la misma pletina de latón de 3",
@@ -780,6 +814,8 @@ LISTADO: dict[str, Ficha] = {
             "viene horizontal desde el agujero del seguidor 3. En el otro extremo del "
             "mismo eje, 78 mm a proa, va la palanca del lápiz."
         ),
+        material="latón, pletina de 3",
+        proceso="corte + taladro",
     ),
     "platina_levas": Ficha(
         "disco de contrachapado con los siete agujeros del mecanismo",
@@ -823,6 +859,8 @@ LISTADO: dict[str, Ficha] = {
             "lo que los separa y los alinea. El Ø19 del centro y el de 28 llevan los "
             "rodamientos del árbol y del eje de la manivela."
         ),
+        material="contrachapado de abedul de 9",
+        proceso="corte láser o CNC",
     ),
     "seguidor": Ficha(
         "barra de dos cubos con cuatro agujeros en línea, en POM-C de 5",
@@ -858,6 +896,8 @@ LISTADO: dict[str, Ficha] = {
             "atornillado; por debajo, el eje del rodillo descolgado hasta su leva: 21, 14 o 7 "
             "según el canal, que es lo único que distingue un montaje de otro."
         ),
+        material="POM-C negro, plancha de 5",
+        proceso="fresado CNC",
     ),
 }
 """Qué se teclea en cada pieza de la plataforma, y nada más.

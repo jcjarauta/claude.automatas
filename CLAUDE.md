@@ -54,6 +54,7 @@ uv run --group cad python scripts/exportar_catalogo.py  # STEP de las piezas com
 uv run --group cad python scripts/exportar_para_cad.py demo/hola.json --out build/cad/  # el paquete entero para el CAD
 uv run python scripts/dibujar_perfiles.py     # lámina de perfiles para revisar
 uv run python scripts/dibujar_maquina.py      # el dibujo conceptual, generado desde el modelo
+uv run python scripts/dibujar_conjunto.py     # el PLANO DE CONJUNTO: planta, alzado y despiece
 uv run python scripts/dibujar_piezas.py       # sección y cotas de cada pieza comercial, para dibujarla en el CAD
 uv run python scripts/dibujar_amplificador.py # el cabestrante 6:1, acotado desde el contrato
 uv run python scripts/dibujar_cinco_barras.py # el varillaje y la palanca, acotados desde el contrato
