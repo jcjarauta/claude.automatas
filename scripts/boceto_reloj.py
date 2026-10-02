@@ -23,7 +23,13 @@ import sys
 from pathlib import Path
 
 from compile.contratos import Contratos, Valor, cargar
-from scripts.exportar_variables import NOMBRE_MAPA, conversion_de
+from scripts.exportar_variables import (
+    FACTOR_ONSHAPE,
+    NOMBRE_MAPA,
+    TIPO_EN_ONSHAPE,
+    conversion_de,
+    convertir,
+)
 
 RELOJ = Path("docs/reloj/contratos.json")
 
@@ -778,16 +784,82 @@ def tabla_de_cotas(c: Contratos, pieza: str) -> str:
     return "\n".join(lineas) + "\n"
 
 
+def tabla_de_variables(c: Contratos, pieza: str) -> str:
+    """Como se escribe cada cota de la pieza dentro del CAD.
+
+    La tabla de cotas dice **que** mide la pieza; esta dice **de donde sale
+    el numero** en Onshape: en que mapa esta, con que tipo se importo y con
+    que factor de conversion. Son dos preguntas distintas y se hacen en dos
+    momentos distintos: la primera al acotar el boceto, la segunda cuando una
+    cota sale mal y hay que averiguar si el error esta en el contrato o en la
+    importacion.
+
+    El factor va por variable, no por tabla, y por eso hay un CSV por tipo:
+    una sola importacion no puede dar milimetros a unas y grados a otras.
+    """
+    filas: list[tuple[str, str, str, str, str, str]] = []
+    for contrato in c.contratos:
+        for valor in contrato.valores:
+            if not (valor.nombre.startswith(PREFIJOS[pieza]) or valor.nombre in INTERFACES[pieza]):
+                continue
+            cifra, conversion = convertir(valor)
+            if not conversion.tipo.dimensiona:
+                # Una REFERENCIA -segundos, kilos, newtons- no acota nada y
+                # no sube al Variable Studio. Que aparezca aqui seria invitar
+                # a usarla en un boceto.
+                continue
+            mapa = NOMBRE_MAPA[conversion.tipo]
+            limpia = cifra.rstrip("0").rstrip(".") if "." in cifra else cifra
+            filas.append(
+                (
+                    valor.nombre,
+                    f"reloj_{mapa}.csv",
+                    TIPO_EN_ONSHAPE[conversion.tipo],
+                    FACTOR_ONSHAPE[conversion.tipo],
+                    f"#{mapa}.{valor.nombre}",
+                    f"{limpia} {conversion.simbolo}".strip(),
+                )
+            )
+
+    lineas = [
+        f"### Variables de Onshape de la pieza `{pieza}`",
+        "",
+        "Las cuatro primeras columnas son lo que hay configurado en el",
+        "Variable Studio; la quinta es lo que se teclea al acotar.",
+        "",
+        "| Cota | CSV | Tipo de variable | Factor de conversion | Se escribe | Vale |",
+        "| --- | --- | --- | --- | --- | --- |",
+    ]
+    for nombre, csv_, tipo, factor, escribe, vale in filas:
+        lineas.append(f"| `{nombre}` | `{csv_}` | {tipo} | `{factor}` | `{escribe}` | {vale} |")
+    usados = ", ".join(f"`{u}`" for u in sorted({f[1] for f in filas}))
+    cuantos = len({f[1] for f in filas})
+    lineas += [
+        "",
+        f"**{len(filas)} variables**, en {cuantos} mapa(s): {usados}.",
+        "Cada mapa es **una** variable importada con fila «Todos los valores»,",
+        "tipo de resultado «Mapa» y la columna 0 como clave.",
+    ]
+    return "\n".join(lineas) + "\n"
+
+
 def main(argv: list[str] | None = None) -> int:
     partes = argparse.ArgumentParser(prog="boceto_reloj", description=__doc__)
     partes.add_argument("--pieza", default="varilla", choices=sorted(PREFIJOS))
     partes.add_argument("--tabla", action="store_true", help="la tabla de cotas, en markdown")
+    partes.add_argument(
+        "--variables",
+        action="store_true",
+        help="la tabla de variables de Onshape de la pieza, en markdown",
+    )
     partes.add_argument("--contratos", type=Path, default=RELOJ)
     partes.add_argument("--out", type=Path, default=None)
     opciones = partes.parse_args(argv)
 
     contratos = cargar(opciones.contratos)
-    if opciones.tabla:
+    if opciones.variables:
+        texto, sufijo = tabla_de_variables(contratos, opciones.pieza), "variables.md"
+    elif opciones.tabla:
         texto, sufijo = tabla_de_cotas(contratos, opciones.pieza), "cotas.md"
     else:
         if opciones.pieza not in PIEZAS:
@@ -798,9 +870,7 @@ def main(argv: list[str] | None = None) -> int:
         print(texto)
         return 0
     opciones.out.mkdir(parents=True, exist_ok=True)
-    nombre = (
-        f"boceto-{opciones.pieza}.svg" if sufijo == "boceto.svg" else f"cotas-{opciones.pieza}.md"
-    )
+    nombre = f"{sufijo.split('.')[0]}-{opciones.pieza}.{sufijo.split('.')[1]}"
     ruta = opciones.out / nombre
     ruta.write_text(texto, encoding="utf-8")
     print(f"escrito {ruta}")

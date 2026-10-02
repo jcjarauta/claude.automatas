@@ -13,6 +13,7 @@ Fecha de este estado: **2026-10-02**. Rama: `reloj`.
 | El recorrido de diseño, de la primera pieza al bastidor | `docs/reloj/plan-de-diseno.md` |
 | Qué piezas hay, en qué orden se hacen y de qué parámetro sale cada una | `docs/reloj/piezas.md` |
 | Los números que no se tocan | `docs/reloj/contratos.json` |
+| Por qué cada número se movió | `docs/reloj/cambios.md` |
 | Las etapas y sus puertas | `docs/reloj/ROADMAP.md` |
 | Los principios comunes a todas las máquinas | `docs/baseline.md` |
 
