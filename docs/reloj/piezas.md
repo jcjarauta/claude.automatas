@@ -136,7 +136,7 @@ oscilación, que es lo que fija el ángulo de impulso.
 | Nº | Pieza | De dónde salen sus cotas | Proceso |
 | --- | --- | --- | --- |
 | 2.1 | Rueda de escape | `dientes_escape`, `modulo`; perfil de diente de escape | Plantilla, **galga de diente** |
-| 2.2 | Cuerpo del áncora | Abarca `dientes_escape/4 + 0,5` ≈ 7,5 dientes | Plantilla |
+| 2.2 | Cuerpo del áncora | Abarca el medio diente impar más próximo a `dientes_escape/4`: 7,5 | Plantilla |
 | 2.3 | Paletas (×2) | Ángulo de reposo y de impulso; **ranura de ajuste** | Postizas, atornilladas |
 | 2.4 | Horquilla | Huelgo con la varilla del péndulo | Plantilla |
 | 2.5 | Platina provisional de banco | Solo 2 ejes; se tira después | Plantilla, una sola |

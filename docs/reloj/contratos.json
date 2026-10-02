@@ -31,7 +31,7 @@
         },
         {
           "nombre": "amplitud_nominal",
-          "valor": 0.035,
+          "valor": 0.034906585,
           "unidad": "rad",
           "descripcion": "Unos 2 grados a cada lado. Mas amplitud sube el error circular",
           "tolerancia": "se mide en R1"
@@ -62,7 +62,7 @@
           "nombre": "abarque_ancora",
           "valor": 7.5,
           "unidad": "adimensional",
-          "descripcion": "Dientes que abarca el ancora: dientes_escape/4 + 0,5",
+          "descripcion": "Dientes que abarca el ancora: el medio diente impar mas proximo a dientes_escape/4, para que una paleta entre cuando la otra sale",
           "tolerancia": ""
         },
         {
@@ -145,6 +145,27 @@
           "tolerancia": ""
         },
         {
+          "nombre": "horas_por_vuelta_rueda_grande",
+          "valor": 4.0,
+          "unidad": "h",
+          "descripcion": "Con la rueda grande de 64 dientes moviendo la linterna de 16 de la central",
+          "tolerancia": "sale del tren"
+        },
+        {
+          "nombre": "vueltas_tambor",
+          "valor": 7.5,
+          "unidad": "adimensional",
+          "descripcion": "autonomia_horas / horas_por_vuelta_rueda_grande. Son las gargantas que lleva el tambor",
+          "tolerancia": "derivada"
+        },
+        {
+          "nombre": "longitud_cuerda",
+          "valor": 2.0,
+          "unidad": "m",
+          "descripcion": "caida_disponible x ramales_polea. Lo que hay que comprar, mas el nudo",
+          "tolerancia": "derivada"
+        },
+        {
           "nombre": "diametro_tambor",
           "valor": 0.085,
           "unidad": "m",
@@ -167,7 +188,7 @@
         },
         {
           "nombre": "tension_cuerda_techo",
-          "valor": 24.5,
+          "valor": 24.525,
           "unidad": "N",
           "descripcion": "Con el techo de 5 kg y polea de dos ramales: la mitad del peso. Es la carga que tiene que aguantar la cuerda, con su coeficiente",
           "tolerancia": "derivada de masa_pesa_techo"

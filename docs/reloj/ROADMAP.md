@@ -103,7 +103,7 @@ lo demás y hoy es una incógnita.**
 construido: péndulo, áncora, rueda de escape y una platina provisional.
 
 **Verificación automática**
-- El áncora abarca `dientes_escape/4 + 0,5` dientes y las dos paletas son
+- El áncora abarca el medio diente impar más próximo a `dientes_escape/4` y las dos paletas son
   simétricas respecto al eje.
 - Con reposo cero el modelo devuelve veredicto negativo: un escape sin reposo
   se dispara solo.
