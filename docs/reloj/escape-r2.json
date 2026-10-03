@@ -1,0 +1,25 @@
+{
+  "estado": "propuesta para el banco R2",
+  "fecha": "2026-10-03",
+  "porque": "La geometria del escape que pasa la envolvente de conjunto (core/reloj/graham.py) dando la vuelta entera, tambien con error de sierra de 0,3 mm. Sustituye a las paletas y al diente del contrato vigente, que se atascan o retroceden. No es contrato todavia: pasa a docs/reloj/contratos.json cuando R2 confirme el reposo y el ancho de paleta.",
+  "valores": {
+    "dientes":        {"valor": 30,   "unidad": "adimensional", "descripcion": "Un diente por oscilacion"},
+    "radio_punta":    {"valor": 45.0, "unidad": "mm", "descripcion": "Rueda de 90 a escala 1"},
+    "radio_fondo":    {"valor": 38.0, "unidad": "mm", "descripcion": "Diente de 7"},
+    "espesor_punta":  {"valor": 1.5,  "unidad": "grados", "descripcion": "1,18 mm a radio 45: lo minimo que da el contrachapado sin desportillarse"},
+    "socavado":       {"valor": 8.0,  "unidad": "grados", "descripcion": "POSITIVO: el pie de la cara de ataque queda DETRAS de la punta. Solo la punta toca la paleta"},
+    "dorso":          {"valor": 15.0, "unidad": "grados", "descripcion": "Poco tumbado: el diente que acaba de pasar deja sitio a la paleta de salida"},
+    "amplitud":       {"valor": 3.0,  "unidad": "grados", "descripcion": "Semiamplitud del pendulo, la del contrato"},
+    "reposo":         {"valor": 1.5,  "unidad": "grados", "descripcion": "Lo que entra la paleta cuando recoge el diente. Puesta a punto en R2"},
+    "impulso":        {"valor": 2.0,  "unidad": "grados", "descripcion": "Lo que la rueda empuja al ancora"},
+    "ancho_trabajo":  {"valor": 2.2,  "unidad": "mm", "descripcion": "De la cara de reposo a la de caida, a lo largo del camino del diente. Con 2,75 se atasca con error de sierra"},
+    "largo_dedo":     {"valor": 7.0,  "unidad": "mm", "descripcion": "Tramo estrecho de la paleta, el que entra entre los dientes"},
+    "ancho_cuerpo":   {"valor": 9.0,  "unidad": "mm", "descripcion": "Cuerpo de la paleta, fuera de la rueda, donde va la ranura del M4"},
+    "largo_paleta":   {"valor": 18.0, "unidad": "mm", "descripcion": "Dedo mas cuerpo"},
+    "yugo":           {"valor": 20.0, "unidad": "grados", "descripcion": "Brazos bajo la horizontal, como la demostracion de Wolfram"},
+    "brazo_ancho":    {"valor": 10.0, "unidad": "mm", "descripcion": "Ancho de brazos y piernas del yugo"},
+    "cubo":           {"valor": 24.0, "unidad": "mm", "descripcion": "Asiento del collar, el mismo que el de la rueda"},
+    "eje":            {"valor": 10.0, "unidad": "mm", "descripcion": "Varilla calibrada. NO escala: es la misma varilla para todo el reloj"},
+    "pierna_hasta":   {"valor": 53.0, "unidad": "mm", "descripcion": "Radio desde el centro de la rueda donde acaba la pierna: 8 mm de aire a las puntas"}
+  }
+}
