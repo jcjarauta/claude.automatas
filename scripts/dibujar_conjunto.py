@@ -27,38 +27,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from emit.montaje import alturas
 from emit.plataforma import LISTADO, contrato_mm
 
 RAIZ = Path(__file__).resolve().parent.parent
-
-
-def alturas(c: dict[str, float]) -> dict[str, tuple[float, float]]:
-    """La pila vertical, de la cara alta de la base hacia arriba.
-
-    Todo sale de la cadena declarada: `base_al_plato`, `platina_espesor`,
-    `pila_altura`, `seguidor_plano_z`, `poste_vano` y `reductor_bahia`. No
-    hay ni un número suelto, y por eso mover `base_al_plato` mueve la
-    lámina entera.
-    """
-    bap, pl = c["base_al_plato"], c["platina_espesor"]
-    p1 = (bap, bap + pl)
-    leva0 = p1[1] + 2.0
-    seg = leva0 + c["seguidor_plano_z"]
-    p2 = (p1[1] + c["poste_vano"], p1[1] + c["poste_vano"] + pl)
-    p3 = (p2[1] + c["reductor_bahia"], p2[1] + c["reductor_bahia"] + pl)
-    return {
-        "base": (-c["base_espesor"], 0.0),
-        "mesa": (c["mesa_altura"] - c["mesa_espesor"], c["mesa_altura"]),
-        "plato1": p1,
-        "levas": (leva0, leva0 + c["pila_altura"]),
-        "seguidores": (seg, seg + c["seguidor_espesor"]),
-        "sector": (seg + c["seguidor_espesor"], seg + c["seguidor_espesor"] + 5.0),
-        "balancin": (seg + c["balancin_entrada"], seg + c["balancin_entrada"]),
-        "plato2": p2,
-        "bahia": (p2[1], p3[0]),
-        "plato3": p3,
-        "poste": (-c["base_poste_empotrado"], p3[1]),
-    }
 
 
 def planta(c: dict[str, float]) -> dict[str, tuple[float, float]]:
