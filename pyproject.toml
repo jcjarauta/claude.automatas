@@ -27,6 +27,10 @@ cad = [
     # para exportar STEP y, a partir de E6, para las vistas del dossier.
     # Nada de lo que calcula el proyecto depende de él.
     "build123d>=0.9",
+    # El visor de VS Code. No es una dependencia del motor: es el ojo en el
+    # bucle. Las catorce envolventes del catálogo estuvieron mil veces
+    # pequeñas durante días porque nadie había abierto nunca una.
+    "ocp_vscode>=2.6",
 ]
 
 [build-system]

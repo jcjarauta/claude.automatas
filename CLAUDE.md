@@ -56,6 +56,8 @@ uv run --group cad python scripts/exportar_para_cad.py demo/hola.json --out buil
 uv run python scripts/dibujar_perfiles.py     # lámina de perfiles para revisar
 uv run python scripts/dibujar_maquina.py      # el dibujo conceptual, generado desde el modelo
 uv run python scripts/dibujar_conjunto.py     # el PLANO DE CONJUNTO: planta, alzado y despiece
+uv run --group cad python scripts/ver.py seguidor            # una pieza en el visor de VS Code
+uv run --group cad python scripts/ver.py --conjunto --theta 90  # la máquina montada, a ese ángulo
 uv run python scripts/dibujar_piezas.py       # sección y cotas de cada pieza comercial, para dibujarla en el CAD
 uv run python scripts/dibujar_amplificador.py # el cabestrante 6:1, acotado desde el contrato
 uv run python scripts/dibujar_cinco_barras.py # el varillaje y la palanca, acotados desde el contrato
@@ -123,6 +125,7 @@ emit/
   dxf.py              #   Corte láser / CNC
   dossier.py          #   Dossier de montaje
   step.py             #   3D
+  montaje.py          #   El conjunto en 3D: sólidos de plataforma y dónde va cada uno
   onshape.py          #   Gemelo paramétrico (1 llamada por pedido)
 api/                  # FastAPI
 web/                  # React + Vite + TypeScript
@@ -1002,6 +1005,41 @@ falla si el esquema versionado se queda atrás.
   `core/units.py` y lo dice en el docstring. Ahora el catálogo usa el
   mismo.
 
+- **`connect_to()` de build123d construye un ÁRBOL, no un grafo.** Coloca
+  el hijo respecto del padre y no reconcilia dos caminos que llegan al
+  mismo sitio: no hay solucionador. De esta máquina no cabe **ninguna** de
+  las tres cosas que la definen —el cinco barras es un lazo cerrado, el
+  contacto leva-rodillo no es una articulación y no existe `CamJoint`, y
+  el cabestrante es una relación entre dos giros—. Lo que sí cabe es una
+  cadena abierta: `poste → seguidor → sector`, `eje_pivote → tambor →
+  brazo`.
+
+  Así que **el compilador es el solucionador**, y no por falta de otro:
+  es la regla 1 y la regla 2. La cinemática vive en `core/`, pura y en θ;
+  `emit/montaje.py` solo **coloca**. Un solucionador en un emisor sería
+  cinemática fuera del núcleo.
+
+- **La distancia exacta entre dos sólidos de OCCT es lo caro de un
+  barrido.** Diecinueve piezas dan unos ciento setenta pares móviles, y a
+  veinticuatro ángulos eso es media hora: un test que se desactiva. Dos
+  cosas lo dejan en segundos y las dos hacen falta: **construir cada
+  sólido una vez** y recolocarlo —si no, cada ángulo vuelve a extruir las
+  mismas planchas— y **filtrar por cajas envolventes** antes de pedir la
+  distancia exacta.
+
+  Y un barrido de todos contra todos **no significa nada sin declarar qué
+  puede tocarse**: el poste atraviesa el agujero del plato por diseño, el
+  árbol atraviesa las tres levas. Decir «nada se toca» es falso. Por eso
+  el test va contra una lista corta de pares que de verdad no deben
+  acercarse, y la tabla general de interfaces se queda para la máquina 2.
+
+- **`_psi_desde_la_leva` no se puede llamar con un solo ángulo.**
+  Reconstruye el spline de la curva de paso con **tantos nudos como
+  ángulos se le pidan**, así que pedir uno da «hacen falta al menos 8
+  muestras» y no la máquina en ese ángulo. `compile.conjunto.estados`
+  toma la rejilla entera de golpe, y `piezas_en` redondea a grado para
+  poder enseñar una posición suelta.
+
 - **Fase.** Un cartucho montado desfasado escribe basura. La marca física y la
   verificación van en el dossier, no solo en el código.
 
@@ -1027,7 +1065,7 @@ falla si el esquema versionado se queda atrás.
 | `docs/contratos.json` | Los números de esos contratos, que es de donde los lee todo |
 | `docs/ficha-producto.md` | Despiece, proveedores, coste de material y decisiones de fabricación |
 | `docs/metodologia.md` | Cómo se diseña, se prueba antes de gastar, y qué lleva el dossier |
-| `docs/ensamblaje.md` | Cómo se monta en Onshape: subconjuntos, emparejamientos y qué NO comprueba |
+| `docs/ensamblaje.md` | Cómo se monta: en Onshape a mano, y en 3D desde el compilador |
 | `docs/modulos/` | Una ficha por módulo del catálogo |
 | `docs/piezas/` | Una ficha por pieza comercial: cotas de interfaz, fuente y sustitutos |
 | `bench/README.md` | Protocolo del banco de ensayo y datos medidos |

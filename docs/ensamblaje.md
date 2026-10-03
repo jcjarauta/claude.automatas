@@ -360,6 +360,50 @@ parar en algún sitio, se para después del 9 y se conduce a mano (§5).
 
 ---
 
+## 7 bis. El otro montaje: el que corre solo
+
+Lo de arriba se monta a mano en Onshape y sirve para **verlo y
+arrastrarlo**. En paralelo hay un montaje que no se toca con el ratón y
+que hace lo que Onshape no puede: `emit/montaje.py` levanta los sólidos
+de las trece piezas desde sus perfiles y los coloca a partir de lo que
+calcula el compilador.
+
+```
+θ → core/ → ψ de cada seguidor → emit/montaje.py → sólidos en su sitio
+                                        ↓
+                         visor de VS Code  ·  barrido como test
+```
+
+**build123d no resuelve la cinemática, y no hace falta que lo haga.** Sus
+articulaciones existen —`RevoluteJoint` y compañía— pero `connect_to()`
+construye un árbol: coloca el hijo respecto del padre y no reconcilia dos
+caminos que llegan al mismo sitio. El cinco barras es un lazo cerrado, el
+contacto leva-rodillo no es una articulación y el cabestrante es una
+relación entre dos giros: ninguno cabe. Y aunque cupieran, la cinemática
+vive en `core/` por la regla 2.
+
+**Lo que esto aporta y no aporta nada más:**
+
+| | |
+| --- | --- |
+| Ver un sólido sin abrir el CAD | `scripts/ver.py`, en el visor de VS Code |
+| Hueco al poste en TRES dimensiones, barriendo el ciclo | `compile.conjunto.barrer`, como test |
+| Cerrar el lazo por su cuenta y decir si no cierra | **no** — eso solo lo hace Onshape |
+| Arrastrar con el ratón | **no** |
+
+El barrido es el **tercer camino** sobre el hueco de 9,7 mm: el plano lo
+mide con la leva como un radio máximo y el poste como el círculo del
+obstáculo; aquí se mide con el perfil entero, los sólidos de verdad y el
+poste real de Ø8. Los dos coinciden en los 3,5 mm que separan los dos
+radios, y no comparten una línea de código.
+
+Y un aviso sobre lo que **no** es un barrido general: el poste atraviesa
+el agujero del plato por diseño y el árbol atraviesa las tres levas, así
+que «nada se toca» es falso. El test va contra una lista corta de pares
+que de verdad no deben acercarse.
+
+---
+
 ## 8. Lo que todavía no se puede montar
 
 Dos piezas del listado entran en el conjunto pero se quedan colgando, y una

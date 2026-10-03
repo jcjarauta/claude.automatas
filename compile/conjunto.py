@@ -29,15 +29,25 @@ una dependencia de trescientos megas. Hará falta cuando exista bastidor.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from pydantic import BaseModel, ConfigDict
 
-from compile.escribiente import SEGUIDORES, Compilacion, Escribiente
+from compile.escribiente import (
+    SEGUIDORES,
+    Compilacion,
+    Escribiente,
+    _psi_desde_la_leva,
+)
 from core.solido import densidad_de, descontar_taladro, inercia_de_prisma, masa_de_prisma
 from core.units import KgM2, Kilogramos, Longitud, Metros, a_mm, mm
 from core.verdict import Incidencia, Veredicto
+
+if TYPE_CHECKING:  # pragma: no cover
+    from emit.montaje import Estado
 from emit.pieza import Pieza
 
 
@@ -224,3 +234,154 @@ def montar(
 
 
 __all__ = ["Cartucho", "Montaje", "montar"]
+
+
+# ---------------------------------------------------------------------------
+# El barrido en tres dimensiones
+# ---------------------------------------------------------------------------
+
+
+def estados(compilacion: Compilacion, maquina: Escribiente, thetas: Any) -> list[Estado]:
+    """La máquina en cada ángulo del árbol, leyendo las levas sintetizadas.
+
+    **Hacen falta al menos ocho ángulos de golpe**, y no es un capricho de
+    esta función: `_psi_desde_la_leva` reconstruye el spline de la curva de
+    paso con tantos nudos como ángulos se le piden. Pedir uno solo no da la
+    máquina en ese ángulo, da un error.
+
+    Los dos números que salen de aquí son distintos y confundirlos es la
+    trampa del calaje: la **desviación** del seguidor es para lo que se
+    sintetiza la leva, y el **ángulo absoluto** del brazo lleva además la
+    relación y el calaje. Se leen con la misma función y distintos
+    argumentos, para que no puedan separarse al tocar una.
+    """
+    from emit.montaje import Estado
+
+    thetas = np.asarray(thetas, dtype=np.float64)
+    crudo = {n: _psi_desde_la_leva(compilacion.perfiles[n], thetas) for n in SEGUIDORES}
+    brazo = {
+        n: _psi_desde_la_leva(
+            compilacion.perfiles[n], thetas, compilacion.calajes[n], maquina.relacion
+        )
+        for n in SEGUIDORES
+    }
+    return [
+        Estado(
+            theta=float(theta),
+            desviaciones=(
+                float(crudo["izquierdo"][i]),
+                float(crudo["derecho"][i]),
+                float(crudo["elevador"][i]),
+            ),
+            psi_izquierdo=float(brazo["izquierdo"][i]),
+            psi_derecho=float(brazo["derecho"][i]),
+        )
+        for i, theta in enumerate(thetas)
+    ]
+
+
+def piezas_en(
+    compilacion: Compilacion, maquina: Escribiente | None = None, theta: float = 0.0
+) -> list[Any]:
+    """Todas las piezas colocadas en 3D en el ángulo más cercano a `theta`.
+
+    Se evalúa sobre una rejilla de un grado porque la máquina no se puede
+    leer en un ángulo suelto (ver `estados`). Para mirarla en pantalla eso
+    sobra; para barrer el ciclo está `barrer`, que no redondea nada.
+    """
+    from emit.montaje import colocar
+
+    maquina = maquina or Escribiente()
+    thetas = np.linspace(0.0, 2.0 * np.pi, 360, endpoint=False)
+    indice = int(np.argmin(np.abs(np.angle(np.exp(1j * (thetas - theta))))))
+    return colocar(
+        list(compilacion.piezas),
+        [maquina.seguidor(i) for i in range(len(SEGUIDORES))],
+        estados(compilacion, maquina, thetas)[indice],
+    )
+
+
+@dataclass(frozen=True)
+class Roce:
+    """Lo más cerca que llegan dos piezas durante el barrido."""
+
+    una: str
+    otra: str
+    holgura: float
+    """En milímetros. Negativa si se solapan."""
+    theta: float
+
+
+def _separacion_de_cajas(una: Any, otra: Any) -> float:
+    """Lo MENOS que pueden distar dos sólidos, por sus cajas envolventes.
+
+    Es una cota inferior barata: si las cajas distan 40 mm, los sólidos
+    distan al menos 40. Sirve para no pagar la distancia exacta —que es lo
+    caro— en los pares que ni se acercan.
+    """
+    hueco = 0.0
+    for eje in ("X", "Y", "Z"):
+        a0, a1 = getattr(una.min, eje), getattr(una.max, eje)
+        b0, b1 = getattr(otra.min, eje), getattr(otra.max, eje)
+        hueco += max(b0 - a1, a0 - b1, 0.0) ** 2
+    return float(np.sqrt(hueco))
+
+
+def barrer(
+    compilacion: Compilacion,
+    maquina: Escribiente | None = None,
+    pasos: int = 24,
+    entre: Callable[[str, str], bool] | None = None,
+    cerca: float = 25.0,
+) -> list[Roce]:
+    """Recorre el ciclo y mide lo que se acerca cada par de piezas.
+
+    **Esto es lo que no hace nadie más.** `holguras()` mira en el plano y
+    solo mira las levas contra los postes; Onshape tiene detección de
+    interferencias pero es estática, hay que congelar θ y repetir a mano.
+    Aquí es un bucle, y por tanto puede ser un test.
+
+    Solo se miran los pares con **al menos una pieza móvil**: dos piezas
+    quietas o se tocan siempre o no se tocan nunca, y eso ya lo dice un
+    único montaje.
+
+    `cerca` es **lo que importa**, en milímetros: un par cuyas cajas
+    envolventes nunca se acercan tanto no aparece en el resultado. La
+    distancia exacta entre dos sólidos de OCCT es lo caro de todo esto, y
+    sin este filtro el barrido pasa de segundos a media hora —es decir, de
+    un test que se ejecuta a uno que se desactiva—. Lo que sí aparece
+    lleva su distancia **exacta**.
+
+    Devuelve un `Roce` por par, ordenado de menos holgura a más, así que
+    el primero es el que decide.
+    """
+    from emit.montaje import colocar, taller
+
+    maquina = maquina or Escribiente()
+    hecho = taller()
+    seguidores = [maquina.seguidor(i) for i in range(len(SEGUIDORES))]
+    levas = list(compilacion.piezas)
+    thetas = np.linspace(0.0, 2.0 * np.pi, max(pasos, 8), endpoint=False)
+    peor: dict[tuple[str, str], Roce] = {}
+    for estado in estados(compilacion, maquina, thetas):
+        theta = estado.theta
+        piezas = colocar(levas, seguidores, estado, piezas_base=hecho)
+        cajas = [p.solido.bounding_box() for p in piezas]
+        for i, una in enumerate(piezas):
+            for j, otra in enumerate(piezas[i + 1 :], start=i + 1):
+                if not (una.movil or otra.movil):
+                    continue
+                if _separacion_de_cajas(cajas[i], cajas[j]) > cerca:
+                    continue
+                # El filtro se prueba en los dos sentidos: el orden del par
+                # lo decide cómo se montó la lista, y quien filtra no tiene
+                # por qué saberlo.
+                if entre is not None and not (
+                    entre(una.nombre, otra.nombre) or entre(otra.nombre, una.nombre)
+                ):
+                    continue
+                clave = (una.nombre, otra.nombre)
+                holgura = float(una.solido.distance_to(otra.solido))
+                if clave not in peor or holgura < peor[clave].holgura:
+                    peor[clave] = Roce(una.nombre, otra.nombre, holgura, float(theta))
+    return sorted(peor.values(), key=lambda r: r.holgura)
