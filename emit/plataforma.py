@@ -34,6 +34,8 @@ from pathlib import Path
 
 from ezdxf.filemanagement import new as nuevo_dxf
 
+from emit.dxf import guardar
+
 RAIZ = Path(__file__).resolve().parent.parent
 CONTRATOS = RAIZ / "docs" / "contratos.json"
 MM = 1000.0
@@ -974,5 +976,5 @@ def escribir_dxf(perfil: Perfil, destino: Path, capa: str = "VISIBLE") -> Path:
                 dxfattribs={"layer": capa},
             )
     destino.parent.mkdir(parents=True, exist_ok=True)
-    doc.saveas(destino)
+    guardar(doc, destino)
     return destino

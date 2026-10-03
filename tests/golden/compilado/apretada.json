@@ -26,7 +26,7 @@
       "puntos_del_contorno": 720,
       "radio_maximo_mm": 52.78806,
       "radio_minimo_mm": 50.049933,
-      "sha256": "6c00bd5f37745b6437218a2026527f20ed9adcb58afe2604e2e5abbc4eae2aa9"
+      "sha256": "852f17a6c249d445d0b01f09697936dcc95c5e16cecc5fc7b865dce34ebb5626"
     },
     {
       "canal": "derecho",
@@ -36,7 +36,7 @@
       "puntos_del_contorno": 720,
       "radio_maximo_mm": 54.170954,
       "radio_minimo_mm": 50.994325,
-      "sha256": "280376937021b2f30b53fcac17b50da92c30ddfa721cfad531a13627932d3302"
+      "sha256": "465ecc3dcab5469765cfa646a8f5bacff5ef754cc2bc9ea79a7c19dc2ac6d85c"
     },
     {
       "canal": "elevador",
@@ -46,7 +46,7 @@
       "puntos_del_contorno": 720,
       "radio_maximo_mm": 52.328728,
       "radio_minimo_mm": 51.718289,
-      "sha256": "7ae2657148bd051629c0bcea93579042c01d82249837ec321c4666b106f5e603"
+      "sha256": "f88b2c9b5b156050f17e6c13fd2391428023e7f9ce89be67ec074fbd9d236db8"
     }
   ],
   "tramos": [

@@ -181,6 +181,7 @@ def escribir_manifiestos() -> list[Path]:
         ruta.write_text(
             json.dumps(manifiesto(nombre), indent=2, ensure_ascii=False, sort_keys=True) + "\n",
             encoding="utf-8",
+            newline="\n",  # tests/golden es -text en git: un CRLF de Windows entraría tal cual
         )
         escritos.append(ruta)
     return escritos

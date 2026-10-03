@@ -50,6 +50,30 @@ potencia: el corte atraviesa, el rótulo solo marca."""
 # el determinismo es un requisito del producto y no una comodidad de los tests.
 opciones_dxf.write_fixed_meta_data_for_testing = True
 
+DECIMALES_MM = 9
+"""Redondeo de toda coordenada que sale al archivo, en milímetros.
+
+La misma cuenta no da el mismo último bit en Linux y en Windows: numpy y la
+libm de cada plataforma discrepan en el decimal 15. El golden se generó en
+una y fallaba en la otra con la geometría medida idéntica. Un nanómetro está
+seis órdenes por debajo de cualquier tolerancia de taller y muy por encima
+de ese ruido, así que el archivo vuelve a ser el mismo en las dos."""
+
+
+def _mm(x: float) -> float:
+    return round(x, DECIMALES_MM)
+
+
+def guardar(doc: Drawing, ruta: Path) -> None:
+    """Guarda con fin de línea LF en cualquier sistema.
+
+    `Drawing.saveas` abre en modo texto, y en Windows eso escribe CRLF: el
+    mismo pedido daba dos archivos distintos según la máquina. El
+    `.gitattributes` protege lo que está en git, no lo que sale del emisor.
+    """
+    with ruta.open("wt", encoding="utf-8", errors="dxfreplace", newline="\n") as fp:
+        doc.write(fp)
+
 
 @dataclass(frozen=True)
 class Kerf:
@@ -81,7 +105,7 @@ def _compensar(
     medido es exactamente el perfil que calculó el núcleo.
     """
     if abs(desplazamiento) < 1e-12:
-        return [(a_mm(x), a_mm(y)) for x, y in puntos]
+        return [(_mm(a_mm(x)), _mm(a_mm(y))) for x, y in puntos]
     anillo = LinearRing([(float(x), float(y)) for x, y in puntos])
     if not anillo.is_ccw:
         anillo = LinearRing(list(anillo.coords)[::-1])
@@ -91,7 +115,7 @@ def _compensar(
             "compensar el kerf parte el contorno en trozos: el perfil tiene un "
             "detalle más fino que la herramienta y esta pieza no se puede cortar así."
         )
-    return [(x * 1000.0, y * 1000.0) for x, y in ampliado.exterior.coords[:-1]]
+    return [(_mm(x * 1000.0), _mm(y * 1000.0)) for x, y in ampliado.exterior.coords[:-1]]
 
 
 def _documento() -> Drawing:
@@ -152,21 +176,21 @@ def escribir_dxf(
                 f"sobrevive a un kerf de {a_mm(Metros(kerf.anchura)):.2f} mm."
             )
         espacio.add_circle(
-            (a_mm(taladro.centro[0]), a_mm(taladro.centro[1])),
-            radio,
+            (_mm(a_mm(taladro.centro[0])), _mm(a_mm(taladro.centro[1]))),
+            _mm(radio),
             dxfattribs={"layer": "TALADRO"},
         )
 
     for referencia in pieza.referencias:
         espacio.add_lwpolyline(
-            [(a_mm(x), a_mm(y)) for x, y in referencia.puntos],
+            [(_mm(a_mm(x)), _mm(a_mm(y))) for x, y in referencia.puntos],
             close=referencia.cerrada,
             dxfattribs={"layer": "REFERENCIA"},
         )
 
     if pieza.marca_fase is not None:
         espacio.add_circle(
-            (a_mm(pieza.marca_fase[0]), a_mm(pieza.marca_fase[1])),
+            (_mm(a_mm(pieza.marca_fase[0])), _mm(a_mm(pieza.marca_fase[1]))),
             2.0,
             dxfattribs={"layer": "FASE"},
         )
@@ -179,12 +203,12 @@ def escribir_dxf(
             nota,
             height=3.0,
             dxfattribs={"layer": "ROTULO"},
-        ).set_placement((a_mm(pieza.limites[0]), a_mm(pieza.limites[1]) - 8.0))
+        ).set_placement((_mm(a_mm(pieza.limites[0])), _mm(a_mm(pieza.limites[1]) - 8.0)))
 
     ruta = Path(destino)
     ruta.parent.mkdir(parents=True, exist_ok=True)
     _fijar_orden_de_clases(doc)
-    doc.saveas(ruta, encoding="utf-8")
+    guardar(doc, ruta)
     return ruta
 
 
@@ -205,4 +229,4 @@ def escribir_dxfs(
     ]
 
 
-__all__ = ["CAPAS", "Kerf", "escribir_dxf", "escribir_dxfs"]
+__all__ = ["CAPAS", "DECIMALES_MM", "Kerf", "escribir_dxf", "escribir_dxfs", "guardar"]
