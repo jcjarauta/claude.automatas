@@ -185,6 +185,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("paquete", type=Path, nargs="?", default=Path("build/cad"))
     op = p.parse_args(argv)
     cambios = pendientes(op.paquete)
+    # La consola de Windows es cp1252 y no tiene la flecha de los cambios.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     print(informe(cambios, MAPAS), end="")
     return 0
 

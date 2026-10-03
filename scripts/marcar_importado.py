@@ -42,7 +42,9 @@ def marcar(paquete: Path, cuales: list[str] | None = None, hoy: str | None = Non
             "contenido": texto,
         }
         tocados.append(nombre)
-    IMPORTADO.write_text(json.dumps(datos, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    IMPORTADO.write_text(
+        json.dumps(datos, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n"
+    )
     return tocados
 
 

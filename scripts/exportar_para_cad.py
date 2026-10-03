@@ -406,11 +406,11 @@ def main(argv: list[str] | None = None) -> int:
 
     # 1 · las cotas compartidas
     contratos = cargar_contratos()
-    (destino / "variables.fs").write_text(featurescript(contratos), encoding="utf-8")
+    (destino / "variables.fs").write_text(featurescript(contratos), encoding="utf-8", newline="\n")
     entero = csv(contratos)
-    (destino / "variables.csv").write_text(entero, encoding="utf-8")
+    (destino / "variables.csv").write_text(entero, encoding="utf-8", newline="\n")
     for sufijo, contenido in por_unidad(entero).items():
-        (destino / f"variables_{sufijo}.csv").write_text(contenido, encoding="utf-8")
+        (destino / f"variables_{sufijo}.csv").write_text(contenido, encoding="utf-8", newline="\n")
 
     # 2 · el catálogo comercial, si hay kernel
     catalogo = False
@@ -439,7 +439,9 @@ def main(argv: list[str] | None = None) -> int:
     from scripts.dibujar_pieza import hoja as hoja_de_pieza
 
     for cual in PERFIL_DE:
-        (plataforma / f"{cual}.svg").write_text(hoja_de_pieza([cual]), encoding="utf-8")
+        (plataforma / f"{cual}.svg").write_text(
+            hoja_de_pieza([cual]), encoding="utf-8", newline="\n"
+        )
 
     # 3ter · qué CSV hay que reimportar, que es lo único que el paquete no
     # puede saber mirándose a sí mismo: depende de lo que ya esté en Onshape.
@@ -447,7 +449,7 @@ def main(argv: list[str] | None = None) -> int:
     from scripts.csv_pendientes import pendientes
 
     (destino / "REIMPORTAR.md").write_text(
-        informe_pendientes(pendientes(destino), MAPAS), encoding="utf-8"
+        informe_pendientes(pendientes(destino), MAPAS), encoding="utf-8", newline="\n"
     )
 
     # 4 · el sólido, si hay kernel y si el perfil lo admite
@@ -469,14 +471,14 @@ def main(argv: list[str] | None = None) -> int:
         fallo_del_solido = f"el kernel no pudo apilar el cartucho: {type(exc).__name__}"
 
     # 5 · la tabla de materiales, para la biblioteca del CAD
-    (destino / "materiales.csv").write_text(materiales(), encoding="utf-8")
+    (destino / "materiales.csv").write_text(materiales(), encoding="utf-8", newline="\n")
 
     # 6 · las cotas de las piezas comerciales, para poder dibujarlas
     #     paramétricas en vez de importarlas como sólidos mudos
     comerciales = cotas_comerciales()
-    (destino / "piezas.csv").write_text(comerciales, encoding="utf-8")
+    (destino / "piezas.csv").write_text(comerciales, encoding="utf-8", newline="\n")
     for sufijo, contenido in por_unidad(comerciales).items():
-        (destino / f"piezas_{sufijo}.csv").write_text(contenido, encoding="utf-8")
+        (destino / f"piezas_{sufijo}.csv").write_text(contenido, encoding="utf-8", newline="\n")
 
     # 7 · el calaje, que es lo que se monta mal
     (destino / "calajes.md").write_text(
@@ -490,10 +492,11 @@ def main(argv: list[str] | None = None) -> int:
             for nombre, valor in compilacion.calajes.items()
         ),
         encoding="utf-8",
+        newline="\n",
     )
 
     (destino / "README.md").write_text(
-        hoja_de_ruta(escritura.nombre, catalogo, solido), encoding="utf-8"
+        hoja_de_ruta(escritura.nombre, catalogo, solido), encoding="utf-8", newline="\n"
     )
 
     print(f"paquete de CAD en {destino}/")
