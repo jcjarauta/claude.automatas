@@ -811,3 +811,61 @@ Al núcleo van `largo_del_flanco` —la raíz corta de la misma ecuación— y
 `cuerda`, que es trivial y existe porque el proyecto ya se ha tropezado tres
 veces con la diferencia entre el arco y la cuerda: tenerla con nombre obliga a
 elegir cuál se está pidiendo.
+
+## 2026-10-03 · La envolvente de conjunto del escape, y el banco R2 al doble
+
+`core/reloj/graham.py` monta la rueda, las paletas y el yugo y **los mueve**:
+gira el áncora en pasos de 0,05° y deja avanzar la rueda hasta que toca. Si
+el áncora no cabe, el escape está atascado; si nada para la rueda, desbocado;
+si la rueda tiene que volver atrás durante el reposo, ya no es un Graham.
+`juzgar()` da la vuelta entera —cada diente pasa por las dos paletas— en unos
+seis segundos.
+
+Es la envolvente que faltaba: ninguna comprobación de pieza suelta ve si la
+paleta cabe entre dos dientes o si el diente apoya en su punta.
+
+### Lo que dice del contrato vigente
+
+**No pasa**, y por eso la geometría del banco vive aparte, en
+`docs/reloj/escape-r2.json`, hasta que R2 la confirme:
+
+| | Contrato | Qué pasa | Banco R2 |
+| --- | --- | --- | --- |
+| Diente | cara con el pie 1,49° **por delante** de la punta | la paleta apoya en la cara, 1,1 mm bajo la punta, y la rueda retrocede ~0,2° por golpe | socavado de verdad: pie **detrás**. Apoya en R45,00 |
+| Paleta | bloque de 14 a lo largo del camino del diente | no cabe entre dos puntas (8,2 mm): se atasca | dedo de 2,2 mm de ancho de trabajo |
+| Caras de reposo | 44,21 / 45,79, las dos por fuera | la de salida tiene que bloquear por **dentro** | las dos en R45,00; caídas en 42,80 y 47,20 |
+| Yugo | V de brazos tangentes | el canto interior pasa a 40 mm del centro, dentro de la banda de dientes | yugo a 20°, piernas hasta R53 |
+
+Lo defienden `tests/reloj/test_graham.py`: el diente en cuña retrocede, una
+paleta que no cabe se atasca, sin reposo se desboca, y la propuesta da la
+vuelta entera también con error de sierra de 0,3 mm.
+
+### El banco se imprime al doble, en A3
+
+El error de sierra es en milímetros y los ángulos del escape no cambian al
+escalar. Al doble (rueda de Ø180, 127,28 entre centros) el mismo ±0,3 mm pesa
+la mitad:
+
+| Ancho de paleta (equivalente a escala 1) | Escala 1, sierra ±0,3 | Escala 2, sierra ±0,3 |
+| --- | --- | --- |
+| 2,2 | funciona | funciona |
+| 2,75 | se atasca | **funciona** |
+| 3,0 | — | se atasca |
+
+Una paleta más ancha empuja más rato: de 2,8° de impulso de rueda por golpe a
+3,4°. Y todo es más fácil de cortar y de limar: la nariz de la paleta pasa de
+2,2 a 4,4–5,5 mm y la punta del diente de 1,18 a 2,36.
+
+**Lo que cuesta, y no es del banco sino del bastidor (paso 6).** La rueda de
+Ø180 no cabe entre platinas con el tren de ejemplo: la tercera rueda engrana
+con la linterna de escape a 68 mm, y un radio de 90 pasa por encima de su
+eje. O el escape va por fuera de la platina —a la vista, como en muchos
+relojes de madera—, o la última pareja se separa. Dentro, el máximo con 5 mm
+de aire es una rueda de unos Ø116. La inercia de la rueda sube con la cuarta
+potencia de la escala en un disco plano: los radios de aligerado pasan a ser
+obligatorios en la definitiva.
+
+`scripts/plantillas_escape_r2.py` saca el PDF: hoja de banco (taladros, rueda
+ideal con banda de ±0,3 y escala de ángulos para una aguja), plantillas de
+rueda, yugo y tres juegos de paletas (4,4 / 5,0 / 5,5) y el protocolo con la
+tabla diente a diente. Juzga cada ancho antes de escribir nada.
