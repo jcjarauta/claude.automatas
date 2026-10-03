@@ -927,6 +927,41 @@ falla si el esquema versionado se queda atrás.
   del datum» en la propia cota, donde se lee al teclearla y no en una nota
   al pie.
 
+- **Un lazo cinemático cerrado montado todo con revolutes sale en rojo, y el
+  mensaje no señala al culpable.** El cinco barras tiene cinco articulaciones
+  y Onshape intenta satisfacerlas todas a la vez: un lazo plano con revolutes
+  es redundante y solo consistente si la geometría es exacta hasta el último
+  bit. Como no lo es, sale `Mate overdefines the assembly`, a veces sobre
+  varios emparejamientos a la vez.
+
+  La receta es del propio personal de Onshape, repetida en cuatro hilos:
+  **el emparejamiento que CIERRA el lazo se pone cilíndrico**, nunca de
+  revolución. El cilíndrico libera `Tz`, que es donde se acumula el desajuste
+  fuera del plano; la articulación sigue girando igual. Aquí es el perno de
+  la punta, y además es físicamente cierto: los dos distales trabajan en
+  planos separados un milímetro.
+
+  Y los emparejamientos del lazo se ponen **de uno en uno**, dejando el que
+  cierra para el final. Si no, el rojo aparece sobre un grupo y hay que
+  suprimir candidatos a ciegas para aislarlo. Onshape no tiene contador
+  numérico de grados de libertad, solo un icono.
+
+- **Onshape no detecta colisiones al moverse, así que el hueco al poste no lo
+  vigila nadie.** No hay contacto, ni rodadura, ni parada al chocar: la
+  relación de engranaje es, en palabras del blog oficial, *«a mathematical
+  link»*. `Interference Detection` existe pero es **estática**, mira la
+  posición de ahora. El hueco de 9,7 mm se comprueba congelando θ con
+  **mate values** —`J`, doble clic sobre el valor, teclear— y repitiendo en
+  una rejilla de ángulos. El número continuo lo sigue dando
+  `compile/conjunto.py`.
+
+  La misma familia: los límites de emparejamiento **no aceptan variables**,
+  así que un tope del contrato se teclea a mano o no existe. Y Simulation
+  excluye justo lo que mueve esta máquina —tangentes y **las cuatro**
+  relaciones—, de modo que el conjunto que se mueve no es el que se simula.
+
+  El plan entero está en `docs/ensamblaje.md`.
+
 - **Fase.** Un cartucho montado desfasado escribe basura. La marca física y la
   verificación van en el dossier, no solo en el código.
 
@@ -952,6 +987,7 @@ falla si el esquema versionado se queda atrás.
 | `docs/contratos.json` | Los números de esos contratos, que es de donde los lee todo |
 | `docs/ficha-producto.md` | Despiece, proveedores, coste de material y decisiones de fabricación |
 | `docs/metodologia.md` | Cómo se diseña, se prueba antes de gastar, y qué lleva el dossier |
+| `docs/ensamblaje.md` | Cómo se monta en Onshape: subconjuntos, emparejamientos y qué NO comprueba |
 | `docs/modulos/` | Una ficha por módulo del catálogo |
 | `docs/piezas/` | Una ficha por pieza comercial: cotas de interfaz, fuente y sustitutos |
 | `bench/README.md` | Protocolo del banco de ensayo y datos medidos |
