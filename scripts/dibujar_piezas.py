@@ -31,7 +31,10 @@ from emit.catalogo import LARGO_POR_DEFECTO, cargar
 from scripts.exportar_para_cad import mapa_de
 
 MM = 1000.0
-POR_DEFECTO = LARGO_POR_DEFECTO * MM
+POR_DEFECTO = LARGO_POR_DEFECTO
+"""`emit.catalogo` ya lo da en milímetros, igual que su `_mm`. Cuando
+estaba en metros aquí se multiplicaba por mil, y ese era el síntoma
+visible del mismo fallo que hacía los STEP mil veces pequeños."""
 """Los mm que el catálogo pone cuando una ficha no declara longitud. Aquí
 hace falta el mismo número: si el boceto usara otro, el dibujo y el STEP
 medirían distinto y nadie sabría cuál mirar."""

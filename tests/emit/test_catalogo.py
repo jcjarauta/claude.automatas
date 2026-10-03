@@ -8,6 +8,7 @@ se verifica midiendo la caja envolvente y comparándola con el JSON.
 
 from __future__ import annotations
 
+import contextlib
 from pathlib import Path
 
 import pytest
@@ -15,7 +16,7 @@ import pytest
 from core.comercial import Cota, FamiliaComercial, Fuente, PiezaComercial
 from core.errors import FichaIncompleta
 from core.solido import densidad_de
-from core.units import mm
+from core.units import a_mm, mm
 from emit.catalogo import caja_envolvente, cargar, escribir_catalogo, solido_de
 
 pytestmark = pytest.mark.core
@@ -46,7 +47,7 @@ def pieza(familia: FamiliaComercial, **cotas: float) -> PiezaComercial:
 def test_un_rodamiento_mide_lo_que_dice_su_ficha():
     rodamiento = pieza(FamiliaComercial.RODAMIENTO, exterior=19.0, agujero=10.0, ancho=5.0)
     x, y, z = caja_envolvente(rodamiento)
-    assert (x, y, z) == pytest.approx((0.019, 0.019, 0.005))
+    assert (x, y, z) == pytest.approx((19.0, 19.0, 5.0))
 
 
 def test_un_rodamiento_esta_hueco():
@@ -71,8 +72,8 @@ def test_el_casquillo_sobresale_por_la_valona():
             longitud=6.0,
         )
     )
-    assert x == pytest.approx(0.015)
-    assert y == pytest.approx(0.015)
+    assert x == pytest.approx(15.0)
+    assert y == pytest.approx(15.0)
 
 
 def test_un_engranaje_sale_como_disco_al_diametro_exterior():
@@ -81,13 +82,13 @@ def test_un_engranaje_sale_como_disco_al_diametro_exterior():
     x, _, z = caja_envolvente(
         pieza(FamiliaComercial.ENGRANAJE, exterior=43.4, agujero=15.0, ancho=4.0, modulo=0.7)
     )
-    assert x == pytest.approx(0.0434)
-    assert z == pytest.approx(0.004)
+    assert x == pytest.approx(43.4)
+    assert z == pytest.approx(4.0)
 
 
 def test_el_muelle_sale_como_el_cilindro_que_ocupa():
     _, _, z = caja_envolvente(pieza(FamiliaComercial.MUELLE, exterior=8.8, longitud_libre=68.0))
-    assert z == pytest.approx(0.068)
+    assert z == pytest.approx(68.0)
 
 
 def test_un_tornillo_tiene_cabeza_y_un_anillo_no():
@@ -99,9 +100,9 @@ def test_un_tornillo_tiene_cabeza_y_un_anillo_no():
     anillo = caja_envolvente(
         pieza(FamiliaComercial.FIJACION, agujero=10.0, exterior=20.0, ancho=8.0)
     )
-    assert tornillo[0] == pytest.approx(0.0055)
-    assert anillo[0] == pytest.approx(0.020)
-    assert anillo[2] == pytest.approx(0.008)
+    assert tornillo[0] == pytest.approx(5.5)
+    assert anillo[0] == pytest.approx(20.0)
+    assert anillo[2] == pytest.approx(8.0)
 
 
 def test_todo_se_apoya_en_z_cero():
@@ -173,7 +174,7 @@ def test_las_cotas_criticas_del_catalogo_estan_en_el_solido():
         if not radiales:
             continue
         x, y, _ = caja_envolvente(p)
-        assert max(x, y) == pytest.approx(max(radiales), rel=1e-6), (
+        assert max(x, y) == pytest.approx(a_mm(max(radiales)), rel=1e-6), (
             f"{p.nombre}: el sólido no mide lo que dice su cota crítica"
         )
 
@@ -194,7 +195,7 @@ def test_el_step_se_puede_volver_a_leer(tmp_path: Path):
     ruta = escribir_catalogo([p], tmp_path)[0]
     vuelto = import_step(str(ruta))
     ancho = vuelto.bounding_box().size.X
-    assert ancho == pytest.approx(0.015, abs=1e-6)
+    assert ancho == pytest.approx(15.0, abs=1e-6)
 
 
 # ---------------------------------------------------------------------------
@@ -248,7 +249,9 @@ def test_las_cinco_masas_contrastadas_siguen_siendo_las_mismas():
     """
     for nombre, esperada in MASAS_VERIFICADAS.items():
         pieza = next(p for p in cargar() if p.nombre == nombre)
-        masa = solido_de(pieza).volume * densidad_de(pieza.material) * 1000.0
+        # El sólido viene en mm³ (§ A_MM); la densidad, en kg/m³.
+        volumen = solido_de(pieza).volume / 1000.0**3
+        masa = volumen * densidad_de(pieza.material) * 1000.0
         assert masa == pytest.approx(esperada, abs=0.001), (
             f"{nombre}: {masa:.3f} g ahora, {esperada:.3f} g cuando se contrastó "
             "con Onshape. Si el cambio es querido, redibuja la pieza en el CAD, "
@@ -272,3 +275,92 @@ def test_solo_se_verifican_las_piezas_cuya_envolvente_es_el_solido():
         "plancha_pom",
     }
     assert not (set(MASAS_VERIFICADAS) & sin_envolvente_fiel)
+
+
+# ---------------------------------------------------------------------------
+# La unidad que declara el archivo, que es la que lee el CAD
+# ---------------------------------------------------------------------------
+
+PREFIJOS_SI = {"": 1.0, "MILLI": 1e-3, "CENTI": 1e-2, "DECI": 1e-1, "KILO": 1e3}
+"""Lo que vale en metros un número escrito en la unidad que declara el STEP."""
+
+
+def _unidad_y_mayor_coordenada(ruta: Path) -> tuple[float, float]:
+    """Cuánto mide en metros la unidad del archivo, y su mayor coordenada.
+
+    Se lee el STEP **como texto**, igual que lo lee un CAD cualquiera, y no
+    a través del kernel que lo escribió. Esa es toda la gracia: el kernel
+    escribe y relee con el mismo criterio, así que un desajuste entre la
+    cabecera y los números le resulta invisible.
+    """
+    import re
+
+    texto = ruta.read_text(encoding="utf-8", errors="replace")
+    unidad = re.search(
+        r"LENGTH_UNIT\(\)[^;]*?SI_UNIT\(\s*(?:\.(\w+)\.|\$)\s*,\s*\.METRE\.",
+        texto,
+        re.DOTALL,
+    )
+    assert unidad is not None, f"{ruta.name} no declara LENGTH_UNIT: ningún CAD sabrá qué lee"
+    factor = PREFIJOS_SI[unidad.group(1) or ""]
+
+    # **Solo los puntos de TRES componentes.** Un punto del espacio de
+    # parámetros de una superficie también se escribe como CARTESIAN_POINT,
+    # y el de una circunferencia llega a 2π = 6,283: colado entre los del
+    # modelo, un cilindro de Ø6 parecía medir 6,283.
+    mayor = 0.0
+    for punto in re.finditer(r"CARTESIAN_POINT\('[^']*',\(([^)]*)\)\)", texto):
+        numeros = punto.group(1).split(",")
+        if len(numeros) != 3:
+            continue
+        for numero in numeros:
+            # Un punto puede llevar una referencia en vez de un número.
+            with contextlib.suppress(ValueError):
+                mayor = max(mayor, abs(float(numero)))
+    return factor, mayor
+
+
+def test_el_step_mide_lo_mismo_leido_con_la_unidad_que_declara(tmp_path: Path):
+    """**La comprobación que faltaba, y por la que el catálogo entero salió
+    mil veces pequeño.**
+
+    El sólido se construía con las cotas en metros —el poste con radio
+    0,004 y largo 0,195— y `export_step` escribía una cabecera que declara
+    `SI_UNIT(.MILLI.,.METRE.)`. El archivo decía milímetros y llevaba
+    metros dentro: las catorce referencias entraban en cualquier CAD a una
+    milésima de su tamaño.
+
+    Ninguno de los tests que ya había lo veía. `caja_envolvente` compara
+    metros contra metros por los dos lados, y el de ida y vuelta pasa por
+    `import_step`, que **comete el mismo error que el exportador**: escribe
+    y relee el mismo número y da igual lo que diga la cabecera. Es la
+    familia del `text-anchor`: una comprobación que modela al lector tiene
+    que leer como lee él.
+
+    El cerco: en todas estas formas —cilindros apoyados en Z = 0 y planchas
+    centradas en XY— la mayor coordenada es o el radio mayor o la altura
+    total, así que la mayor dimensión de la envolvente está entre una y dos
+    veces esa coordenada. Un factor mil rompe el cerco por goleada.
+    """
+    for p in cargar():
+        ruta = escribir_catalogo([p], tmp_path)[0]
+        factor, coordenada = _unidad_y_mayor_coordenada(ruta)
+        coordenada_mm = coordenada * factor / 1e-3
+        dimension_mm = max(caja_envolvente(p))
+        assert coordenada_mm <= dimension_mm * (1 + 1e-6), (
+            f"{p.nombre}: el archivo dice {coordenada_mm:.4g} mm donde la pieza "
+            f"mide {dimension_mm:.4g} mm — la cabecera y los números no concuerdan"
+        )
+        assert dimension_mm <= coordenada_mm * 2 * (1 + 1e-6), (
+            f"{p.nombre}: el archivo dice {coordenada_mm:.4g} mm donde la pieza "
+            f"mide {dimension_mm:.4g} mm — la cabecera y los números no concuerdan"
+        )
+
+
+def test_el_poste_mide_195_mm_en_el_archivo(tmp_path: Path):
+    """El caso concreto, con el número a la vista. El poste es un cilindro
+    más alto que ancho, así que su mayor coordenada **es** su largo: 195 mm
+    y no 0,195, que es lo que salía."""
+    poste = next(x for x in cargar() if x.nombre == "poste_pivote")
+    factor, coordenada = _unidad_y_mayor_coordenada(escribir_catalogo([poste], tmp_path)[0])
+    assert coordenada * factor == pytest.approx(0.195, rel=1e-9)

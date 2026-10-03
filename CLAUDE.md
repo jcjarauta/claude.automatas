@@ -44,6 +44,7 @@ uv sync                      # instalar dependencias
 uv sync --group cad          # + el kernel OCCT, solo si vas a exportar STEP
 uv run pytest                # tests
 uv run pytest -m core        # solo el núcleo (rápido)
+uv run --group cad pytest    # + los tests del kernel OCCT, que si no SE SALTAN
 uv run ruff check --fix .    # lint
 uv run ruff format .         # formato
 uv run mypy core compile emit  # tipos (estricto en core/)
@@ -961,6 +962,45 @@ falla si el esquema versionado se queda atrás.
   relaciones—, de modo que el conjunto que se mueve no es el que se simula.
 
   El plan entero está en `docs/ensamblaje.md`.
+
+- **Un archivo que declara una unidad y lleva otra dentro se ve
+  perfecto.** Las catorce envolventes del catálogo salían **mil veces
+  pequeñas**: `emit/catalogo.py` construía el sólido con las cotas en
+  metros —el poste con radio 0,004 y largo 0,195— y `export_step` escribía
+  una cabecera que declara `SI_UNIT(.MILLI.,.METRE.)`. Es la regla 3 rota
+  en un emisor, y el ayudante que debía cruzar la frontera se llamaba
+  `_mm` y devolvía metros: **el nombre decía que convertía y no
+  convertía**.
+
+  Lo grave es por qué sobrevivió días con tres tests encima:
+
+  1. `caja_envolvente` devolvía metros y se comparaba contra la ficha, que
+     también está en metros. **Metros contra metros: el factor se cancela.**
+  2. El test de ida y vuelta pasa por `import_step`, que **comete el mismo
+     error que el exportador**. Escribe y relee el mismo número y la
+     cabecera le da igual. Dos caminos que comparten la equivocación no son
+     dos caminos.
+  3. `uv run pytest` **desinstala build123d** —el grupo `cad` no entra en
+     el sync por defecto— así que el módulo entero se saltaba con
+     `importorskip` y nadie leía el aviso. Para que corran: `uv run
+     --group cad pytest`.
+
+  Y sobre todo: **nadie había abierto nunca uno de esos STEP.** Se generan,
+  se guardan y se arrastran al CAD. Un visor en el bucle lo caza el primer
+  día.
+
+  Lo cierra `test_el_step_mide_lo_mismo_leido_con_la_unidad_que_declara`,
+  que lee el archivo **como texto**, saca el prefijo de `LENGTH_UNIT` y
+  cruza la mayor coordenada contra la envolvente. Es la familia del
+  `text-anchor`: una comprobación que modela al lector tiene que leer como
+  lee él, no como escribe quien escribió. Cuidado al escribirla: un punto
+  del espacio de parámetros de una superficie también es un
+  `CARTESIAN_POINT`, y el de una circunferencia llega a 2π, así que un
+  cilindro de Ø6 parecía medir 6,283. Solo valen los de tres componentes.
+
+  `emit/step.py` —el cartucho— **nunca tuvo el fallo**: usa `a_mm` de
+  `core/units.py` y lo dice en el docstring. Ahora el catálogo usa el
+  mismo.
 
 - **Fase.** Un cartucho montado desfasado escribe basura. La marca física y la
   verificación van en el dossier, no solo en el código.

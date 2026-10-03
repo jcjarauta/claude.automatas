@@ -44,7 +44,7 @@ def indice(piezas: list[PiezaComercial]) -> str:
         criticas = ", ".join(f"{c.nombre} {float(c.valor) * 1000:g}" for c in p.criticas) or "—"
         lineas.append(
             f"| `{p.nombre}.step` | {p.cantidad} | {p.designacion} | "
-            f"{x * 1000:.1f} × {y * 1000:.1f} × {z * 1000:.1f} | {criticas} |"
+            f"{x:.1f} × {y:.1f} × {z:.1f} | {criticas} |"
         )
 
     pendientes = [p for p in piezas if not p.fuente.verificado or p.pedir]

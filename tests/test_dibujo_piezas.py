@@ -38,8 +38,8 @@ def test_el_perfil_dibujado_mide_lo_mismo_que_el_solido(pieza):
     x, y, z = caja_envolvente(pieza)
     if pieza.familia.value == "material":
         return  # la plancha es un prisma, no una pieza de revolución
-    assert diametro == pytest.approx(max(x, y) * 1000.0, rel=1e-6), pieza.nombre
-    assert altura == pytest.approx(z * 1000.0, rel=1e-6), pieza.nombre
+    assert diametro == pytest.approx(max(x, y), rel=1e-6), pieza.nombre
+    assert altura == pytest.approx(z, rel=1e-6), pieza.nombre
 
 
 def test_cada_pieza_declara_al_menos_dos_cotas():

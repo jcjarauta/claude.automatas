@@ -40,18 +40,29 @@ from build123d import Align, Box, Cylinder, Mode, Part, Pos, export_step
 
 from core.comercial import FamiliaComercial, PiezaComercial
 from core.errors import FichaIncompleta
+from core.units import a_mm
 
 CATALOGO = Path("docs/piezas")
 
-LARGO_POR_DEFECTO = 0.010
+LARGO_POR_DEFECTO = 10.0
 """Cuando una ficha no declara longitud, el sólido se hace de 10 mm. Sirve
 para colocarlo y no para acotar: si la longitud importa, va en la ficha."""
 
+# La ficha guarda metros, como todo el núcleo; el STEP se escribe en
+# milímetros, que es lo que declara su cabecera y lo que lee un CAD. La
+# frontera de unidades se cruza en `_mm` y en ningún otro sitio del módulo,
+# con el mismo `a_mm` que usa `emit/step.py`: regla 3, SI dentro y mm fuera.
+
 
 def _mm(pieza: PiezaComercial, nombre: str, por_defecto: float | None = None) -> float:
-    """Una cota en metros, o el valor por defecto si la ficha no la trae."""
+    """Una cota en MILÍMETROS, o el valor por defecto si la ficha no la trae.
+
+    El valor por defecto llega ya en milímetros: es un número escrito aquí,
+    no una cota de la ficha, y mezclar las dos unidades en el mismo
+    argumento es justo como se cuela un error de factor mil.
+    """
     try:
-        return float(pieza.cota(nombre).valor)
+        return a_mm(pieza.cota(nombre).valor)
     except KeyError:
         if por_defecto is None:
             raise FichaIncompleta(
@@ -71,7 +82,7 @@ def _tubo(exterior: float, agujero: float, alto: float) -> Part:
 
 
 def solido_de(pieza: PiezaComercial) -> Part:
-    """La envolvente de una pieza comercial, en metros y apoyada en Z = 0.
+    """La envolvente de una pieza comercial, en MILÍMETROS y apoyada en Z = 0.
 
     El eje Z es el de revolución en todo lo que gira, que es casi todo. Así
     una pieza importada se orienta sola sobre el eje donde va.
@@ -84,7 +95,7 @@ def solido_de(pieza: PiezaComercial) -> Part:
 
     if f is FamiliaComercial.CASQUILLO:
         largo = _mm(pieza, "longitud", LARGO_POR_DEFECTO)
-        espesor_valona = _mm(pieza, "espesor_valona", 0.001)
+        espesor_valona = _mm(pieza, "espesor_valona", 1.0)
         cuerpo = _tubo(_mm(pieza, "exterior"), _mm(pieza, "agujero"), largo)
         valona = _tubo(_mm(pieza, "valona"), _mm(pieza, "agujero"), espesor_valona)
         # La valona va abajo: es la cara que apoya, y la que come el hueco.
@@ -100,7 +111,7 @@ def solido_de(pieza: PiezaComercial) -> Part:
     if f is FamiliaComercial.ENGRANAJE:
         # Disco al diámetro exterior. Los dientes no ayudan a saber si cabe,
         # y la pieza se compra hecha: dibujarlos sería adorno con riesgo.
-        return _tubo(_mm(pieza, "exterior"), _mm(pieza, "agujero"), _mm(pieza, "ancho", 0.004))
+        return _tubo(_mm(pieza, "exterior"), _mm(pieza, "agujero"), _mm(pieza, "ancho", 4.0))
 
     if f is FamiliaComercial.INSTRUMENTO:
         return _tubo(_mm(pieza, "cuerpo"), 0.0, _mm(pieza, "longitud", LARGO_POR_DEFECTO))
@@ -111,9 +122,10 @@ def solido_de(pieza: PiezaComercial) -> Part:
         # `agujero` y `exterior` es un anillo. Meterlos en la misma rama sin
         # mirar daba un tornillo de cabeza Ø18 donde había un anillo.
         try:
-            metrica = float(pieza.cota("metrica").valor)
+            pieza.cota("metrica")
         except KeyError:
             return _tubo(_mm(pieza, "exterior"), _mm(pieza, "agujero"), _mm(pieza, "ancho"))
+        metrica = _mm(pieza, "metrica")
         cabeza = _mm(pieza, "cabeza", metrica * 1.8)
         largo = _mm(pieza, "longitud", LARGO_POR_DEFECTO)
         vastago = _tubo(metrica, 0.0, largo)
@@ -121,8 +133,8 @@ def solido_de(pieza: PiezaComercial) -> Part:
 
     if f is FamiliaComercial.MATERIAL:
         return Box(
-            _mm(pieza, "ancho", 0.1),
-            _mm(pieza, "largo", 0.1),
+            _mm(pieza, "ancho", 100.0),
+            _mm(pieza, "largo", 100.0),
             _mm(pieza, "espesor"),
             align=(Align.CENTER, Align.CENTER, Align.MIN),
         )
@@ -156,7 +168,7 @@ def escribir_catalogo(
 
 
 def caja_envolvente(pieza: PiezaComercial) -> tuple[float, float, float]:
-    """Ancho, fondo y alto de la envolvente, en metros.
+    """Ancho, fondo y alto de la envolvente, en MILÍMETROS.
 
     Es lo que permite comprobar que el sólido generado coincide con la ficha
     sin abrir un CAD, y por eso hay tests que lo usan.
