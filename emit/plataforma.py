@@ -855,7 +855,7 @@ LISTADO: dict[str, Ficha] = {
             "plana y se aprieta con un collar por debajo. El derecho es este mismo volteado, "
             "así que queda un milímetro más abajo: los dos proximales se cruzan."
         ),
-        material="latón, pletina de 3",
+        material="chapa de latón de 3",
         proceso="corte + taladro",
     ),
     "brazo_distal": Ficha(
@@ -886,7 +886,7 @@ LISTADO: dict[str, Ficha] = {
             "común de Ø13. El cubo grande va siempre a la punta, y la curva hacia la caja: el "
             "izquierdo es el derecho volteado."
         ),
-        material="latón, pletina de 3",
+        material="chapa de latón de 3",
         proceso="corte + taladro",
     ),
     "palanca_lapiz": _barra_calada(
@@ -902,7 +902,7 @@ LISTADO: dict[str, Ficha] = {
             "a media altura de levantamiento: ese es el calaje."
         ),
         eje="balancin",
-        material="latón, pletina de 3",
+        material="chapa de latón de 3",
         proceso="corte + taladro",
     ),
     "mordaza": Ficha(
@@ -932,7 +932,7 @@ LISTADO: dict[str, Ficha] = {
             "cinta entra entre el bloque y el sector, y el M3 la aprieta contra el canto. Dos "
             "por cinta, una en cada anclaje, justo por fuera de los puntos de tangencia."
         ),
-        material="latón, pletina de 6",
+        material="chapa de latón de 6",
         proceso="fresado",
     ),
     "eje_pivote": Ficha(
@@ -955,7 +955,7 @@ LISTADO: dict[str, Ficha] = {
             "un circlip sobre el tambor: 55 en los dos lados. La cara plana mira al otro cubo "
             "del brazo y es lo único que fija el calaje."
         ),
-        material="acero W10 h6 rectificado",
+        material="barra W10 h6 rectificada",
         proceso="corte a medida + fresado de la cara plana",
     ),
     "sector": Ficha(
@@ -1035,7 +1035,7 @@ LISTADO: dict[str, Ficha] = {
             "plana y lleva el pomo en el perno del extremo. Es lo único que sobresale por "
             "arriba."
         ),
-        material="latón, pletina de 3 + pomo de madera",
+        material="chapa de latón de 3",
         proceso="corte + taladro",
     ),
     "volante": Ficha(
@@ -1069,7 +1069,7 @@ LISTADO: dict[str, Ficha] = {
             "la cara plana y no lleva prisionero. NO va en la bahía del reductor: centrado a 28 "
             "del árbol con R52, el árbol y la rueda Z60 lo atravesarían."
         ),
-        material="latón, plancha de 6",
+        material="chapa de latón de 6",
         proceso="corte + taladro",
     ),
     "base": Ficha(
@@ -1134,7 +1134,7 @@ LISTADO: dict[str, Ficha] = {
             "recibe la bieleta isógona, que viene horizontal desde el agujero del seguidor 3. "
             "En el mismo eje, 89,75 mm a proa, va la palanca del lápiz."
         ),
-        material="latón, pletina de 3",
+        material="chapa de latón de 3",
         proceso="corte + taladro",
     ),
     "platina_levas": Ficha(
@@ -1249,7 +1249,7 @@ LISTADO: dict[str, Ficha] = {
             "la bahía lleva el piñón; encima del plato 3, el volante y luego la manivela. "
             "Empieza 1 por debajo del plato 2 y acaba 1 por encima de la manivela: 51."
         ),
-        material="acero W10 h6 rectificado",
+        material="barra W10 h6 rectificada",
         proceso="corte a medida + fresado de la cara plana",
     ),
     "casquillo_rueda": Ficha(
@@ -1311,7 +1311,7 @@ LISTADO: dict[str, Ficha] = {
             "del plato y rosca en el apoyo. Popa en y = 4 del cinco barras, fuera del paso de la "
             "bieleta; proa en y = 39, antes del canto del plato."
         ),
-        material="latón, pletina de 6",
+        material="chapa de latón de 6",
         proceso="corte + taladro; rosca M3 en la cara alta",
     ),
     "bieleta": Ficha(
@@ -1370,7 +1370,7 @@ LISTADO: dict[str, Ficha] = {
             "En x = 65, y = 80 del cinco barras, a 3 del canto de la mesa. Arriba, soldado en el "
             "taladro del bulón; abajo, el eje móvil trasero de la mesa pasa por su ojo."
         ),
-        material="latón Ø4",
+        material="latón, barra de Ø4",
         proceso="corte + taladro transversal Ø1,8 a 2 de la punta",
     ),
     "bulon_tirante": Ficha(
@@ -1428,7 +1428,7 @@ LISTADO: dict[str, Ficha] = {
             "En x = ±(68..71), una en cada eje fijo (y = 40 y 100) y cada eje móvil (y = 80 y "
             "140). Horizontales con la mesa arriba; bajan 4,3° al levantar."
         ),
-        material="latón, pletina de 3",
+        material="chapa de latón de 3",
         proceso="corte + taladro",
     ),
     "eje_mesa_movil": Ficha(
@@ -1474,7 +1474,7 @@ LISTADO: dict[str, Ficha] = {
         "Son los soportes de la mesa que la ficha de la base ya anunciaba. Por fuera de las "
         "bielas, y por eso fuera de la huella de la mesa.",
         montaje="Sobre la cara alta de la base, por fuera de cada biela, con un M2 desde abajo.",
-        material="latón, pletina de 4",
+        material="chapa de latón de 4",
         proceso="corte + taladro; rosca M2 en el pie",
     ),
     "orejeta_mesa": Ficha(
@@ -1526,7 +1526,7 @@ LISTADO: dict[str, Ficha] = {
         "Lleva el poste de las láminas hacia quien escribe, por encima de la mesa: por "
         "detrás están el plato 1 y los brazos.",
         montaje="Soldado sobre el tubo de la punta, a z = 75..78, apuntando a +Y del cinco barras.",
-        material="latón, pletina de 3",
+        material="chapa de latón de 3",
         proceso="corte + taladro + soldadura blanda",
     ),
     "poste_horquilla": Ficha(
@@ -1547,7 +1547,7 @@ LISTADO: dict[str, Ficha] = {
             "Soldado de pie sobre el extremo del brazo, de z = 78 a 112, con la cara hacia el "
             "lápiz."
         ),
-        material="latón, pletina de 4",
+        material="chapa de latón de 4",
         proceso="corte + taladro + rosca M2",
     ),
     "pinza": Ficha(
@@ -1713,8 +1713,8 @@ LISTADO: dict[str, Ficha] = {
             "En el poste, con la cara alta 1 por debajo del seguidor: ahí va la valona del "
             "casquillo igus. Encima, soldada, la placa de tope. Alrededor, el muelle de torsión."
         ),
-        material="latón, barra de Ø12",
-        proceso="torneado + taladro roscado M3 radial",
+        material="latón, barra de Ø16",
+        proceso="torneado de la barra de Ø16, la del tambor y la garra, + roscado M3 radial",
     ),
     "placa_tope": Ficha(
         "brazo corto de latón con el poste, la pata del muelle y el pasador de tope en línea",
@@ -1760,7 +1760,7 @@ LISTADO: dict[str, Ficha] = {
             "(DIN 7984) que entra por debajo del rodillo: M3 × 16 en el izquierdo, × 20 en el "
             "derecho y × 30 en el elevador; arriba, una tuerca fina DIN 439."
         ),
-        material="tubo de latón Ø4 × 0,45",
+        material="latón, tubo 4/3,1",
         proceso="corte a largo",
     ),
     "garra": Ficha(
