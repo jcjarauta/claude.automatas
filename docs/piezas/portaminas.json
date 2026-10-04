@@ -31,7 +31,7 @@
       "critica": false
     }
   ],
-  "nota": "De pinza y 2 mm, no de 0,5: el de 2 mm no necesita avanzar la mina, tiene cuerpo cilíndrico que entra directo en el anillo de apriete, y la mina no se rompe. EL DIÁMETRO DEL CUERPO NO ESTÁ MEDIDO: los 10 mm son la cota nominal de la caja. Hay que medir un ejemplar con pie de rey antes de dimensionar el anillo.",
+  "nota": "De pinza y 2 mm, no de 0,5: el de 2 mm no necesita avanzar la mina y la mina no se rompe. NINGUNA MEDIDA ESTA TOMADA: el fabricante no las publica y las tiendas no coinciden (Ø8 o Ø10, 150, 152 o 155 de largo). Con pie de rey sobre el ejemplar que se va a montar se miden cinco cosas —largo, cuerpo, donde acaba el agarre metalico, el pie del clip y el diametro del agarre— y se pasan por scripts/medir_portaminas.py, que cierra la pinza y base_al_plato.",
   "sustitutos": [
     "Caran d'Ache Fixpencil 22: todo metal y mucho mejor acabado, pero cuerpo hexagonal y 20,80 EUR"
   ]

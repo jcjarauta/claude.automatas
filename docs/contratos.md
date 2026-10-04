@@ -402,6 +402,12 @@ de cómo se sujeta el lápiz, que es la decisión que sigue abierta. Con él se
 cierran de golpe `poste_largo` y el largo de los tres separadores que apoyan
 el plato 1.
 
+**Ya se sabe qué lo fija** (2026-10-04): la pinza del portaminas cuelga del
+plato 1 y tiene que apretar plástico liso, por encima del agarre metálico y
+por debajo del clip. Eso da una ventana —46..72 con un portaminas de 150, 40
+de agarre y 50 de clip— y el 75 de hoy caería fuera. `compile/portaminas.py`
+la calcula y `scripts/medir_portaminas.py` la cierra con el lápiz medido.
+
 `eje_pivote_largo` ya no está aquí: no depende de `base_al_plato`, sino de lo
 que se apila entre el collar del proximal y el tambor, todo colgado del plato
 1. Son **55**, uno solo para los dos lados.

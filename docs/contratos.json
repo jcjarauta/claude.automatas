@@ -877,7 +877,7 @@
           "nombre": "base_al_plato",
           "valor": 0.075,
           "unidad": "m",
-          "descripcion": "Hueco libre de la cara alta de la base a la cara baja del plato 1. PENDIENTE: lo fija cuanto portaminas cuelga por debajo del varillaje. Con 75 el plato 3 acaba a 180 y la maquina mide los 200 de la ficha",
+          "descripcion": "Hueco libre de la cara alta de la base a la cara baja del plato 1. PENDIENTE DE MEDIR EL PORTAMINAS: lo fija la pinza, que cuelga del plato 1 y tiene que apretar plastico liso, entre el agarre metalico y el clip (compile/portaminas.py). Con 150 de largo, 40 de agarre y 50 de clip la ventana es 46..72 y el 75 de hoy pone la pinza sobre el clip. Se cierra con scripts/medir_portaminas.py, que escribe tambien el poste y el tirante",
           "tolerancia": "PENDIENTE"
         },
         {
