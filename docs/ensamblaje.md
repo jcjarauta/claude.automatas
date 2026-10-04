@@ -312,7 +312,7 @@ Detection*. Marca en rojo el solape de volumen entre las piezas seleccionadas.
 **Y aquí está la parte que hay que hacer a mano.** La detección es **estática**:
 mira la posición en la que está el conjunto ahora mismo, no durante el
 movimiento. No existe detección continua ni parada al chocar. Así que el hueco
-de 9,7 mm al poste —que es el límite de conjunto que decide qué frases caben,
+de 11,3 mm al poste —que es el límite de conjunto que decide qué frases caben,
 y que ninguna envolvente de C3 ve— **se comprueba congelando θ y repitiendo**:
 
 1. Pulsa `J` para ver los emparejamientos.
@@ -405,7 +405,7 @@ vive en `core/` por la regla 2.
 | Cerrar el lazo por su cuenta y decir si no cierra | **no** — eso solo lo hace Onshape |
 | Arrastrar con el ratón | **no** |
 
-El barrido es el **tercer camino** sobre el hueco de 9,7 mm: el plano lo
+El barrido es el **tercer camino** sobre el hueco de 11,3 mm: el plano lo
 mide con la leva como un radio máximo y el poste como el círculo del
 obstáculo; aquí se mide con el perfil entero, los sólidos de verdad y el
 poste real de Ø8. Los dos coinciden en los 3,5 mm que separan los dos

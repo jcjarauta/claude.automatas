@@ -324,16 +324,16 @@ FICHAS: dict[str, Ficha] = {
         datum="rodamiento_arbol_alojamiento_diametro_radio",
     ),
     "seguidor": Ficha(
-        "barra de dos cubos con cuatro agujeros en línea: muelle, dos al sector y rodillo",
+        "barra de dos cubos con seis agujeros en línea: muelle, dos al sector y tres al rodillo",
         {
             "seguidor_cubo_diametro_radio": 1,
             "seguidor_extremo_diametro_radio": 1,
             "seguidor_pivote_diametro_radio": 1,
             "seguidor_muelle_diametro_radio": 1,
             "union_sector_seguidor_diametro_radio": 2,
-            "seguidor_rodillo_diametro_radio": 1,
+            "seguidor_rodillo_diametro_radio": 3,
         },
-        entre_centros=("brazo_seguidor",),
+        entre_centros=("brazo_seguidor", "brazo_seguidor_derecho", "brazo_seguidor_izquierdo"),
         tangentes=4,
         desde_datum=(
             "seguidor_muelle_radio",

@@ -185,14 +185,16 @@ def test_el_obstaculo_es_la_valona_del_casquillo_y_no_el_poste():
     assert "poco_hueco_al_poste" in [i.codigo for i in con_valona_grande.avisos]
 
     # El caso que destapó todo esto —poste Ø16 con casquillo de bronce de
-    # valona Ø28— quedó al filo: 3,3 mm sobre un mínimo de 3,0. Pasa por
-    # poco, y por poco no es un sitio donde dejar un diseño.
-    assert 0.003 < hueco(14.0) < 0.0035
+    # valona Ø28— quedó al filo: 3,3 mm sobre un mínimo de 3,0. Con la pila
+    # escalonada la leva mayor es la del elevador, unos 2 mm más pequeña que
+    # la que había, y el mismo caso sube a 4,8.
+    assert 0.0045 < hueco(14.0) < 0.005
 
 
 def test_el_hueco_al_poste_es_el_que_dice_el_contrato_de_bastidor():
-    """9,7 mm con «hola», la valona real del GFM-0810 (Ø15) y el calaje fijo.
-    Ha cambiado dos veces y por eso está clavado en un test: primero por leer
-    Ø12 donde el fabricante dice Ø15, y luego al fijar el calaje."""
+    """11,3 mm con «hola», la valona real del GFM-0810 (Ø15) y el calaje fijo.
+    Ha cambiado tres veces y por eso está clavado en un test: primero por leer
+    Ø12 donde el fabricante dice Ø15, luego al fijar el calaje (9,7) y luego
+    al escalonar la pila, que deja como leva mayor la del elevador."""
     montaje, _ = montar(compilar(hola()), Escribiente())
-    assert float(montaje.holgura_al_poste) == pytest.approx(0.0097, abs=1e-4)
+    assert float(montaje.holgura_al_poste) == pytest.approx(0.0113, abs=1e-4)

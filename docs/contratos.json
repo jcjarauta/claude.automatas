@@ -141,15 +141,29 @@
           "nombre": "radio_base",
           "valor": 0.055,
           "unidad": "m",
-          "descripcion": "Radio base de la leva",
+          "descripcion": "Radio base de la leva de ABAJO de la pila, la del elevador. Con brazo_seguidor sitúa los tres postes a hypot(radio_base, brazo_seguidor) del árbol. Las otras dos levas son más pequeñas: la pila es escalonada (compile/escribiente.py, ORDEN_EN_LA_PILA)",
           "tolerancia": ""
         },
         {
           "nombre": "brazo_seguidor",
           "valor": 0.045,
           "unidad": "m",
-          "descripcion": "Del pivote del seguidor al centro del rodillo",
+          "descripcion": "Del pivote del seguidor al centro del rodillo del ELEVADOR, la leva de abajo. Es también el agujero de rodillo más cercano de los tres del seguidor",
           "tolerancia": ""
+        },
+        {
+          "nombre": "brazo_seguidor_derecho",
+          "valor": 0.052,
+          "unidad": "m",
+          "tolerancia": "",
+          "descripcion": "Del pivote al rodillo del seguidor DERECHO, la leva del medio. Con el poste fijo, un brazo más largo da una leva más pequeña: radio base = raíz(poste² − brazo²) = 48,44. 52 es el mínimo para que la tuerca del eje del rodillo quede fuera del sector"
+        },
+        {
+          "nombre": "brazo_seguidor_izquierdo",
+          "valor": 0.059,
+          "unidad": "m",
+          "tolerancia": "",
+          "descripcion": "Del pivote al rodillo del seguidor IZQUIERDO, la leva de arriba: radio base 39,61. Los tres brazos van de 7 en 7 para que el seguidor sea UNA pieza con tres agujeros de rodillo; el rodillo va en el de su canal. Este seguidor va además al revés (rodillo al otro lado del poste) para dejar libre el pasillo por el que sale el cartucho"
         },
         {
           "nombre": "rodillo_radio",
@@ -664,23 +678,23 @@
         },
         {
           "nombre": "rodillo_descuelgue_1",
-          "valor": 0.021,
+          "valor": 0.007,
           "unidad": "m",
-          "descripcion": "Lo que el eje del rodillo baja del plano medio de los seguidores al centro de su leva, para el canal 1. Son multiplos del paso de la pila (5 de leva + 2 de separador), y por eso salen tres ejes distintos y no uno",
+          "descripcion": "Lo que el eje del rodillo baja del plano medio de los seguidores al centro de su leva, para el canal 1, el IZQUIERDO, cuya leva va arriba de la pila. Son múltiplos del paso de la pila (5 de leva + 2 de separador), y por eso salen tres ejes distintos y no uno",
           "tolerancia": ""
         },
         {
           "nombre": "rodillo_descuelgue_2",
           "valor": 0.014,
           "unidad": "m",
-          "descripcion": "Lo mismo para el canal 2",
+          "descripcion": "Lo mismo para el canal 2, el DERECHO, leva del medio",
           "tolerancia": ""
         },
         {
           "nombre": "rodillo_descuelgue_3",
-          "valor": 0.007,
+          "valor": 0.021,
           "unidad": "m",
-          "descripcion": "Lo mismo para el canal 3",
+          "descripcion": "Lo mismo para el canal 3, el ELEVADOR, leva de abajo: su eje pasa junto a las otras dos, y por eso son más pequeñas",
           "tolerancia": ""
         },
         {

@@ -1,8 +1,39 @@
 # Propuesta: cartucho intercambiable y fabricación
 
-Estado: **PROPUESTA, sin aprobar** (2026-10-04). No toca código ni contratos
+Estado: **APROBADA** (2026-10-04): garra con muelle, cartucho con su eje y su
+cubo, y cambio de los contratos de fase y eje. **Fase 1 hecha**, ver §0. No toca código ni contratos
 hasta que se apruebe. Lo que cambia un contrato congelado está marcado
 **[CONTRATO]**.
+
+## 0. Resultado de la fase 1 (viabilidad)
+
+**Encontró un fallo de la máquina que no era del cartucho.** Al meter en el
+montaje 3D los rodillos con sus ejes —no estaban—, el eje del rodillo de la
+leva de abajo atravesaba las dos levas de encima entre 1,4 y 2,0 mm en los
+tres casos de referencia, y el del medio rozaba la de arriba. El barrido no
+lo veía porque los rodillos no estaban en él.
+
+Arreglo, sin tocar ningún contrato congelado ni mover los postes:
+
+- **Pila escalonada**: de abajo arriba, elevador R 55 (no cambia, ni su
+  cadena de levantamiento), derecho R 48,4 e izquierdo R 39,6 de radio base.
+  Cada eje queda a ≥ 5 mm de las levas de encima (mínimo exigido 2), y el
+  ángulo de presión máximo sube de 8,3° a 11,4°.
+- **Un solo seguidor con tres agujeros de rodillo, a 45, 52 y 59**: con el
+  poste fijo, el brazo largo da la leva pequeña. 52 es el mínimo para que la
+  tuerca del eje quede fuera del sector.
+- **El seguidor izquierdo, al revés**, para que ningún rodillo quede en el
+  pasillo de salida.
+- Nueva comprobación del compilador: `eje_de_rodillo_contra_leva`.
+- El cartucho baja a **Ø104,6** (manda la del elevador); quedan 5,2 por lado
+  entre los postes.
+
+Y el cartucho **sale por detrás sin tocar nada** salvo el árbol, que es lo que
+la fase 3 parte: test `test_el_cartucho_sale_por_detras_entre_los_dos_postes`,
+holgura mínima 1,25 mm. Las levas se alejan de los rodillos al salir; la
+palanca de servicio no tiene que apartar los seguidores 65°, solo
+**sujetarlos** donde están para que los muelles no los metan en el hueco
+(§3.3).
 
 ## 1. El problema
 
@@ -100,7 +131,7 @@ recalculan con él. Lo digo porque el contrato está congelado.
 Ø10 y los rodamientos 6800. De paso se corrige h7/h6: el contrato dice h7 y
 la pieza dice h6.
 
-### 3.3 Retirar los seguidores
+### 3.3 Retirar los seguidores (corregido por la fase 1: basta sujetarlos)
 
 Los rodillos cuelgan dentro de la pila, por fuera de las levas, y los muelles
 los aprietan contra ellas. Para sacar el cartucho se propone una **palanca de

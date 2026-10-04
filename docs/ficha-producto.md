@@ -52,7 +52,8 @@ un kit de hobby caro, hemos perdido.
 | L-003 | Leva del elevador | 1 | POM-C negro 5 mm | Fresado CNC |
 | S-001 | Separador de pila | 2 | Latón, Ø3,2 × Ø6 × 2 | Comercial |
 
-Las tres levas son **Ø108 mm**, con taladro de eje Ø10 y pasador de índice Ø3
+Las tres levas son **escalonadas** —de abajo arriba, unos Ø105, Ø95 y Ø78
+según la frase: elevador, derecho e izquierdo—, con taladro de eje Ø10 y pasador de índice Ø3
 a 18 mm sobre +X. La geometría la genera el compilador; el contrato de fase
 está congelado en `docs/contratos.md`.
 

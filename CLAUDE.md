@@ -954,7 +954,7 @@ falla si el esquema versionado se queda atrás.
   vigila nadie.** No hay contacto, ni rodadura, ni parada al chocar: la
   relación de engranaje es, en palabras del blog oficial, *«a mathematical
   link»*. `Interference Detection` existe pero es **estática**, mira la
-  posición de ahora. El hueco de 9,7 mm se comprueba congelando θ con
+  posición de ahora. El hueco de 11,3 mm se comprueba congelando θ con
   **mate values** —`J`, doble clic sobre el valor, teclear— y repitiendo en
   una rejilla de ángulos. El número continuo lo sigue dando
   `compile/conjunto.py`.
@@ -1076,7 +1076,7 @@ falla si el esquema versionado se queda atrás.
 pivotes anclados, palanca para el lápiz y tres levas apiladas. Tres números
 que se decidieron midiendo y no eligiendo:
 
-- **Hueco al poste: 9,7 mm** con «hola». Los tres
+- **Hueco al poste: 11,3 mm** con «hola» (9,7 antes de escalonar la pila). Los tres
   postes de seguidor están a 71 mm del árbol y atraviesan los tres planos, así
   que la leva de cada canal gira bajo los postes de los otros dos. **Ese hueco
   encoge cuando la frase crece**, y es el límite de conjunto que decide qué
@@ -1084,8 +1084,14 @@ que se decidieron midiendo y no eligiendo:
   Y lo que mide el hueco **no es el poste, es la valona de su casquillo**:
   `Cartucho.radio_poste` es el radio del obstáculo. Con postes de Ø16 y
   casquillo de bronce de valona Ø28 quedaban 3,0 mm y saltaba el aviso; con
-  Ø8 y un igus GFM-0810, cuya valona es **Ø15**, quedan 9,7. Con un barrido
-  de toda la caja bajan a 8,9.
+  Ø8 y un igus GFM-0810, cuya valona es **Ø15**, quedaban 9,7; con la pila
+  escalonada, 11,3.
+- **La pila es escalonada** (2026-10-04): elevador abajo con R 55, derecho
+  R 48,4, izquierdo arriba R 39,6. El eje de cada rodillo baja junto a las
+  levas de encima, y con tres iguales el de abajo las atravesaba. Los postes
+  no se mueven: cambian los brazos de seguidor (45 / 52 / 59, una pieza con
+  tres agujeros) y el izquierdo va al revés para dejar salir el cartucho.
+  `compilar` lo vigila con `eje_de_rodillo_contra_leva`.
 - **Relación seguidor → brazo, 6:1.** Con relación 1 y un barrido de brazo de
   26°, mantener el ángulo de presión por debajo de 30° exige un radio base de
   110 mm: levas de 240 mm, tres apiladas. Con 6:1 el seguidor barre un sexto

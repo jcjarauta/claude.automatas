@@ -140,26 +140,39 @@ def circulo(centro: Punto, radio: float) -> Perfil:
     return [Arco(centro, radio, 0.0, 2 * math.pi)]
 
 
-def seguidor(c: dict[str, float] | None = None) -> Perfil:
-    """La barra del seguidor: pivote, rodillo, muelle y los dos al sector.
+BRAZOS_DE_SEGUIDOR = ("brazo_seguidor", "brazo_seguidor_derecho", "brazo_seguidor_izquierdo")
+"""Los tres agujeros de rodillo, del más cercano al pivote al más lejano: el
+elevador (leva de abajo), el derecho y el izquierdo (leva de arriba)."""
 
-    Es una barra de dos cubos como los brazos, y lleva **cuatro** agujeros en
-    línea porque todo lo que cuelga del seguidor tira sobre el mismo eje: el
-    muelle cerca, para que su par apenas varíe; los dos tornillos del sector
-    repartidos, porque el agujero del sector es de paso y hacen falta dos
-    puntos para quitarle el giro; y el rodillo al final, a 45.
+
+def seguidor(c: dict[str, float] | None = None) -> Perfil:
+    """La barra del seguidor: pivote, muelle, los dos al sector y el rodillo.
+
+    Es una barra de dos cubos como los brazos, y todo va en línea porque todo
+    lo que cuelga del seguidor tira sobre el mismo eje: el muelle cerca, para
+    que su par apenas varíe; los dos tornillos del sector repartidos, porque
+    el agujero del sector es de paso y hacen falta dos puntos para quitarle el
+    giro; y el rodillo al final.
+
+    **Tres agujeros de rodillo, a 45, 52 y 59**, y una sola pieza para los
+    tres canales: la pila es escalonada y cada canal lleva su brazo
+    (`Escribiente.brazos_de_canal`). El rodillo va en el agujero de su canal;
+    los otros dos se quedan vacíos, y a cambio hay una referencia en vez de
+    tres.
 
     En línea y no en una brida alrededor del cubo: una brida con los
     tornillos a 11 obligaría a un cubo de Ø28 en una pieza de 45 de largo.
     """
     c = contrato_mm() if c is None else c
-    largo = c["brazo_seguidor"]
+    brazos = [c[n] for n in BRAZOS_DE_SEGUIDOR]
+    largo = max(brazos)
     perfil = barra(largo, c["seguidor_cubo_diametro"] / 2, c["seguidor_extremo_diametro"] / 2)
     perfil += circulo((0.0, 0.0), c["seguidor_pivote_diametro"] / 2)
     perfil += circulo((c["seguidor_muelle_radio"], 0.0), c["seguidor_muelle_diametro"] / 2)
     for cota in ("union_sector_seguidor_cerca", "union_sector_seguidor_lejos"):
         perfil += circulo((c[cota], 0.0), c["union_sector_seguidor_diametro"] / 2)
-    perfil += circulo((largo, 0.0), c["seguidor_rodillo_diametro"] / 2)
+    for brazo in sorted(brazos):
+        perfil += circulo((brazo, 0.0), c["seguidor_rodillo_diametro"] / 2)
     return perfil
 
 
@@ -1118,10 +1131,12 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte láser o CNC",
     ),
     "seguidor": Ficha(
-        "barra de dos cubos con cuatro agujeros en línea, en POM-C de 5",
+        "barra de dos cubos con seis agujeros en línea, en POM-C de 5",
         3,
         (
-            Variable("cota", "brazo_seguidor", "entre centros"),
+            Variable("cota", "brazo_seguidor", "al rodillo del elevador"),
+            Variable("cota", "brazo_seguidor_derecho", "al rodillo del derecho"),
+            Variable("cota", "brazo_seguidor_izquierdo", "al rodillo del izquierdo, el extremo"),
             Variable("cota", "seguidor_espesor", "espesor", en_el_perfil=False),
             Variable("cota", "seguidor_pivote_diametro", "Ø alojamiento del casquillo", "H7"),
             Variable("cota", "seguidor_cubo_diametro", "Ø del cubo"),
@@ -1133,10 +1148,10 @@ LISTADO: dict[str, Ficha] = {
             Variable("cota", "union_sector_seguidor_lejos", "pivote al tornillo lejano"),
             Variable("cota", "union_sector_seguidor_diametro", "Ø paso de los dos al sector"),
             Variable(
-                "cota", "rodillo_descuelgue_1", "baja el rodillo, canal 1", en_el_perfil=False
+                "cota", "rodillo_descuelgue_1", "baja el rodillo, izquierdo", en_el_perfil=False
             ),
-            Variable("cota", "rodillo_descuelgue_2", "canal 2", en_el_perfil=False),
-            Variable("cota", "rodillo_descuelgue_3", "canal 3", en_el_perfil=False),
+            Variable("cota", "rodillo_descuelgue_2", "derecho", en_el_perfil=False),
+            Variable("cota", "rodillo_descuelgue_3", "elevador", en_el_perfil=False),
         ),
         ("plancha", "seguidor_espesor"),
         "La misma plancha de POM-C 5 que las levas y el sector, y justo el largo útil "
@@ -1148,8 +1163,10 @@ LISTADO: dict[str, Ficha] = {
         montaje=(
             "Pivota sobre su poste a través del casquillo igus, en el plano único de "
             "seguidores, a 21 de la cara baja de la primera leva. Por encima lleva el sector "
-            "atornillado; por debajo, el eje del rodillo descolgado hasta su leva: 21, 14 o 7 "
-            "según el canal, que es lo único que distingue un montaje de otro."
+            "atornillado; por debajo, el eje del rodillo descolgado hasta su leva, en el "
+            "agujero de su canal: el elevador a 45 y bajando 21, el derecho a 52 y 14, el "
+            "izquierdo a 59 y 7. El izquierdo se monta volteado, con el rodillo al otro lado "
+            "del poste. Es lo único que distingue un montaje de otro."
         ),
         material="POM-C negro, plancha de 5",
         proceso="fresado CNC",

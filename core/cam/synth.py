@@ -62,6 +62,7 @@ class Seguidor:
         brazo: float,
         radio_rodillo: float,
         orientacion_pivote: float = 0.0,
+        sentido: int = 1,
     ) -> Seguidor:
         """Coloca el pivote donde el ángulo de presión arranca en cero.
 
@@ -76,9 +77,16 @@ class Seguidor:
         Con el brazo perpendicular al radio, el triángulo centro-pivote-rodillo
         es rectángulo en el rodillo, así que el pivote va a
         `hypot(radio_base, brazo)` del centro.
+
+        `sentido` dice a qué lado de la recta centro-pivote cae el rodillo:
+        +1 girando en sentido antihorario desde el pivote, -1 en el otro. Los
+        dos son igual de buenos para el ángulo de presión; lo que cambia es
+        DÓNDE queda el rodillo, y eso decide qué estorba al sacar las levas.
         """
         if radio_base <= 0.0 or brazo <= 0.0:
             raise ValueError("el radio base y el brazo deben ser positivos")
+        if sentido not in (1, -1):
+            raise ValueError(f"el sentido es 1 o -1, no {sentido}")
         distancia = float(np.hypot(radio_base, brazo))
         pivote = (
             distancia * float(np.cos(orientacion_pivote)),
@@ -86,7 +94,7 @@ class Seguidor:
         )
         # Dónde toca el rodillo en reposo, resolviendo las dos circunferencias.
         x = radio_base**2 / distancia
-        y = radio_base * brazo / distancia
+        y = sentido * radio_base * brazo / distancia
         contacto = np.array(
             [
                 x * np.cos(orientacion_pivote) - y * np.sin(orientacion_pivote),
@@ -100,6 +108,42 @@ class Seguidor:
             brazo=brazo,
             radio_rodillo=radio_rodillo,
             psi_cero=psi_cero,
+        )
+
+    @staticmethod
+    def radio_base_en_el_poste(distancia: float, brazo: float) -> float:
+        """El radio base que sale de un pivote fijo y un brazo dado.
+
+        Con el brazo perpendicular al radio en reposo, `radio_base² + brazo²
+        = distancia²`: alargar el brazo achica la leva sin mover el poste.
+        """
+        if not 0.0 < brazo < distancia:
+            raise ValueError(
+                f"con el poste a {distancia} el brazo tiene que ser más corto, no {brazo}"
+            )
+        return float(np.sqrt(distancia**2 - brazo**2))
+
+    @classmethod
+    def en_el_poste(
+        cls,
+        distancia: float,
+        brazo: float,
+        radio_rodillo: float,
+        orientacion_pivote: float = 0.0,
+        sentido: int = 1,
+    ) -> Seguidor:
+        """`bien_puesto` visto desde el bastidor: el pivote está a una
+        distancia fija del árbol —es un poste— y lo que se elige es el brazo.
+
+        Es lo que permite que tres levas de tamaños distintos compartan los
+        mismos tres postes.
+        """
+        return cls.bien_puesto(
+            cls.radio_base_en_el_poste(distancia, brazo),
+            brazo,
+            radio_rodillo,
+            orientacion_pivote,
+            sentido,
         )
 
 

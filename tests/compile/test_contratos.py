@@ -314,17 +314,36 @@ def test_los_pivotes_en_polares_son_los_mismos_que_salen_de_la_transformacion(
 def test_los_tres_rodillos_cuelgan_a_un_paso_de_pila_cada_uno(contratos: Contratos):
     """Los tres seguidores van en UN plano y cada rodillo baja a su leva.
 
-    El brazo del seguidor llega a 26 mm del arbol y la leva tiene 55 de radio
-    base, asi que el brazo pasa por encima: no cabe en el plano de su leva.
-    De ahi que los tres descuelgues sean distintos, y que se diferencien en
-    exactamente un paso de pila —una leva mas un separador— y no en cualquier
-    cosa.
+    El brazo del seguidor pasa por encima de las levas, así que no cabe en
+    el plano de la suya. De ahí que los tres descuelgues sean distintos, y
+    que se diferencien en exactamente un paso de pila —una leva más un
+    separador— y no en cualquier cosa. Y el orden lo pone la pila: la leva
+    de arriba baja un paso, la de abajo tres.
     """
-    d = [contratos.valor("bastidor", f"rodillo_descuelgue_{i}").metros for i in (1, 2, 3)]
+    from compile.escribiente import ORDEN_EN_LA_PILA, SEGUIDORES
+
     paso = float(Escribiente().espesor_leva) + float(Cartucho().separador)
-    assert d[0] - d[1] == pytest.approx(paso, abs=1e-9)
-    assert d[1] - d[2] == pytest.approx(paso, abs=1e-9)
-    assert d[2] == pytest.approx(paso, abs=1e-9)
+    for canal, nombre in enumerate(SEGUIDORES, start=1):
+        bajada = contratos.valor("bastidor", f"rodillo_descuelgue_{canal}").metros
+        pasos_hasta_arriba = len(ORDEN_EN_LA_PILA) - ORDEN_EN_LA_PILA.index(nombre)
+        assert bajada == pytest.approx(pasos_hasta_arriba * paso, abs=1e-9), nombre
+
+
+def test_los_brazos_del_contrato_son_los_de_la_maquina(contratos: Contratos):
+    """Los tres agujeros de rodillo del seguidor y los tres brazos con los
+    que se sintetizan las levas son el mismo número."""
+    from compile.escribiente import SEGUIDORES
+
+    m = Escribiente()
+    nombres = {
+        "izquierdo": "brazo_seguidor_izquierdo",
+        "derecho": "brazo_seguidor_derecho",
+        "elevador": "brazo_seguidor",
+    }
+    for i, canal in enumerate(SEGUIDORES):
+        assert contratos.valor("bastidor", nombres[canal]).metros == pytest.approx(
+            float(m.brazos_de_canal[i]), abs=1e-12
+        ), canal
 
 
 def test_el_septimo_agujero_de_la_platina_deja_pared_a_todos_los_demas():

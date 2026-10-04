@@ -212,6 +212,68 @@ def test_un_seguidor_quieto_no_tiene_angulo_de_presion():
 
 
 # ---------------------------------------------------------------------------
+# El seguidor al revés y el seguidor en un poste fijo
+# ---------------------------------------------------------------------------
+
+
+def test_el_seguidor_al_reves_es_el_espejo_sobre_la_recta_del_pivote():
+    """Con `sentido=-1` el brazo apunta al otro lado de la recta centro-pivote.
+    El pivote no se mueve; el rodillo en reposo cae en el simétrico y el
+    brazo sigue perpendicular al radio, así que el ángulo de presión sigue
+    arrancando en cero."""
+    directo = Seguidor.bien_puesto(mm(40.0), mm(60.0), mm(4.0), orientacion_pivote=0.3)
+    reves = Seguidor.bien_puesto(mm(40.0), mm(60.0), mm(4.0), orientacion_pivote=0.3, sentido=-1)
+    assert reves.pivote == pytest.approx(directo.pivote)
+
+    def contacto(s: Seguidor) -> np.ndarray:
+        return np.array(s.pivote) + s.brazo * np.array([np.cos(s.psi_cero), np.sin(s.psi_cero)])
+
+    a, b = contacto(directo), contacto(reves)
+    assert np.hypot(*b) == pytest.approx(mm(40.0))
+    eje = np.array([np.cos(0.3), np.sin(0.3)])
+    assert float(a @ eje) == pytest.approx(float(b @ eje))  # la misma proyección
+
+    def lado(v: np.ndarray) -> float:
+        return float(eje[0] * v[1] - eje[1] * v[0])
+
+    assert lado(a) == pytest.approx(-lado(b))  # al otro lado
+    assert lado(a) > 0.0
+    # Perpendicular al radio en reposo.
+    brazo = b - np.array(reves.pivote)
+    assert float(brazo @ b) == pytest.approx(0.0, abs=1e-12)
+
+
+def test_un_seguidor_al_reves_tambien_hace_un_circulo_si_esta_quieto():
+    thetas = rejilla(48)
+    quieto = desde_muestras(thetas, np.zeros_like(thetas), n=720)
+    s = Seguidor.bien_puesto(mm(40.0), mm(60.0), mm(4.0), sentido=-1)
+    p = sintetizar(quieto, s)
+    assert p.radio_maximo == pytest.approx(mm(36.0), abs=1e-9)
+    assert p.radio_minimo == pytest.approx(mm(36.0), abs=1e-9)
+
+
+def test_el_sentido_solo_puede_ser_uno_o_menos_uno():
+    with pytest.raises(ValueError, match="sentido"):
+        Seguidor.bien_puesto(mm(40.0), mm(60.0), mm(4.0), sentido=0)
+
+
+def test_en_el_poste_el_brazo_decide_el_radio_base():
+    """El poste está donde está: con el pivote a `distancia` del árbol, un
+    brazo más largo pide una leva más pequeña. `radio_base² + brazo² =
+    distancia²`, porque el brazo sigue perpendicular al radio."""
+    distancia = float(np.hypot(mm(55.0), mm(45.0)))
+    for brazo in (mm(45.0), mm(52.0), mm(59.0)):
+        s = Seguidor.en_el_poste(distancia, brazo, mm(3.0), orientacion_pivote=1.0)
+        assert s.distancia_pivote == pytest.approx(distancia)
+        assert s.brazo == pytest.approx(brazo)
+        assert Seguidor.radio_base_en_el_poste(distancia, brazo) == pytest.approx(
+            np.sqrt(distancia**2 - brazo**2)
+        )
+    with pytest.raises(ValueError, match="poste"):
+        Seguidor.en_el_poste(mm(50.0), mm(50.0), mm(3.0))
+
+
+# ---------------------------------------------------------------------------
 # Determinismo
 # ---------------------------------------------------------------------------
 

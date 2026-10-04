@@ -192,7 +192,12 @@ def presupuesto_de_error(
     if not compilacion.perfiles or compilacion.simulacion is None:
         raise ValueError("no hay nada que presupuestar: la compilación no llegó a simular")
 
-    brazos = (float(maquina.brazo_seguidor),) * 2
+    # Cada brazo con su seguidor: la pila escalonada les da brazos distintos,
+    # y el más largo amplifica menos el error del canto.
+    brazos = (
+        float(maquina.brazos_de_canal[SEGUIDORES.index("izquierdo")]),
+        float(maquina.brazos_de_canal[SEGUIDORES.index("derecho")]),
+    )
     presiones = _angulos_de_presion(compilacion)
     error_de_canto = float(holguras.error_de_perfil) + float(holguras.desgaste)
 
@@ -238,12 +243,18 @@ def amplificacion_del_canto(maquina: Escribiente) -> float:
 
     La cuenta corta, sin corregir por ángulo de presión:
 
-        relacion × brazo proximal / brazo del seguidor = 6 × 90 / 45 = 12
+        relacion × brazo proximal / brazo del seguidor = 6 × 90 / 52 ≈ 10,4
+
+    con el brazo de seguidor más corto de los dos que mueven la punta, que es
+    el que más amplifica.
 
     Sirve para hablar con el taller —«cada centésima que os paséis son doce
     en el papel»— y para comprobar de cabeza lo que devuelve la cadena.
     """
-    return maquina.relacion * float(maquina.proximal) / float(maquina.brazo_seguidor)
+    corto = min(
+        float(maquina.brazos_de_canal[SEGUIDORES.index(n)]) for n in ("izquierdo", "derecho")
+    )
+    return maquina.relacion * float(maquina.proximal) / corto
 
 
 __all__ = [

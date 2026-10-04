@@ -296,7 +296,7 @@ def test_caza_los_dos_diametros_cambiados(tmp_path: Path):
 def test_dos_cotas_que_valen_lo_mismo_son_un_solo_grupo():
     """**Dos rasgos del mismo tamano no se distinguen midiendo.**
 
-    En el seguidor, el paso del rodillo y los dos del sector son los tres
+    En el seguidor, los tres pasos de rodillo y los dos del sector son los cinco
     Ø3,2, y el alojamiento del casquillo y el extremo del brazo son los dos
     Ø10. Pidiendolos por separado, cada cota se llevaba TODOS los que casan
     y sobraba, y la siguiente no encontraba ninguno y faltaba: cuatro quejas
@@ -311,7 +311,7 @@ def test_dos_cotas_que_valen_lo_mismo_son_un_solo_grupo():
     escribir_dxf(seguidor(), destino)
     inf = comparar(destino, "seguidor")
     assert inf.cuadra, [h.texto for h in inf.hallazgos]
-    assert any("R1.6 ×3" in b for b in inf.bien), inf.bien
+    assert any("R1.6 ×5" in b for b in inf.bien), inf.bien
 
     # El otro choque que tenia esta pieza —alojamiento del casquillo y extremo
     # del brazo, los dos Ø10— se quito cambiando el extremo a Ø11, porque ahi

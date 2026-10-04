@@ -360,6 +360,7 @@ def taller(c: dict[str, float] | None = None) -> dict[str, Any]:
     for nombre in (
         "arbol_de_levas",
         "rodamiento_arbol",
+        "rodillo_seguidor",
         "rueda_reductor",
         "pinon_reductor",
         "portaminas",
@@ -435,8 +436,14 @@ def colocar(
         piezas.append(Colocada(f"poste{i + 1}", _poner(poste, 0.0, pivote, z["poste"][0]), False))
 
     # --- lo que gira con el árbol -------------------------------------------
+    # Cada leva a la altura de su rodillo: el contrato dice cuánto baja cada
+    # uno desde el plano de los seguidores, y eso ordena la pila sin que este
+    # módulo tenga que importar el compilador.
+    seg_medio = z["seguidores"][0] + c["seguidor_espesor"] / 2.0
     for i, pieza in enumerate(levas):
-        altura = z["levas"][0] + i * (c["pila_altura"] - 3.0 * 5.0) / 2.0 + i * 5.0
+        altura = seg_medio - c[f"rodillo_descuelgue_{i + 1}"] - ESPESOR_DE_LEVA / 2.0
+        if not z["levas"][0] - 1e-6 <= altura <= z["levas"][1] - ESPESOR_DE_LEVA + 1e-6:
+            raise ValueError(f"la leva {i + 1} cae fuera de la pila: revisa rodillo_descuelgue")
         piezas.append(
             Colocada(f"leva_{i + 1}", _poner(solido_de_pieza(pieza), estado.theta, z=altura), True)
         )
@@ -450,6 +457,23 @@ def colocar(
                 f"seguidor_{i + 1}",
                 _poner(seguidor_solido, angulo, pivote, z["seguidores"][0]),
                 True,
+            )
+        )
+        # El rodillo, en el agujero de su canal y a la altura de su leva.
+        brazo = seg.brazo * mm
+        rodillo_en = (pivote[0] + brazo * math.cos(angulo), pivote[1] + brazo * math.sin(angulo))
+        centro_z = seg_medio - c[f"rodillo_descuelgue_{i + 1}"]
+        ancho = hecho["rodillo_seguidor"].bounding_box().size.Z
+        piezas.append(
+            Colocada(
+                f"rodillo_{i + 1}",
+                _poner(hecho["rodillo_seguidor"], 0.0, rodillo_en, centro_z - ancho / 2.0),
+                True,
+            )
+        )
+        piezas.append(
+            Colocada(
+                f"eje_rodillo_{i + 1}", _eje_del_rodillo(c, z, rodillo_en, centro_z, ancho), True
             )
         )
         if i < 2:  # el canal del elevador no lleva cabestrante
@@ -510,6 +534,45 @@ def colocar(
     piezas += _levantamiento(c, hecho, estado, seguidores, z)
     piezas += _portalapiz(c, hecho, z, al_marco(punta))
     return piezas
+
+
+ESPESOR_DE_LEVA = 5.0
+"""POM-C de 5, `Escribiente.espesor_leva`."""
+
+CABEZA_DEL_EJE = (5.5, 2.0)
+"""Ø y alto de la cabeza del M3 DIN 7984 (cabeza baja) que hace de eje del
+rodillo. Va por DEBAJO del rodillo: por arriba está el sector."""
+
+TUERCA_DEL_EJE = (6.0, 1.8)
+"""Entre aristas y alto de la tuerca fina M3 DIN 439, sobre el seguidor."""
+
+CASQUILLO_DEL_EJE = 4.0
+"""Ø del casquillo de latón que lleva el rodillo hasta su leva. Es lo que
+pasa junto a las levas de encima: `Escribiente.radio_eje_rodillo`."""
+
+
+def _eje_del_rodillo(
+    c: dict[str, float],
+    z: dict[str, tuple[float, float]],
+    centro: Punto,
+    centro_z: float,
+    ancho: float,
+) -> Any:
+    """El eje del rodillo descolgado: un M3 de cabeza baja que entra por
+    debajo del rodillo, sube por un casquillo hasta el seguidor, lo atraviesa
+    y se cierra con una tuerca fina. Un sólido, porque se mueve entero con el
+    seguidor y lo que importa es lo que roza al girar."""
+    x, y = centro
+    pie = centro_z - ancho / 2.0
+    techo = z["seguidores"][1]
+    radio = 1.5 - JUEGO_GIRATORIO / 2.0
+    eje = _cilindro(radio, (x, y, pie - CABEZA_DEL_EJE[1]), (x, y, techo + TUERCA_DEL_EJE[1]))
+    eje += _cilindro(CABEZA_DEL_EJE[0] / 2.0, (x, y, pie - CABEZA_DEL_EJE[1]), (x, y, pie))
+    eje += _cilindro(
+        CASQUILLO_DEL_EJE / 2.0, (x, y, centro_z + ancho / 2.0), (x, y, z["seguidores"][0])
+    )
+    eje += _cilindro(TUERCA_DEL_EJE[0] / 2.0, (x, y, techo), (x, y, techo + TUERCA_DEL_EJE[1]))
+    return eje
 
 
 def _punta(codo_1: Punto, codo_2: Punto, distal: float) -> Punto:

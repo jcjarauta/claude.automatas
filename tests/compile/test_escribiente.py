@@ -16,6 +16,7 @@ import pytest
 
 from compile.escribiente import (
     ERROR_DE_TRAZO_MAXIMO,
+    ORDEN_EN_LA_PILA,
     SEGUIDORES,
     Escribiente,
     compilar,
@@ -71,6 +72,39 @@ def test_la_maquina_por_defecto_compila_una_frase():
     assert not compilacion.veredicto.errores
     assert len(compilacion.piezas) == 3
     assert set(compilacion.perfiles) == set(SEGUIDORES)
+
+
+# ---------------------------------------------------------------------------
+# La pila escalonada
+# ---------------------------------------------------------------------------
+
+
+def test_con_las_tres_levas_iguales_el_eje_del_rodillo_atraviesa_las_de_encima():
+    """El fallo que tenía la máquina y que no veía nadie: con el mismo radio
+    base en los tres canales, el eje del rodillo de abajo pasa por dentro de
+    las levas de arriba. Ahora es un veredicto, no una sorpresa al montar."""
+    iguales = Escribiente(brazos_de_canal=(mm(45.0), mm(45.0), mm(45.0)), sentidos=(1, 1, 1))
+    v = compilar(hola(), iguales).veredicto
+    assert not v.apto
+    assert "eje_de_rodillo_contra_leva" in {i.codigo for i in v.incidencias}
+
+
+def test_la_pila_escalonada_deja_libres_los_ejes_de_los_rodillos():
+    compilacion = compilar(hola())
+    holgura = compilacion.veredicto.metricas["holgura_eje_rodillo_min"]
+    assert holgura >= float(Escribiente().holgura_eje_rodillo)
+    # Y cada leva cabe dentro de la de debajo, que es lo que la hace sacable.
+    radios = {n: float(p.radio_maximo) for n, p in compilacion.perfiles.items()}
+    abajo_arriba = [radios[n] for n in ORDEN_EN_LA_PILA]
+    assert abajo_arriba == sorted(abajo_arriba, reverse=True)
+
+
+def test_los_tres_seguidores_comparten_postes():
+    """Escalonar la pila no mueve el bastidor: los tres pivotes siguen a la
+    misma distancia del árbol, la del contrato."""
+    m = Escribiente()
+    distancias = [float(np.hypot(*m.seguidor(i).pivote)) for i in range(3)]
+    assert distancias == pytest.approx([m.distancia_al_poste] * 3)
 
 
 def test_cada_leva_es_una_pieza_con_su_taladro_y_su_fase():
@@ -469,10 +503,18 @@ def test_el_radio_de_curvatura_no_se_divide_por_dos_al_doblar_el_muestreo():
     """
     grueso = peor_radio(compilar(hola(), capacidad=Capacidad(muestras=720)))
     fino = peor_radio(compilar(hola(), capacidad=Capacidad(muestras=5760)))
-    assert grueso / fino < 1.15, (
+    # Una esquina divide por dos en cada doblado: por ocho al refinar ocho
+    # veces. Un mínimo de verdad se acerca despacio: las levas del brazo
+    # pierden un 4-7 % por doblado (19,3 → 16,5 en el izquierdo con la pila
+    # sin escalonar, 9,1 → 7,6 con la escalonada) y el elevador casi nada.
+    # El umbral está entre las dos firmas, lejos de las dos.
+    assert grueso / fino < 1.3, (
         f"el radio mínimo pasa de {grueso * 1000:.2f} a {fino * 1000:.2f} mm al "
         "refinar ocho veces: eso no es un mínimo, es una esquina"
     )
+    # Y converge: el último doblado mueve mucho menos que el primero.
+    muy_fino = peor_radio(compilar(hola(), capacidad=Capacidad(muestras=11520)))
+    assert fino / muy_fino < 1.08
 
 
 def test_sin_redondear_la_esquina_el_radio_si_se_desploma():

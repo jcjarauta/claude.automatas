@@ -79,8 +79,9 @@ no se podría tener en stock y esto dejaría de ser un producto para ser un
 encargo.
 
 Lo que decide si una frase cabe es el **hueco entre la leva mayor y el poste
-del seguidor de al lado**. Con la caja de escritura por defecto son 9,7 mm
-con «hola» y 8,9 con un barrido de toda la caja; por debajo de 3 el
+del seguidor de al lado**. Con la caja de escritura por defecto eran 9,7 mm
+con «hola» y 8,9 con un barrido de toda la caja, y con la pila escalonada
+(2026-10-04) son 11,3 con «hola»; por debajo de 3 el
 compilador avisa y por debajo de 0 lo rechaza. Ese número no lo ve ninguna
 envolvente que juzgue una leva sola: es un límite de conjunto.
 

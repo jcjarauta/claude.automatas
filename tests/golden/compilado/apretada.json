@@ -2,8 +2,7 @@
   "apto": false,
   "avisos": [
     "contacto_justo",
-    "curvatura_justa",
-    "curvatura_justa"
+    "contacto_justo"
   ],
   "calajes_grados": {
     "derecho": -176.251166,
@@ -15,28 +14,30 @@
   "error_trazo_mm": 0.241965,
   "errores": [
     "capacidad_superada",
+    "perfil_autointersecado",
+    "perfil_autointersecado",
     "perfil_autointersecado"
   ],
   "levas": [
     {
       "canal": "izquierdo",
-      "curvatura_minima_mm": 4.402859,
+      "curvatura_minima_mm": 1.919841,
       "numero": "L-001",
-      "presion_maxima_grados": 17.064333,
+      "presion_maxima_grados": 29.33483,
       "puntos_del_contorno": 720,
-      "radio_maximo_mm": 52.78806,
-      "radio_minimo_mm": 50.049933,
-      "sha256": "852f17a6c249d445d0b01f09697936dcc95c5e16cecc5fc7b865dce34ebb5626"
+      "radio_maximo_mm": 39.191076,
+      "radio_minimo_mm": 35.583491,
+      "sha256": "2ea9eb1f645aacd26539e3d1cf2cf790bbe5d50348b509b052ade08d85c70855"
     },
     {
       "canal": "derecho",
-      "curvatura_minima_mm": 4.630855,
+      "curvatura_minima_mm": 3.187917,
       "numero": "L-002",
-      "presion_maxima_grados": 16.714102,
+      "presion_maxima_grados": 21.41812,
       "puntos_del_contorno": 720,
-      "radio_maximo_mm": 54.170954,
-      "radio_minimo_mm": 50.994325,
-      "sha256": "465ecc3dcab5469765cfa646a8f5bacff5ef754cc2bc9ea79a7c19dc2ac6d85c"
+      "radio_maximo_mm": 47.944215,
+      "radio_minimo_mm": 44.273415,
+      "sha256": "a9ab20e9968def9b7efbd2e17d72d78e30d15c4b74390965905eb99e9371a447"
     },
     {
       "canal": "elevador",

@@ -192,7 +192,9 @@ def test_la_maquina_entera_no_choca_en_todo_el_ciclo():
     Lo que encontró la primera vez: los proximales solapados donde se cruzan,
     el balancín metido en la leva 3, el volante atravesado por el árbol, la
     bieleta cruzando el balancín, el lápiz en el mismo eje que el perno de la
-    punta y los distales rectos pasando por el poste 3.
+    punta y los distales rectos pasando por el poste 3. Y, en cuanto entraron
+    los rodillos con sus ejes, el eje del rodillo de abajo atravesando las dos
+    levas de encima: de ahí la pila escalonada.
     """
     from compile.conjunto import barrer
     from compile.escribiente import Escribiente, compilar
@@ -205,6 +207,11 @@ def test_la_maquina_entera_no_choca_en_todo_el_ciclo():
     # salir con holgura NEGATIVA. Con `distance_to` solo salía 0.
     engrane = next(r for r in roces if {r.una, r.otra} == {"rueda", "pinon"})
     assert engrane.holgura < -1.0, engrane
+    # Cada rodillo toca SU leva en todo el ciclo, sin meterse: la leva del
+    # compilador y el seguidor del montaje cuadran por caminos distintos.
+    for n in (1, 2, 3):
+        contacto = next(r for r in roces if {r.una, r.otra} == {f"leva_{n}", f"rodillo_{n}"})
+        assert abs(contacto.holgura) < 0.01, contacto
     choques = [
         r
         for r in roces
@@ -214,3 +221,42 @@ def test_la_maquina_entera_no_choca_en_todo_el_ciclo():
         f"{r.una} con {r.otra}: {r.holgura:.3f} en θ = {math.degrees(r.theta):.0f}°"
         for r in choques
     )
+
+
+@pytest.mark.slow
+def test_el_cartucho_sale_por_detras_entre_los_dos_postes():
+    """**El cartucho se puede cambiar sin desmontar la máquina.**
+
+    Las tres levas, en fase cero, salen en línea recta por el hueco entre los
+    postes 1 y 2 —el que da a la parte de atrás de la base— sin tocar nada:
+    ni postes, ni platos, ni seguidores, ni los ejes de los rodillos. Lo
+    único que se interpone es el árbol, que el cartucho lleva dentro.
+
+    Es lo que hace posible la pila escalonada con el seguidor izquierdo al
+    revés: con las tres levas iguales y los tres rodillos del mismo lado,
+    uno de ellos quedaba en el pasillo.
+    """
+    from build123d import Pos
+
+    from compile.conjunto import piezas_en
+    from compile.escribiente import Escribiente, compilar
+    from scripts.exportar_para_cad import leer
+
+    maquina = Escribiente()
+    piezas = piezas_en(compilar(leer(RAIZ / "demo" / "hola.json")), maquina, 0.0)
+    levas = [p.solido for p in piezas if p.nombre.startswith("leva_")]
+    cartucho = levas[0] + levas[1] + levas[2]
+    resto = [p for p in piezas if not p.nombre.startswith("leva_") and p.nombre != "arbol"]
+
+    # Hacia atrás: lejos del tercer poste, por el medio de los otros dos.
+    x, y = maquina.seguidor(2).pivote
+    n = math.hypot(x, y)
+    atras = (-x / n * 1000.0, -y / n * 1000.0)
+    radio = cartucho.bounding_box().size.X / 2.0
+    for paso in range(1, 13):
+        d = paso * 10.0 / 1000.0
+        movido = Pos(atras[0] * d, atras[1] * d, 0.0) * cartucho
+        for pieza in resto:
+            holgura = movido.distance_to(pieza.solido)
+            assert holgura > 1.0, f"a {paso * 10} mm el cartucho roza {pieza.nombre}: {holgura:.2f}"
+    assert maquina.distancia_al_poste * 1000.0 / 2.0 + radio < 12 * 10.0, "no ha llegado a salir"

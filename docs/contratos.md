@@ -137,13 +137,24 @@ banco diga que el modelo predice:
 
 - Postes de seguidor: tres, a **71,1 mm** del árbol, repartidos a 120°.
   Sale de `hypot(radio_base, brazo_seguidor)` = `hypot(55, 45)`.
+- **La pila es escalonada.** El eje de cada rodillo baja desde el plano único
+  de seguidores hasta su leva pasando junto a las que tiene encima; con las
+  tres del mismo radio base, el de abajo las atravesaba casi 2 mm. Cada leva
+  es ahora más pequeña que la de debajo: de abajo arriba, **elevador R 55,
+  derecho R 48,4 e izquierdo R 39,6** de radio base. No se mueve el bastidor:
+  con el poste fijo, un brazo de seguidor más largo da una leva más pequeña
+  (`radio_base² + brazo² = 71,06²`), y los brazos son **45, 52 y 59**, los
+  tres agujeros de rodillo de UN solo seguidor. El izquierdo va al revés para
+  dejar libre el pasillo por el que sale el cartucho. El compilador lo vigila:
+  `eje_de_rodillo_contra_leva` si un eje pasa a menos de 2 mm de una leva.
 - Poste de seguidor de **Ø8** con casquillo igus GFM-0810. **Lo que la leva ve
   no es el poste: es la valona del casquillo**, que mide **Ø15** —confirmado
   en la ficha del fabricante, d3 = 15 mm—. Con los Ø16 que se suponían antes
   y un casquillo de bronce con valona de Ø28, el hueco caía a 3,0 mm y
   saltaba el aviso. El Ø16 nunca estuvo justificado: la fuerza tangencial en
   el seguidor es de 0,7 N.
-- Hueco entre la leva mayor y ese obstáculo: **9,7 mm** con «hola». Encoge
+- Hueco entre la leva mayor y ese obstáculo: **11,3 mm** con «hola» (9,7
+  antes de escalonar la pila; la mayor es ahora la del elevador). Encoge
   cuando la frase crece —8,9 mm con un barrido de toda la caja— y es el
   límite de conjunto que decide qué frases caben.
 - Caja de escritura: 80 × 30 mm, centrada a 100 mm sobre la línea de pivotes.
@@ -535,6 +546,7 @@ absorbe el alabeo es la flexura, y 0,5 es todo su recorrido.
 | 2026-09-30 | **Calaje** | Congelado. El calaje pasa de ser la media de los ángulos de la frase a ser el ángulo del brazo en el centro de la caja | Con la media, el calaje se movía 3,3° entre frases y el brazo dejaba de ser pieza de stock. Cuesta décimas de milímetro de leva |
 | 2026-09-30 | Bastidor | Hueco al poste de 9,5 a **9,7 mm** con «hola» | Consecuencia de fijar el calaje. No es una decisión, es el número que sale |
 | 2026-09-30 | Fase | Pasador de índice de Ø3 × 16 a **Ø3 × 24** | Con 16 no llegaba a la tercera leva de una pila de 19 mm, que es justo lo que el contrato promete calar. Lo encontró un test que cruza la ficha del pasador con la de la plancha y la del separador |
+| 2026-10-04 | Bastidor | **Pila escalonada**: radios base 55 / 48,4 / 39,6 (elevador abajo, derecho, izquierdo arriba), brazos de seguidor 45 / 52 / 59 en una sola pieza, izquierdo al revés, descuelgues 21 / 14 / 7 reasignados. Hueco al poste de 9,7 a **11,3 mm** | Al meter los rodillos y sus ejes en el montaje 3D, el eje del rodillo de abajo atravesaba las dos levas de encima entre 1,4 y 2 mm en los tres casos de referencia. No toca ningún contrato congelado: calaje, fase y pila de 19 siguen igual |
 | 2026-10-01 | Bastidor | **Añadido el amplificador 6:1**: cabestrante de cinta, sector R 48 y tambor R 8 | Era un escalar en el código sin mecanismo. Se eligió frente a engranajes por el juego: un par de calidad 8d daba 1,98 mm en la punta y llevaba el peor caso de 2,84 a 6,74; la cinta da 0,0115 |
 | 2026-10-01 | Bastidor | **Añadida la transformación** entre el marco de la leva y el del cinco barras: origen (−16,225, −28,103), 150° | Eran dos sistemas de coordenadas sin relación. Con cinta el entre-ejes es libre, así que es una elección de empaquetado y `brazo_separacion` no se toca |
 | 2026-10-01 | Bastidor | **Añadidas las cotas del cabestrante**: fibra neutra y canto mecanizado del sector y del tambor, cinta, tangencia y arcos | La relación la fija la fibra neutra y no el canto; la tangencia cae a 126° y no a 54, así que el sector necesita 140° de semiarco y no 25 |

@@ -62,13 +62,14 @@ def test_un_error_en_el_canto_llega_a_la_punta_muy_amplificado():
 
 
 def test_la_cuenta_de_cabeza_se_queda_corta_frente_al_jacobiano():
-    """`relacion × proximal / brazo_seguidor` da 12, y sirve para hablar con
+    """`relacion × proximal / brazo_seguidor` da 10,4 con el brazo de 52 del
+    derecho, y sirve para hablar con
     el taller. Pero el cinco barras mueve la punta con una palanca efectiva
     mayor que el brazo proximal, así que la amplificación real es casi el
     doble. La cuenta corta es optimista y conviene no confundirlas."""
     maquina = Escribiente()
     de_cabeza = amplificacion_del_canto(maquina)
-    assert de_cabeza == pytest.approx(12.0)
+    assert de_cabeza == pytest.approx(6.0 * 90.0 / 52.0)
     real = max(c.amplificacion for c in presupuesto().cadena.contribuciones if "perfil" in c.nombre)
     assert real > de_cabeza
 

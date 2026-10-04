@@ -53,7 +53,17 @@ from emit.pieza import Pieza, Polilinea, Taladro, Veta
 Arreglo = npt.NDArray[np.float64]
 
 SEGUIDORES = ("izquierdo", "derecho", "elevador")
-"""Una leva por seguidor, en el orden en que se apilan en el eje."""
+"""Una leva por seguidor. El orden es el de los postes —el seguidor `i` va
+en el poste a `i × 120°`— y el de la numeración L-001…L-003; el de la pila
+es otro, `ORDEN_EN_LA_PILA`."""
+
+ORDEN_EN_LA_PILA = ("elevador", "derecho", "izquierdo")
+"""De abajo arriba. **La pila es escalonada**: cada leva es más pequeña que
+la de debajo, porque el eje del rodillo de una leva baja desde el plano de
+los seguidores pasando junto a todas las que tiene encima. Con las tres del
+mismo tamaño ese eje atravesaba las de arriba casi 2 mm. El elevador va
+abajo y conserva su radio porque tiene el recorrido más corto y de él cuelga
+toda la cadena del levantamiento."""
 
 ERROR_DE_TRAZO_MAXIMO = 0.0005
 """Medio milímetro. Por encima de eso, la letra deja de parecerse."""
@@ -102,6 +112,25 @@ class Escribiente(BaseModel):
     # -- las levas -----------------------------------------------------------
     radio_base: Longitud = mm(55.0)
     brazo_seguidor: Longitud = mm(45.0)
+    """Estos dos sitúan los postes: el pivote va a `hypot(radio_base,
+    brazo_seguidor)` del árbol. Son también el radio y el brazo de la leva de
+    abajo de la pila, la del elevador."""
+    brazos_de_canal: tuple[Longitud, Longitud, Longitud] = (mm(59.0), mm(52.0), mm(45.0))
+    """El brazo de cada seguidor, en el orden de `SEGUIDORES`. Con el poste
+    fijo, un brazo más largo da una leva más pequeña (`Seguidor.en_el_poste`):
+    así se escalona la pila sin mover el bastidor. Van de 7 en 7 para que sea
+    UNA sola pieza de seguidor con tres agujeros de rodillo, y 52 es el mínimo
+    para que la tuerca del eje quede fuera del sector."""
+    sentidos: tuple[int, int, int] = (-1, 1, 1)
+    """A qué lado del poste cae cada rodillo. El izquierdo va al revés para
+    que ningún rodillo quede en el pasillo por el que sale el cartucho, entre
+    los postes 1 y 2."""
+    radio_eje_rodillo: Longitud = mm(2.0)
+    """El casquillo de Ø4 que baja el rodillo desde el seguidor hasta su
+    leva. Es lo que pasa junto a las levas de encima."""
+    holgura_eje_rodillo: Longitud = mm(2.0)
+    """Lo mínimo entre ese casquillo y una leva que gira a su lado: la
+    `holgura_minima` del contrato."""
     radio_rodillo: Longitud = mm(3.0)
     """Ø6 mm: el exterior de un **MR63 (3×6×2,5)**, que es un rodamiento
     miniatura corriente y barato. Antes eran 2 mm, un diámetro para el que no
@@ -173,18 +202,30 @@ class Escribiente(BaseModel):
             "elevador": float(elevador[0, 0]),
         }
 
+    @property
+    def distancia_al_poste(self) -> float:
+        """Del árbol al pivote de cualquier seguidor: los tres postes."""
+        return float(np.hypot(float(self.radio_base), float(self.brazo_seguidor)))
+
+    def radio_base_de(self, indice: int) -> float:
+        return Seguidor.radio_base_en_el_poste(
+            self.distancia_al_poste, float(self.brazos_de_canal[indice])
+        )
+
     def seguidor(self, indice: int) -> Seguidor:
         """El seguidor de cada leva.
 
         Los tres pivotes van repartidos alrededor del eje para que los brazos
-        no se estorben. `bien_puesto` los coloca con el brazo perpendicular al
-        radio, que es donde el ángulo de presión arranca en cero.
+        no se estorben, todos a la misma distancia. Cada uno con su brazo y su
+        sentido, perpendicular al radio en reposo, que es donde el ángulo de
+        presión arranca en cero.
         """
-        return Seguidor.bien_puesto(
-            radio_base=float(self.radio_base),
-            brazo=float(self.brazo_seguidor),
-            radio_rodillo=float(self.radio_rodillo),
+        return Seguidor.en_el_poste(
+            self.distancia_al_poste,
+            float(self.brazos_de_canal[indice]),
+            float(self.radio_rodillo),
             orientacion_pivote=indice * 2.0 * np.pi / len(SEGUIDORES),
+            sentido=self.sentidos[indice],
         )
 
 
@@ -474,6 +515,34 @@ def pieza_de_leva(
 # ---------------------------------------------------------------------------
 
 
+def holguras_de_los_ejes(
+    perfiles: dict[str, PerfilLeva], maquina: Escribiente
+) -> dict[tuple[str, str], float]:
+    """Lo que el eje de cada rodillo libra de las levas que tiene encima.
+
+    Las tres levas giran juntas, así que en el marco de la leva el eje del
+    rodillo recorre su curva de paso. Basta con medir la distancia de esa
+    curva al perfil de cada leva de encima y restar el radio del casquillo.
+    Negativo si lo atraviesa.
+    """
+    from shapely import distance, points
+    from shapely.geometry import Polygon
+
+    resultado: dict[tuple[str, str], float] = {}
+    for i, abajo in enumerate(ORDEN_EN_LA_PILA):
+        if abajo not in perfiles:
+            continue
+        recorrido = points(np.asarray(perfiles[abajo].paso))
+        for arriba in ORDEN_EN_LA_PILA[i + 1 :]:
+            if arriba not in perfiles:
+                continue
+            leva = Polygon(np.asarray(perfiles[arriba].perfil))
+            dentro = leva.contains(recorrido)
+            d = np.where(dentro, -1.0, 1.0) * distance(recorrido, leva.exterior)
+            resultado[(abajo, arriba)] = float(d.min()) - float(maquina.radio_eje_rodillo)
+    return resultado
+
+
 def compilar(
     escritura: Escritura,
     maquina: Escribiente | None = None,
@@ -569,6 +638,26 @@ def compilar(
             },
         )
 
+    holguras = holguras_de_los_ejes(perfiles, maquina)
+    for (abajo, arriba), holgura in holguras.items():
+        if holgura < float(maquina.holgura_eje_rodillo):
+            veredicto = veredicto.con(
+                Incidencia(
+                    gravedad="error",
+                    codigo="eje_de_rodillo_contra_leva",
+                    mensaje=(
+                        f"el eje del rodillo {abajo} pasa a {a_mm(Metros(holgura)):.2f} mm "
+                        f"de la leva {arriba}, que tiene encima"
+                    ),
+                    sugerencia="reduce la caja de escritura o escalona más la pila",
+                )
+            )
+    if holguras:
+        veredicto = Veredicto(
+            incidencias=veredicto.incidencias,
+            metricas={**veredicto.metricas, "holgura_eje_rodillo_min": min(holguras.values())},
+        )
+
     contacto, contacto_en_la_punta, incidencias_contacto = verificar_por_contacto(perfiles, maquina)
     for incidencia in incidencias_contacto:
         veredicto = veredicto.con(incidencia)
@@ -627,12 +716,14 @@ __all__ = [
     "ERROR_DE_CONTACTO_GRAVE",
     "ERROR_DE_TRAZO_MAXIMO",
     "MUESTRAS_DE_CONTACTO",
+    "ORDEN_EN_LA_PILA",
     "SEGUIDORES",
     "Compilacion",
     "Escribiente",
     "Simulacion",
     "compilar",
     "encajar_en_la_caja",
+    "holguras_de_los_ejes",
     "pieza_de_leva",
     "simular",
     "verificar_por_contacto",
