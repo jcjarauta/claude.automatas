@@ -128,6 +128,7 @@ suba, está en la sección siguiente.
 | Anillo de apriete del lápiz | 1 | 6,81 | 6,81 |
 | Cinta del amplificador, fleje 1.4310 0,05 × 5 | 1 | 4,57 | 4,57 |
 | Muelles de torsión del seguidor *(estimado)* | 3 | 1,81 | 5,44 |
+| Muelle de la garra, compresión 0,8 × Di 11,6 × L0 20 *(estimado)* | 1 | 1,00 | 1,00 |
 | Contrachapado de abedul 9 mm | 1 | 4,43 | 4,43 |
 | Postes de pivote, inox Ø8 h6 | 3 | 1,21 | 3,63 |
 | Volante, material (disco de plancha de latón Ø104 × 6) | 1 | 5,57 | 5,57 |
@@ -136,7 +137,7 @@ suba, está en la sección siguiente.
 | Tornillería inox A2 | 20 | 0,04 | 0,80 |
 | Árbol de levas, Ø10 h6 rectificado | 1 | 0,47 | 0,47 |
 | Acabado Osmo 3062 | 1 | 0,30 | 0,30 |
-| **Plataforma** | | | **103,64** |
+| **Plataforma** | | | **104,64** |
 
 La **base casi dobla** su línea, de 10,39 a 19,30: al cerrar la planta pasó
 de 154 a 275 mm de fondo, así que una tabla de 2 m da 7 bases y no 13. El
@@ -149,8 +150,8 @@ sin verificar.
 | | € |
 | --- | --- |
 | Cartucho | 39,04 |
-| Plataforma | 103,64 |
-| **Material y compras de un escribiente** | **142,68** |
+| Plataforma | 104,64 |
+| **Material y compras de un escribiente** | **143,68** |
 
 Son **70 € más** de lo que decía la estimación anterior de 60-65 €, y la
 diferencia no es que algo haya subido: es que antes faltaban el corte, los

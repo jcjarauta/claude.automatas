@@ -1,0 +1,44 @@
+{
+  "nombre": "muelle_garra",
+  "familia": "muelle",
+  "designacion": "muelle de compresión, cuerda de piano 0,8 × Ø medio 12,4 × 3,5 espiras activas, L0 20",
+  "cantidad": 1,
+  "material": "acero aleado",
+  "fuente": {
+    "proveedor": "catálogo o a medida, PENDIENTE de presupuesto",
+    "referencia": "compresión 0,8 × Di 11,6 × L0 20, extremos cerrados y amolados",
+    "url": "https://www.gutekunst-federn.de/",
+    "fecha": "2026-10-04",
+    "verificado": false
+  },
+  "cotas": [
+    {
+      "nombre": "hilo",
+      "valor": 0.0008,
+      "tolerancia": "",
+      "critica": false
+    },
+    {
+      "nombre": "exterior",
+      "valor": 0.0132,
+      "tolerancia": "cabe en la garra de Ø14",
+      "critica": true
+    },
+    {
+      "nombre": "interior",
+      "valor": 0.0116,
+      "tolerancia": "pasa por el eje motriz de Ø10",
+      "critica": true
+    },
+    {
+      "nombre": "longitud_libre",
+      "valor": 0.02,
+      "tolerancia": "",
+      "critica": false
+    }
+  ],
+  "nota": "Aprieta la garra contra la cabeza del eje del cartucho: es la retención axial de la pila y la fuerza con que roza la lengüeta al deslizar el cartucho, así que va BLANDO. k = G d⁴ / 8 D³ n = 0,61 N/mm: 4,9 N montado a 12 (garra_muelle_largo) y 7,9 N con la garra levantada su carrera de 5. Bloque 4,4, lejos de los 7. Tensión a 7,9 N: 530 MPa, holgado. Auditoría A5.",
+  "sustitutos": [
+    "cualquier compresión de catálogo Di 10,5-12, De ≤ 13,5, L0 18-22 y k entre 0,4 y 0,8 N/mm"
+  ]
+}

@@ -323,6 +323,17 @@
       "url": "https://evek.red/acero-inoxidable/3280-fleje-de-resorte-de-acero-inoxidable-005x10mm-04x200mm-14310-301-l%C3%A1mina-fleje-de-chapa-de-acero-inoxidable.html",
       "rinde": 4.0,
       "nota_del_rendimiento": "4 máquinas por metro. Antes decía «hendido a 10 para los tres canales», de cuando la cinta medía 10 de ancho, y se cobraba el metro entero."
+    },
+    {
+      "concepto": "Muelle de la garra",
+      "referencia": "compresión 0,8 × Di 11,6 × L0 20",
+      "proveedor": "PENDIENTE de presupuesto",
+      "cantidad": 1,
+      "precio": 1.0,
+      "iva_incluido": true,
+      "verificado": false,
+      "url": "https://www.gutekunst-federn.de/",
+      "pedir": "uno de catálogo Di 10,5-12, De ≤ 13,5, L0 18-22 y k 0,4-0,8 N/mm, o a medida"
     }
   ],
   "corte_por_bloque": {
