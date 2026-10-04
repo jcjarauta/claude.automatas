@@ -706,9 +706,9 @@
         },
         {
           "nombre": "eje_pivote_largo",
-          "valor": 0.063,
+          "valor": 0.066,
           "unidad": "m",
-          "descripcion": "Largo del eje de pivote, el mismo para los dos: del collar de 3 bajo el proximal al circlip 1,5 sobre el tambor, cuya cara alta queda a 41,5 del plato 1. El derecho pide 62,5 y el izquierdo 59; uno solo de 63 es un corte de barra y lo que sobra queda bajo el proximal. Eran 55 hasta que la pila subió 8 para el cubo y el muñón del cartucho (tests/emit/test_montaje.py lo ata a la pila)",
+          "descripcion": "Largo del eje de pivote, el mismo para los dos: del collar de 3 bajo el proximal al circlip 1,5 sobre el tambor, cuya cara alta queda a 44,5 del plato 1. El derecho pide 65,5 y el izquierdo 62; uno solo de 66 es un corte de barra y lo que sobra queda bajo el proximal. Eran 55 hasta que la pila subió 8 para el cubo y el muñón del cartucho, y 63 hasta el calzo de 3 del sector (tests/emit/test_montaje.py lo ata a la pila)",
           "tolerancia": ""
         },
         {
@@ -1060,6 +1060,34 @@
           "unidad": "m",
           "tolerancia": "",
           "descripcion": "La galga de láminas que entra justa entre el pasador de tope y el seguidor con el cartucho de calibrar puesto: es como se orienta el collar en el montaje. Derivada: el hueco en reposo es 1,205, y 1,20 está en cualquier juego de galgas"
+        },
+        {
+          "nombre": "calzo_sector_espesor",
+          "valor": 0.003,
+          "unidad": "m",
+          "tolerancia": "",
+          "descripcion": "Calzo de latón entre el seguidor y el sector: sube el plano de la cinta la holgura mínima sobre los seguidores. Sin él, la cinta de un canal rozaba el seguidor del elevador y el extremo del seguidor izquierdo al cruzarlos (auditoría A6). Chapa de 3, la de los brazos"
+        },
+        {
+          "nombre": "calzo_sector_cubo_diametro",
+          "valor": 0.022,
+          "unidad": "m",
+          "tolerancia": "",
+          "descripcion": "Cubo del calzo: rodea el agujero de paso de 16 con 3 de pared"
+        },
+        {
+          "nombre": "calzo_sector_extremo_diametro",
+          "valor": 0.009,
+          "unidad": "m",
+          "tolerancia": "",
+          "descripcion": "Extremo del calzo, alrededor del tornillo lejano al seguidor"
+        },
+        {
+          "nombre": "tambor_tornillo_diametro",
+          "valor": 0.0016,
+          "unidad": "m",
+          "tolerancia": "",
+          "descripcion": "Taladro roscado M2, radial, en el lado lejano del tambor: ahí los dos extremos de la cinta se solapan y un M2 los sujeta por un agujero del fleje. La cinta no se dobla para anclarse: queda plana sobre el cilindro. Cierra el anclaje del tambor que el contrato dejaba abierto"
         }
       ]
     },

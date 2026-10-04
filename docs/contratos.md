@@ -354,7 +354,15 @@ sector obligan a que uno de los dos ramales cruce.
 test. Son los dos números de la correa abierta, a seis decimales y por dos
 caminos distintos. El otro arreglo no aparece por ningún lado.
 
-Lo que sí queda por cerrar es **dónde cae la mordaza en el tambor**, y con
+**Cerrado el 2026-10-04 (auditoría A6): en el tambor no va una mordaza.** El
+bloque de 24 × 10 con su M4 no cabe en un tambor de Ø16 cuyo centro es el
+agujero en D del eje. Los dos extremos de la cinta se solapan en el lado
+lejano del tambor y los sujeta **un M2 radial** por un agujero del fleje,
+que queda plano sobre el cilindro sin doblarse. En el sector, **una
+mordaza**, detrás, en el centro de los 252°: su ranura sigue dando el
+calaje. Mordazas: dos, no cuatro.
+
+Lo que quedaba por cerrar era **dónde cae la mordaza en el tambor**, y con
 cuánto margen. Los 185° de `amplificador_tambor_abrazado` son 107,94 de correa
 abierta más 33 de barrido más **44 repartidos en «dos anclajes»**, y en el
 tambor hay uno solo: o el margen es generoso a propósito, o el número se
@@ -596,6 +604,7 @@ absorbe el alabeo es la flexura, y 0,5 es todo su recorrido.
 | 2026-09-30 | **Calaje** | Congelado. El calaje pasa de ser la media de los ángulos de la frase a ser el ángulo del brazo en el centro de la caja | Con la media, el calaje se movía 3,3° entre frases y el brazo dejaba de ser pieza de stock. Cuesta décimas de milímetro de leva |
 | 2026-09-30 | Bastidor | Hueco al poste de 9,5 a **9,7 mm** con «hola» | Consecuencia de fijar el calaje. No es una decisión, es el número que sale |
 | 2026-09-30 | Fase | Pasador de índice de Ø3 × 16 a **Ø3 × 24** | Con 16 no llegaba a la tercera leva de una pila de 19 mm, que es justo lo que el contrato promete calar. Lo encontró un test que cruza la ficha del pasador con la de la plancha y la del separador |
+| 2026-10-04 | Bastidor | **Anclaje del tambor cerrado**: M2 radial sobre los dos extremos solapados de la cinta; una mordaza por sector (eran 4, son 2). **Calzo de 3** bajo el sector y ejes de rodillo **avellanados** desde arriba; `eje_pivote_largo` 66 | Auditoría A6: con la cinta en el 3D, la tuerca del rodillo izquierdo la cortaba y la cinta rozaba los seguidores que cruza |
 | 2026-10-04 | Base | Ancho de 190 a **240** | Auditoría A1: los sectores se salían 14,5 por cada lado. Trabajan con la cinta justo hacia fuera, así que recortarlos no servía |
 | 2026-10-04 | Bastidor | **Muelle de torsión y tope de servicio** en cada poste: collar, placa de tope, pasador; tope a 4°; casquillo del rodillo Ø4 con sus tres largos | El muelle de compresión no cabía dentro de los platos, y sin tope el rodillo se metía en el hueco del cartucho al sacarlo |
 | 2026-10-04 | **Fase** | El «plato de arrastre» pasa a ser el **cubo de latón del cartucho**. Ningún valor cambia: Ø3 × 24 a 18 sobre +X | Aprobado con la propuesta del cartucho intercambiable. Era texto sin pieza |

@@ -508,6 +508,21 @@ def anillo(exterior: str, interior: str) -> Callable[[dict[str, float] | None], 
     return perfil
 
 
+def calzo_sector(c: dict[str, float] | None = None) -> Perfil:
+    """El calzo entre seguidor y sector: la barra de los dos tornillos que los
+    unen, con el agujero de paso de la valona en el cubo."""
+    c = contrato_mm() if c is None else c
+    perfil = barra(
+        c["union_sector_seguidor_lejos"],
+        c["calzo_sector_cubo_diametro"] / 2,
+        c["calzo_sector_extremo_diametro"] / 2,
+    )
+    perfil += circulo((0.0, 0.0), c["amplificador_sector_agujero_diametro"] / 2)
+    for cota in ("union_sector_seguidor_cerca", "union_sector_seguidor_lejos"):
+        perfil += circulo((c[cota], 0.0), c["union_sector_seguidor_diametro"] / 2)
+    return perfil
+
+
 def placa_tope(c: dict[str, float] | None = None) -> Perfil:
     """La placa de tope del seguidor: un brazo corto con el poste en el
     origen, el pasador de tope en la punta y la pata fija del muelle en
@@ -650,6 +665,7 @@ PERFILES = {
     "eje_motriz": lambda c: varilla("eje_diametro")(c),
     "garra": lambda c: garra(c),
     "placa_tope": lambda c: placa_tope(c),
+    "calzo_sector": lambda c: calzo_sector(c),
     "collar_seguidor": lambda c: anillo("collar_seguidor_diametro", "poste_eje_diametro")(c),
     "casquillo_rodillo": lambda c: anillo(
         "casquillo_rodillo_diametro", "casquillo_rodillo_interior_diametro"
@@ -907,7 +923,7 @@ LISTADO: dict[str, Ficha] = {
     ),
     "mordaza": Ficha(
         "bloque con un tornillo que aprieta y una ranura que cala",
-        4,
+        2,
         (
             Variable("cota", "mordaza_largo", "largo"),
             Variable("cota", "mordaza_voladizo", "del tornillo al borde"),
@@ -929,8 +945,9 @@ LISTADO: dict[str, Ficha] = {
         "tornillos son M3 y M4 a propósito, para que no se puedan cambiar de agujero.",
         montaje=(
             "Se atornilla sobre la cara libre del sector, con el M4 pasando por su ranura. La "
-            "cinta entra entre el bloque y el sector, y el M3 la aprieta contra el canto. Dos "
-            "por cinta, una en cada anclaje, justo por fuera de los puntos de tangencia."
+            "cinta entra entre el bloque y el sector, y el M3 la aprieta contra el canto. UNA "
+            "por cinta, detrás, en el centro de los 252° que la cinta abraza al sector: el otro "
+            "anclaje es el M2 del tambor, que sujeta los dos extremos solapados."
         ),
         material="chapa de latón de 6",
         proceso="fresado",
@@ -1742,6 +1759,26 @@ LISTADO: dict[str, Ficha] = {
         material="chapa de latón de 2",
         proceso="corte láser, en la chapa del latón",
     ),
+    "calzo_sector": Ficha(
+        "barra de latón con el paso de la valona y los dos tornillos al sector",
+        2,
+        (
+            Variable("cota", "union_sector_seguidor_lejos", "al tornillo lejano"),
+            Variable("cota", "union_sector_seguidor_cerca", "al tornillo cercano"),
+            Variable("cota", "calzo_sector_espesor", "espesor", en_el_perfil=False),
+            Variable("cota", "calzo_sector_cubo_diametro", "Ø del cubo"),
+            Variable("cota", "calzo_sector_extremo_diametro", "Ø del extremo"),
+            Variable("cota", "amplificador_sector_agujero_diametro", "Ø de paso de la valona"),
+            Variable("cota", "union_sector_seguidor_diametro", "Ø de los tornillos"),
+        ),
+        ("plancha", "calzo_sector_espesor"),
+        "Sube el sector, y con él la cinta, la holgura mínima sobre los seguidores: la "
+        "cinta de cada canal cruza por encima del seguidor del elevador y del extremo del "
+        "izquierdo, y sin calzo los rozaba.",
+        montaje=("Entre el seguidor y el sector, con los dos M3 de la unión pasando por los tres."),
+        material="chapa de latón de 3",
+        proceso="corte láser, en la chapa de los brazos",
+    ),
     "casquillo_rodillo": Ficha(
         "tubo de latón Ø4 cortado a tres largos",
         3,
@@ -1756,9 +1793,11 @@ LISTADO: dict[str, Ficha] = {
         "Baja el rodillo desde el seguidor hasta su leva. Es lo que pasa junto a las levas de "
         "encima, y su radio es el que la pila escalonada tiene que librar.",
         montaje=(
-            "Por debajo del seguidor, en el agujero de su canal. Por dentro, el M3 de cabeza baja "
-            "(DIN 7984) que entra por debajo del rodillo: M3 × 16 en el izquierdo, × 20 en el "
-            "derecho y × 30 en el elevador; arriba, una tuerca fina DIN 439."
+            "Por debajo del seguidor, en el agujero de su canal. Por dentro, un M3 avellanado "
+            "(DIN 7991) que entra por arriba, con la cabeza enrasada en el seguidor: cortado a "
+            "12,5 en el izquierdo, a 19,5 en el derecho y a 26,5 en el elevador. Debajo del "
+            "rodillo, una tuerca fina DIN 439 con fijador. Por arriba no asoma nada: por ahí "
+            "pasa la cinta."
         ),
         material="latón, tubo 4/3,1",
         proceso="corte a largo",

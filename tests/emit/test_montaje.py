@@ -226,7 +226,9 @@ def test_la_maquina_entera_no_choca_en_todo_el_ciclo():
     bieleta cruzando el balancín, el lápiz en el mismo eje que el perno de la
     punta y los distales rectos pasando por el poste 3. Y, en cuanto entraron
     los rodillos con sus ejes, el eje del rodillo de abajo atravesando las dos
-    levas de encima: de ahí la pila escalonada.
+    levas de encima: de ahí la pila escalonada. Y, en cuanto entró la cinta,
+    la tuerca del rodillo izquierdo cortándola y la cinta rozando los
+    seguidores que cruza: de ahí el calzo del sector y los ejes avellanados.
     """
     from compile.conjunto import barrer
     from compile.escribiente import Escribiente, compilar
@@ -244,6 +246,12 @@ def test_la_maquina_entera_no_choca_en_todo_el_ciclo():
     for n in (1, 2, 3):
         contacto = next(r for r in roces if {r.una, r.otra} == {f"leva_{n}", f"rodillo_{n}"})
         assert abs(contacto.holgura) < 0.01, contacto
+    # Y cada cinta toca su sector y su tambor en todo el ciclo, sin meterse:
+    # la trayectoria se recalcula en cada estado.
+    for n in (1, 2):
+        for polea in (f"sector_{n}", f"tambor_{n}"):
+            contacto = next(r for r in roces if {r.una, r.otra} == {f"cinta_{n}", polea})
+            assert abs(contacto.holgura) < 0.01, contacto
     choques = [
         r
         for r in roces

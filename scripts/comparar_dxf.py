@@ -436,6 +436,19 @@ FICHAS: dict[str, Ficha] = {
         {"casquillo_rodillo_diametro_radio": 1, "casquillo_rodillo_interior_diametro_radio": 1},
         datum="casquillo_rodillo_interior_diametro_radio",
     ),
+    "calzo_sector": Ficha(
+        "barra: paso de la valona y los dos tornillos al sector",
+        {
+            "calzo_sector_cubo_diametro_radio": 1,
+            "calzo_sector_extremo_diametro_radio": 1,
+            "amplificador_sector_agujero_diametro_radio": 1,
+            "union_sector_seguidor_diametro_radio": 2,
+        },
+        entre_centros=("union_sector_seguidor_lejos",),
+        tangentes=4,
+        desde_datum=("union_sector_seguidor_cerca",),
+        datum="amplificador_sector_agujero_diametro_radio",
+    ),
     "placa_tope": Ficha(
         "brazo corto: poste, pata del muelle y pasador de tope en línea",
         {

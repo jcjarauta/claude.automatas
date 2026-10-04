@@ -212,9 +212,12 @@ def alturas(c: dict[str, float] | None = None) -> dict[str, tuple[float, float]]
     p1 = (bap, bap + pl)
     leva0 = p1[1] + c["leva_sobre_plato"]
     seg = leva0 + c["seguidor_plano_z"]
+    # El sector va sobre un calzo: la cinta, en su plano, tiene que pasar por
+    # encima de los seguidores que cruza sin rozarlos.
+    sobre = seg + c["seguidor_espesor"] + c["calzo_sector_espesor"]
     sector = (
-        seg + c["seguidor_espesor"],
-        seg + c["seguidor_espesor"] + c["amplificador_sector_espesor"],
+        sobre,
+        sobre + c["amplificador_sector_espesor"],
     )
     p2 = (p1[1] + c["poste_vano"], p1[1] + c["poste_vano"] + pl)
     p3 = (p2[1] + c["reductor_bahia"], p2[1] + c["reductor_bahia"] + pl)
@@ -334,7 +337,7 @@ GRUPOS: tuple[Grupo, ...] = (
         "El cabestrante 6:1: sectores, tambores y ejes de pivote",
         "#f1c40f",
         1.0,
-        ("sector_", "tambor_", "eje_pivote_"),
+        ("sector_", "tambor_", "eje_pivote_", "cinta_", "mordaza_", "tornillo_tambor_"),
     ),
     Grupo(
         "cinco_barras",
@@ -752,6 +755,17 @@ def colocar(
         piezas.append(
             Colocada(f"tambor_{n}", _poner(hecho["tambor"], giro, pivote, z["tambor"][0]), True)
         )
+        piezas += _cinta(
+            c,
+            hecho,
+            z,
+            n,
+            sector_en=pivotes[lado],
+            giro_sector=estado.desviaciones[lado],
+            tambor_en=pivote,
+            giro_tambor=giro
+            - (c[("calaje_izquierdo", "calaje_derecho")[lado]] + c["brazo_origen_giro"]),
+        )
 
     piezas += _transmision(c, hecho, estado, z)
     piezas += _levantamiento(c, hecho, estado, seguidores, z)
@@ -762,12 +776,118 @@ def colocar(
 ESPESOR_DE_LEVA = 5.0
 """POM-C de 5, `Escribiente.espesor_leva`."""
 
-CABEZA_DEL_EJE = (5.5, 2.0)
+CABEZA_DEL_EJE = (6.0, 1.7)
 """Ø y alto de la cabeza del M3 DIN 7984 (cabeza baja) que hace de eje del
 rodillo. Va por DEBAJO del rodillo: por arriba está el sector."""
 
 TUERCA_DEL_EJE = (6.0, 1.8)
 """Entre aristas y alto de la tuerca fina M3 DIN 439, sobre el seguidor."""
+
+
+def _arco(
+    centro: Punto, radio: float, desde: float, hasta: float, z: tuple[float, float], grueso: float
+) -> Any:
+    """Un trozo de anillo de `grueso` por fuera de `radio`, de `desde` a
+    `hasta` en sentido antihorario: la cinta abrazada a una polea."""
+    from build123d import Polyline, Pos, extrude, make_face
+
+    n = max(8, int(abs(hasta - desde) / math.radians(3)))
+    # Las cuerdas de un polígono caen dentro de su círculo; se agranda el
+    # radio interior hasta que caigan fuera, para no meter la cinta en la polea.
+    radio = radio / math.cos((hasta - desde) / n / 2.0)
+    fuera = [
+        (
+            centro[0] + (radio + grueso) * math.cos(desde + (hasta - desde) * k / n),
+            centro[1] + (radio + grueso) * math.sin(desde + (hasta - desde) * k / n),
+        )
+        for k in range(n + 1)
+    ]
+    dentro = [
+        (
+            centro[0] + radio * math.cos(desde + (hasta - desde) * k / n),
+            centro[1] + radio * math.sin(desde + (hasta - desde) * k / n),
+        )
+        for k in range(n, -1, -1)
+    ]
+    cara = make_face(Polyline(*(fuera + dentro), close=True))
+    return Pos(0.0, 0.0, z[0]) * extrude(cara, z[1] - z[0])
+
+
+def _tramo(a: Punto, b: Punto, normal: Punto, z: tuple[float, float], grueso: float) -> Any:
+    """Un tramo recto de cinta de `a` a `b`, con su grueso hacia `normal`."""
+    from build123d import Polyline, Pos, extrude, make_face
+
+    na = (a[0] + normal[0] * grueso, a[1] + normal[1] * grueso)
+    nb = (b[0] + normal[0] * grueso, b[1] + normal[1] * grueso)
+    cara = make_face(Polyline(a, b, nb, na, close=True))
+    return Pos(0.0, 0.0, z[0]) * extrude(cara, z[1] - z[0])
+
+
+def _cinta(
+    c: dict[str, float],
+    hecho: dict[str, Any],
+    z: dict[str, tuple[float, float]],
+    n: int,
+    sector_en: Punto,
+    giro_sector: float,
+    tambor_en: Punto,
+    giro_tambor: float,
+) -> list[Colocada]:
+    """La cinta del cabestrante de un canal, su mordaza y el tornillo del
+    tambor.
+
+    Correa abierta: deja el sector y el tambor por las dos tangentes
+    exteriores, a ±`amplificador_tangencia` de la línea de centros. Abraza
+    el sector por detrás, los 252°, y allí la sujeta la **mordaza**, cuya
+    ranura da el calaje. En el tambor abraza el lado lejano, y sus **dos
+    extremos se solapan** bajo un M2 radial que pasa por un agujero del
+    fleje: el fleje no se dobla para anclarse, queda plano sobre el
+    cilindro. Los dos centros no se mueven; lo que gira con el seguidor y
+    con el brazo son la mordaza y el tornillo.
+    """
+    from build123d import Pos, Rot
+
+    rs, rt = c["amplificador_sector_radio_mecanizado"], c["amplificador_tambor_radio_mecanizado"]
+    t = c["cinta_espesor"]
+    sx, sy = sector_en
+    tx, ty = tambor_en
+    hacia = math.atan2(ty - sy, tx - sx)
+    fi = c["amplificador_tangencia"]
+    plano = z["sector"]
+    cinta = _arco(sector_en, rs, hacia + fi, hacia + 2 * math.pi - fi, plano, t)
+    cinta += _arco(tambor_en, rt, hacia - fi, hacia + fi, plano, t)
+    for signo in (1.0, -1.0):
+        a = hacia + signo * fi
+        normal = (math.cos(a), math.sin(a))
+        de_sector = (sx + rs * normal[0], sy + rs * normal[1])
+        de_tambor = (tx + rt * normal[0], ty + rt * normal[1])
+        cinta += _tramo(de_sector, de_tambor, normal, plano, t)
+    piezas = [Colocada(f"cinta_{n}", cinta, True)]
+
+    # La mordaza, sobre la cara libre del sector, detrás, a lo largo de la
+    # cinta y con su canto exterior en el canto del sector.
+    atras = hacia + math.pi + giro_sector
+    radial = rs - c["mordaza_ancho"] / 2.0
+    mordaza = (
+        Pos(sx + radial * math.cos(atras), sy + radial * math.sin(atras), plano[1])
+        * Rot(Z=math.degrees(atras) + 90.0)
+        * Pos(c["mordaza_voladizo"] - c["mordaza_largo"] / 2.0, 0.0, 0.0)
+        * hecho["mordaza"]
+    )
+    piezas.append(Colocada(f"mordaza_{n}", mordaza, True))
+
+    # El M2 del tambor, radial, en el lado lejano: cabeza de Ø3,8 × 1,3
+    # sobre los dos extremos solapados de la cinta.
+    lejos = hacia + giro_tambor
+    medio = (plano[0] + plano[1]) / 2.0
+    pie = rt + 2 * t
+    tornillo = _cilindro(
+        1.9,
+        (tx + pie * math.cos(lejos), ty + pie * math.sin(lejos), medio),
+        (tx + (pie + 1.3) * math.cos(lejos), ty + (pie + 1.3) * math.sin(lejos), medio),
+    )
+    piezas.append(Colocada(f"tornillo_tambor_{n}", tornillo, True))
+    return piezas
 
 
 def _tope_y_muelle(
@@ -852,22 +972,26 @@ def _eje_del_rodillo(
     centro_z: float,
     ancho: float,
 ) -> Any:
-    """El eje del rodillo descolgado: un M3 de cabeza baja que entra por
-    debajo del rodillo, sube por un casquillo hasta el seguidor, lo atraviesa
-    y se cierra con una tuerca fina. Un sólido, porque se mueve entero con el
-    seguidor y lo que importa es lo que roza al girar."""
+    """El eje del rodillo descolgado: un M3 avellanado (DIN 7991) que entra
+    por arriba con la cabeza enrasada en el seguidor, baja por el casquillo,
+    atraviesa el rodillo y se cierra debajo con una tuerca fina.
+
+    **Por arriba no asoma nada**: la cinta del cabestrante pasa por encima
+    del seguidor izquierdo y del elevador, y una tuerca encima del seguidor
+    la cortaba (auditoría A6). Por debajo la tuerca de 1,8 ocupa menos que
+    la cabeza de 2 que había. El mismo tornillo en los tres canales, cortado
+    a su largo."""
     x, y = centro
     pie = centro_z - ancho / 2.0
     techo = z["seguidores"][1]
     radio = 1.5 - JUEGO_GIRATORIO / 2.0
-    eje = _cilindro(radio, (x, y, pie - CABEZA_DEL_EJE[1]), (x, y, techo + TUERCA_DEL_EJE[1]))
-    eje += _cilindro(CABEZA_DEL_EJE[0] / 2.0, (x, y, pie - CABEZA_DEL_EJE[1]), (x, y, pie))
+    eje = _cilindro(radio, (x, y, pie - TUERCA_DEL_EJE[1]), (x, y, techo))
+    eje += _cilindro(TUERCA_DEL_EJE[0] / 2.0, (x, y, pie - TUERCA_DEL_EJE[1]), (x, y, pie))
     eje += _cilindro(
         c["casquillo_rodillo_diametro"] / 2.0,
         (x, y, centro_z + ancho / 2.0),
         (x, y, z["seguidores"][0]),
     )
-    eje += _cilindro(TUERCA_DEL_EJE[0] / 2.0, (x, y, techo), (x, y, techo + TUERCA_DEL_EJE[1]))
     return eje
 
 

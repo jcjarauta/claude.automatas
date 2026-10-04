@@ -13,11 +13,11 @@ Barra, tubo y alambre se piden por largo: el de cada pieza más 2 mm de corte. L
 | nogal americano macizo de 25 | tabla | tabla cepillada de 25, 240 de ancho útil | 69 126 mm² | base ×1 |
 | aluminio 5083, chapa de 4 | chapa | chapa de 4 | 12 096 mm² | mesa ×1 |
 | chapa de latón de 2 | chapa | chapa CuZn39Pb3 de 2 | 6 917 mm² | separador ×2, placa_tope ×3 |
-| chapa de latón de 3 | chapa | chapa CuZn39Pb3 de 3 | 123 234 mm² | brazo_proximal ×2, brazo_distal ×2, palanca_lapiz ×1, manivela ×1, balancin ×1, biela_mesa ×4, brazo_horquilla ×1 |
+| chapa de latón de 3 | chapa | chapa CuZn39Pb3 de 3 | 126 566 mm² | brazo_proximal ×2, brazo_distal ×2, palanca_lapiz ×1, manivela ×1, balancin ×1, biela_mesa ×4, brazo_horquilla ×1, calzo_sector ×2 |
 | chapa de latón de 4 | chapa | chapa CuZn39Pb3 de 4 | 1 532 mm² | soporte_mesa ×4, poste_horquilla ×1 |
-| chapa de latón de 6 | chapa | chapa CuZn39Pb3 de 6 | 14 820 mm² | mordaza ×4, volante ×1, apoyo_balancin ×2 |
+| chapa de latón de 6 | chapa | chapa CuZn39Pb3 de 6 | 13 860 mm² | mordaza ×2, volante ×1, apoyo_balancin ×2 |
 | fleje 1.4310 de 0,15 | fleje | fleje inoxidable de muelle, 0,15 | 1 476 mm² | lamina_flexura ×2 |
-| barra W10 h6 rectificada | barra | eje de precisión Ø10 h6 CF53, cortado a medida | 293 mm | eje_pivote ×2, eje_manivela ×1, eje_cartucho ×1, munon ×1, eje_motriz ×1 |
+| barra W10 h6 rectificada | barra | eje de precisión Ø10 h6 CF53, cortado a medida | 299 mm | eje_pivote ×2, eje_manivela ×1, eje_cartucho ×1, munon ×1, eje_motriz ×1 |
 | acero plata Ø1,5 | barra | acero plata Ø1,5 h9 | 324 mm | eje_mesa_movil ×2, eje_mesa_fijo ×4 |
 | acero plata Ø4 h6 | barra | acero plata Ø4 h6 | 99 mm | eje_balancin ×1 |
 | acero plata Ø6 | barra | acero plata Ø6 h9 | 11 mm | bulon_tirante ×1 |
