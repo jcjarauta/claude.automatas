@@ -37,26 +37,36 @@ def _version() -> str:
         return "sin control de versiones"
 
 
+def grupo_de_pieza(pieza: str, nombres: list[str] | None = None) -> str:
+    """El subsistema de una pieza del listado, buscándola en el montaje: la
+    pieza «brazo_proximal» se coloca como «proximal_1», la platina como cada
+    plato. Sin `nombres`, monta la máquina para buscarlos."""
+    from emit.montaje import grupo_de
+
+    if nombres is None:
+        from scripts.ver import _piezas
+
+        nombres = [p.nombre for p, _ in _piezas(0.0)]
+    buscado = ALIAS.get(pieza, pieza)
+    for n in nombres:
+        if n == buscado or n.startswith((buscado + "_", buscado.replace("brazo_", "") + "_")):
+            return grupo_de(n).nombre
+    raise ValueError(f"la pieza {pieza} no está en el montaje")
+
+
 def datos(version: str | None = None):
     from emit.catalogo import cargar
     from emit.dossier import Datos
     from emit.materiales import tornilleria
-    from emit.montaje import grupo_de
     from emit.plataforma import LISTADO
     from scripts.ver import _piezas
 
     colocadas = [(p.nombre, s) for p, s in _piezas(0.0)]
     nombres = [n for n, _ in colocadas]
 
-    def grupo(pieza: str) -> str:
-        buscado = ALIAS.get(pieza, pieza)
-        for n in nombres:
-            if n == buscado or n.startswith((buscado + "_", buscado.replace("brazo_", "") + "_")):
-                return grupo_de(n).nombre
-        raise ValueError(f"la pieza {pieza} no está en el montaje")
-
     fabricadas = tuple(
-        (n, f.cantidad, f.material, f.proceso, grupo(n), f.montaje) for n, f in LISTADO.items()
+        (n, f.cantidad, f.material, f.proceso, grupo_de_pieza(n, nombres), f.montaje)
+        for n, f in LISTADO.items()
     )
     comerciales = tuple((p.nombre, p.cantidad, p.designacion) for p in cargar())
     return Datos(

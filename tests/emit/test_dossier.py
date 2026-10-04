@@ -15,7 +15,7 @@ PROCEDIMIENTOS = (RAIZ / "docs" / "procedimientos.md").read_text(encoding="utf-8
 
 def test_el_orden_de_montaje_pasa_por_todos_los_grupos_una_vez():
     assert sorted(ORDEN_DE_MONTAJE) == sorted(g.nombre for g in GRUPOS)
-    assert ORDEN_DE_MONTAJE[-1] == "cartucho", "el cartucho se mete en una máquina montada"
+    assert ORDEN_DE_MONTAJE[-2:] == ("cartucho", "levas"), "se meten en una máquina montada"
 
 
 def test_los_procedimientos_se_leen_enteros():

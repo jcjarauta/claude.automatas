@@ -49,9 +49,10 @@ ORDEN_DE_MONTAJE = (
     "levantamiento",
     "portalapiz",
     "cartucho",
+    "levas",
 )
-"""De abajo arriba y de dentro afuera. El cartucho, el último: es lo que se
-mete en una máquina ya montada, y lo que se cambia."""
+"""De abajo arriba y de dentro afuera. El cartucho y sus levas, los últimos:
+es lo que se mete en una máquina ya montada, y lo que se cambia."""
 
 COMPROBACIONES = (
     "Cada plato apretado entre sus collares; el 3, con su M3 avellanado en cada poste.",

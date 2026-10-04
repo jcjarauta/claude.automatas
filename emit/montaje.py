@@ -297,11 +297,18 @@ GRUPOS: tuple[Grupo, ...] = (
         ("base", "poste1", "poste2", "poste3", "plato", "rodamiento_", "collar_plato_"),
     ),
     Grupo(
-        "cartucho",
-        "Lo que se cambia en cada pedido: las levas y lo que las enhebra",
-        "#ff8c1a",
+        "levas",
+        "Lo único que se fabrica para cada pedido: la frase del cliente en tres levas",
+        "#ff6a00",
         1.0,
-        ("leva_", "eje_cartucho", "cubo", "separador_", "pasador_indice"),
+        ("leva_",),
+    ),
+    Grupo(
+        "cartucho",
+        "El metal que enhebra las levas y viaja con ellas: igual en todos los pedidos",
+        "#c9a227",
+        1.0,
+        ("eje_cartucho", "cubo", "separador_", "pasador_indice"),
     ),
     Grupo(
         "entre_puntos",
@@ -396,6 +403,39 @@ GRUPOS: tuple[Grupo, ...] = (
 fijo a la punta. Es lo que el visor pinta de un color por grupo y lo que la
 auditoría de conjunto cuenta; un test exige que toda pieza colocada caiga en
 exactamente uno."""
+
+
+NIVELES: dict[str, tuple[str, ...]] = {
+    "levas": ("levas",),
+    "cartucho": ("levas", "cartucho"),
+    "maquina": tuple(
+        g
+        for g in (
+            "bastidor",
+            "entre_puntos",
+            "accionamiento",
+            "seguidores",
+            "amplificador",
+            "cinco_barras",
+            "levantamiento",
+            "portalapiz",
+        )
+    ),
+}
+"""Los tres niveles en que se fabrica y se monta el escribiente: las levas,
+por pedido; el cartucho, las levas con el metal que las enhebra, que se
+monta por pedido con piezas de stock; y la máquina, la plataforma, igual en
+todas. Es la división que importa para buscar mejoras de montaje y de
+fabricación, porque cada nivel lo hace alguien distinto y con otra
+frecuencia."""
+
+
+def nivel_de(grupo: str) -> str:
+    """El nivel más estrecho al que pertenece un grupo."""
+    for nivel in ("levas", "cartucho", "maquina"):
+        if grupo in NIVELES[nivel]:
+            return nivel
+    raise ValueError(f"el grupo «{grupo}» no está en ningún nivel")
 
 
 def grupo_de(nombre: str) -> Grupo:

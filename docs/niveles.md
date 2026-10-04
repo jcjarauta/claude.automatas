@@ -1,0 +1,85 @@
+# Levas, cartucho y máquina
+
+El escribiente se fabrica y se monta en tres niveles. Cada uno lo hace alguien
+distinto, con otra frecuencia, y por eso las mejoras se buscan nivel a nivel:
+
+- **Levas.** Las tres levas de POM que genera el compilador: la frase del
+  cliente. Lo único que no puede tenerse a stock.
+- **Cartucho.** Las levas más el metal que las enhebra: eje del cartucho,
+  cubo, separadores y pasador. El metal es igual en todos los pedidos y va a
+  stock; el cartucho se monta para cada pedido.
+- **Máquina.** La plataforma, todo lo demás. A stock, igual en todas.
+
+En el código son `emit.montaje.NIVELES`, y en el visor
+`scripts/ver.py --conjunto --nivel levas|cartucho|maquina`.
+
+## Lo que tiene cada nivel
+
+Cada fila cuenta solo lo propio de su nivel: el cartucho lleva además las
+levas, y la máquina no lleva ninguna de las dos.
+
+<!-- niveles:inicio · generado por scripts/niveles.py, no editar a mano -->
+
+| Nivel | Quién y cuándo | Piezas fabricadas | Unidades | Materiales | Procesos | Comerciales (ud.) | Fijaciones | Ajustes a mano |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| **levas** | por pedido, fuera: fresado en un solo amarre | 3 | 3 | 1 | 1 | 0 (0) | 0 | ninguno |
+| **cartucho** | metal a stock; se monta por pedido con las levas | 3 | 4 | 3 | 3 | 1 (1) | 0 | fase entre el pasador del cubo y la ranura del eje, al prensar el cubo |
+| **maquina** | a stock, igual en todos los pedidos | 39 | 84 | 21 | 28 | 14 (108) | 79 | orientar 3 collares de seguidor con la galga de 1,20; calar 2 brazos con la mordaza de la cinta; apretar 15 collares de plato a su altura |
+
+<!-- niveles:fin -->
+
+## Levas: la precisión es la palanca
+
+**Datos** (pedido de ejemplo «hola»):
+- Tres piezas de POM-C de 5, fresadas en un solo amarre: 394 s de máquina.
+  De una plancha salen 81 levas, o sea 27 cartuchos.
+- Cuestan 37,70 € de los 39,04 del cartucho. 35 € son el corte, una
+  previsión sin cerrar; por tarifa saldría a 19,76.
+- El **error de perfil** (±0,05) se amplifica ×17 y ×20 en los dos brazos, y
+  se lleva **1,88 mm de los 2,62 mm** del peor caso en la punta: el 72 %
+  (`compile.tolerancias`). Ninguna otra pieza de la máquina pesa tanto en
+  lo que se ve escrito.
+
+| # | Mejora | Por qué | Esfuerzo |
+| --- | --- | --- | --- |
+| L1 | **Pedir el perfil a ±0,02** al taller, o cortar las levas en casa | El peor caso en la punta baja de 2,6 a 1,5 mm. Es la mejora de calidad más grande que hay, y está en un proveedor, no en el diseño | Medio: presupuesto o máquina |
+| L2 | **Que el plano diga H8 en los dos taladros** | El contrato pide Ø10 y Ø3 H8 (deslizantes), pero `Taladro` no tiene campo de tolerancia: el DXF sale a nominal y el taller corta lo que quiera | Bajo: un campo en `emit/pieza.py` y su rótulo |
+| L3 | **Cerrar el precio del corte por bloque** | 35 € es una previsión y es el 90 % del cartucho. El caso malo es cortar las tres levas en tres amarres: eso es lo que hay que pactar | Bajo: negociación |
+| L4 | **Grabar en cada leva el número de pedido**, en la misma pasada que la marca FASE 0 | Un cliente con varios cartuchos, o un taller con varios pedidos abiertos, tiene que saber de quién es cada leva suelta | Bajo: un texto más en el DXF |
+
+## Cartucho: la fase no debería montarse
+
+**Datos:** 3 piezas fabricadas (4 unidades), 3 materiales y 3 procesos, más
+el pasador. Tres uniones: el cubo a presión en el eje, el pasador m6 en el
+cubo, y levas y separadores enhebrados en los dos. **Un ajuste**: al prensar
+el cubo hay que dejar el pasador a 60° de la ranura del eje.
+
+| # | Mejora | Por qué | Esfuerzo |
+| --- | --- | --- | --- |
+| C1 | **Eje y cubo en una sola pieza** | Hoy la fase del cartucho respecto de la máquina (la ranura de la garra, en el eje) y la de las levas (el pasador, en el cubo) se juntan al **prensar**: 1° de error en la prensa es 1° de fase en todo lo que escribe. Torneados de una barra de Ø25 (tetón, eje Ø10 y valona Ø24) y con la ranura y el taladro del pasador fresados **en el mismo amarre**, la fase sale de la máquina y no de la mano. Una pieza menos, una prensa menos y el único ajuste del nivel, fuera | Medio: rediseño del eje del cartucho; afecta al contrato de cartucho, no a los congelados |
+| C2 | **Plantilla de montaje del cartucho** mientras no exista C1 | Una placa con el Ø10 y el Ø3 a su ángulo para prensar el cubo siempre igual | Bajo |
+| C3 | Separadores cortados en la chapa de 2 junto a la placa de tope | Ya es así; anotado para que el anidado de la chapa los cuente por pedido | — |
+
+## Máquina: menos piezas sueltas que ajustar
+
+**Datos:** 39 piezas fabricadas (84 unidades), 21 materiales, 28 procesos, 14
+comerciales (108 unidades) y 79 fijaciones. **20 ajustes a mano**: 3
+collares con galga, 2 calajes con mordaza y 15 collares de plato apretados a
+su altura.
+
+| # | Mejora | Por qué | Esfuerzo |
+| --- | --- | --- | --- |
+| M1 | **Tubos separadores donde no gira nada**: de la base al plato 1 (60) y del plato 2 al plato 3 (20) | Los 15 collares de plato se aprietan a cota, uno a uno. Con dos tubos por poste cortados a largo, el M3 de la punta aprieta todo el paquete: plato 3, tubo, plato 2 contra su collar de abajo, y plato 1 sobre su tubo. **Los collares de plato bajan de 15 a 6** (sobre el plato 1 y bajo el 2, donde están los seguidores), y la altura sale del largo de un tubo y no de una medida en el montaje | Medio: dos piezas nuevas de tubo y el montaje |
+| M2 | **Tres espesores de chapa de latón en vez de cuatro** | Solo el soporte de la mesa y el poste de la horquilla van en 4. Pasarlos a 3 o a 6 quita una chapa del pedido | Medio: recalcular las dos piezas |
+| M3 | **Unificar largos de tornillería** | 79 fijaciones en 21 referencias. Varios M2 (×4, ×5, ×8) pueden ser un solo largo | Bajo |
+| M4 | Con M1, los prisioneros bajan de 23 a 14 | Cada prisionero es un apriete que se afloja | Viene con M1 |
+
+## Prioridades
+
+| | Mejora | Qué gana |
+| --- | --- | --- |
+| 1 | **L2**, la tolerancia de los taladros en el plano | Que el taller corte lo que pide el contrato. Barata y sin riesgo |
+| 2 | **C1**, eje y cubo en una pieza | Quita el único ajuste del cartucho, que es justo el que puede desfasar la escritura |
+| 3 | **L1**, perfil a ±0,02 | La mayor mejora de calidad del escribiente: de 2,6 a 1,5 mm en la punta |
+| 4 | **M1**, tubos separadores | De 20 ajustes a mano a 11 en la máquina |
+| 5 | L4, M2, M3 | Trazabilidad y orden de compra |

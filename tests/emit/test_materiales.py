@@ -62,3 +62,13 @@ def test_los_precios_cuentan_la_tornilleria_de_la_lista():
     )
     linea = next(x for x in precios["plataforma"] if x["concepto"].startswith("Tornillería"))
     assert linea["cantidad"] == sum(f.cantidad for f in tornilleria())
+
+
+def test_la_tabla_de_niveles_esta_al_dia():
+    pytest.importorskip("build123d", reason="hace falta el kernel: uv sync --group cad")
+    from scripts.niveles import DOCUMENTO, con_tabla
+
+    actual = DOCUMENTO.read_text(encoding="utf-8")
+    assert actual == con_tabla(actual), (
+        "docs/niveles.md no está al día: uv run --group cad python scripts/niveles.py --escribir"
+    )

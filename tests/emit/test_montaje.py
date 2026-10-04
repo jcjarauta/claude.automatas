@@ -359,8 +359,21 @@ def test_toda_pieza_colocada_cae_en_un_solo_grupo():
         g = grupo_de(p.nombre).nombre
         if g == "bastidor":
             assert not p.movil, p.nombre
-        if g == "cartucho":
+        if g in ("levas", "cartucho"):
             assert p.movil, p.nombre
+
+
+def test_cada_grupo_esta_en_un_nivel_y_los_niveles_se_contienen():
+    """Las levas están dentro del cartucho, y el cartucho y la máquina no
+    comparten ningún grupo: lo que va a stock no se confunde con lo que se
+    fabrica por pedido."""
+    from emit.montaje import GRUPOS, NIVELES, nivel_de
+
+    todos = {g.nombre for g in GRUPOS}
+    assert set(NIVELES["levas"]) < set(NIVELES["cartucho"])
+    assert not set(NIVELES["cartucho"]) & set(NIVELES["maquina"])
+    assert set(NIVELES["cartucho"]) | set(NIVELES["maquina"]) == todos
+    assert {nivel_de(g) for g in todos} == {"levas", "cartucho", "maquina"}
 
 
 def test_los_agujeros_de_la_mordaza_en_el_sector_son_los_de_la_cinta():

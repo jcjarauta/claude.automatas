@@ -60,7 +60,9 @@ def _piezas(theta_grados: float, sacado: float = 0.0):
             p,
             a_escuadra
             * (
-                fuera * p.solido if sacado and grupo_de(p.nombre).nombre == "cartucho" else p.solido
+                fuera * p.solido
+                if sacado and grupo_de(p.nombre).nombre in ("levas", "cartucho")
+                else p.solido
             ),
         )
         for p in piezas
@@ -113,6 +115,11 @@ def main(argv: list[str] | None = None) -> int:
     partes.add_argument("--theta", type=float, default=0.0, help="ángulo del árbol, en grados")
     partes.add_argument("--step", type=Path, help="escribe un STEP en vez de mostrarlo")
     partes.add_argument("--grupos", help="solo estos grupos, separados por comas")
+    partes.add_argument(
+        "--nivel",
+        choices=("levas", "cartucho", "maquina"),
+        help="solo un nivel: las levas, el cartucho entero o la máquina",
+    )
     partes.add_argument("--sacado", type=float, default=0.0, help="saca el cartucho, en mm")
     partes.add_argument("--vista", choices=sorted(VISTAS), default="iso")
     op = partes.parse_args(argv)
@@ -168,6 +175,10 @@ def _mostrar_por_grupos(op) -> int:
 
     piezas = _piezas(op.theta, op.sacado)
     print(auditoria(piezas))
+    if op.nivel:
+        from emit.montaje import NIVELES
+
+        op.grupos = ",".join(NIVELES[op.nivel])
     pedidos = set(op.grupos.split(",")) if op.grupos else {g.nombre for g in GRUPOS}
     desconocidos = pedidos - {g.nombre for g in GRUPOS}
     if desconocidos:
