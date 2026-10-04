@@ -105,6 +105,46 @@ def bieleta_isogona(c: Contratos | None = None, maquina: Escribiente | None = No
     return Bieleta(pivote=pivote, pasador=pasador, ojo=ojo, direccion=u, factor=factor)
 
 
+def giro_del_eje(
+    desviacion: float,
+    c: Contratos | None = None,
+    bieleta: Bieleta | None = None,
+) -> float:
+    """Radianes que gira el eje del balancín con el seguidor 3 desviado
+    `desviacion` de su punto de diseño. Positivo es bajar la mesa.
+
+    Cierra el lazo de la bieleta: el pasador del seguidor en su arco, el ojo
+    del balancín en el suyo —arriba del eje, en x = x_eje + entrada·sen(giro)—
+    y la varilla rígida entre los dos. Bisección: el seguidor se mueve
+    décimas de grado y la función es monótona en ese tramo.
+    """
+    c = c or cargar()
+    b = bieleta or bieleta_isogona(c)
+    r = _m(c, "levantamiento_pasador_al_pivote")
+    e = _m(c, "balancin_entrada")
+    psi0 = math.atan2(b.pasador[1] - b.pivote[1], b.pasador[0] - b.pivote[0])
+    sx = b.pivote[0] + r * math.cos(psi0 + desviacion)
+    sy = b.pivote[1] + r * math.sin(psi0 + desviacion)
+    x_eje = b.ojo[0]
+
+    def resto(g: float) -> float:
+        return math.hypot(x_eje + e * math.sin(g) - sx, b.ojo[1] - sy) - b.largo
+
+    a, z = -0.5, 0.5
+    for _ in range(80):
+        medio = (a + z) / 2
+        a, z = (medio, z) if (resto(medio) > 0) == (resto(a) > 0) else (a, medio)
+    return (a + z) / 2
+
+
+def caida_de_la_mesa(giro: float, c: Contratos | None = None) -> float:
+    """Metros que baja la mesa desde la posición de escritura. La palanca va
+    a -calaje escribiendo, así que su perno baja palanca·(sen giro + sen calaje)."""
+    c = c or cargar()
+    palanca = _m(c, "brazo_palanca")
+    return palanca * (math.sin(giro) + math.sin(calaje_elevador(c)))
+
+
 @dataclass(frozen=True)
 class Pila:
     """Las alturas de la cadena, en metros sobre la cara alta de la base."""
@@ -165,8 +205,10 @@ __all__ = [
     "apoyo_balancin_alto",
     "bieleta_isogona",
     "bieleta_pata_seguidor",
+    "caida_de_la_mesa",
     "calaje_elevador",
     "eje_balancin_x",
+    "giro_del_eje",
     "pila",
     "tirante_largo",
 ]

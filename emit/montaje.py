@@ -266,6 +266,12 @@ class Estado:
     desviaciones: tuple[float, float, float]
     psi_izquierdo: float
     psi_derecho: float
+    giro_balancin: float = 0.0
+    """Radianes que gira el eje del balancín: positivo baja la mesa. Lo
+    calcula `compile.levantamiento.giro_del_eje` desde la desviación del
+    seguidor 3, cerrando el lazo de la bieleta."""
+    caida_mesa: float = 0.0
+    """Metros que baja la mesa desde la posición de escritura."""
 
 
 def _del_cinco_barras(c: dict[str, float]) -> Callable[[Punto], Punto]:

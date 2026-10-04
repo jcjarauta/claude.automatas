@@ -255,8 +255,12 @@ def estados(compilacion: Compilacion, maquina: Escribiente, thetas: Any) -> list
     relación y el calaje. Se leen con la misma función y distintos
     argumentos, para que no puedan separarse al tocar una.
     """
+    from compile.contratos import cargar
+    from compile.levantamiento import bieleta_isogona, caida_de_la_mesa, giro_del_eje
     from emit.montaje import Estado
 
+    contratos = cargar()
+    bieleta = bieleta_isogona(contratos, maquina)
     thetas = np.asarray(thetas, dtype=np.float64)
     crudo = {n: _psi_desde_la_leva(compilacion.perfiles[n], thetas) for n in SEGUIDORES}
     brazo = {
@@ -275,8 +279,11 @@ def estados(compilacion: Compilacion, maquina: Escribiente, thetas: Any) -> list
             ),
             psi_izquierdo=float(brazo["izquierdo"][i]),
             psi_derecho=float(brazo["derecho"][i]),
+            giro_balancin=giro,
+            caida_mesa=caida_de_la_mesa(giro, contratos),
         )
         for i, theta in enumerate(thetas)
+        for giro in (giro_del_eje(float(crudo["elevador"][i]), contratos, bieleta),)
     ]
 
 

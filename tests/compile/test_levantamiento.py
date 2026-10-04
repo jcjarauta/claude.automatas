@@ -144,3 +144,28 @@ def test_los_apoyos_no_alcanzan_los_sectores_en_planta(contratos):
         for nombre in ("apoyo_balancin_trasero_y", "apoyo_balancin_delantero_y"):
             hueco = math.dist(centro, (x, _valor(contratos, nombre))) - radio_sector - medio_apoyo
             assert hueco > _valor(contratos, "holgura_minima"), (i, nombre, hueco)
+
+
+def test_la_cadena_baja_la_mesa_lo_que_el_compilador_levanta(contratos):
+    """El lazo cerrado de verdad, en todo el ciclo: la desviación del seguidor
+    3 que da la leva sintetizada → la bieleta → el eje → la palanca → la mesa,
+    contra la altura que el compilador manda con su modelo de palanca. Y en
+    el mismo SENTIDO: con el balancín colgando, la mesa subía al levantar."""
+    from pathlib import Path
+
+    import numpy as np
+
+    from compile.conjunto import estados
+    from compile.escribiente import compilar
+    from scripts.exportar_para_cad import leer
+
+    maquina = Escribiente()
+    compilacion = compilar(leer(Path(__file__).resolve().parents[2] / "demo" / "hola.json"))
+    thetas = np.linspace(0.0, 2.0 * np.pi, 72, endpoint=False)
+    palanca = _valor(contratos, "brazo_palanca")
+    calaje = calaje_elevador(contratos)
+    peor = 0.0
+    for e in estados(compilacion, maquina, thetas):
+        manda = palanca * math.sin(e.desviaciones[2] * maquina.relacion + calaje)
+        peor = max(peor, abs(e.caida_mesa - manda))
+    assert peor < 5e-6, f"la mesa se separa {peor * 1e6:.1f} µm de lo que manda el compilador"
