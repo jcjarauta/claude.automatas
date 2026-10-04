@@ -405,7 +405,7 @@ SANGRIA = 22.0
 líneas escalonadas, la capital arriba a la izquierda y el swash abajo a la
 derecha, es la diagonal que equilibra la tarjeta."""
 
-LAZO_BAJO = "cump"
+LAZO_BAJO = ""
 """Bajo qué letra cierra el swash su lazo: lo que va delante de ella queda
 sin subrayar."""
 
@@ -432,12 +432,18 @@ def trazos_en_unidades() -> list[list[Punto]]:
     return [barra_y_fuste, feliz, *sueltos, tilde, cumple + swash]
 
 
+RENGLONES = [[0, 1, 2], [3, 4]]
+"""Un cartucho por renglón (compile.renglones): «Feliz» con su punto, y la
+tilde con «cumpleaños» y su swash. En una vuelta no cabe con calidad: la
+leva cortada redondearía la letra medio milímetro."""
+
+
 def pedido() -> dict[str, object]:
     trazos = []
     for t in trazos_en_unidades():
         # Y hacia arriba, y en mm con la x de 10.
         trazos.append(trazo([(x * X_POR_UNIDAD, -y * X_POR_UNIDAD) for x, y in t]))
-    return {"nombre": "feliz_cumpleanos", "trazos": trazos}
+    return {"nombre": "feliz_cumpleanos", "trazos": trazos, "renglones": RENGLONES}
 
 
 def vista(ruta: Path, datos: dict[str, object], escala: float = 6.0) -> None:

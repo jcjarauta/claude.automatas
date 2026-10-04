@@ -708,11 +708,16 @@ def compilar(
     maquina: Escribiente | None = None,
     capacidad: Capacidad | None = None,
     limites: LimitesLeva | None = None,
+    en_la_caja: bool = False,
 ) -> Compilacion:
     """De una frase a tres levas, con un solo veredicto al final.
 
     Sin `capacidad`, las muestras por vuelta las elige la frase
     (`muestras_para`); con ella, se respeta tal cual.
+
+    Con `en_la_caja` la escritura ya viene colocada en el papel, en el marco
+    de la máquina, y no se vuelve a encajar: es lo que hace un renglón, que
+    tiene que caer donde lo puso la composición entera (`compile.renglones`).
     """
     maquina = maquina or Escribiente()
     elegir_muestras = capacidad is None
@@ -723,7 +728,7 @@ def compilar(
     # encajar escala la frase, así que al revés el redondeo valdría una cosa
     # distinta en cada pedido. Y antes de `programa`, porque lo que se
     # redondea es lo que se fabrica: `Compilacion.escritura` es la de verdad.
-    capturada = encajar_en_la_caja(escritura, maquina)
+    capturada = escritura if en_la_caja else encajar_en_la_caja(escritura, maquina)
     encajada = suavizar(capturada, capacidad.radio_de_esquina)
     if elegir_muestras:
         capacidad = capacidad.model_copy(update={"muestras": muestras_para(encajada, capacidad)})

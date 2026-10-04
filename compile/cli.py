@@ -21,8 +21,9 @@ from pathlib import Path
 from compile.conjunto import montar
 from compile.coste import PrecioCerrado, cargar_precios, valorar
 from compile.energia import Accionamiento, analizar, relacion_del_contrato, rpm_del_arbol
-from compile.escribiente import Escribiente, compilar
+from compile.escribiente import Compilacion, Escribiente, compilar
 from compile.informe import escribir_informe, resumen
+from compile.renglones import compilar_por_renglones, leer_pedido
 from compile.tolerancias import presupuesto_de_error
 from core.energy.humano import Transmision
 from core.escritura import Capacidad, Escritura, Trazo
@@ -62,7 +63,12 @@ def main(argv: list[str] | None = None) -> int:
     partes = argparse.ArgumentParser(prog="compile.cli", description=__doc__)
     partes.add_argument("entrada", type=Path, help="JSON con la escritura, en mm")
     partes.add_argument("--out", type=Path, default=Path("build"), help="carpeta de salida")
-    partes.add_argument("--muestras", type=int, default=720, help="muestras por vuelta")
+    partes.add_argument(
+        "--muestras",
+        type=int,
+        default=None,
+        help="muestras por vuelta; por defecto las elige la frase (720, 1440 o 2880)",
+    )
     # Los dos por defecto salen del CONTRATO y no de un literal: la máquina
     # lleva reductor 3:1 y se gira a 90 rpm en la manivela, y con 1:1 y 30
     # el informe de cada pedido pedía un volante que ya está decidido.
@@ -97,10 +103,29 @@ def main(argv: list[str] | None = None) -> int:
     )
     opciones = partes.parse_args(argv)
 
-    escritura = leer_escritura(opciones.entrada)
+    pedido = leer_pedido(opciones.entrada)
     maquina = Escribiente()
-    compilacion = compilar(escritura, maquina, Capacidad(muestras=opciones.muestras))
+    capacidad = None if opciones.muestras is None else Capacidad(muestras=opciones.muestras)
+    if pedido.renglones is None:
+        trabajos = [(compilar(pedido.escritura, maquina, capacidad), opciones.out)]
+    else:
+        # Un cartucho por renglón, cada uno en su carpeta, todos a la misma
+        # escala y con los mismos calajes (compile.renglones).
+        compilaciones = compilar_por_renglones(
+            pedido.escritura, pedido.renglones, maquina, capacidad
+        )
+        trabajos = [
+            (c, opciones.out / f"renglon_{numero}")
+            for numero, c in enumerate(compilaciones, start=1)
+        ]
+    aptos = [_cartucho(c, maquina, destino, opciones) for c, destino in trabajos]
+    return 0 if all(aptos) else 1
 
+
+def _cartucho(
+    compilacion: Compilacion, maquina: Escribiente, destino: Path, opciones: argparse.Namespace
+) -> bool:
+    """Informe, programa, patrón y piezas de un cartucho. Devuelve si es apto."""
     accionamiento = Accionamiento(
         transmision=Transmision(relacion=opciones.relacion_manivela),
         vueltas_por_minuto=opciones.rpm,
@@ -123,7 +148,6 @@ def main(argv: list[str] | None = None) -> int:
             )
             valoracion = valorar(compilacion, maquina, cargar_precios(PRECIOS), corte=corte)
 
-    destino: Path = opciones.out
     destino.mkdir(parents=True, exist_ok=True)
     escribir_informe(
         compilacion,
@@ -186,12 +210,11 @@ def main(argv: list[str] | None = None) -> int:
         for incidencia in veredicto_montaje.errores:
             print(f"  [conjunto] {incidencia.mensaje}")
     print(f"escrito en {destino}/")
-    apto = (
+    return (
         compilacion.veredicto.apto
         and (veredicto_montaje is None or veredicto_montaje.apto)
         and (veredicto_energia is None or veredicto_energia.apto)
     )
-    return 0 if apto else 1
 
 
 if __name__ == "__main__":

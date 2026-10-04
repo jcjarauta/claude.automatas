@@ -4,6 +4,7 @@ adonde las pone `colocar`, y que todo salga del perfil cortado."""
 from __future__ import annotations
 
 import math
+from itertools import pairwise
 from pathlib import Path
 
 import numpy as np
@@ -87,7 +88,8 @@ def test_hay_una_pista_por_parte_que_se_mueve_y_un_valor_por_fotograma(animacion
 def test_la_tinta_es_lo_que_escriben_las_levas_cortadas(animacion):
     """La tinta sobre la mesa sale del recorrido por contacto: tantos puntos
     de tinta como puntos apoyados tiene la vuelta, ni uno más."""
-    raiz, _, recorrido = animacion
+    raiz, _, recorridos = animacion
+    (recorrido,) = recorridos
     mesa = next(h for h in raiz.hijos if h.nombre == "mesa")
     assert recorrido.camino.startswith("perfil cortado")
     escritos = set()
@@ -107,7 +109,7 @@ def test_la_tinta_sale_cuando_la_punta_pasa_y_se_borra_al_volver(animacion):
     mesa = next(h for h in raiz.hijos if h.nombre == "mesa")
     assert mesa.hijos
     for trozo in mesa.hijos:
-        k = int(trozo.nombre.removeprefix("tinta_"))
+        k = int(trozo.nombre.rsplit("_", 1)[1])
         _, valores = trozo.pista
         assert valores[0] == -HUNDIDO
         assert all(v == -HUNDIDO for v in valores[: k + 1])
@@ -116,3 +118,94 @@ def test_la_tinta_sale_cuando_la_punta_pasa_y_se_borra_al_volver(animacion):
     assert len(tiempos_r) == len(tiempos) + 1
     mesa_r = next(h for h in con_reposo.hijos if h.nombre == "mesa")
     assert all(t.pista[1][-1] == 0.0 for t in mesa_r.hijos)
+
+
+FELIZ = RAIZ / "demo" / "feliz_cumpleanos.json"
+
+
+@pytest.fixture(scope="module")
+def dos_cartuchos():
+    from scripts.animar import construir
+
+    return construir(FELIZ, FOTOGRAMAS)
+
+
+def _pista(raiz, nombre):
+    from scripts.animar import rutas
+
+    return next(v for r, v in rutas(raiz).items() if r.endswith("/" + nombre))
+
+
+def test_con_renglones_se_anima_un_cartucho_por_vuelta(dos_cartuchos):
+    """Dos vueltas y un cambio entre ellas: el fin de la primera y el momento
+    en que el primer cartucho ya ha salido y el segundo aún no ha entrado."""
+    raiz, tiempos, recorridos = dos_cartuchos
+    assert len(recorridos) == 2
+    assert len(tiempos) == 2 * FOTOGRAMAS + 2
+    assert all(b > a for a, b in pairwise(tiempos))
+    _, uno = _pista(raiz, "cartucho_1")
+    _, dos = _pista(raiz, "cartucho_2")
+    dentro = [0.0, 0.0, 0.0]
+    escribe_el_segundo = FOTOGRAMAS + 2 + 5
+    assert uno[5] == dentro
+    assert dos[5] != dentro
+    assert uno[FOTOGRAMAS + 1] != dentro
+    assert dos[FOTOGRAMAS + 1] != dentro
+    assert dos[escribe_el_segundo] == dentro
+    assert uno[escribe_el_segundo] != dentro
+    # El que espera fuera no gira; el que escribe gira con el árbol.
+    _, giro_2 = _pista(raiz, "giro_2")
+    _, arbol = _pista(raiz, "arbol")
+    assert giro_2[5] == 360.0
+    assert giro_2[escribe_el_segundo] == arbol[escribe_el_segundo]
+
+
+def test_el_segundo_cartucho_cae_donde_lo_pone_colocar(dos_cartuchos):
+    """Lo mismo que se pide a la animación de una vuelta, en la segunda: las
+    levas del segundo cartucho donde las pone `colocar` con su compilación."""
+    from compile.conjunto import estados
+    from compile.escribiente import SEGUIDORES, Escribiente
+    from compile.renglones import compilar_por_renglones, leer_pedido
+    from emit.montaje import colocar, taller
+    from emit.plataforma import contrato_mm
+    from scripts.animar import nodos_en
+
+    raiz, _, _ = dos_cartuchos
+    c = contrato_mm()
+    maquina = Escribiente()
+    pedido = leer_pedido(FELIZ)
+    segunda = compilar_por_renglones(pedido.escritura, pedido.renglones, maquina)[1]
+    thetas = np.linspace(0.0, 2.0 * np.pi, FOTOGRAMAS, endpoint=False)
+    todos = estados(segunda, maquina, thetas, camino="contacto")
+    seguidores = [maquina.seguidor(i) for i in range(len(SEGUIDORES))]
+    f = 7
+    reales = {
+        p.nombre: p.solido
+        for p in colocar(list(segunda.piezas), seguidores, todos[f], c, taller(c))
+    }
+    nodo, ubicacion = nodos_en(raiz, FOTOGRAMAS + 2 + f)["giro_2"]
+    levas = [(n, solido) for n, solido in nodo.piezas if n.startswith("leva_")]
+    assert len(levas) == 3
+    for nombre, local in levas:
+        animada = (ubicacion * local).center()
+        real = reales[nombre].center()
+        d = math.dist((animada.X, animada.Y, animada.Z), (real.X, real.Y, real.Z))
+        assert d < 0.02, f"{nombre}: a {d:.3f} mm de colocar"
+
+
+def test_la_tinta_de_la_primera_vuelta_se_queda_en_la_segunda(dos_cartuchos):
+    from scripts.animar import HUNDIDO
+
+    raiz, _, _ = dos_cartuchos
+    mesa = next(h for h in raiz.hijos if h.nombre == "mesa")
+    primera = [t for t in mesa.hijos if t.nombre.startswith("tinta_1_")]
+    segunda = [t for t in mesa.hijos if t.nombre.startswith("tinta_2_")]
+    assert primera
+    assert segunda
+    for trozo in primera:
+        _, valores = trozo.pista
+        assert valores[0] == -HUNDIDO
+        assert all(v == 0.0 for v in valores[FOTOGRAMAS:])
+    for trozo in segunda:
+        _, valores = trozo.pista
+        assert all(v == -HUNDIDO for v in valores[: FOTOGRAMAS + 2])

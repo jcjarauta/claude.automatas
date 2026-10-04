@@ -1,6 +1,6 @@
 # Propuesta · dimensionar el escribiente para tareas más grandes
 
-2026-10-04 · estado: **propuesta, pendiente de aprobar**
+2026-10-04 · estado: **aprobada; fases 1 a 4 hechas**, 5 y 6 pendientes
 
 La pregunta: el escribiente se queda pequeño. ¿Qué hay que agrandar para que
 escriba tarjetas, dedicatorias y párrafos? La respuesta corta, medida: **no la
@@ -128,6 +128,27 @@ arquitectura de esta máquina.
 
 Las fases 1 a 4 son software y se pueden hacer ya. La 5 es la primera pieza
 nueva de hardware. La 6 espera al banco.
+
+### Lo que dieron las fases 1 a 4
+
+- **Fase 1** (`core.cam.envelope.recortar`, `compile.escribiente`). La
+  envolvente es el interior de la curva de paso erosionado en el radio del
+  rodillo: la pieza que el propio rodillo deja. Se recorre por contacto y
+  decide el error en el papel: hasta 0,25 mm, aviso `socavado_tolerable`.
+  «Hola Mundo» con rúbrica, que era imposible, es apto con 0,23 mm.
+- **Fase 2**. El compilador elige 720, 1440 o 2880 muestras para que la punta
+  no avance más de 0,5 mm entre muestra y muestra, salvo que se le fije la
+  capacidad.
+- **Fase 3** (`compile.renglones`). El pedido lleva `renglones`; la
+  composición se encaja entera una vez y cada renglón se compila donde quedó,
+  con los mismos calajes. El CLI escribe un cartucho por renglón en
+  `renglon_1/`, `renglon_2/`…
+- **Fase 4**. «Feliz cumpleaños» en dos cartuchos: «Feliz» con 0,04 mm de
+  error, «cumpleaños» y su swash con 0,09 mm. La animación hace las dos
+  vueltas y el cambio de cartucho entre ellas (`scripts/animar.py`).
+- De paso: el ángulo del brazo derecho saltaba una vuelta en frases que
+  empezaban arriba a la izquierda (90° de presión por una diagonal).
+  Corregido en el compilador, con test.
 
 ## Lo que se queda fuera
 
