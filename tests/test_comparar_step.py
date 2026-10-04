@@ -86,6 +86,11 @@ def platina(tmp_path: Path, **kw) -> Path:
             c["rodamiento_arbol_alojamiento_diametro"] / 2,
         )
     )
+    for cual in ("trasero", "delantero"):
+        t, r = c[f"platina_apoyo_{cual}_angulo"], c[f"platina_apoyo_{cual}_al_arbol"]
+        agujeros.append(
+            (r * math.cos(t), r * math.sin(t), c["apoyo_balancin_tornillo_diametro"] / 2)
+        )
     return _step(tmp_path / "platina.step", agujeros, **kw)
 
 
@@ -128,11 +133,11 @@ def test_un_step_que_no_declara_su_unidad_se_para(tmp_path: Path):
 
 
 def test_un_solido_trae_cada_rasgo_dos_veces_y_se_compara_una_cara(tmp_path: Path):
-    """Siete agujeros y un contorno son ocho círculos, no dieciséis. Contar
+    """Nueve agujeros y un contorno son diez círculos, no veinte. Contar
     las dos caras invita a buscar el error donde no está."""
     entidades, circulares, _, _ = leer_step(platina(tmp_path))
-    assert entidades == {"CIRCLE": 8}
-    assert len(circulares) == 8
+    assert entidades == {"CIRCLE": 10}
+    assert len(circulares) == 10
 
 
 def test_el_que_volvio_de_onshape_con_los_dos_agujeros_cambiados():
@@ -172,7 +177,14 @@ def test_el_que_volvio_de_onshape_bueno():
     le dice que no cuadra.
     """
     inf = comparar(DATOS / "platina_levas_buena.step", "platina_levas")
-    assert inf.cuadra, informe(inf)
+    # **Dibujada antes de 2026-10-04**, cuando la platina ganó los dos M3 de
+    # los apoyos del eje del balancín. Lo que se pide es que el lector la
+    # entienda entera y que lo único que eche en falta sea eso: los dos
+    # agujeros y su recuento, ni uno más. El día que se redibuje en Onshape,
+    # vuelve a ser `assert inf.cuadra`.
+    faltan = sorted(h.texto for h in inf.hallazgos)
+    assert len(faltan) == 3, informe(inf)
+    assert all("apoyo" in t for t in faltan), informe(inf)
     # Y que pase por el motivo bueno: los ocho círculos y el espesor del
     # contrato, no una comparación que se quedó sin rasgos que mirar.
     entidades, circulares, _, espesor = leer_step(DATOS / "platina_levas_buena.step")

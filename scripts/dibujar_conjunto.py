@@ -316,6 +316,23 @@ def despiece() -> list[tuple[int, str, int, str, str]]:
         "brazo_distal",
         "volante",
         "manivela",
+        "eje_balancin",
+        "apoyo_balancin",
+        "casquillo_bieleta",
+        "bieleta",
+        "bulon_tirante",
+        "tirante",
+        "soporte_mesa",
+        "eje_mesa_fijo",
+        "biela_mesa",
+        "eje_mesa_movil",
+        "orejeta_mesa",
+        "mesa",
+        "tubo_punta",
+        "brazo_horquilla",
+        "poste_horquilla",
+        "lamina_flexura",
+        "pinza",
     ]
     assert set(orden) == set(LISTADO), "el despiece y el listado se han separado"
     return [

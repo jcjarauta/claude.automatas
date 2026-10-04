@@ -1280,17 +1280,10 @@
           "tolerancia": ""
         },
         {
-          "nombre": "orejeta_mesa_x_dentro",
-          "valor": 0.052,
-          "unidad": "m",
-          "descripcion": "Orejetas bajo la mesa que sujetan los ejes moviles: cara de dentro, a cada lado",
-          "tolerancia": ""
-        },
-        {
           "nombre": "orejeta_mesa_ancho",
-          "valor": 0.004,
+          "valor": 0.04,
           "unidad": "m",
-          "descripcion": "Orejetas: bloque de laton de 4 en X",
+          "descripcion": "Una orejeta por eje movil, centrada y de 40 de ancho: el casquillo largo es lo que impide que la mesa ruede sobre el eje. Dos pequenas a los lados obligaban a cuatro tornillos fuera de linea",
           "tolerancia": ""
         },
         {
@@ -1323,23 +1316,16 @@
         },
         {
           "nombre": "poste_horquilla_alto",
-          "valor": 0.037,
+          "valor": 0.034,
           "unidad": "m",
-          "descripcion": "Poste del portalapiz, del brazo (z 75) a 2 por encima de la lamina de arriba (z 110)",
-          "tolerancia": ""
-        },
-        {
-          "nombre": "pinza_diametro",
-          "valor": 0.016,
-          "unidad": "m",
-          "descripcion": "Collar apretado al portaminas, del que salen las laminas: 3 de pared sobre el cuerpo de 10",
+          "descripcion": "Poste del portalapiz, de la cara alta del brazo (z 78) a 2 por encima de la pestana de arriba (z 112)",
           "tolerancia": ""
         },
         {
           "nombre": "pinza_largo",
-          "valor": 0.024,
+          "valor": 0.028,
           "unidad": "m",
-          "descripcion": "Largo del collar: abarca las dos laminas, a 90 y a 110, con 2 de sobra",
+          "descripcion": "Alto de la pinza: de 84 a 112, para que las dos pestanas, dobladas hacia abajo, tengan donde atornillarse",
           "tolerancia": ""
         },
         {
@@ -1348,6 +1334,146 @@
           "unidad": "m",
           "descripcion": "Lo que cada lamina entra en el poste y en la pinza, apretada con un M2, fuera de su largo libre",
           "tolerancia": ""
+        },
+        {
+          "nombre": "bieleta_largo_desarrollado",
+          "valor": 0.083575,
+          "unidad": "m",
+          "descripcion": "Largo de varilla antes de doblar: bieleta_entre_centros + las dos patas. Derivado; los radios de doblado de 2 lo acortan menos de 1 mm y se ajusta al doblar la segunda pata",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "apoyo_balancin_tornillo_diametro",
+          "valor": 0.0032,
+          "unidad": "m",
+          "descripcion": "Paso del M3 que cuelga cada apoyo de la cara baja del plato 2. Los tres platos son la misma pieza, asi que el 1 y el 3 llevan los dos agujeros sin usar",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "platina_apoyo_trasero_al_arbol",
+          "valor": 0.044216174304069815,
+          "unidad": "m",
+          "descripcion": "Del arbol al agujero del apoyo de popa del eje del balancin. Derivado: (balancin_eje_x, apoyo_balancin_trasero_y) del cinco barras llevado al marco de la leva",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "platina_apoyo_trasero_angulo",
+          "valor": -2.6960896990712526,
+          "unidad": "rad",
+          "descripcion": "Angulo de ese agujero en el marco de la leva",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "platina_apoyo_delantero_al_arbol",
+          "valor": 0.07570751410545798,
+          "unidad": "m",
+          "descripcion": "Del arbol al agujero del apoyo de proa. Derivado como el de popa",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "platina_apoyo_delantero_angulo",
+          "valor": -2.431323594554943,
+          "unidad": "rad",
+          "descripcion": "Angulo de ese agujero en el marco de la leva",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "mesa_tornillo_diametro",
+          "valor": 0.0022,
+          "unidad": "m",
+          "descripcion": "Paso del M2 que sujeta cada orejeta a la mesa",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "mesa_tornillos_entre",
+          "valor": 0.06,
+          "unidad": "m",
+          "descripcion": "Entre los dos tornillos de la mesa: los de las dos orejetas, encima de los ejes moviles. Derivado: mesa_bisagra_lejos - mesa_bisagra_cerca",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "mesa_tornillo_al_borde",
+          "valor": 0.025,
+          "unidad": "m",
+          "descripcion": "Del tornillo trasero al canto de atras de la mesa: la bisagra movil trasera (cerca + biela = 80) menos el canto (55)",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "orejeta_mesa_alto",
+          "valor": 0.0045,
+          "unidad": "m",
+          "descripcion": "De 2,5 por debajo del eje movil a la cara baja de la mesa, que esta 2 por encima del eje",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "horquilla_cubo_diametro",
+          "valor": 0.016,
+          "unidad": "m",
+          "descripcion": "Los dos cubos del brazo del portalapiz: 1,5 de pared sobre el tubo de 13, y el mismo en el otro extremo, donde va el poste",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "horquilla_largo",
+          "valor": 0.035,
+          "unidad": "m",
+          "descripcion": "Del tubo de la punta al centro del poste: medio collar de la pinza (8) + flexura_largo + medio poste (2)",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "poste_horquilla_tornillo_al_pie",
+          "valor": 0.0095,
+          "unidad": "m",
+          "descripcion": "Del pie del poste al M2 de la lamina de abajo: la lamina va a z 90 y su pestana, doblada hacia abajo, lleva el tornillo a 2,5",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "flexura_tornillo_diametro",
+          "valor": 0.0022,
+          "unidad": "m",
+          "descripcion": "Paso del M2 que aprieta cada pestana de lamina contra el poste y contra la pinza",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "pinza_ancho",
+          "valor": 0.016,
+          "unidad": "m",
+          "descripcion": "La pinza es un bloque cuadrado y no un collar: las pestanas de las laminas se aprietan contra una cara plana",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "pinza_al_borde",
+          "valor": 0.008,
+          "unidad": "m",
+          "descripcion": "Del eje del portaminas a cada cara de la pinza: medio ancho",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "lamina_desarrollo",
+          "valor": 0.035,
+          "unidad": "m",
+          "descripcion": "Largo de cada lamina antes de doblar: flexura_largo libre + dos pestanas de flexura_empotramiento",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "lamina_entre_tornillos",
+          "valor": 0.03,
+          "unidad": "m",
+          "descripcion": "Entre los dos M2 de una lamina: el largo libre + una pestana",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "lamina_tornillo_al_borde",
+          "valor": 0.0025,
+          "unidad": "m",
+          "descripcion": "Del M2 a la punta de la pestana: media pestana",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "pinza_agujero_diametro",
+          "valor": 0.01,
+          "unidad": "m",
+          "descripcion": "Agujero de la pinza: el cuerpo del portaminas, 10 NOMINAL y sin medir. Se ajusta al portaminas comprado antes de taladrar; el prisionero M3 recoge el resto",
+          "tolerancia": "ajustar al medido"
         }
       ]
     }

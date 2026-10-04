@@ -309,12 +309,15 @@ FICHAS: dict[str, Ficha] = {
             "rodamiento_arbol_alojamiento_diametro_radio": 2,
             "poste_eje_diametro_radio": 3,
             "brazo_eje_diametro_radio": 2,
+            "apoyo_balancin_tornillo_diametro_radio": 2,
         },
         polares=(
             ("poste_radio_al_arbol", "poste_reparto", 3),
             ("platina_pivote_al_arbol", "platina_pivote_angulo_izquierdo", 1),
             ("platina_pivote_al_arbol", "platina_pivote_angulo_derecho", 1),
             ("reductor_entre_ejes", "platina_manivela_angulo", 1),
+            ("platina_apoyo_trasero_al_arbol", "platina_apoyo_trasero_angulo", 1),
+            ("platina_apoyo_delantero_al_arbol", "platina_apoyo_delantero_angulo", 1),
         ),
         datum="rodamiento_arbol_alojamiento_diametro_radio",
     ),
@@ -370,6 +373,122 @@ FICHAS: dict[str, Ficha] = {
         "anillo: el agujero de 15 de la rueda sobre el árbol de 10",
         {"casquillo_rueda_diametro_radio": 1, "eje_diametro_radio": 1},
         datum="eje_diametro_radio",
+    ),
+    "eje_balancin": Ficha(
+        "sección del eje del balancín: Ø4 con una cara plana",
+        {"balancin_eje_diametro_radio": 1},
+        segmentos={"balancin_chaveta_cuerda": 1},
+        cara_plana="balancin_chaveta",
+        cara_plana_angulo="brazo_chaveta_angulo",
+        datum="balancin_eje_diametro_radio",
+    ),
+    "apoyo_balancin": Ficha(
+        "bloque con el agujero del eje, el alto sobre X",
+        {"balancin_eje_diametro_radio": 1},
+        segmentos={"apoyo_balancin_alto": 2, "apoyo_balancin_ancho": 2},
+        voladizo="apoyo_balancin_bajo_eje",
+        simetrico=True,
+        datum="balancin_eje_diametro_radio",
+    ),
+    "bieleta": Ficha(
+        "sección de la varilla",
+        {"bieleta_diametro_radio": 1},
+        datum="bieleta_diametro_radio",
+    ),
+    "casquillo_bieleta": Ficha(
+        "anillo: el agujero de 3,2 del seguidor sobre la varilla de 2",
+        {"casquillo_bieleta_diametro_radio": 1, "bieleta_diametro_radio": 1},
+        datum="bieleta_diametro_radio",
+    ),
+    "tirante": Ficha(
+        "sección de la varilla",
+        {"tirante_diametro_radio": 1},
+        datum="tirante_diametro_radio",
+    ),
+    "bulon_tirante": Ficha(
+        "sección del bulón",
+        {"brazo_perno_diametro_radio": 1},
+        datum="brazo_perno_diametro_radio",
+    ),
+    "mesa": Ficha(
+        "chapa con los dos M2 de las orejetas, el fondo sobre X",
+        {"mesa_tornillo_diametro_radio": 2},
+        segmentos={"mesa_fondo": 2, "mesa_ancho": 2},
+        desde_datum=("mesa_tornillos_entre",),
+        voladizo="mesa_tornillo_al_borde",
+        simetrico=True,
+        datum="mesa_tornillo_diametro_radio",
+    ),
+    "biela_mesa": Ficha(
+        "biela: los dos extremos iguales, sin cara plana",
+        {"mesa_biela_extremo_diametro_radio": 2, "mesa_eje_diametro_radio": 2},
+        entre_centros=("mesa_biela",),
+        tangentes=4,
+        datum="mesa_eje_diametro_radio",
+    ),
+    "eje_mesa_movil": Ficha(
+        "sección del eje",
+        {"mesa_eje_diametro_radio": 1},
+        datum="mesa_eje_diametro_radio",
+    ),
+    "eje_mesa_fijo": Ficha(
+        "sección del eje",
+        {"mesa_eje_diametro_radio": 1},
+        datum="mesa_eje_diametro_radio",
+    ),
+    "soporte_mesa": Ficha(
+        "bloque con el agujero del eje fijo, el alto sobre X",
+        {"mesa_eje_diametro_radio": 1},
+        segmentos={"soporte_mesa_alto": 2, "soporte_mesa_fondo": 2},
+        voladizo="mesa_bisagra_z",
+        simetrico=True,
+        datum="mesa_eje_diametro_radio",
+    ),
+    "orejeta_mesa": Ficha(
+        "bloque con el agujero del eje móvil, el alto sobre X",
+        {"mesa_eje_diametro_radio": 1},
+        segmentos={"orejeta_mesa_alto": 2, "orejeta_mesa_fondo": 2},
+        voladizo="mesa_biela_extremo_diametro_radio",
+        simetrico=True,
+        datum="mesa_eje_diametro_radio",
+    ),
+    "tubo_punta": Ficha(
+        "anillo: el tubo de la punta",
+        {"punta_tubo_diametro_radio": 1, "punta_tubo_interior_diametro_radio": 1},
+        datum="punta_tubo_interior_diametro_radio",
+    ),
+    "brazo_horquilla": Ficha(
+        "barra de dos cubos iguales con el agujero del tubo en el datum",
+        {"horquilla_cubo_diametro_radio": 2, "punta_tubo_diametro_radio": 1},
+        entre_centros=("horquilla_largo",),
+        tangentes=4,
+        datum="punta_tubo_diametro_radio",
+    ),
+    "poste_horquilla": Ficha(
+        "bloque con los dos M2 de las láminas, el alto sobre X",
+        {"flexura_tornillo_diametro_radio": 2},
+        segmentos={"poste_horquilla_alto": 2, "horquilla_ancho": 2},
+        desde_datum=("flexura_separacion",),
+        voladizo="poste_horquilla_tornillo_al_pie",
+        simetrico=True,
+        datum="flexura_tornillo_diametro_radio",
+    ),
+    "pinza": Ficha(
+        "bloque cuadrado con el agujero del portaminas",
+        {"pinza_agujero_diametro_radio": 1},
+        segmentos={"pinza_ancho": 4},
+        voladizo="pinza_al_borde",
+        simetrico=True,
+        datum="pinza_agujero_diametro_radio",
+    ),
+    "lamina_flexura": Ficha(
+        "lámina desarrollada con los dos M2",
+        {"flexura_tornillo_diametro_radio": 2},
+        segmentos={"lamina_desarrollo": 2, "flexura_ancho": 2},
+        desde_datum=("lamina_entre_tornillos",),
+        voladizo="lamina_tornillo_al_borde",
+        simetrico=True,
+        datum="flexura_tornillo_diametro_radio",
     ),
 }
 """Las piezas prismáticas de la plataforma. No hay marco genérico a propósito:
@@ -1004,6 +1123,14 @@ def comparar(ruta: Path, pieza: str, tol: float = TOLERANCIA) -> Informe:
             inf.datum = (
                 "datum en el origen y la cara plana sobre +X: "
                 "dos coincidentes y queda totalmente definida"
+            )
+        elif not otros and ficha.simetrico and segmentos:
+            # Un bloque con un solo agujero: el giro lo quita un BORDE, no un
+            # segundo centro. Simétrico respecto de X, sus lados largos van en
+            # horizontal, y eso es una restricción que el CAD pone de un clic.
+            inf.datum = (
+                "datum en el origen y un borde horizontal: una coincidente y una "
+                "horizontal, y queda totalmente definida"
             )
         else:
             inf.datum = (

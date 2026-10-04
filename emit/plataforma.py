@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import json
 import math
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -253,6 +254,14 @@ def platina_levas(c: dict[str, float] | None = None) -> Perfil:
     t = c["platina_manivela_angulo"]
     centro = (c["reductor_entre_ejes"] * math.cos(t), c["reductor_entre_ejes"] * math.sin(t))
     perfil += circulo(centro, c["rodamiento_arbol_alojamiento_diametro"] / 2)
+    # Los dos M3 de los apoyos del eje del balancín, que cuelgan del plato 2.
+    # En el 1 y en el 3 no sujetan nada: es el precio de que sean una pieza.
+    for cual in ("trasero", "delantero"):
+        t = c[f"platina_apoyo_{cual}_angulo"]
+        r = c[f"platina_apoyo_{cual}_al_arbol"]
+        perfil += circulo(
+            (r * math.cos(t), r * math.sin(t)), c["apoyo_balancin_tornillo_diametro"] / 2
+        )
     return perfil
 
 
@@ -420,6 +429,133 @@ def base(c: dict[str, float] | None = None) -> Perfil:
     return perfil
 
 
+# ---------------------------------------------------------------------------
+# La cadena del levantamiento
+# ---------------------------------------------------------------------------
+#
+# Todas en su marco y en su datum, como las demás: el agujero que ancla en el
+# origen y el siguiente sobre +X. Los bloques van con su eje LARGO sobre X,
+# que es lo que deja el contorno simétrico respecto del eje X y lo sitúa con
+# una sola cota hacia -X.
+
+
+def _bloque(atras: float, largo: float, ancho: float) -> Perfil:
+    """Rectángulo de `largo` en X, empezando a `atras` por detrás del datum,
+    y de `ancho` centrado en Y."""
+    return rectangulo((largo / 2 - atras, 0.0), largo, ancho)
+
+
+def eje_balancin(c: dict[str, float] | None = None) -> Perfil:
+    """La sección del eje del balancín: Ø4 con UNA cara plana. La palanca cala
+    a 0° de ella y el balancín a 90°: el giro lo lleva la pieza cortada."""
+    c = contrato_mm() if c is None else c
+    return agujero_en_d((0.0, 0.0), c["balancin_eje_diametro"] / 2, c["balancin_chaveta"])
+
+
+def apoyo_balancin(c: dict[str, float] | None = None) -> Perfil:
+    """Bloque colgado del plato 2 con el agujero del eje: el largo, sobre X,
+    es lo que baja desde el plato."""
+    c = contrato_mm() if c is None else c
+    return _bloque(
+        c["apoyo_balancin_bajo_eje"], c["apoyo_balancin_alto"], c["apoyo_balancin_ancho"]
+    ) + circulo((0.0, 0.0), c["balancin_eje_diametro"] / 2)
+
+
+def varilla(diametro: str) -> Callable[[dict[str, float] | None], Perfil]:
+    """La sección de una varilla: un círculo. Se extruye a lo largo."""
+
+    def perfil(c: dict[str, float] | None = None) -> Perfil:
+        c = contrato_mm() if c is None else c
+        return circulo((0.0, 0.0), c[diametro] / 2)
+
+    return perfil
+
+
+def casquillo_bieleta(c: dict[str, float] | None = None) -> Perfil:
+    c = contrato_mm() if c is None else c
+    return disco(c["casquillo_bieleta_diametro"] / 2, c["bieleta_diametro"])
+
+
+def mesa(c: dict[str, float] | None = None) -> Perfil:
+    """La mesa del papel, con el FONDO sobre X: así los dos tornillos de las
+    orejetas, que van uno encima de cada eje móvil, quedan en línea."""
+    c = contrato_mm() if c is None else c
+    r = c["mesa_tornillo_diametro"] / 2
+    return (
+        _bloque(c["mesa_tornillo_al_borde"], c["mesa_fondo"], c["mesa_ancho"])
+        + circulo((0.0, 0.0), r)
+        + circulo((c["mesa_tornillos_entre"], 0.0), r)
+    )
+
+
+def biela_mesa(c: dict[str, float] | None = None) -> Perfil:
+    """Biela lateral de la mesa: dos cubos iguales, no cala nada."""
+    c = contrato_mm() if c is None else c
+    largo, r = c["mesa_biela"], c["mesa_biela_extremo_diametro"] / 2
+    eje = c["mesa_eje_diametro"] / 2
+    return barra(largo, r, r) + circulo((0.0, 0.0), eje) + circulo((largo, 0.0), eje)
+
+
+def soporte_mesa(c: dict[str, float] | None = None) -> Perfil:
+    """Bloque sobre la base con el agujero del eje fijo: el alto, sobre X."""
+    c = contrato_mm() if c is None else c
+    return _bloque(c["mesa_bisagra_z"], c["soporte_mesa_alto"], c["soporte_mesa_fondo"]) + circulo(
+        (0.0, 0.0), c["mesa_eje_diametro"] / 2
+    )
+
+
+def orejeta_mesa(c: dict[str, float] | None = None) -> Perfil:
+    """Bloque bajo la mesa con el agujero del eje móvil: el alto, sobre X."""
+    c = contrato_mm() if c is None else c
+    return _bloque(
+        c["mesa_biela_extremo_diametro"] / 2, c["orejeta_mesa_alto"], c["orejeta_mesa_fondo"]
+    ) + circulo((0.0, 0.0), c["mesa_eje_diametro"] / 2)
+
+
+def tubo_punta(c: dict[str, float] | None = None) -> Perfil:
+    c = contrato_mm() if c is None else c
+    return disco(c["punta_tubo_diametro"] / 2, c["punta_tubo_interior_diametro"])
+
+
+def brazo_horquilla(c: dict[str, float] | None = None) -> Perfil:
+    """Brazo del portalápiz: del tubo de la punta al pie del poste."""
+    c = contrato_mm() if c is None else c
+    r = c["horquilla_cubo_diametro"] / 2
+    return barra(c["horquilla_largo"], r, r) + circulo((0.0, 0.0), c["punta_tubo_diametro"] / 2)
+
+
+def poste_horquilla(c: dict[str, float] | None = None) -> Perfil:
+    """El poste, con los dos M2 de las pestañas de las láminas."""
+    c = contrato_mm() if c is None else c
+    r = c["flexura_tornillo_diametro"] / 2
+    return (
+        _bloque(
+            c["poste_horquilla_tornillo_al_pie"], c["poste_horquilla_alto"], c["horquilla_ancho"]
+        )
+        + circulo((0.0, 0.0), r)
+        + circulo((c["flexura_separacion"], 0.0), r)
+    )
+
+
+def pinza(c: dict[str, float] | None = None) -> Perfil:
+    """Bloque cuadrado apretado al portaminas: las pestañas necesitan cara plana."""
+    c = contrato_mm() if c is None else c
+    return _bloque(c["pinza_al_borde"], c["pinza_ancho"], c["pinza_ancho"]) + circulo(
+        (0.0, 0.0), c["pinza_agujero_diametro"] / 2
+    )
+
+
+def lamina_flexura(c: dict[str, float] | None = None) -> Perfil:
+    """Una lámina, desarrollada: el largo libre y las dos pestañas antes de doblar."""
+    c = contrato_mm() if c is None else c
+    r = c["flexura_tornillo_diametro"] / 2
+    return (
+        _bloque(c["lamina_tornillo_al_borde"], c["lamina_desarrollo"], c["flexura_ancho"])
+        + circulo((0.0, 0.0), r)
+        + circulo((c["lamina_entre_tornillos"], 0.0), r)
+    )
+
+
 PERFILES = {
     "mordaza": lambda c: mordaza(c),
     "eje_pivote": lambda c: eje_pivote(c),
@@ -432,6 +568,23 @@ PERFILES = {
     "balancin": lambda c: balancin(c),
     "eje_manivela": lambda c: eje_pivote(c),
     "casquillo_rueda": lambda c: casquillo_rueda(c),
+    "eje_balancin": lambda c: eje_balancin(c),
+    "apoyo_balancin": lambda c: apoyo_balancin(c),
+    "bieleta": lambda c: varilla("bieleta_diametro")(c),
+    "casquillo_bieleta": lambda c: casquillo_bieleta(c),
+    "tirante": lambda c: varilla("tirante_diametro")(c),
+    "bulon_tirante": lambda c: varilla("brazo_perno_diametro")(c),
+    "mesa": lambda c: mesa(c),
+    "biela_mesa": lambda c: biela_mesa(c),
+    "eje_mesa_movil": lambda c: varilla("mesa_eje_diametro")(c),
+    "eje_mesa_fijo": lambda c: varilla("mesa_eje_diametro")(c),
+    "soporte_mesa": lambda c: soporte_mesa(c),
+    "orejeta_mesa": lambda c: orejeta_mesa(c),
+    "tubo_punta": lambda c: tubo_punta(c),
+    "brazo_horquilla": lambda c: brazo_horquilla(c),
+    "poste_horquilla": lambda c: poste_horquilla(c),
+    "pinza": lambda c: pinza(c),
+    "lamina_flexura": lambda c: lamina_flexura(c),
 }
 """Las piezas prismáticas que no son barras. El resto sale de `BRAZOS`.
 
@@ -886,6 +1039,13 @@ LISTADO: dict[str, Ficha] = {
                 "platina_manivela_angulo_positivo",
                 "eje de la manivela a, bajo +X",
             ),
+            Variable("cota", "apoyo_balancin_tornillo_diametro", "Ø de los dos M3 de los apoyos"),
+            Variable("cota", "platina_apoyo_trasero_al_arbol", "del árbol al apoyo de popa"),
+            Variable("angulo", "platina_apoyo_trasero_angulo_positivo", "apoyo de popa a, bajo +X"),
+            Variable("cota", "platina_apoyo_delantero_al_arbol", "del árbol al apoyo de proa"),
+            Variable(
+                "angulo", "platina_apoyo_delantero_angulo_positivo", "apoyo de proa a, bajo +X"
+            ),
         ),
         ("plancha", "platina_espesor"),
         "Un disco y no un rectángulo: los agujeros caben dentro de 71,063 —los postes "
@@ -984,6 +1144,324 @@ LISTADO: dict[str, Ficha] = {
         ),
         material="latón, barra de Ø16",
         proceso="torneado + taladro roscado M3",
+    ),
+    "eje_balancin": Ficha(
+        "barra Ø4 h6 con UNA cara plana",
+        1,
+        (
+            Variable("cota", "balancin_eje_diametro", "Ø", "h6"),
+            Variable("cota", "balancin_eje_largo", "largo", en_el_perfil=False),
+            Variable("cota", "balancin_chaveta", "cara plana a"),
+            Variable("cota", "balancin_chaveta_cuerda", "cuerda"),
+            Variable("angulo", "brazo_chaveta_angulo", "girada"),
+        ),
+        ("barra", "balancin_eje_largo"),
+        "Una sola cara plana y dos piezas caladas en ella a ángulos distintos: la palanca a 0 y "
+        "el balancín a 90. El cuarto de vuelta lo lleva el agujero del balancín, no un segundo "
+        "fresado del eje.",
+        montaje=(
+            "Horizontal y de proa a popa, a z = 120 y x = 25,028 del cinco barras. Gira en los dos "
+            "apoyos colgados del plato 2. En la punta de popa, el balancín apuntando hacia arriba; "
+            "90,75 a proa, la palanca. Un circlip por fuera de cada pieza."
+        ),
+        material="acero plata Ø4 h6",
+        proceso="corte a medida + fresado de la cara plana",
+    ),
+    "apoyo_balancin": Ficha(
+        "bloque de latón colgado del plato 2, con el agujero del eje del balancín",
+        2,
+        (
+            Variable("cota", "apoyo_balancin_alto", "alto (sobre X)"),
+            Variable("cota", "apoyo_balancin_ancho", "ancho"),
+            Variable("cota", "apoyo_balancin_fondo", "grueso", en_el_perfil=False),
+            Variable("cota", "balancin_eje_diametro", "Ø del eje", "H7"),
+            Variable("cota", "apoyo_balancin_bajo_eje", "del eje al pie"),
+        ),
+        ("plancha", "apoyo_balancin_fondo"),
+        "El eje del balancín pasa por encima de las levas y los seguidores, donde no hay nada en "
+        "qué apoyarse: cuelga del plato 2. Dos y no uno porque la palanca carga en voladizo.",
+        montaje=(
+            "La cara de arriba contra la cara baja del plato 2, con un M3 que baja por el agujero "
+            "del plato y rosca en el apoyo. Popa en y = 4 del cinco barras, fuera del paso de la "
+            "bieleta; proa en y = 39, antes del canto del plato."
+        ),
+        material="latón, pletina de 6",
+        proceso="corte + taladro; rosca M3 en la cara alta",
+    ),
+    "bieleta": Ficha(
+        "varilla de acero de Ø2 doblada en sus dos extremos",
+        1,
+        (
+            Variable("cota", "bieleta_diametro", "Ø", "h8"),
+            Variable(
+                "cota", "bieleta_largo_desarrollado", "largo antes de doblar", en_el_perfil=False
+            ),
+            Variable("cota", "bieleta_entre_centros", "entre ejes", en_el_perfil=False),
+            Variable("cota", "bieleta_pata_seguidor", "pata hacia abajo", en_el_perfil=False),
+            Variable("cota", "bieleta_pata_balancin", "pata hacia proa", en_el_perfil=False),
+        ),
+        ("barra", "bieleta_largo_desarrollado"),
+        "Une un pasador vertical —el del seguidor— con uno horizontal —el del balancín—, y una "
+        "pletina con dos agujeros no puede. La varilla doblada sí, y su pata de proa ES el "
+        "pasador del balancín. Va isógona: el balancín se mueve lo mismo que el seguidor.",
+        montaje=(
+            "Horizontal a z = 126,33, del agujero de 38 del seguidor 3 al balancín. La pata de "
+            "abajo entra en el casquillo del seguidor; la de proa atraviesa el balancín y se "
+            "retiene con una arandela de presión."
+        ),
+        material="cuerda de piano Ø2",
+        proceso="corte + doblado a 90° en dos planos",
+    ),
+    "casquillo_bieleta": Ficha(
+        "casquillo de latón en el agujero de 3,2 del seguidor 3",
+        1,
+        (
+            Variable("cota", "casquillo_bieleta_diametro", "Ø exterior", "p6"),
+            Variable("cota", "bieleta_diametro", "Ø interior", "H8"),
+            Variable("cota", "seguidor_espesor", "largo", en_el_perfil=False),
+        ),
+        ("barra", "seguidor_espesor"),
+        "El agujero que dejó el sector es de 3,2 para un M3; la pata de la bieleta es de 2. "
+        "Sin casquillo el juego de 1,2 se comería la carrera entera del seguidor, que es de "
+        "0,475.",
+        montaje="A presión en el agujero de 38 del seguidor 3, enrasado por las dos caras.",
+        material="latón, tubo 3,2/2",
+        proceso="corte a medida",
+    ),
+    "tirante": Ficha(
+        "varilla de latón de Ø4 con un taladro transversal abajo",
+        1,
+        (
+            Variable("cota", "tirante_diametro", "Ø"),
+            Variable("cota", "tirante_largo", "largo", "PENDIENTE", en_el_perfil=False),
+            Variable("cota", "tirante_ojo_diametro", "taladro del ojo", en_el_perfil=False),
+        ),
+        ("barra", "tirante_largo"),
+        "Cuelga a plomo de la palanca y baja la mesa: solo traslada, porque la palanca y las "
+        "bielas de la mesa miden lo mismo. El pandeo no decide nada: con 120 y Ø4 aguanta "
+        "1700 N contra menos de 2.",
+        montaje=(
+            "En x = 65, y = 80 del cinco barras, a 3 del canto de la mesa. Arriba, soldado en el "
+            "taladro del bulón; abajo, el eje móvil trasero de la mesa pasa por su ojo."
+        ),
+        material="latón Ø4",
+        proceso="corte + taladro transversal Ø1,8 a 2 de la punta",
+    ),
+    "bulon_tirante": Ficha(
+        "bulón de acero Ø6 con un taladro transversal de 4",
+        1,
+        (
+            Variable("cota", "brazo_perno_diametro", "Ø", "h7"),
+            Variable("cota", "bulon_tirante_largo", "largo", en_el_perfil=False),
+        ),
+        ("barra", "bulon_tirante_largo"),
+        "El perno de la palanca es de 6 y el tirante de 4: el bulón es el paso entre los dos.",
+        montaje=(
+            "Atraviesa el agujero de 6 de la palanca; a 5,5 de su punta de dentro lleva el "
+            "taladro de 4 donde se suelda el tirante. Un circlip por dentro."
+        ),
+        material="acero plata Ø6",
+        proceso="torneado + taladro transversal Ø4",
+    ),
+    "mesa": Ficha(
+        "chapa de aluminio de 4 donde va la tarjeta",
+        1,
+        (
+            Variable("cota", "mesa_fondo", "fondo (sobre X)"),
+            Variable("cota", "mesa_ancho", "ancho"),
+            Variable("cota", "mesa_espesor", "espesor", en_el_perfil=False),
+            Variable("cota", "mesa_tornillo_diametro", "Ø de los dos M2"),
+            Variable("cota", "mesa_tornillos_entre", "entre los dos M2"),
+            Variable("cota", "mesa_tornillo_al_borde", "del M2 al canto de atrás"),
+            Variable("cota", "mesa_planitud", "planitud", en_el_perfil=False),
+        ),
+        ("plancha", "mesa_espesor"),
+        "Es lo que se mueve para levantar: el lápiz va rígido sobre su flexura y la mesa baja "
+        "3 mm. Su planitud, 0,5, es todo el recorrido de la flexura.",
+        montaje=(
+            "Cuelga de dos orejetas, una sobre cada eje móvil, con un M2 cada una. Cara alta a "
+            "12 de la base con la mesa arriba. Centrada en la caja de escritura."
+        ),
+        material="aluminio 5083, chapa de 4",
+        proceso="corte + taladro + avellanado de los M2",
+    ),
+    "biela_mesa": Ficha(
+        "barra de dos cubos iguales, en pletina de latón de 3",
+        4,
+        (
+            Variable("cota", "mesa_biela", "entre centros"),
+            Variable("cota", "mesa_biela_espesor", "espesor", en_el_perfil=False),
+            Variable("cota", "mesa_eje_diametro", "Ø los dos", "H8"),
+            Variable("cota", "mesa_biela_extremo_diametro_radio", "R los dos"),
+        ),
+        ("plancha", "mesa_biela_espesor"),
+        "Cuatro, dos por lado y por FUERA de la mesa: debajo de ella solo hay 8 mm y la mesa "
+        "baja 3, y el pivote trasero cae encima del poste 3. Miden lo mismo que la palanca, "
+        "así que el tirante solo traslada.",
+        montaje=(
+            "En x = ±(68..71), una en cada eje fijo (y = 40 y 100) y cada eje móvil (y = 80 y "
+            "140). Horizontales con la mesa arriba; bajan 4,3° al levantar."
+        ),
+        material="latón, pletina de 3",
+        proceso="corte + taladro",
+    ),
+    "eje_mesa_movil": Ficha(
+        "varilla de acero de Ø1,5 que cruza bajo la mesa",
+        2,
+        (
+            Variable("cota", "mesa_eje_diametro", "Ø", "h8"),
+            Variable("cota", "mesa_eje_movil_largo", "largo", en_el_perfil=False),
+        ),
+        ("barra", "mesa_eje_movil_largo"),
+        "Va con la mesa: la llevan su orejeta y las dos bielas de su lado.",
+        montaje=(
+            "De biela a biela, a 2 por debajo de la mesa. El trasero atraviesa además el ojo del "
+            "tirante. Un circlip por fuera de cada biela."
+        ),
+        material="acero plata Ø1,5",
+        proceso="corte a medida + ranuras de circlip",
+    ),
+    "eje_mesa_fijo": Ficha(
+        "varilla de acero de Ø1,5, corta",
+        4,
+        (
+            Variable("cota", "mesa_eje_diametro", "Ø", "h8"),
+            Variable("cota", "mesa_eje_fijo_largo", "largo", en_el_perfil=False),
+        ),
+        ("barra", "mesa_eje_fijo_largo"),
+        "Cortos y no de lado a lado: por el medio, a y = 38,6, pasa el poste 3.",
+        montaje="Atraviesan su biela y su soporte, a z = 6. Un circlip por dentro.",
+        material="acero plata Ø1,5",
+        proceso="corte a medida",
+    ),
+    "soporte_mesa": Ficha(
+        "bloque de latón sobre la base con el agujero de un eje fijo",
+        4,
+        (
+            Variable("cota", "soporte_mesa_alto", "alto (sobre X)"),
+            Variable("cota", "soporte_mesa_fondo", "fondo"),
+            Variable("cota", "soporte_mesa_ancho", "grueso", en_el_perfil=False),
+            Variable("cota", "mesa_eje_diametro", "Ø del eje", "H8"),
+            Variable("cota", "mesa_bisagra_z", "del eje a la base"),
+        ),
+        ("plancha", "soporte_mesa_ancho"),
+        "Son los soportes de la mesa que la ficha de la base ya anunciaba. Por fuera de las "
+        "bielas, y por eso fuera de la huella de la mesa.",
+        montaje="Sobre la cara alta de la base, por fuera de cada biela, con un M2 desde abajo.",
+        material="latón, pletina de 4",
+        proceso="corte + taladro; rosca M2 en el pie",
+    ),
+    "orejeta_mesa": Ficha(
+        "bloque de latón de 40 bajo la mesa, con el agujero de un eje móvil",
+        2,
+        (
+            Variable("cota", "orejeta_mesa_alto", "alto (sobre X)"),
+            Variable("cota", "orejeta_mesa_fondo", "fondo"),
+            Variable("cota", "orejeta_mesa_ancho", "largo", en_el_perfil=False),
+            Variable("cota", "mesa_eje_diametro", "Ø del eje", "H8"),
+            Variable("cota", "mesa_biela_extremo_diametro_radio", "del eje al pie"),
+        ),
+        ("plancha", "orejeta_mesa_ancho"),
+        "Una por eje y larga, 40: lo que impide que la mesa ruede sobre el eje es lo largo "
+        "del agujero, no un segundo tornillo.",
+        montaje="Bajo la mesa, centrada, con el M2 de la mesa roscado en su cara alta.",
+        material="latón, barra de 6 × 5",
+        proceso="corte + taladro a lo largo + rosca M2",
+    ),
+    "tubo_punta": Ficha(
+        "tubo de latón: el perno hueco de la punta del cinco barras",
+        1,
+        (
+            Variable("cota", "punta_tubo_diametro", "Ø exterior", "h7"),
+            Variable("cota", "punta_tubo_interior_diametro", "Ø interior"),
+            Variable("cota", "punta_tubo_largo", "largo", en_el_perfil=False),
+        ),
+        ("barra", "punta_tubo_largo"),
+        "El portaminas y el perno de la punta no caben en el mismo eje, así que el perno es "
+        "hueco y el lápiz pasa por dentro. Con el lápiz en el eje, lo que gire sobre la punta "
+        "no mueve la mina.",
+        montaje=(
+            "Atraviesa los cubos de la punta de los dos distales, de z = 59 a 75; arriba lleva "
+            "soldado el brazo del portalápiz."
+        ),
+        material="latón, tubo 13/10,6",
+        proceso="corte a medida",
+    ),
+    "brazo_horquilla": Ficha(
+        "brazo de latón del portalápiz: del tubo de la punta al poste",
+        1,
+        (
+            Variable("cota", "horquilla_largo", "entre centros"),
+            Variable("cota", "horquilla_espesor", "espesor", en_el_perfil=False),
+            Variable("cota", "horquilla_cubo_diametro_radio", "R los dos"),
+            Variable("cota", "punta_tubo_diametro", "Ø del tubo"),
+        ),
+        ("plancha", "horquilla_espesor"),
+        "Lleva el poste de las láminas hacia quien escribe, por encima de la mesa: por "
+        "detrás están el plato 1 y los brazos.",
+        montaje="Soldado sobre el tubo de la punta, a z = 75..78, apuntando a +Y del cinco barras.",
+        material="latón, pletina de 3",
+        proceso="corte + taladro + soldadura blanda",
+    ),
+    "poste_horquilla": Ficha(
+        "poste de latón donde se aprietan las láminas",
+        1,
+        (
+            Variable("cota", "poste_horquilla_alto", "alto (sobre X)"),
+            Variable("cota", "horquilla_ancho", "ancho"),
+            Variable("cota", "poste_horquilla_fondo", "grueso", en_el_perfil=False),
+            Variable("cota", "flexura_tornillo_diametro", "Ø de los dos M2"),
+            Variable("cota", "flexura_separacion", "entre los dos M2"),
+            Variable("cota", "poste_horquilla_tornillo_al_pie", "del M2 al pie"),
+        ),
+        ("plancha", "poste_horquilla_fondo"),
+        "La cara fija del paralelogramo: las dos láminas salen de aquí a 20 una de otra, que es "
+        "lo que hace que la punta traslade sin girar.",
+        montaje=(
+            "Soldado de pie sobre el extremo del brazo, de z = 78 a 112, con la cara hacia el "
+            "lápiz."
+        ),
+        material="latón, pletina de 4",
+        proceso="corte + taladro + rosca M2",
+    ),
+    "pinza": Ficha(
+        "bloque cuadrado de latón apretado al portaminas",
+        1,
+        (
+            Variable("cota", "pinza_ancho", "lado"),
+            Variable("cota", "pinza_largo", "alto", en_el_perfil=False),
+            Variable("cota", "pinza_agujero_diametro", "Ø del portaminas", "ajustar"),
+            Variable("cota", "pinza_al_borde", "del eje a cada cara"),
+        ),
+        ("plancha", "pinza_largo"),
+        "Cuadrado y no redondo: las pestañas de las láminas se aprietan contra una cara plana.",
+        montaje=(
+            "En el portaminas, de z = 84 a 112, apretada con un prisionero M3. La cara de proa "
+            "lleva los dos M2 de las pestañas."
+        ),
+        material="latón, barra cuadrada de 16",
+        proceso="corte + taladro + roscas M3 y M2",
+    ),
+    "lamina_flexura": Ficha(
+        "lámina de fleje de 0,15 con una pestaña doblada en cada punta",
+        2,
+        (
+            Variable("cota", "lamina_desarrollo", "largo antes de doblar"),
+            Variable("cota", "flexura_ancho", "ancho"),
+            Variable("cota", "flexura_espesor", "espesor", en_el_perfil=False),
+            Variable("cota", "flexura_tornillo_diametro", "Ø de los dos M2"),
+            Variable("cota", "lamina_entre_tornillos", "entre los dos M2"),
+            Variable("cota", "lamina_tornillo_al_borde", "del M2 a la punta"),
+        ),
+        ("plancha", "flexura_espesor"),
+        "Dos y no una: en paralelogramo la punta traslada sin girar. 1037 N/m las dos, 0,52 N a "
+        "0,5 mm de precarga y 144 MPa: el 10 % del límite del 1.4310.",
+        montaje=(
+            "Horizontales a z = 90 y 110. Cada pestaña, doblada 90° hacia abajo, se aprieta con un "
+            "M2: una contra el poste y otra contra la pinza. 25 libres entre las dos."
+        ),
+        material="fleje 1.4310 de 0,15",
+        proceso="corte + taladro + doblado de las pestañas",
     ),
 }
 """Qué se teclea en cada pieza de la plataforma, y nada más.

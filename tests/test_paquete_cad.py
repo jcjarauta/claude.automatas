@@ -436,7 +436,11 @@ def test_cada_cota_circular_tiene_sus_dos_formas(paquete: Path):
     # Y 47 con la cadena del levantamiento: la varilla de la bieleta y su
     # casquillo, el ojo del tirante, el cubo y el eje de las bielas de la mesa
     # y la pinza del portaminas. Seis círculos, seis gemelos.
-    assert gemelos == 47, f"esperaba 47 cotas circulares con gemelo, hay {gemelos}"
+    #
+    # Y 51 con las piezas de esa cadena: los M2 de la mesa y de la flexura,
+    # los M3 de los apoyos, el agujero de la pinza y el cubo del brazo del
+    # portalápiz; la pinza dejó de ser un collar y su `_diametro` se fue.
+    assert gemelos == 51, f"esperaba 51 cotas circulares con gemelo, hay {gemelos}"
 
 
 def test_el_gemelo_dice_que_es_derivado(paquete: Path):

@@ -31,6 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from emit.plataforma import (
     LISTADO,
+    PERFILES,
     Arco,
     Perfil,
     Segmento,
@@ -70,6 +71,23 @@ PERFIL_DE = {
     "balancin": balancin,
     "eje_manivela": eje_pivote,
     "casquillo_rueda": casquillo_rueda,
+    "eje_balancin": PERFILES["eje_balancin"],
+    "apoyo_balancin": PERFILES["apoyo_balancin"],
+    "bieleta": PERFILES["bieleta"],
+    "casquillo_bieleta": PERFILES["casquillo_bieleta"],
+    "tirante": PERFILES["tirante"],
+    "bulon_tirante": PERFILES["bulon_tirante"],
+    "mesa": PERFILES["mesa"],
+    "biela_mesa": PERFILES["biela_mesa"],
+    "eje_mesa_movil": PERFILES["eje_mesa_movil"],
+    "eje_mesa_fijo": PERFILES["eje_mesa_fijo"],
+    "soporte_mesa": PERFILES["soporte_mesa"],
+    "orejeta_mesa": PERFILES["orejeta_mesa"],
+    "tubo_punta": PERFILES["tubo_punta"],
+    "brazo_horquilla": PERFILES["brazo_horquilla"],
+    "poste_horquilla": PERFILES["poste_horquilla"],
+    "pinza": PERFILES["pinza"],
+    "lamina_flexura": PERFILES["lamina_flexura"],
 }
 """De dónde sale la forma de cada pieza.
 
@@ -497,6 +515,7 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
     # que es justo lo que este bucle existe para evitar.
     #
     # El número va en el rayo y el nombre en la leyenda, igual que los radios.
+    cajas_polares: list[tuple[float, float, float, float]] = []
     for cota_r, cota_a, centros in _polares(ficha, c):
         # **Lo que se rotula es lo que se teclea.** El campo de ángulo mide
         # una magnitud y no acepta el signo, así que un ángulo negativo se
@@ -554,6 +573,28 @@ def planta(nombre: str, c: dict[str, float], x: float, y: float, ancho: float, a
         # En DOS líneas: de una sola, el rótulo del pivote derecho medía 67 px
         # y se salía de la tarjeta por la izquierda. Partido por el «·» que
         # separa el agujero de su ángulo, ninguna pasa de 35.
+        # **Y si cae encima de otro, se aleja por su rayo.** Con los dos M3 de
+        # los apoyos la platina pasó a nueve agujeros y el «58,407°» del pivote
+        # izquierdo aterrizaba sobre el «90°» de la manivela: dos rótulos
+        # superpuestos mienten sin avisar. Se mide la caja, como el test.
+        lineas_r = (f"{cual}{donde}", f"{marca}{numero(grados)}°{lado}")
+        ancho_r = 2.9 * max(len(t) for t in lineas_r)
+
+        def caja_polar(
+            f: float, a: float = ang_r, an: str = ancla, w: float = ancho_r
+        ) -> tuple[float, float, float, float]:
+            x_, y_ = ox + math.cos(a) * f, oy - math.sin(a) * f
+            x0_ = x_ if an == "start" else x_ - w if an == "end" else x_ - w / 2
+            return (x0_, y_ - 6.5, x0_ + w, y_ + 6.5)
+
+        def pisa(b: tuple[float, float, float, float]) -> bool:
+            return any(
+                b[0] < q[2] and q[0] < b[2] and b[1] < q[3] and q[1] < b[3] for q in cajas_polares
+            )
+
+        while pisa(caja_polar(fuera)):
+            fuera += 6.0
+        cajas_polares.append(caja_polar(fuera))
         tx, ty = ox + math.cos(ang_r) * fuera, oy - math.sin(ang_r) * fuera
         # El primer rayo se prolonga hasta el número: un rótulo que no toca
         # lo que describe hay que emparejarlo de cabeza, y de ahí salen los
