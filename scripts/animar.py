@@ -1,8 +1,12 @@
 """El escribiente moviéndose en el visor, y lo que escribe.
 
-    uv run --group cad python scripts/animar.py                 # hola, 72 fotogramas
+    uv run --group cad python scripts/animar.py                 # hola, 8 s por vuelta
     uv run --group cad python scripts/animar.py --fotogramas 120 --gif build/escribiente.gif
-    uv run --group cad python scripts/animar.py --pedido demo/hola.json --velocidad 0.5
+    uv run --group cad python scripts/animar.py --pedido demo/hola.json --velocidad 1
+
+**La tinta sale a medida que la punta escribe**, letra a letra, y al
+terminar la vuelta la máquina se para un momento con la frase entera y el
+papel se borra para la vuelta siguiente.
 
 Hace falta el visor abierto: en VS Code, «OCP CAD Viewer: Open viewer».
 
@@ -39,6 +43,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 RAIZ = Path(__file__).resolve().parent.parent
 RAIZ_DEL_ARBOL = "escribiente"
+
+HUNDIDO = 2.0
+"""mm que espera la tinta aún no escrita por debajo del papel: la mitad del
+espesor de la mesa, que la tapa."""
 
 LEVAS_SOCAVADAS: set[str] = set()
 """Las levas colocadas (leva_1…) que solo se pueden dibujar como silueta."""
@@ -184,9 +192,10 @@ def _geometria_del_brazo(c: dict[str, float], estado: Any) -> dict[str, Any]:
     return salida
 
 
-def construir(pedido: Path, fotogramas: int = 72):
+def construir(pedido: Path, fotogramas: int = 72, reposo: float = 0.0):
     """El árbol animable, sus tiempos y lo que escribe. Devuelve (raíz,
-    tiempos, recorrido)."""
+    tiempos, recorrido). Con `reposo`, en segundos, la máquina se para al
+    final de la vuelta con la frase entera escrita antes de borrarla."""
     from build123d import Location, Plane, Pos, Rot, Vector
 
     from compile.conjunto import estados
@@ -272,27 +281,41 @@ def construir(pedido: Path, fotogramas: int = 72):
         nodo = _miembros(nombre)
         nodos[nodo].piezas.append((nombre, absoluta(nodo).inverse() * solido))
 
-    # La tinta: lo que escriben las levas cortadas, sobre la mesa en θ = 0.
+    # La tinta: lo que escriben las levas cortadas, sobre la mesa, **a medida
+    # que se escribe**. El visor no sabe cambiar una geometría ni esconderla,
+    # solo moverla; así que la tinta va partida en un trozo por fotograma, cada
+    # trozo es un nodo hijo de la mesa, y espera hundido dentro de ella —la
+    # mesa es opaca— hasta que la punta pasa por él: entonces sube al papel.
+    # Al volver al principio de la vuelta todos bajan, y el papel queda limpio.
     from build123d import Polyline
 
     techo_mesa = cero["mesa"].bounding_box().max.Z + 0.05
     apoyado = recorrido.apoyado
     puntos = [al((x * 1000.0, y * 1000.0)) for x, y in recorrido.puntos]
-    # Se empieza en un vuelo: la vuelta es cerrada, y empezando en θ = 0 el
-    # trazo que la cruza salía partido en dos.
-    inicio = int(np.flatnonzero(~apoyado)[0]) if (~apoyado).any() else 0
-    tramo: list[tuple[float, float, float]] = []
-    tinta = []
-    for k in range(len(puntos) + 1):
-        i = (inicio + k) % len(puntos)
-        if apoyado[i] and k < len(puntos):
-            tramo.append((*puntos[i], techo_mesa))
-        else:
-            if len(tramo) > 1:
-                tinta.append(Polyline(*tramo))
-            tramo = []
-    for k, linea in enumerate(tinta):
-        nodos["mesa"].piezas.append((f"tinta_{k + 1}", linea))
+    fotos, m = len(thetas), len(puntos)
+    bordes = [round(k * m / fotos) for k in range(fotos + 1)]
+    trozos: list[Nodo] = []
+    for k in range(fotos):
+        lineas = []
+        tramo: list[tuple[float, float, float]] = []
+        # Hasta el primer punto del trozo siguiente, incluido: así los trozos
+        # se tocan y la línea sale seguida.
+        for j in range(bordes[k], bordes[k + 1] + 1):
+            i = j % m
+            if apoyado[i]:
+                tramo.append((*puntos[i], techo_mesa))
+            else:
+                if len(tramo) > 1:
+                    lineas.append(tramo)
+                tramo = []
+        if len(tramo) > 1:
+            lineas.append(tramo)
+        if lineas:
+            trozo = Nodo(f"tinta_{k:03d}", Location())
+            trozo.piezas += [(f"tinta_{k:03d}_{q}", Polyline(*t)) for q, t in enumerate(lineas)]
+            trozo.pista = ("tz", [0.0 if f > k else -HUNDIDO for f in range(fotos)])
+            trozos.append(trozo)
+    nodos["mesa"].hijos += trozos
 
     # La punta del lápiz, recorriendo la vuelta: una bolita en el plano del papel.
     from build123d import Sphere
@@ -360,14 +383,23 @@ def construir(pedido: Path, fotogramas: int = 72):
     )
     for k, pista in pistas.items():
         nodos[k].pista = pista
+    segundos = 60.0 / rpm_del_arbol()
+    tiempos = list(np.linspace(0.0, segundos, fotos, endpoint=False))
+    if reposo > 0:
+        # Un fotograma más al final: la máquina se queda quieta con la frase
+        # entera escrita —también el último trozo— y luego vuelve a empezar.
+        tiempos.append(segundos + reposo)
+        for nodo in [*nodos.values(), *trozos]:
+            if nodo.pista is not None:
+                accion, valores = nodo.pista
+                final = 0.0 if nodo in trozos else valores[-1]
+                nodo.pista = (accion, [*valores, final])
 
     raiz = Nodo(
         RAIZ_DEL_ARBOL,
         Rot(Z=90.0 - math.degrees(c["cartucho_salida_angulo"])),
         hijos=[nodos[k] for k in nodos if not k.startswith("distal_")],
     )
-    segundos = 60.0 / rpm_del_arbol()
-    tiempos = list(np.linspace(0.0, segundos, len(thetas), endpoint=False))
     return raiz, tiempos, recorrido
 
 
@@ -385,6 +417,8 @@ def ubicacion_en(nodo: Nodo, fotograma: int, padre: Any = None) -> Any:
             propia = propia * Rot(Z=float(valores[fotograma]))
         elif accion == "t":
             propia = Pos(*valores[fotograma]) * propia
+        elif accion == "tz":
+            propia = Pos(0.0, 0.0, float(valores[fotograma])) * propia
         else:
             raise ValueError(f"pista {accion} sin traducir")
     return padre * propia
@@ -425,7 +459,7 @@ def compuesto(nodo: Nodo, colores: dict[str, str]) -> Any:
             alfa = 0.25 if grupo == "bastidor" else 1.0
             solido.color = Color(colores.get(grupo, "#9aa0a6"), alfa)
         except ValueError:
-            solido.color = Color("#111111" if nombre.startswith("tinta") else "#d63384")
+            solido.color = Color("#0b2a6f" if nombre.startswith("tinta") else "#d63384")
         hijos.append(solido)
     hijos += [compuesto(h, colores) for h in nodo.hijos]
     return Compound(children=hijos, label=nodo.nombre).locate(nodo.ubicacion)
@@ -486,8 +520,19 @@ def main(argv: list[str] | None = None) -> int:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     p.add_argument("--pedido", type=Path, default=RAIZ / "demo" / "hola.json")
-    p.add_argument("--fotogramas", type=int, default=72)
-    p.add_argument("--velocidad", type=float, default=1.0, help="1 = tiempo real, 2 s por vuelta")
+    p.add_argument("--fotogramas", type=int, default=120)
+    p.add_argument(
+        "--velocidad",
+        type=float,
+        default=0.25,
+        help="1 = tiempo real, 2 s por vuelta; por defecto 0,25: 8 s por vuelta",
+    )
+    p.add_argument(
+        "--reposo",
+        type=float,
+        default=0.5,
+        help="segundos de máquina parada con la frase escrita, antes de borrar el papel",
+    )
     p.add_argument("--gif", type=Path, help="guarda también la animación como GIF")
     p.add_argument(
         "--pausa",
@@ -501,7 +546,7 @@ def main(argv: list[str] | None = None) -> int:
 
     from emit.montaje import GRUPOS
 
-    raiz, tiempos, recorrido = construir(op.pedido, op.fotogramas)
+    raiz, tiempos, recorrido = construir(op.pedido, op.fotogramas, op.reposo)
     trazos, vuelos = recorrido.tramos()
     print(
         f"{op.pedido.name}: {trazos} trazos y {vuelos} vuelos; error del trazo por el perfil "

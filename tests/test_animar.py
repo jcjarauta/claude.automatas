@@ -85,10 +85,34 @@ def test_hay_una_pista_por_parte_que_se_mueve_y_un_valor_por_fotograma(animacion
 
 
 def test_la_tinta_es_lo_que_escriben_las_levas_cortadas(animacion):
-    """La tinta sobre la mesa sale del recorrido por contacto, y tiene tantos
-    trazos como el pedido."""
+    """La tinta sobre la mesa sale del recorrido por contacto: tantos puntos
+    de tinta como puntos apoyados tiene la vuelta, ni uno más."""
     raiz, _, recorrido = animacion
     mesa = next(h for h in raiz.hijos if h.nombre == "mesa")
-    tinta = [n for n, _ in mesa.piezas if n.startswith("tinta")]
     assert recorrido.camino.startswith("perfil cortado")
-    assert len(tinta) == recorrido.tramos()[0]
+    escritos = set()
+    for trozo in mesa.hijos:
+        for _, linea in trozo.piezas:
+            escritos |= {(round(v.X, 6), round(v.Y, 6)) for v in linea.vertices()}
+    assert len(escritos) == int(recorrido.apoyado.sum())
+
+
+def test_la_tinta_sale_cuando_la_punta_pasa_y_se_borra_al_volver(animacion):
+    """La escritura «orgánica»: en el fotograma 0 el papel está en blanco, cada
+    trozo sube al papel en el fotograma siguiente al suyo y no vuelve a bajar,
+    y al acabar la vuelta está toda la frase."""
+    from scripts.animar import HUNDIDO, construir
+
+    raiz, tiempos, _ = animacion
+    mesa = next(h for h in raiz.hijos if h.nombre == "mesa")
+    assert mesa.hijos
+    for trozo in mesa.hijos:
+        k = int(trozo.nombre.removeprefix("tinta_"))
+        _, valores = trozo.pista
+        assert valores[0] == -HUNDIDO
+        assert all(v == -HUNDIDO for v in valores[: k + 1])
+        assert all(v == 0.0 for v in valores[k + 1 :])
+    con_reposo, tiempos_r, _ = construir(RAIZ / "demo" / "hola.json", FOTOGRAMAS, reposo=0.5)
+    assert len(tiempos_r) == len(tiempos) + 1
+    mesa_r = next(h for h in con_reposo.hijos if h.nombre == "mesa")
+    assert all(t.pista[1][-1] == 0.0 for t in mesa_r.hijos)
