@@ -24,7 +24,7 @@ levas, y la máquina no lleva ninguna de las dos.
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | **levas** | por pedido, fuera: fresado en un solo amarre | 3 | 3 | 1 | 1 | 0 (0) | 0 | ninguno |
 | **cartucho** | metal a stock; se monta por pedido con las levas | 2 | 3 | 2 | 2 | 1 (1) | 0 | ninguno |
-| **maquina** | a stock, igual en todos los pedidos | 39 | 84 | 21 | 28 | 14 (108) | 79 | orientar 3 collares de seguidor con la galga de 1,20; calar 2 brazos con la mordaza de la cinta; apretar 15 collares de plato a su altura |
+| **maquina** | a stock, igual en todos los pedidos | 40 | 81 | 22 | 28 | 14 (99) | 70 | orientar 3 collares de seguidor con la galga de 1,20; calar 2 brazos con la mordaza de la cinta; apretar 6 collares de plato a su altura |
 
 <!-- niveles:fin -->
 
@@ -56,8 +56,8 @@ el cubo hay que dejar el pasador a 60° de la ranura del eje.
 
 | # | Mejora | Por qué | Esfuerzo |
 | --- | --- | --- | --- |
-| C1 | **Eje y cubo en una sola pieza** | Hoy la fase del cartucho respecto de la máquina (la ranura de la garra, en el eje) y la de las levas (el pasador, en el cubo) se juntan al **prensar**: 1° de error en la prensa es 1° de fase en todo lo que escribe. Torneados de una barra de Ø25 (tetón, eje Ø10 y valona Ø24) y con la ranura y el taladro del pasador fresados **en el mismo amarre**, la fase sale de la máquina y no de la mano. Una pieza menos, una prensa menos y el único ajuste del nivel, fuera | Medio: rediseño del eje del cartucho; afecta al contrato de cartucho, no a los congelados |
-| C2 | **Plantilla de montaje del cartucho** mientras no exista C1 | Una placa con el Ø10 y el Ø3 a su ángulo para prensar el cubo siempre igual | Bajo |
+| C1 | **Eje y cubo en una sola pieza** | **Hecho** (2026-10-04): el eje lleva su valona, torneado de Ø25, y la ranura y el pasador se mecanizan en el mismo amarre. Fuera la prensa, una pieza y el único ajuste del cartucho | — |
+| C2 | ~~Plantilla de montaje del cartucho~~ | Ya no hace falta: con C1 no hay nada que orientar al montar | — |
 | C3 | Separadores cortados en la chapa de 2 junto a la placa de tope | Ya es así; anotado para que el anidado de la chapa los cuente por pedido | — |
 
 ## Máquina: menos piezas sueltas que ajustar
@@ -69,10 +69,10 @@ su altura.
 
 | # | Mejora | Por qué | Esfuerzo |
 | --- | --- | --- | --- |
-| M1 | **Tubos separadores donde no gira nada**: de la base al plato 1 (60) y del plato 2 al plato 3 (20) | Los 15 collares de plato se aprietan a cota, uno a uno. Con dos tubos por poste cortados a largo, el M3 de la punta aprieta todo el paquete: plato 3, tubo, plato 2 contra su collar de abajo, y plato 1 sobre su tubo. **Los collares de plato bajan de 15 a 6** (sobre el plato 1 y bajo el 2, donde están los seguidores), y la altura sale del largo de un tubo y no de una medida en el montaje | Medio: dos piezas nuevas de tubo y el montaje |
+| M1 | **Tubos separadores donde no gira nada** | **Hecho** (2026-10-04): tubo de latón 12 × 1,5 de la base al plato 1 (60) y del plato 2 al 3 (20). El M3 de la punta aprieta plato 3, tubo y plato 2 contra su collar. Collares de plato de 15 a 6, prisioneros de 23 a 14, ajustes de la máquina de 20 a 11. Un material más (el tubo de 12) a cambio de nueve piezas torneadas menos | — |
 | M2 | **Tres espesores de chapa de latón en vez de cuatro** | Solo el soporte de la mesa y el poste de la horquilla van en 4. Pasarlos a 3 o a 6 quita una chapa del pedido | Medio: recalcular las dos piezas |
 | M3 | **Unificar largos de tornillería** | 79 fijaciones en 21 referencias. Varios M2 (×4, ×5, ×8) pueden ser un solo largo | Bajo |
-| M4 | Con M1, los prisioneros bajan de 23 a 14 | Cada prisionero es un apriete que se afloja | Viene con M1 |
+| M4 | Con M1, los prisioneros bajan de 23 a 14 | **Hecho** con M1 | — |
 
 ## Prioridades
 

@@ -433,6 +433,11 @@ FICHAS: dict[str, Ficha] = {
         {"collar_seguidor_diametro_radio": 1, "poste_eje_diametro_radio": 1},
         datum="poste_eje_diametro_radio",
     ),
+    "tubo_separador": Ficha(
+        "anillo: el tubo separador sobre el poste",
+        {"tubo_separador_diametro_radio": 1, "tubo_separador_interior_diametro_radio": 1},
+        datum="tubo_separador_interior_diametro_radio",
+    ),
     "casquillo_rodillo": Ficha(
         "anillo: el casquillo del eje del rodillo",
         {"casquillo_rodillo_diametro_radio": 1, "casquillo_rodillo_interior_diametro_radio": 1},

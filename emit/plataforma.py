@@ -671,6 +671,9 @@ PERFILES = {
     "placa_tope": lambda c: placa_tope(c),
     "calzo_sector": lambda c: calzo_sector(c),
     "collar": lambda c: anillo("collar_seguidor_diametro", "poste_eje_diametro")(c),
+    "tubo_separador": lambda c: anillo(
+        "tubo_separador_diametro", "tubo_separador_interior_diametro"
+    )(c),
     "casquillo_rodillo": lambda c: anillo(
         "casquillo_rodillo_diametro", "casquillo_rodillo_interior_diametro"
     )(c),
@@ -1211,8 +1214,9 @@ LISTADO: dict[str, Ficha] = {
         "es el argumento del producto.",
         montaje=(
             "Los tres son la misma pieza y van a tres alturas: el 1 a base_al_plato de la base, "
-            "el 2 a 58 por encima y el 3 a 20 más, cada uno apretado entre dos collares con "
-            "prisionero; el 3, por arriba, con un M3 avellanado en la punta de cada poste. Los "
+            "el 2 a 58 por encima y el 3 a 20 más. El 1, entre su tubo separador y un collar; "
+            "el 2 y el 3, apretados por el M3 avellanado de la punta de cada poste contra el "
+            "collar de debajo del 2, con el tubo de 20 entre los dos. Los "
             "tres postes los atraviesan y los alinean. El Ø19 del centro lleva el rodamiento "
             "del muñón (plato 1) o del eje motriz (platos 2 y 3), y el de 28 el del eje de la "
             "manivela."
@@ -1722,22 +1726,22 @@ LISTADO: dict[str, Ficha] = {
     # --- lo que sostiene y empuja cada seguidor ---------------------------------
     "collar": Ficha(
         "collar de latón con un prisionero M3 radial",
-        18,
+        9,
         (
             Variable("cota", "collar_seguidor_diametro", "Ø exterior"),
             Variable("cota", "poste_eje_diametro", "Ø interior", "F7"),
             Variable("cota", "collar_seguidor_largo", "largo", en_el_perfil=False),
         ),
         ("barra", "collar_seguidor_largo"),
-        "Lo que fija las alturas en los postes, que nadie decía: sostiene cada seguidor y "
-        "lleva su muelle de torsión, y aprieta cada plato por arriba y por abajo. Una sola "
-        "pieza para las dos cosas. Bajo el seguidor, girarlo a la marca antes de apretar pone "
-        "a la vez el tope y la precarga.",
+        "Fija alturas en los postes donde no cabe un tubo: sostiene cada seguidor y lleva "
+        "su muelle de torsión, y aprieta los platos 1 y 2 por el lado del vano de los "
+        "seguidores. Una sola pieza para las dos cosas. Bajo el seguidor, girarlo a la marca "
+        "antes de apretar pone a la vez el tope y la precarga.",
         montaje=(
-            "En cada poste, seis: uno arriba y otro abajo de los platos 1 y 2, uno bajo el "
-            "plato 3 —encima lo sujeta un M3 avellanado en la punta del poste— y uno bajo el "
-            "seguidor, con la cara alta 1 por debajo de él, donde va la valona del casquillo "
-            "igus; encima de este, soldada, la placa de tope, y alrededor el muelle de torsión."
+            "En cada poste, tres: uno sobre el plato 1, uno bajo el plato 2 —el resto de la "
+            "altura la dan los tubos separadores— y uno bajo el seguidor, con la cara alta 1 "
+            "por debajo de él, donde va la valona del casquillo igus; encima de este, soldada, "
+            "la placa de tope, y alrededor el muelle de torsión."
         ),
         material="latón, barra de Ø16",
         proceso="torneado de la barra de Ø16, la del tambor y la garra, + roscado M3 radial",
@@ -1787,6 +1791,28 @@ LISTADO: dict[str, Ficha] = {
         montaje=("Entre el seguidor y el sector, con los dos M3 de la unión pasando por los tres."),
         material="chapa de latón de 3",
         proceso="corte láser, en la chapa de los brazos",
+    ),
+    "tubo_separador": Ficha(
+        "tubo de latón 12 × 1,5 cortado a dos largos",
+        6,
+        (
+            Variable("cota", "tubo_separador_diametro", "Ø exterior"),
+            Variable("cota", "tubo_separador_interior_diametro", "Ø interior"),
+            Variable("cota", "tubo_separador_largo_1", "base a plato 1", en_el_perfil=False),
+            Variable("cota", "tubo_separador_largo_2", "plato 2 a plato 3", en_el_perfil=False),
+        ),
+        ("barra", "tubo_separador_largo_2"),
+        "Fija la altura de los platos por su largo, donde no gira nada: de la base al plato 1 y "
+        "del plato 2 al plato 3. Sustituye nueve collares que había que apretar a cota uno a "
+        "uno (docs/niveles.md, M1).",
+        montaje=(
+            "En cada poste, uno de 60 entre la base y el plato 1 y otro de 20 entre los platos 2 "
+            "y 3. El M3 avellanado de la punta del poste aprieta el paquete de arriba —plato 3, "
+            "tubo, plato 2— contra el collar de debajo del plato 2; el plato 1 queda entre su "
+            "tubo y el collar de encima."
+        ),
+        material="latón, tubo 12/9",
+        proceso="corte a largo",
     ),
     "casquillo_rodillo": Ficha(
         "tubo de latón Ø4 cortado a tres largos",

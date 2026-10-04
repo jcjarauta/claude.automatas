@@ -59,6 +59,7 @@ STOCK: dict[str, Stock] = {
     "latón, tubo 13/10,6": Stock("tubo", "tubo de latón 13 × 1,2"),
     "latón, tubo 4/3,1": Stock("tubo", "tubo de latón 4 × 0,45"),
     "latón, tubo 3,2/2": Stock("tubo", "tubo de latón 3,2 × 0,6"),
+    "latón, tubo 12/9": Stock("tubo", "tubo de latón 12 × 1,5"),
 }
 """El material en bruto. Lo que no está aquí no se puede pedir."""
 
@@ -88,8 +89,8 @@ def _largos(nombre: str, cota: str, c: dict[str, float]) -> list[float]:
     raiz, _, sufijo = cota.rpartition("_")
     if sufijo.isdigit():
         largos = [c[v.nombre] for v in ficha.variables if v.nombre.startswith(raiz + "_")]
-        if len(largos) == ficha.cantidad:
-            return largos
+        if largos and ficha.cantidad % len(largos) == 0:
+            return largos * (ficha.cantidad // len(largos))
     return [c[cota]] * ficha.cantidad
 
 

@@ -1116,6 +1116,34 @@
           "unidad": "m",
           "tolerancia": "",
           "descripcion": "Paso del M4 que fija la mordaza al sector, con su tuerca debajo"
+        },
+        {
+          "nombre": "tubo_separador_diametro",
+          "valor": 0.012,
+          "unidad": "m",
+          "descripcion": "Tubo de latón 12 × 1,5 sobre cada poste, donde no gira nada: fija la altura de los platos por su largo, no por una medida en el montaje (docs/niveles.md, M1)",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "tubo_separador_interior_diametro",
+          "valor": 0.009,
+          "unidad": "m",
+          "descripcion": "Pasa holgado por el poste de 8",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "tubo_separador_largo_1",
+          "valor": 0.06,
+          "unidad": "m",
+          "descripcion": "De la base al plato 1: base_al_plato. Derivado, con test",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "tubo_separador_largo_2",
+          "valor": 0.02,
+          "unidad": "m",
+          "descripcion": "Del plato 2 al plato 3: reductor_bahia. Derivado, con test",
+          "tolerancia": ""
         }
       ]
     },

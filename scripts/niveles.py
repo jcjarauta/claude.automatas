@@ -33,7 +33,7 @@ AJUSTES: dict[str, tuple[str, ...]] = {
     "maquina": (
         "orientar 3 collares de seguidor con la galga de 1,20",
         "calar 2 brazos con la mordaza de la cinta",
-        "apretar 15 collares de plato a su altura",
+        "apretar 6 collares de plato a su altura",
     ),
 }
 """Lo que se ajusta a mano, no lo que se monta: cada uno es una ocasión de

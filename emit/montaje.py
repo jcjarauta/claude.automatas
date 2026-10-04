@@ -294,7 +294,16 @@ GRUPOS: tuple[Grupo, ...] = (
         "Lo que no se mueve: base, postes, platos y rodamientos",
         "#9aa0a6",
         0.25,
-        ("base", "poste1", "poste2", "poste3", "plato", "rodamiento_", "collar_plato_"),
+        (
+            "base",
+            "poste1",
+            "poste2",
+            "poste3",
+            "plato",
+            "rodamiento_",
+            "collar_plato_",
+            "tubo_separador_",
+        ),
     ),
     Grupo(
         "levas",
@@ -715,21 +724,36 @@ def colocar(
     poste = hecho["poste"]
     for i, pivote in enumerate(pivotes):
         piezas.append(Colocada(f"poste{i + 1}", _poner(poste, 0.0, pivote, z["poste"][0]), False))
-        # Cada plato, apretado entre dos collares: es lo que fija su altura. El 3
-        # no lleva collar encima: el poste acaba en su cara alta y ahí lo sujeta
-        # un M3 avellanado en la punta roscada; encima va el volante.
-        for plato in ("plato1", "plato2", "plato3"):
-            lados = [("bajo", z[plato][0] - c["collar_seguidor_largo"])]
-            if plato != "plato3":
-                lados.append(("sobre", z[plato][1]))
-            for lado, pie in lados:
-                piezas.append(
-                    Colocada(
-                        f"collar_plato_{plato[-1]}{lado}_{i + 1}",
-                        _poner(hecho["collar"], 0.0, pivote, pie),
-                        False,
-                    )
+        # La altura de los platos la dan dos tubos donde no gira nada —de la
+        # base al plato 1 y del 2 al 3— y dos collares donde sí: sobre el 1 y
+        # bajo el 2, que es el vano de los seguidores. El M3 avellanado de la
+        # punta del poste aprieta plato 3, tubo y plato 2 contra su collar.
+        for k, (pie, techo) in enumerate(
+            ((0.0, z["plato1"][0]), (z["plato2"][1], z["plato3"][0])), 1
+        ):
+            piezas.append(
+                Colocada(
+                    f"tubo_separador_{k}_{i + 1}",
+                    _cilindro(c["tubo_separador_diametro"] / 2.0, (*pivote, pie), (*pivote, techo))
+                    - _cilindro(
+                        c["tubo_separador_interior_diametro"] / 2.0,
+                        (*pivote, pie - 1.0),
+                        (*pivote, techo + 1.0),
+                    ),
+                    False,
                 )
+            )
+        for plato, lado, pie in (
+            ("plato1", "sobre", z["plato1"][1]),
+            ("plato2", "bajo", z["plato2"][0] - c["collar_seguidor_largo"]),
+        ):
+            piezas.append(
+                Colocada(
+                    f"collar_plato_{plato[-1]}{lado}_{i + 1}",
+                    _poner(hecho["collar"], 0.0, pivote, pie),
+                    False,
+                )
+            )
 
     # --- lo que gira con el árbol -------------------------------------------
     # Cada leva a la altura de su rodillo: el contrato dice cuánto baja cada

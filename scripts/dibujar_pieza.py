@@ -97,6 +97,7 @@ PERFIL_DE = {
     "calzo_sector": PERFILES["calzo_sector"],
     "collar": PERFILES["collar"],
     "casquillo_rodillo": PERFILES["casquillo_rodillo"],
+    "tubo_separador": PERFILES["tubo_separador"],
 }
 """De dónde sale la forma de cada pieza.
 
