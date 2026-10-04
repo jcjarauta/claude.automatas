@@ -46,7 +46,7 @@ from core.escritura import (
     suavizar,
 )
 from core.program import Programa
-from core.units import Longitud, Metros, Radianes, a_mm, mm
+from core.units import Longitud, Metros, Radianes, a_mm, grados, mm
 from core.verdict import Incidencia, Veredicto
 from emit.pieza import Pieza, Polilinea, Taladro, Veta
 
@@ -131,6 +131,12 @@ class Escribiente(BaseModel):
     holgura_eje_rodillo: Longitud = mm(3.0)
     """Lo mínimo entre ese casquillo y una leva que gira a su lado: la
     `holgura_minima` del contrato de bastidor."""
+    tope_seguidor: float = float(grados(4.0))
+    """Radianes que puede girar cada seguidor hacia dentro desde su punto de
+    diseño antes de tocar el pasador de tope: `tope_giro` del contrato."""
+    margen_al_tope: float = float(grados(0.5))
+    """Lo que tiene que sobrar hasta el tope girando con una frase: el error
+    de orientar el collar a mano son unos ±0,3 mm por grado a 20 del poste."""
     radio_maximo_cartucho: Longitud = mm(55.5)
     """Lo más que puede medir de radio una leva para que el cartucho salga
     entre los dos postes traseros: `cartucho_radio_maximo`."""
@@ -653,6 +659,27 @@ def compilar(
                         f"de la leva {arriba}, que tiene encima"
                     ),
                     sugerencia="reduce la caja de escritura o escalona más la pila",
+                )
+            )
+    for indice, nombre in enumerate(SEGUIDORES):
+        if nombre not in perfiles:
+            continue
+        hacia = maquina.seguidor(indice).hacia_dentro
+        dentro = float(np.max(hacia * np.asarray(perfiles[nombre].psi)))
+        veredicto = Veredicto(
+            incidencias=veredicto.incidencias,
+            metricas={**veredicto.metricas, f"giro_hacia_dentro_{nombre}": dentro},
+        )
+        if dentro > maquina.tope_seguidor - maquina.margen_al_tope:
+            veredicto = veredicto.con(
+                Incidencia(
+                    gravedad="error",
+                    codigo="seguidor_contra_tope",
+                    mensaje=(
+                        f"el seguidor {nombre} gira {np.degrees(dentro):.2f}° hacia dentro y el "
+                        f"tope está a {np.degrees(maquina.tope_seguidor):.1f}°"
+                    ),
+                    sugerencia="reduce la caja de escritura",
                 )
             )
     mayor = max((float(p.radio_maximo) for p in perfiles.values()), default=0.0)

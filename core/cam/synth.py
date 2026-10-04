@@ -51,6 +51,16 @@ class Seguidor:
             raise ValueError(f"el radio del rodillo debe ser positivo, no {self.radio_rodillo}")
 
     @property
+    def hacia_dentro(self) -> int:
+        """El signo del giro que acerca el rodillo al centro de la leva: +1
+        si es ψ creciente, -1 si es decreciente. Es el lado al que hay que
+        poner el tope del seguidor."""
+        a = self.psi_cero
+        rodillo = np.array(self.pivote) + self.brazo * np.array([np.cos(a), np.sin(a)])
+        tangente = self.brazo * np.array([-np.sin(a), np.cos(a)])
+        return -1 if float(rodillo @ tangente) > 0.0 else 1
+
+    @property
     def distancia_pivote(self) -> float:
         """Separación entre el centro de la leva y el pivote del seguidor."""
         return float(np.hypot(*self.pivote))

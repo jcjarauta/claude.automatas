@@ -577,6 +577,7 @@ def colocar(
                 f"eje_rodillo_{i + 1}", _eje_del_rodillo(c, z, rodillo_en, centro_z, ancho), True
             )
         )
+        piezas += _tope_y_muelle(c, z, hecho, i + 1, pivote, seg.psi_cero, seg.hacia_dentro, angulo)
         if i < 2:  # el canal del elevador no lleva cabestrante
             piezas.append(
                 Colocada(
@@ -647,9 +648,80 @@ rodillo. Va por DEBAJO del rodillo: por arriba está el sector."""
 TUERCA_DEL_EJE = (6.0, 1.8)
 """Entre aristas y alto de la tuerca fina M3 DIN 439, sobre el seguidor."""
 
-CASQUILLO_DEL_EJE = 4.0
-"""Ø del casquillo de latón que lleva el rodillo hasta su leva. Es lo que
-pasa junto a las levas de encima: `Escribiente.radio_eje_rodillo`."""
+
+def _tope_y_muelle(
+    c: dict[str, float],
+    z: dict[str, tuple[float, float]],
+    hecho: dict[str, Any],
+    n: int,
+    pivote: Punto,
+    reposo: float,
+    hacia_dentro: int,
+    angulo: float,
+) -> list[Colocada]:
+    """Lo que sostiene y empuja un seguidor, en su poste: el collar, la placa
+    de tope soldada encima, el pasador de tope y el muelle de torsión con sus
+    dos patas. La placa va girada `tope_angulo` desde el brazo del seguidor
+    en reposo, hacia el lado en que el rodillo se mete."""
+    x, y = pivote
+    techo = z["seguidores"][0] - 1.0  # la valona del casquillo igus
+    pie_placa = techo - c["tope_placa_espesor"]
+    pie_collar = pie_placa - c["collar_seguidor_largo"]
+    a = reposo + hacia_dentro * c["tope_angulo"]
+    piezas = [
+        Colocada(
+            f"collar_seguidor_{n}", _poner(hecho["collar_seguidor"], a, pivote, pie_collar), False
+        ),
+        Colocada(f"placa_tope_{n}", _poner(hecho["placa_tope"], a, pivote, pie_placa), False),
+    ]
+    px, py = x + c["tope_brazo"] * math.cos(a), y + c["tope_brazo"] * math.sin(a)
+    piezas.append(
+        Colocada(
+            f"pasador_tope_{n}",
+            _cilindro(
+                c["tope_pasador_diametro"] / 2.0,
+                (px, py, techo),
+                (px, py, z["seguidores"][1] - 0.5),
+            ),
+            False,
+        )
+    )
+    # El muelle: cuatro espiras de 0,8 sobre el collar, y sus dos patas. La
+    # fija sube a la placa; la móvil, a su agujero del seguidor, y se mueve
+    # con él.
+    hilo = MUELLE_DE_TORSION[0]
+    exterior = c["collar_seguidor_diametro"] / 2.0 + 0.35 + 2 * hilo
+    alto = MUELLE_DE_TORSION[1] * hilo * 1.4
+    pie = pie_placa - 0.5 - alto
+    espiras = _cilindro(exterior, (x, y, pie), (x, y, pie + alto)) - _cilindro(
+        exterior - 2 * hilo, (x, y, pie - 1), (x, y, pie + alto + 1)
+    )
+    medio = exterior - hilo
+    r = hilo / 2.0
+    fija = (x + c["muelle_pata_radio"] * math.cos(a), y + c["muelle_pata_radio"] * math.sin(a))
+    movil = (
+        x + c["seguidor_muelle_radio"] * math.cos(angulo),
+        y + c["seguidor_muelle_radio"] * math.sin(angulo),
+    )
+    patas = []
+    for punta, altura in ((fija, techo - 0.2), (movil, z["seguidores"][0] + 3.0)):
+        d = math.hypot(punta[0] - x, punta[1] - y)
+        arranque = (x + (punta[0] - x) * medio / d, y + (punta[1] - y) * medio / d, pie + alto - r)
+        patas.append(_cilindro(r, arranque, (punta[0], punta[1], pie + alto - r)))
+        patas.append(
+            _cilindro(r, (punta[0], punta[1], pie + alto - r), (punta[0], punta[1], altura))
+        )
+    muelle = espiras
+    for pata in patas:
+        muelle += pata
+    piezas.append(Colocada(f"muelle_seguidor_{n}", muelle, True))
+    return piezas
+
+
+MUELLE_DE_TORSION = (0.8, 4)
+"""Hilo y espiras del muelle de torsión del seguidor: 0,8 de cuerda de piano,
+Ø medio 13, cuatro espiras. 0,44 N·mm por grado: los 50 mN·m de precarga son
+113° de torsión, y en los ±2,6° del seguidor el par varía un 4 %."""
 
 
 def _eje_del_rodillo(
@@ -670,7 +742,9 @@ def _eje_del_rodillo(
     eje = _cilindro(radio, (x, y, pie - CABEZA_DEL_EJE[1]), (x, y, techo + TUERCA_DEL_EJE[1]))
     eje += _cilindro(CABEZA_DEL_EJE[0] / 2.0, (x, y, pie - CABEZA_DEL_EJE[1]), (x, y, pie))
     eje += _cilindro(
-        CASQUILLO_DEL_EJE / 2.0, (x, y, centro_z + ancho / 2.0), (x, y, z["seguidores"][0])
+        c["casquillo_rodillo_diametro"] / 2.0,
+        (x, y, centro_z + ancho / 2.0),
+        (x, y, z["seguidores"][0]),
     )
     eje += _cilindro(TUERCA_DEL_EJE[0] / 2.0, (x, y, techo), (x, y, techo + TUERCA_DEL_EJE[1]))
     return eje

@@ -185,7 +185,15 @@ banco diga que el modelo predice:
   (`radio_base² + brazo² = 71,06²`), y los brazos son **45, 52 y 59**, los
   tres agujeros de rodillo de UN solo seguidor. El izquierdo va al revés para
   dejar libre el pasillo por el que sale el cartucho. El compilador lo vigila:
-  `eje_de_rodillo_contra_leva` si un eje pasa a menos de 2 mm de una leva.
+  `eje_de_rodillo_contra_leva` si un eje pasa a menos de 3 mm de una leva.
+- **Cada seguidor se sostiene y se empuja desde su poste** (2026-10-04): un
+  collar de latón con prisionero bajo el seguidor, una placa de tope soldada
+  encima con un pasador Ø3 a 20 del poste, y un **muelle de torsión**
+  enrollado en el collar —pata fija en la placa, pata móvil en el agujero de
+  12 del seguidor—. El de compresión de 68 de largo no cabía: su anclaje
+  caía fuera de los platos. El tope deja girar el seguidor 4° hacia dentro;
+  ninguna frase llega (`seguidor_contra_tope`) y, sin cartucho, el rodillo
+  se queda ahí. La placa va girada `tope_angulo` = 29,93°, derivado.
 - Poste de seguidor de **Ø8** con casquillo igus GFM-0810. **Lo que la leva ve
   no es el poste: es la valona del casquillo**, que mide **Ø15** —confirmado
   en la ficha del fabricante, d3 = 15 mm—. Con los Ø16 que se suponían antes
@@ -585,6 +593,7 @@ absorbe el alabeo es la flexura, y 0,5 es todo su recorrido.
 | 2026-09-30 | **Calaje** | Congelado. El calaje pasa de ser la media de los ángulos de la frase a ser el ángulo del brazo en el centro de la caja | Con la media, el calaje se movía 3,3° entre frases y el brazo dejaba de ser pieza de stock. Cuesta décimas de milímetro de leva |
 | 2026-09-30 | Bastidor | Hueco al poste de 9,5 a **9,7 mm** con «hola» | Consecuencia de fijar el calaje. No es una decisión, es el número que sale |
 | 2026-09-30 | Fase | Pasador de índice de Ø3 × 16 a **Ø3 × 24** | Con 16 no llegaba a la tercera leva de una pila de 19 mm, que es justo lo que el contrato promete calar. Lo encontró un test que cruza la ficha del pasador con la de la plancha y la del separador |
+| 2026-10-04 | Bastidor | **Muelle de torsión y tope de servicio** en cada poste: collar, placa de tope, pasador; tope a 4°; casquillo del rodillo Ø4 con sus tres largos | El muelle de compresión no cabía dentro de los platos, y sin tope el rodillo se metía en el hueco del cartucho al sacarlo |
 | 2026-10-04 | **Fase** | El «plato de arrastre» pasa a ser el **cubo de latón del cartucho**. Ningún valor cambia: Ø3 × 24 a 18 sobre +X | Aprobado con la propuesta del cartucho intercambiable. Era texto sin pieza |
 | 2026-10-04 | **Eje** | Tolerancia de h7 a **h6**; el árbol se parte en muñón, eje del cartucho y eje motriz; la retención axial la da la garra | Aprobado con la propuesta. La pieza ya era h6 |
 | 2026-10-04 | Cartucho | **Nuevo contrato, pendiente**: radio máximo 55,5, salida a 60°, muñón, cubo, garra con ranura descentrada | La interfaz plataforma-cartucho estaba repartida en textos y no la vigilaba nada |

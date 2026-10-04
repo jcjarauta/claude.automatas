@@ -673,3 +673,74 @@ def test_una_leva_demasiado_grande_no_deja_salir_el_cartucho():
     v = compilar(hola(), estrecha).veredicto
     assert "cartucho_no_sale" in {i.codigo for i in v.incidencias}
     assert "cartucho_no_sale" not in {i.codigo for i in compilar(hola()).veredicto.incidencias}
+
+
+# ---------------------------------------------------------------------------
+# El tope del seguidor
+# ---------------------------------------------------------------------------
+
+
+def test_el_tope_del_compilador_es_el_del_contrato(contratos: Contratos):
+    assert Escribiente().tope_seguidor == pytest.approx(
+        contratos.valor("bastidor", "tope_giro").valor
+    )
+
+
+def test_ninguna_frase_de_referencia_lleva_un_seguidor_al_tope():
+    from compile.escribiente import SEGUIDORES, compilar
+    from tests.casos import firma, hola, puntos
+
+    m = Escribiente()
+    for caso in (hola, firma, puntos):
+        v = compilar(caso()).veredicto
+        assert "seguidor_contra_tope" not in {i.codigo for i in v.incidencias}, caso.__name__
+        for nombre in SEGUIDORES:
+            assert v.metricas[f"giro_hacia_dentro_{nombre}"] < m.tope_seguidor - m.margen_al_tope
+
+
+def test_un_tope_demasiado_cerca_salta():
+    from compile.escribiente import compilar
+    from tests.casos import hola
+
+    v = compilar(hola(), Escribiente(tope_seguidor=0.01)).veredicto
+    assert "seguidor_contra_tope" in {i.codigo for i in v.incidencias}
+
+
+def test_el_angulo_de_la_placa_de_tope_es_el_que_para_el_seguidor_en_su_giro():
+    """La placa se gira `tope_angulo` respecto del brazo del seguidor. Con
+    ese ángulo, el seguidor —el contorno de su barra, la más larga de las
+    tres— toca el pasador de tope justo al girar `tope_giro`, y en reposo le
+    sobra hueco. Derivado: si cambia la barra o el brazo de la placa, este
+    test dice el ángulo nuevo."""
+    from shapely import affinity
+    from shapely.geometry import Point
+
+    c = contrato_mm()
+    largo = max(c["brazo_seguidor"], c["brazo_seguidor_derecho"], c["brazo_seguidor_izquierdo"])
+    barra = (
+        Point(0, 0)
+        .buffer(c["seguidor_cubo_diametro"] / 2, 512)
+        .union(Point(largo, 0).buffer(c["seguidor_extremo_diametro"] / 2, 512))
+        .convex_hull
+    )
+    phi = c["tope_angulo"]
+    pasador = Point(c["tope_brazo"] * math.cos(phi), c["tope_brazo"] * math.sin(phi))
+    r = c["tope_pasador_diametro"] / 2
+
+    def hueco(giro: float) -> float:
+        return affinity.rotate(barra, giro, origin=(0, 0), use_radians=True).distance(pasador) - r
+
+    assert hueco(c["tope_giro"]) == pytest.approx(0.0, abs=0.01)
+    assert hueco(0.0) > 1.0
+
+
+def test_el_casquillo_del_rodillo_llena_el_descuelgue(contratos: Contratos):
+    """Del rodillo a la cara baja del seguidor, en cada canal; y su radio es
+    el que vigila el compilador al escalonar la pila."""
+    c = contrato_mm()
+    for n in (1, 2, 3):
+        esperado = c[f"rodillo_descuelgue_{n}"] - 2.5 / 2.0 - c["seguidor_espesor"] / 2.0
+        assert c[f"casquillo_rodillo_largo_{n}"] == pytest.approx(esperado), n
+    assert float(Escribiente().radio_eje_rodillo) * 1000.0 == pytest.approx(
+        c["casquillo_rodillo_diametro"] / 2.0
+    )

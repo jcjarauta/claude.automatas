@@ -332,3 +332,21 @@ def test_la_orientacion_de_la_curva_de_paso_es_estable():
     ciclo el perfil saldría del revés."""
     for amplitud in (1.0, 5.0, 10.0, 15.0):
         assert orientacion(sintetizar(oscilacion(amplitud), seguidor()).paso) == -1.0
+
+
+@pytest.mark.parametrize("sentido", [1, -1])
+def test_hacia_dentro_es_el_giro_que_acerca_el_rodillo_al_arbol(sentido: int):
+    """El signo del giro que mete el rodillo hacia la leva. Lo necesita el
+    tope del seguidor, que solo para ese lado, y cambia con el sentido."""
+    s = Seguidor.bien_puesto(mm(40.0), mm(60.0), mm(4.0), orientacion_pivote=0.7, sentido=sentido)
+
+    def radio(delta: float) -> float:
+        a = s.psi_cero + delta
+        return float(np.hypot(s.pivote[0] + s.brazo * np.cos(a), s.pivote[1] + s.brazo * np.sin(a)))
+
+    d = s.hacia_dentro
+    assert d in (1, -1)
+    assert radio(d * 0.01) < radio(0.0) < radio(-d * 0.01)
+    assert (
+        d == sentido
+    )  # el rodillo cae al lado del sentido, y hacia dentro es seguir girando hacia él

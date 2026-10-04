@@ -444,8 +444,10 @@ def test_cada_cota_circular_tiene_sus_dos_formas(paquete: Path):
     # Y 54 con el distal curvo: el radio de su línea media y los de sus dos
     # cantos, que el CAD pide en radio porque son arcos.
     # Y 57 con el contrato de cartucho: el cubo, el tetón y el radio máximo.
-    # Y 60 con las piezas del cartucho: separador, garra y su pasador.
-    assert gemelos == 60, f"esperaba 60 cotas circulares con gemelo, hay {gemelos}"
+    # Y 60 con las piezas del cartucho: separador, garra y su pasador. Y 68
+    # con las de los seguidores: collar, placa de tope —cubo, extremo, pasador
+    # y pata del muelle— y casquillo del rodillo, por fuera y por dentro.
+    assert gemelos == 68, f"esperaba 68 cotas circulares con gemelo, hay {gemelos}"
 
 
 def test_el_gemelo_dice_que_es_derivado(paquete: Path):

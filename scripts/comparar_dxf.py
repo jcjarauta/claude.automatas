@@ -426,6 +426,30 @@ FICHAS: dict[str, Ficha] = {
         desde_datum=("pasador_radio",),
         datum="eje_diametro_radio",
     ),
+    "collar_seguidor": Ficha(
+        "anillo: el collar sobre el poste",
+        {"collar_seguidor_diametro_radio": 1, "poste_eje_diametro_radio": 1},
+        datum="poste_eje_diametro_radio",
+    ),
+    "casquillo_rodillo": Ficha(
+        "anillo: el casquillo del eje del rodillo",
+        {"casquillo_rodillo_diametro_radio": 1, "casquillo_rodillo_interior_diametro_radio": 1},
+        datum="casquillo_rodillo_interior_diametro_radio",
+    ),
+    "placa_tope": Ficha(
+        "brazo corto: poste, pata del muelle y pasador de tope en línea",
+        {
+            "tope_cubo_diametro_radio": 1,
+            "tope_extremo_diametro_radio": 1,
+            "poste_eje_diametro_radio": 1,
+            "muelle_pata_diametro_radio": 1,
+            "tope_pasador_diametro_radio": 1,
+        },
+        entre_centros=("tope_brazo",),
+        tangentes=4,
+        desde_datum=("muelle_pata_radio",),
+        datum="poste_eje_diametro_radio",
+    ),
     "garra": Ficha(
         "anillo: el manguito de la garra",
         {"garra_diametro_radio": 1, "eje_diametro_radio": 1},

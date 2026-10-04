@@ -498,6 +498,29 @@ def disco_con_pasador(diametro: str) -> Callable[[dict[str, float] | None], Perf
     return perfil
 
 
+def anillo(exterior: str, interior: str) -> Callable[[dict[str, float] | None], Perfil]:
+    """Un anillo de dos cotas de diámetro: collares y casquillos."""
+
+    def perfil(c: dict[str, float] | None = None) -> Perfil:
+        c = contrato_mm() if c is None else c
+        return disco(c[exterior] / 2, c[interior])
+
+    return perfil
+
+
+def placa_tope(c: dict[str, float] | None = None) -> Perfil:
+    """La placa de tope del seguidor: un brazo corto con el poste en el
+    origen, el pasador de tope en la punta y la pata fija del muelle en
+    medio, todo sobre +X. Es simétrica respecto de X, así que la misma placa
+    vale para el seguidor que va al revés: se gira, no se voltea."""
+    c = contrato_mm() if c is None else c
+    perfil = barra(c["tope_brazo"], c["tope_cubo_diametro"] / 2, c["tope_extremo_diametro"] / 2)
+    perfil += circulo((0.0, 0.0), c["poste_eje_diametro"] / 2)
+    perfil += circulo((c["muelle_pata_radio"], 0.0), c["muelle_pata_diametro"] / 2)
+    perfil += circulo((c["tope_brazo"], 0.0), c["tope_pasador_diametro"] / 2)
+    return perfil
+
+
 def garra(c: dict[str, float] | None = None) -> Perfil:
     """El manguito de la garra visto desde arriba. La lengüeta de abajo y las
     dos ranuras del pasador son de la tercera dimensión: van en la hoja como
@@ -626,6 +649,11 @@ PERFILES = {
     "munon": lambda c: varilla("eje_diametro")(c),
     "eje_motriz": lambda c: varilla("eje_diametro")(c),
     "garra": lambda c: garra(c),
+    "placa_tope": lambda c: placa_tope(c),
+    "collar_seguidor": lambda c: anillo("collar_seguidor_diametro", "poste_eje_diametro")(c),
+    "casquillo_rodillo": lambda c: anillo(
+        "casquillo_rodillo_diametro", "casquillo_rodillo_interior_diametro"
+    )(c),
 }
 """Las piezas prismáticas que no son barras. El resto sale de `BRAZOS`.
 
@@ -1667,6 +1695,73 @@ LISTADO: dict[str, Ficha] = {
         ),
         material="barra W10 h6 rectificada",
         proceso="corte + taladro transversal Ø2",
+    ),
+    # --- lo que sostiene y empuja cada seguidor ---------------------------------
+    "collar_seguidor": Ficha(
+        "collar de latón con un prisionero M3 radial",
+        3,
+        (
+            Variable("cota", "collar_seguidor_diametro", "Ø exterior"),
+            Variable("cota", "poste_eje_diametro", "Ø interior", "F7"),
+            Variable("cota", "collar_seguidor_largo", "largo", en_el_perfil=False),
+        ),
+        ("barra", "collar_seguidor_largo"),
+        "Sostiene el seguidor a su altura —era lo único que no decía nadie— y lleva el muelle "
+        "de torsión alrededor. Girarlo a la marca antes de apretar el prisionero pone a la vez "
+        "el tope y la precarga.",
+        montaje=(
+            "En el poste, con la cara alta 1 por debajo del seguidor: ahí va la valona del "
+            "casquillo igus. Encima, soldada, la placa de tope. Alrededor, el muelle de torsión."
+        ),
+        material="latón, barra de Ø12",
+        proceso="torneado + taladro roscado M3 radial",
+    ),
+    "placa_tope": Ficha(
+        "brazo corto de latón con el poste, la pata del muelle y el pasador de tope en línea",
+        3,
+        (
+            Variable("cota", "tope_brazo", "del poste al pasador"),
+            Variable("cota", "tope_placa_espesor", "espesor", en_el_perfil=False),
+            Variable("cota", "tope_cubo_diametro", "Ø del cubo"),
+            Variable("cota", "tope_extremo_diametro", "Ø del extremo"),
+            Variable("cota", "poste_eje_diametro", "Ø del poste", "F7"),
+            Variable("cota", "muelle_pata_radio", "del poste a la pata fija"),
+            Variable("cota", "muelle_pata_diametro", "Ø de la pata fija"),
+            Variable("cota", "tope_pasador_diametro", "Ø del pasador de tope", "m6"),
+            Variable("angulo", "tope_angulo", "girada respecto del seguidor", en_el_perfil=False),
+        ),
+        ("plancha", "tope_placa_espesor"),
+        "Sin cartucho, el muelle mete el rodillo en el hueco que deja la leva y el siguiente "
+        "cartucho no entra. El pasador lo para 4° más allá de donde trabaja: ninguna frase llega, "
+        "y la leva que entra lo empuja de 1 a 3 mm.",
+        montaje=(
+            "Soldada sobre el collar del seguidor, girada tope_angulo respecto del brazo del "
+            "seguidor en reposo, hacia el lado en que el rodillo se mete. El pasador de tope, de "
+            "pie, hasta medio milímetro bajo el sector. La pata fija del muelle, en su agujero."
+        ),
+        material="chapa de latón de 2",
+        proceso="corte láser, en la chapa del latón",
+    ),
+    "casquillo_rodillo": Ficha(
+        "tubo de latón Ø4 cortado a tres largos",
+        3,
+        (
+            Variable("cota", "casquillo_rodillo_diametro", "Ø exterior"),
+            Variable("cota", "casquillo_rodillo_interior_diametro", "Ø interior"),
+            Variable("cota", "casquillo_rodillo_largo_1", "izquierdo", en_el_perfil=False),
+            Variable("cota", "casquillo_rodillo_largo_2", "derecho", en_el_perfil=False),
+            Variable("cota", "casquillo_rodillo_largo_3", "elevador", en_el_perfil=False),
+        ),
+        ("barra", "casquillo_rodillo_largo_3"),
+        "Baja el rodillo desde el seguidor hasta su leva. Es lo que pasa junto a las levas de "
+        "encima, y su radio es el que la pila escalonada tiene que librar.",
+        montaje=(
+            "Por debajo del seguidor, en el agujero de su canal. Por dentro, el M3 de cabeza baja "
+            "(DIN 7984) que entra por debajo del rodillo: M3 × 16 en el izquierdo, × 20 en el "
+            "derecho y × 30 en el elevador; arriba, una tuerca fina DIN 439."
+        ),
+        material="tubo de latón Ø4 × 0,45",
+        proceso="corte a largo",
     ),
     "garra": Ficha(
         "manguito de latón con una lengüeta descentrada y dos ranuras verticales",

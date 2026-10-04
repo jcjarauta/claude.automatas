@@ -94,6 +94,9 @@ PERFIL_DE = {
     "munon": PERFILES["munon"],
     "eje_motriz": PERFILES["eje_motriz"],
     "garra": PERFILES["garra"],
+    "placa_tope": PERFILES["placa_tope"],
+    "collar_seguidor": PERFILES["collar_seguidor"],
+    "casquillo_rodillo": PERFILES["casquillo_rodillo"],
 }
 """De dónde sale la forma de cada pieza.
 

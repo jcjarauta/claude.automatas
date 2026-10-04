@@ -12,7 +12,14 @@ anillo, en el listado y en el montaje 3D. El cartucho entra y sale
 **deslizando**, sin levantar la garra: la ranura y la U van a lo largo de la
 salida. Tests: sale sin meterse en nada y, girado media vuelta, choca con la
 lengüeta. Pendiente de la fase 4: el tope que sujeta los seguidores al sacarlo,
-y el muelle concreto de la garra (precio y referencia). No toca código ni contratos
+y el muelle concreto de la garra (precio y referencia).
+
+**Fase 4 hecha** (2026-10-04): cada seguidor se sostiene y se empuja desde su
+poste con un collar, una placa de tope con pasador y un muelle de **torsión**
+(el de compresión anclaba fuera de los platos). Tope a 4° hacia dentro,
+vigilado por el compilador (`seguidor_contra_tope`); en el ciclo el seguidor
+llega a 0,6 mm del pasador. Casquillo del rodillo Ø4 con sus tres largos y sus
+tornillos. Pendiente: presupuesto de los muelles a medida. No toca código ni contratos
 hasta que se apruebe. Lo que cambia un contrato congelado está marcado
 **[CONTRATO]**.
 

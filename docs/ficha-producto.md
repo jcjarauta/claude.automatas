@@ -81,7 +81,7 @@ está congelado en `docs/contratos.md`.
 | Poste de pivote | 3 | Eje inox X46Cr13 Ø8 h6, **195 mm** (baja hasta la base y hace de pata) | [Dold Mechatronik](https://www.dold-mechatronik.de/) | ~1,00 *(sin IVA ni portes)* |
 | Rueda Z60 **m0,7** latón, Ø ext 43,4 | 1 | **Mädler 26206000** | [Mädler](https://www.maedler.de/article/26206000) | 12,30 (50 ud, neto) |
 | Piñón Z20 **m0,7** latón, Ø ext 15,4 | 1 | **Mädler 26202000** | [Mädler](https://www.maedler.de/article/26202000) | 8,89 (50 ud, neto) |
-| Muelle del seguidor | 3 | **RS PRO 751-540**, k = 0,44 N/mm, Fmáx 19,5 N | [RS España](https://es.rs-online.com/web/p/muelles-de-compresion/0751540) | 1,25 *(neto, pack de 5)* |
+| Muelle del seguidor | 3 | **De torsión a medida**, 0,8 × Ø13 × 4 espiras, en el collar del poste | PENDIENTE de presupuesto | 1,50 *(estimado)* |
 | Anillo de apriete del lápiz | 1 | **Mädler 62311000GA** o hecho en latón | [Mädler](https://www.maedler.de/Article/62311000GA) | 5,63 (50 ud) |
 | Tornillería M3/M4 A2 | ~20 | DIN 912 inox A-2, cajas de 100 | [Ferretería Campollano](https://www.ferreteriacampollano.com/tornilleria-y-fijaciones/tornillos-allen/din-912.html) | ~0,04 |
 
@@ -127,7 +127,7 @@ suba, está en la sección siguiente.
 | Rodillos y pivotes, MR63ZZ | 7 | 1,19 | 8,33 |
 | Anillo de apriete del lápiz | 1 | 6,81 | 6,81 |
 | Cinta del amplificador, fleje 1.4310 0,05 × 5 | 1 | 4,57 | 4,57 |
-| Muelles de compresión RS PRO 751-540 | 3 | 1,51 | 4,54 |
+| Muelles de torsión del seguidor *(estimado)* | 3 | 1,81 | 5,44 |
 | Contrachapado de abedul 9 mm | 1 | 4,43 | 4,43 |
 | Postes de pivote, inox Ø8 h6 | 3 | 1,21 | 3,63 |
 | Volante, material (disco de plancha de latón Ø104 × 6) | 1 | 5,57 | 5,57 |
@@ -136,7 +136,7 @@ suba, está en la sección siguiente.
 | Tornillería inox A2 | 20 | 0,04 | 0,80 |
 | Árbol de levas, Ø10 h6 rectificado | 1 | 0,47 | 0,47 |
 | Acabado Osmo 3062 | 1 | 0,30 | 0,30 |
-| **Plataforma** | | | **97,66** |
+| **Plataforma** | | | **98,56** |
 
 La **base casi dobla** su línea, de 10,39 a 19,30: al cerrar la planta pasó
 de 154 a 275 mm de fondo, así que una tabla de 2 m da 7 bases y no 13. El
@@ -149,8 +149,8 @@ sin verificar.
 | | € |
 | --- | --- |
 | Cartucho | 39,04 |
-| Plataforma | 97,66 |
-| **Material y compras de un escribiente** | **136,70** |
+| Plataforma | 98,56 |
+| **Material y compras de un escribiente** | **137,60** |
 
 Son **70 € más** de lo que decía la estimación anterior de 60-65 €, y la
 diferencia no es que algo haya subido: es que antes faltaban el corte, los

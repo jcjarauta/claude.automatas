@@ -1,15 +1,15 @@
 {
   "nombre": "muelle_seguidor",
   "familia": "muelle",
-  "designacion": "RS PRO 751-540",
+  "designacion": "muelle de torsión, cuerda de piano 0,8 × Ø medio 13 × 4 espiras, patas rectas",
   "cantidad": 3,
   "material": "acero aleado",
   "fuente": {
-    "proveedor": "RS España",
-    "referencia": "751-540",
-    "url": "https://es.rs-online.com/web/p/muelles-de-compresion/0751540",
-    "fecha": "2026-09-29",
-    "verificado": true
+    "proveedor": "a medida, PENDIENTE de presupuesto",
+    "referencia": "torsión 0,8 × 13 × 4, patas a 6 y 7,5 de radio libre",
+    "url": "https://www.gutekunst-federn.de/",
+    "fecha": "2026-10-04",
+    "verificado": false
   },
   "cotas": [
     {
@@ -20,25 +20,25 @@
     },
     {
       "nombre": "exterior",
-      "valor": 0.0088,
+      "valor": 0.0138,
       "tolerancia": "",
+      "critica": false
+    },
+    {
+      "nombre": "interior",
+      "valor": 0.0122,
+      "tolerancia": "pasa por el collar de Ø11,5",
       "critica": false
     },
     {
       "nombre": "longitud_libre",
-      "valor": 0.068,
-      "tolerancia": "",
-      "critica": false
-    },
-    {
-      "nombre": "longitud_minima",
-      "valor": 0.0238,
-      "tolerancia": "",
+      "valor": 0.0045,
+      "tolerancia": "cuerpo, sin patas",
       "critica": false
     }
   ],
-  "nota": "De compresión y no de tracción: el de tracción rompe por el gancho, se puede desenganchar y TINTINEA, que en un objeto cuyo argumento es que suena bien lo descalifica. k = 0,44 N/mm y Fmáx 19,5 N, que cumple variación menor del 15 % en los 3 mm de recorrido con precarga entre 8,8 y 18,2 N. Es esbelto y necesita varilla guía.",
+  "nota": "DE TORSIÓN y no de compresión (2026-10-04): el RS PRO 751-540, de 68 de largo libre, empujando a 12 del pivote, tenía que anclarse a 92-100 mm del árbol, fuera de los platos (R85). Este va enrollado en el collar del seguidor, sobre el poste: la pata fija en la placa de tope, a 14, y la móvil en el agujero del seguidor, a 12. 0,44 N·mm por grado (E d⁴ / 64 D n); los 50 mN·m de precarga de core/energy/budget.py son 113° de torsión, y en los ±2,6° que gira el seguidor el par varía un 4 % (el de compresión, un 9,6 %). Tensión a 120°: unos 1100 MPa, bajo los 1650 admisibles de la cuerda de 0,8. Dos van a derechas y el del seguidor izquierdo, que va al revés, a izquierdas. Sin ganchos: no se suelta ni tintinea.",
   "sustitutos": [
-    "RS PRO 821-380, k = 0,29 N/mm, para el tramo de 5,8 a 9,5 N"
+    "cualquier torsión de catálogo 0,8 × Ø12,5-13 de 3 a 5 espiras, doblando las patas"
   ]
 }

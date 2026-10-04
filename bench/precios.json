@@ -136,7 +136,8 @@
       "precio": 0.6,
       "iva_incluido": true,
       "verificado": false,
-      "url": "https://randrade.com/laton/300-plancha-laton.html"
+      "url": "https://randrade.com/laton/300-plancha-laton.html",
+      "pedir": "precio de corte láser de discos Ø44 en latón de 2, junto con el resto de la chapa"
     },
     {
       "concepto": "Pasador de índice",
@@ -204,15 +205,15 @@
       "pedir": "IVA y portes a España, y precio de corte en serie"
     },
     {
-      "concepto": "Muelle de compresión del seguidor",
-      "referencia": "RS PRO 751-540, k = 0,44 N/mm, Fmax 19,5 N",
-      "proveedor": "RS España",
+      "concepto": "Muelle de torsión del seguidor",
+      "referencia": "a medida, 0,8 × Ø13 × 4 espiras",
+      "proveedor": "PENDIENTE de presupuesto",
       "cantidad": 3,
-      "precio": 1.252,
-      "escalado": "pack de 5",
+      "precio": 1.5,
       "iva_incluido": false,
-      "verificado": true,
-      "url": "https://es.rs-online.com/web/p/muelles-de-compresion/0751540"
+      "verificado": false,
+      "url": "https://www.gutekunst-federn.de/",
+      "pedir": "presupuesto de 3 a medida (2 a derechas, 1 a izquierdas) con patas rectas, y si hay de catálogo 0,8 × Ø13"
     },
     {
       "concepto": "Rueda del reductor",

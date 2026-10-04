@@ -69,7 +69,9 @@ escribiente                      ← el conjunto de arriba
 │                                + muelle + anillo + casquillo de la rueda + rueda Z60
 ├── cartucho            RÍGIDO   eje del cartucho (27) + cubo + 3 levas + 2 separadores
 │                                + pasador. Entra y sale por detrás, entre los postes 1 y 2
+├── soporte_seguidor    RÍGIDO   collar + placa de tope + pasador de tope, ×3, fijos al poste
 ├── canal               RÍGIDO   seguidor + sector + 2 mordazas + casquillo + rodillo
+│                                + eje del rodillo (M3, casquillo Ø4, tuerca) + muelle de torsión
 │                                ×2 (canal izquierdo y canal derecho)
 ├── canal_elevador      RÍGIDO   seguidor + casquillo + rodillo + casquillo de la bieleta
 ├── pivote              RÍGIDO   eje_pivote (55) + tambor (en D) + brazo_proximal

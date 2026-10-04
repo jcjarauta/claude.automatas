@@ -771,14 +771,14 @@
           "nombre": "seguidor_muelle_radio",
           "valor": 0.012,
           "unidad": "m",
-          "descripcion": "Del pivote al anclaje del muelle. PENDIENTE de la precarga, que nadie ha medido: lo elegi con los 50 mN·m que `core/energy/budget.py` trae POR DEFECTO, y midiendo la inercia real del conjunto sector+seguidor —6,1e-5 kg·m², seis veces la que supone C6— el par de inercia a 30 rpm es de 2,4 mN·m, veinte veces menos. Lo que decide el radio es la variacion del par, que va con r cuadrado: a 12 es del 9,6 % en todo el barrido y a 30 seria del 60 %",
-          "tolerancia": "PENDIENTE"
+          "descripcion": "Del pivote al agujero donde entra la pata móvil del muelle de torsión. El muelle ya no es de compresión: con 68 de largo libre su anclaje caía fuera de los platos. A 12, la pata pasa por fuera del cubo de la placa de tope",
+          "tolerancia": ""
         },
         {
           "nombre": "seguidor_muelle_diametro",
           "valor": 0.003,
           "unidad": "m",
-          "descripcion": "Agujero del anclaje del muelle",
+          "descripcion": "Agujero de la pata móvil del muelle de torsión: alambre de 0,8 con holgura",
           "tolerancia": ""
         },
         {
@@ -940,6 +940,118 @@
           "valor": -1.0382922284930458,
           "unidad": "rad",
           "descripcion": "Donde cae el centro del arco del distal visto desde el perno del codo, con la punta sobre +X",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "collar_seguidor_diametro",
+          "valor": 0.0115,
+          "unidad": "m",
+          "descripcion": "Collar de latón sobre el poste, bajo el seguidor: sostiene la placa de tope y lleva el muelle de torsión alrededor. Se fija con un prisionero M3 radial, girado a la marca: esa orientación pone el tope y la precarga a la vez",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "collar_seguidor_largo",
+          "valor": 0.007,
+          "unidad": "m",
+          "descripcion": "Largo del collar: el muelle de 4 espiras de 0,8 y la holgura",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "tope_placa_espesor",
+          "valor": 0.002,
+          "unidad": "m",
+          "descripcion": "La placa de tope, chapa de latón de 2: la misma chapa que separadores y garra",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "tope_brazo",
+          "valor": 0.02,
+          "unidad": "m",
+          "descripcion": "Del poste al pasador de tope. A 20, cada grado de giro del seguidor son 0,3 mm de hueco: lo que permite orientar el collar a mano",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "tope_cubo_diametro",
+          "valor": 0.012,
+          "unidad": "m",
+          "descripcion": "El cubo de la placa, soldado sobre el collar. Pequeño a propósito: la pata móvil del muelle, a 12, tiene que pasar por fuera",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "tope_extremo_diametro",
+          "valor": 0.007,
+          "unidad": "m",
+          "descripcion": "El extremo del brazo de la placa, alrededor del pasador",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "tope_pasador_diametro",
+          "valor": 0.003,
+          "unidad": "m",
+          "descripcion": "El pasador de tope, de pie en la placa hasta medio milímetro bajo el sector",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "tope_angulo",
+          "valor": 0.52238,
+          "unidad": "rad",
+          "descripcion": "Del brazo del seguidor en reposo al brazo de la placa, hacia el lado en que el rodillo se mete hacia el árbol. Derivado: con él, el seguidor toca el pasador justo al girar tope_giro",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "tope_giro",
+          "valor": 0.06981317007977318,
+          "unidad": "rad",
+          "descripcion": "Lo que puede girar el seguidor hacia dentro desde su punto de diseño antes de tocar el tope. Ninguna frase debe llegar (el compilador lo vigila: seguidor_contra_tope); sin cartucho, el rodillo se queda ahí y la leva que entra lo empuja de 1 a 3 mm",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "muelle_pata_radio",
+          "valor": 0.014,
+          "unidad": "m",
+          "descripcion": "Del poste al agujero de la pata fija del muelle, en el brazo de la placa",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "muelle_pata_diametro",
+          "valor": 0.001,
+          "unidad": "m",
+          "descripcion": "Agujero de la pata fija",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "casquillo_rodillo_diametro",
+          "valor": 0.004,
+          "unidad": "m",
+          "descripcion": "Casquillo del eje del rodillo: tubo de latón Ø4 que lleva el rodillo desde el seguidor hasta su leva. Es lo que pasa junto a las levas de encima, y por eso su radio es el que vigila eje_de_rodillo_contra_leva",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "casquillo_rodillo_interior_diametro",
+          "valor": 0.0031,
+          "unidad": "m",
+          "descripcion": "Paso del M3 que hace de eje",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "casquillo_rodillo_largo_1",
+          "valor": 0.00325,
+          "unidad": "m",
+          "descripcion": "Canal 1, el izquierdo: del rodillo a la cara baja del seguidor. Derivado: descuelgue − medio rodillo − medio seguidor",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "casquillo_rodillo_largo_2",
+          "valor": 0.01025,
+          "unidad": "m",
+          "descripcion": "Canal 2, el derecho",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "casquillo_rodillo_largo_3",
+          "valor": 0.01725,
+          "unidad": "m",
+          "descripcion": "Canal 3, el elevador",
           "tolerancia": ""
         }
       ]
