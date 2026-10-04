@@ -14,7 +14,15 @@ import pytest
 
 from compile.contratos import cargar
 from compile.escribiente import Escribiente
-from compile.levantamiento import bieleta_isogona, calaje_elevador, eje_balancin_x
+from compile.levantamiento import (
+    apoyo_balancin_alto,
+    bieleta_isogona,
+    bieleta_pata_seguidor,
+    calaje_elevador,
+    eje_balancin_x,
+    pila,
+    tirante_largo,
+)
 
 
 @pytest.fixture(scope="module")
@@ -93,3 +101,46 @@ def test_la_mesa_baja_lo_que_la_leva_manda(contratos, bieleta):
 
     baja = palanca * (math.sin(giro_del_eje(medio_giro)) - math.sin(giro_del_eje(-medio_giro)))
     assert baja == pytest.approx(0.003, abs=2e-6)
+
+
+@pytest.mark.parametrize(
+    ("nombre", "derivada"),
+    [
+        ("apoyo_balancin_alto", apoyo_balancin_alto),
+        ("bieleta_pata_seguidor", bieleta_pata_seguidor),
+        ("tirante_largo", tirante_largo),
+    ],
+)
+def test_las_cotas_derivadas_de_la_pila_son_las_del_contrato(contratos, nombre, derivada):
+    """Las tres cruzan la pila de alturas: si alguien mueve un plato o un
+    seguidor, esto dice cuál ya no vale."""
+    assert _valor(contratos, nombre) == pytest.approx(derivada(contratos), abs=2e-6)
+
+
+def test_el_balancin_libra_los_seguidores(contratos):
+    """Apunta hacia arriba: lo que baja por debajo del eje es su cubo, y
+    tiene que quedar a holgura_minima de la cara alta de los seguidores."""
+    p = pila(contratos)
+    cubo_abajo = p.eje_balancin - _valor(contratos, "balancin_cubo_diametro") / 2
+    seguidores_arriba = p.seguidores + _valor(contratos, "seguidor_espesor")
+    assert cubo_abajo - seguidores_arriba == pytest.approx(_valor(contratos, "holgura_minima"))
+
+
+def test_los_apoyos_no_alcanzan_los_sectores_en_planta(contratos):
+    """En altura sí coinciden —el apoyo baja hasta 5 bajo el eje y el sector
+    sube 5 sobre los seguidores—, así que lo que los separa es la planta: los
+    sectores giran sobre los postes 1 y 2, y su canto no llega a los apoyos."""
+    from compile.levantamiento import al_cinco_barras
+
+    maquina = Escribiente()
+    radio_sector = _valor(contratos, "amplificador_sector_radio_mecanizado")
+    medio_apoyo = math.hypot(
+        _valor(contratos, "apoyo_balancin_ancho") / 2, _valor(contratos, "apoyo_balancin_fondo") / 2
+    )
+    x = _valor(contratos, "balancin_eje_x")
+    for i in (0, 1):
+        pivote = maquina.seguidor(i).pivote
+        centro = al_cinco_barras(contratos, float(pivote[0]), float(pivote[1]))
+        for nombre in ("apoyo_balancin_trasero_y", "apoyo_balancin_delantero_y"):
+            hueco = math.dist(centro, (x, _valor(contratos, nombre))) - radio_sector - medio_apoyo
+            assert hueco > _valor(contratos, "holgura_minima"), (i, nombre, hueco)

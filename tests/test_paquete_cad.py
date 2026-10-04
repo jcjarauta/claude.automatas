@@ -432,7 +432,11 @@ def test_cada_cota_circular_tiene_sus_dos_formas(paquete: Path):
     # de la punta (R9, un arco del contorno), el tubo y su interior, y el
     # exterior del casquillo. Se llaman `_diametro` a propósito: el
     # comparador mira los agujeros por su radio, y sin nombre no hay gemelo.
-    assert gemelos == 41, f"esperaba 41 cotas circulares con gemelo, hay {gemelos}"
+    #
+    # Y 47 con la cadena del levantamiento: la varilla de la bieleta y su
+    # casquillo, el ojo del tirante, el cubo y el eje de las bielas de la mesa
+    # y la pinza del portaminas. Seis círculos, seis gemelos.
+    assert gemelos == 47, f"esperaba 47 cotas circulares con gemelo, hay {gemelos}"
 
 
 def test_el_gemelo_dice_que_es_derivado(paquete: Path):

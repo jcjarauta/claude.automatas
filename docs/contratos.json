@@ -383,6 +383,13 @@
           "tolerancia": ""
         },
         {
+          "nombre": "punta_tubo_largo",
+          "valor": 0.016,
+          "unidad": "m",
+          "descripcion": "Largo del tubo de la punta: de 1 por debajo del distal de abajo hasta la horquilla, encima del proximal de arriba",
+          "tolerancia": ""
+        },
+        {
           "nombre": "distal_punta_diametro",
           "valor": 0.019,
           "unidad": "m",
@@ -646,6 +653,13 @@
           "valor": 0.021,
           "unidad": "m",
           "descripcion": "De la cara inferior de la primera leva a la del plano de los seguidores. Los tres seguidores van en UN solo plano porque su brazo pasa por encima de las levas: llega a 26 mm del arbol y la leva tiene 55 de radio base",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "leva_sobre_plato",
+          "valor": 0.002,
+          "unidad": "m",
+          "descripcion": "De la cara alta del plato 1 a la cara baja de la primera leva: el hueco del plato de arrastre. Estaba como un 2.0 suelto en emit/montaje.py",
           "tolerancia": ""
         },
         {
@@ -1102,6 +1116,237 @@
           "valor": 0.0033333333333333335,
           "unidad": "m",
           "descripcion": "Pared entre el agujero del eje y el del pasador. Derivada: balancin_entrada menos los dos radios. Es LA cota que decide el diametro del eje, y con el Ø10 de los demas ejes sale negativa",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "apoyo_balancin_ancho",
+          "valor": 0.01,
+          "unidad": "m",
+          "descripcion": "Ancho de cada apoyo del eje del balancin, en X: 3 de pared a cada lado del eje de 4",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "apoyo_balancin_fondo",
+          "valor": 0.006,
+          "unidad": "m",
+          "descripcion": "Grueso de cada apoyo a lo largo del eje: una pletina de laton de 6",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "apoyo_balancin_bajo_eje",
+          "valor": 0.005,
+          "unidad": "m",
+          "descripcion": "Lo que el apoyo baja por debajo del eje: 3 de pared bajo el agujero de 4",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "apoyo_balancin_alto",
+          "valor": 0.027,
+          "unidad": "m",
+          "descripcion": "Alto de cada apoyo, de la cara baja del plato 2 a 5 por debajo del eje. Derivado (compile/levantamiento.py): no depende de base_al_plato, todo cuelga del plato 2",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "apoyo_balancin_trasero_y",
+          "valor": 0.004,
+          "unidad": "m",
+          "descripcion": "Donde va el apoyo de popa, en el marco del cinco barras. Fuera del paso de la bieleta, que cruza en diagonal de y = -11 a +15: en y = -5 la rozaba",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "apoyo_balancin_delantero_y",
+          "valor": 0.039,
+          "unidad": "m",
+          "descripcion": "Donde va el apoyo de proa: antes del canto del plato 2, que en x = 25 esta en y = 48,8. La palanca queda en voladizo a 36 de el",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "bieleta_diametro",
+          "valor": 0.002,
+          "unidad": "m",
+          "descripcion": "Cuerda de piano de 2. Es a la vez el pasador del balancin (balancin_perno_diametro): un extremo doblado entra en el agujero del balancin. La bieleta une un pasador horizontal con uno vertical y una pletina con dos agujeros no puede: por eso es una varilla doblada en los dos extremos",
+          "tolerancia": "h8"
+        },
+        {
+          "nombre": "bieleta_pata_seguidor",
+          "valor": 0.019333,
+          "unidad": "m",
+          "descripcion": "Pata vertical de la bieleta, del eje de la varilla a la cara baja del seguidor 3, por dentro del casquillo. Derivada: el ojo del balancin esta a z_eje + balancin_entrada",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "bieleta_pata_balancin",
+          "valor": 0.004,
+          "unidad": "m",
+          "descripcion": "Pata horizontal que hace de pasador del balancin: sus 3 y 1 para la arandela de retencion",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "casquillo_bieleta_diametro",
+          "valor": 0.0032,
+          "unidad": "m",
+          "descripcion": "Casquillo de laton en el agujero de 3,2 del seguidor 3 (el que dejo el sector). Por dentro, la pata de 2 de la bieleta",
+          "tolerancia": "p6"
+        },
+        {
+          "nombre": "tirante_largo",
+          "valor": 0.1205,
+          "unidad": "m",
+          "descripcion": "Largo de la varilla del tirante: del eje del perno de la palanca con la mesa arriba al del eje movil trasero, mas 3 por arriba (cruza el bulon) y 2 por abajo (bajo su ojo). Derivado, y PENDIENTE con base_al_plato: es la unica cota de la cadena que cruza la pila entera",
+          "tolerancia": "PENDIENTE"
+        },
+        {
+          "nombre": "tirante_ojo_diametro",
+          "valor": 0.0018,
+          "unidad": "m",
+          "descripcion": "Taladro transversal en la punta de abajo del tirante, donde entra el eje movil trasero de 1,5: los 0,3 recogen los 0,113 que se corre la mesa",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "bulon_tirante_largo",
+          "valor": 0.009,
+          "unidad": "m",
+          "descripcion": "Bulon de 6 que cuelga el tirante de la palanca: los 3 de la palanca, 5,5 hasta el centro del taladro transversal de 4 donde se suelda la varilla y 0,5 de cabeza",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "mesa_biela_espesor",
+          "valor": 0.003,
+          "unidad": "m",
+          "descripcion": "Pletina de laton de 3 de cada biela lateral de la mesa",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "mesa_biela_extremo_diametro",
+          "valor": 0.005,
+          "unidad": "m",
+          "descripcion": "Cubos de las bielas de la mesa, iguales en los dos extremos: 1,75 de pared sobre el eje de 1,5",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "mesa_eje_diametro",
+          "valor": 0.0015,
+          "unidad": "m",
+          "descripcion": "Ejes de las bielas de la mesa: acero plata de 1,5",
+          "tolerancia": "h8"
+        },
+        {
+          "nombre": "mesa_biela_x_dentro",
+          "valor": 0.068,
+          "unidad": "m",
+          "descripcion": "Cara de dentro de cada biela lateral, a cada lado del eje de simetria. Las bielas van POR FUERA de la mesa (60) y del tirante (63..67): debajo de la mesa solo hay 8 mm y la mesa baja 3, y el pivote trasero cae encima del poste 3",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "mesa_bisagra_z",
+          "valor": 0.006,
+          "unidad": "m",
+          "descripcion": "Altura de los ejes de la mesa sobre la base, con la mesa arriba. El cubo movil baja 3 y libra la base por 0,5",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "mesa_eje_movil_largo",
+          "valor": 0.142,
+          "unidad": "m",
+          "descripcion": "Ejes moviles, de biela a biela por debajo de la mesa: 2 x (68 + 3)",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "mesa_eje_fijo_largo",
+          "valor": 0.007,
+          "unidad": "m",
+          "descripcion": "Ejes fijos, cortos: los 3 de la biela y los 4 del soporte. No cruzan: por el medio pasa el poste 3",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "soporte_mesa_ancho",
+          "valor": 0.004,
+          "unidad": "m",
+          "descripcion": "Soportes de los ejes fijos, por fuera de cada biela: bloque de laton de 4 en X",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "soporte_mesa_fondo",
+          "valor": 0.008,
+          "unidad": "m",
+          "descripcion": "Fondo de cada soporte, en Y",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "soporte_mesa_alto",
+          "valor": 0.0085,
+          "unidad": "m",
+          "descripcion": "Alto de cada soporte: hasta el eje fijo mas el radio del cubo de la biela",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "orejeta_mesa_x_dentro",
+          "valor": 0.052,
+          "unidad": "m",
+          "descripcion": "Orejetas bajo la mesa que sujetan los ejes moviles: cara de dentro, a cada lado",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "orejeta_mesa_ancho",
+          "valor": 0.004,
+          "unidad": "m",
+          "descripcion": "Orejetas: bloque de laton de 4 en X",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "orejeta_mesa_fondo",
+          "valor": 0.006,
+          "unidad": "m",
+          "descripcion": "Orejetas: fondo en Y",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "horquilla_ancho",
+          "valor": 0.012,
+          "unidad": "m",
+          "descripcion": "Ancho del brazo y del poste del portalapiz: el de las laminas de la flexura",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "horquilla_espesor",
+          "valor": 0.003,
+          "unidad": "m",
+          "descripcion": "Brazo del portalapiz: pletina de laton de 3, encima del tubo de la punta",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "poste_horquilla_fondo",
+          "valor": 0.004,
+          "unidad": "m",
+          "descripcion": "Poste del portalapiz: pletina de laton de 4",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "poste_horquilla_alto",
+          "valor": 0.037,
+          "unidad": "m",
+          "descripcion": "Poste del portalapiz, del brazo (z 75) a 2 por encima de la lamina de arriba (z 110)",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "pinza_diametro",
+          "valor": 0.016,
+          "unidad": "m",
+          "descripcion": "Collar apretado al portaminas, del que salen las laminas: 3 de pared sobre el cuerpo de 10",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "pinza_largo",
+          "valor": 0.024,
+          "unidad": "m",
+          "descripcion": "Largo del collar: abarca las dos laminas, a 90 y a 110, con 2 de sobra",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "flexura_empotramiento",
+          "valor": 0.005,
+          "unidad": "m",
+          "descripcion": "Lo que cada lamina entra en el poste y en la pinza, apretada con un M2, fuera de su largo libre",
           "tolerancia": ""
         }
       ]

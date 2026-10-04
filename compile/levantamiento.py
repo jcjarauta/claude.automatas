@@ -105,4 +105,68 @@ def bieleta_isogona(c: Contratos | None = None, maquina: Escribiente | None = No
     return Bieleta(pivote=pivote, pasador=pasador, ojo=ojo, direccion=u, factor=factor)
 
 
-__all__ = ["Bieleta", "al_cinco_barras", "bieleta_isogona", "calaje_elevador", "eje_balancin_x"]
+@dataclass(frozen=True)
+class Pila:
+    """Las alturas de la cadena, en metros sobre la cara alta de la base."""
+
+    seguidores: float
+    """Cara baja del plano de seguidores."""
+    eje_balancin: float
+    """Eje del balancín: el cubo del balancín libra los seguidores con
+    `holgura_minima`, porque el balancín apunta hacia arriba."""
+    ojo: float
+    """Pasador del balancín, a media altura de levantamiento."""
+    plato2_abajo: float
+
+
+def pila(c: Contratos | None = None) -> Pila:
+    c = c or cargar()
+    plato1_arriba = _m(c, "base_al_plato") + _m(c, "platina_espesor")
+    seguidores = plato1_arriba + _m(c, "leva_sobre_plato") + _m(c, "seguidor_plano_z")
+    eje = (
+        seguidores
+        + _m(c, "seguidor_espesor")
+        + _m(c, "holgura_minima")
+        + _m(c, "balancin_cubo_diametro") / 2
+    )
+    return Pila(
+        seguidores=seguidores,
+        eje_balancin=eje,
+        ojo=eje + _m(c, "balancin_entrada"),
+        plato2_abajo=plato1_arriba + _m(c, "poste_vano"),
+    )
+
+
+def apoyo_balancin_alto(c: Contratos | None = None) -> float:
+    """De la cara baja del plato 2 a `apoyo_balancin_bajo_eje` bajo el eje."""
+    c = c or cargar()
+    p = pila(c)
+    return p.plato2_abajo - (p.eje_balancin - _m(c, "apoyo_balancin_bajo_eje"))
+
+
+def bieleta_pata_seguidor(c: Contratos | None = None) -> float:
+    """La pata vertical de la bieleta: del ojo a la cara baja del seguidor."""
+    p = pila(c or cargar())
+    return p.ojo - p.seguidores
+
+
+def tirante_largo(c: Contratos | None = None) -> float:
+    """Del perno de la palanca, con la mesa arriba, al eje móvil trasero; más
+    el radio del bulón por arriba y 2 bajo el ojo por abajo."""
+    c = c or cargar()
+    perno = pila(c).eje_balancin + _m(c, "brazo_palanca") * math.sin(calaje_elevador(c))
+    return perno - _m(c, "mesa_bisagra_z") + _m(c, "brazo_perno_diametro") / 2 + 0.002
+
+
+__all__ = [
+    "Bieleta",
+    "Pila",
+    "al_cinco_barras",
+    "apoyo_balancin_alto",
+    "bieleta_isogona",
+    "bieleta_pata_seguidor",
+    "calaje_elevador",
+    "eje_balancin_x",
+    "pila",
+    "tirante_largo",
+]
