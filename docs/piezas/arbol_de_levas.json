@@ -20,10 +20,10 @@
     },
     {
       "nombre": "longitud",
-      "valor": 0.12,
+      "valor": 0.092,
       "tolerancia": "",
       "critica": false
     }
   ],
-  "nota": "Contrato de eje: Ø10 porque es la varilla calibrada más corriente y tiene rodamiento barato en cualquier catálogo."
+  "nota": "Contrato de eje: Ø10 porque es la varilla calibrada más corriente y tiene rodamiento barato en cualquier catálogo. Cortado a 92: del plato 1 (2 por debajo) a la bahía del reductor, 2 por encima de la rueda. Con 120 asomaba 13 por encima del plato 3 sin llevar nada, y ahí va el volante."
 }

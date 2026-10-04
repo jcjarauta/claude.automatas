@@ -204,7 +204,7 @@ def test_el_step_se_puede_volver_a_leer(tmp_path: Path):
 
 MASAS_VERIFICADAS = {
     "poste_pivote": 76.454,  # pendiente de rehacer en Onshape: el poste va ya por 195
-    "arbol_de_levas": 73.985,
+    "arbol_de_levas": 56.721,  # pendiente de rehacer en Onshape: de 120 a 92, 73,985 · 92/120
     "pasador_indice": 1.332,
     "separador_pila": 0.344,
     "casquillo_pivote": 0.388,

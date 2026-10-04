@@ -629,7 +629,7 @@ LISTADO: dict[str, Ficha] = {
         2,
         (
             Variable("cota", "brazo_eje_diametro", "Ø", "h6"),
-            Variable("cota", "eje_pivote_largo", "largo", "PENDIENTE", en_el_perfil=False),
+            Variable("cota", "eje_pivote_largo", "largo", en_el_perfil=False),
             Variable("cota", "brazo_chaveta", "cara plana a"),
             Variable("cota", "brazo_chaveta_cuerda", "cuerda"),
         ),

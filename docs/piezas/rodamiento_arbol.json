@@ -2,7 +2,7 @@
   "nombre": "rodamiento_arbol",
   "familia": "rodamiento",
   "designacion": "6800-2Z",
-  "cantidad": 2,
+  "cantidad": 4,
   "material": "acero cromo, blindado con chapa",
   "fuente": {
     "proveedor": "123rodamiento",
@@ -31,7 +31,7 @@
       "critica": false
     }
   ],
-  "nota": "El agujero Ø10 fija el árbol de levas y está en el contrato de eje.",
+  "nota": "Cuatro: dos para el árbol, en los platos 1 y 2, y dos para el eje de la manivela, en los platos 2 y 3. Eran dos y ensamblaje.md ya decía cuatro. El agujero Ø10 fija el árbol de levas y está en el contrato de eje.",
   "sustitutos": [
     "MR106-2Z (10x6x3) si hiciera falta menos altura"
   ]

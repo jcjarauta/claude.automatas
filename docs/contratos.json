@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "fecha": "2026-10-02",
+  "fecha": "2026-10-04",
   "contratos": [
     {
       "nombre": "eje",
@@ -362,6 +362,34 @@
           "tolerancia": ""
         },
         {
+          "nombre": "brazo_arandela",
+          "valor": 0.0005,
+          "unidad": "m",
+          "descripcion": "Holgura entre brazo y brazo del varillaje, que van a 3 + 0,5. Con 1 mm de desnivel y 3 de espesor los proximales se solapaban 2 mm donde se cruzan, y los distales en la punta",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "punta_tubo_exterior",
+          "valor": 0.012,
+          "unidad": "m",
+          "descripcion": "Perno comun de la punta, HUECO: por dentro pasa el portaminas. Con el lapiz en el eje de la punta, que el portalapiz gire sobre el no mueve la mina",
+          "tolerancia": "h7"
+        },
+        {
+          "nombre": "punta_tubo_interior",
+          "valor": 0.0106,
+          "unidad": "m",
+          "descripcion": "Interior del tubo de la punta: 0,3 de holgura radial sobre el portaminas de 10",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "distal_punta_diametro",
+          "valor": 0.018,
+          "unidad": "m",
+          "descripcion": "Cubo del extremo de la punta de cada distal: 3 de pared sobre el tubo de 12. El otro extremo, el del codo, sigue en brazo_extremo_diametro con el perno de 6",
+          "tolerancia": ""
+        },
+        {
           "nombre": "brazo_cubo_diametro",
           "valor": 0.018,
           "unidad": "m",
@@ -482,10 +510,17 @@
         },
         {
           "nombre": "eje_pivote_largo",
-          "valor": 0.045,
+          "valor": 0.055,
           "unidad": "m",
-          "descripcion": "Largo del eje de pivote. PENDIENTE de la pila definitiva: lo fija cuantas piezas se apilan, que es cosa del montaje",
-          "tolerancia": "PENDIENTE"
+          "descripcion": "Largo del eje de pivote, el mismo para los dos: del collar bajo el proximal al circlip sobre el tambor, cuya cara alta queda a 33,5 del plato 1. El derecho pide 54,5 y el izquierdo 51; uno solo de 55 es un corte de barra y lo que sobra queda bajo el proximal",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "eje_manivela_largo",
+          "valor": 0.051,
+          "unidad": "m",
+          "descripcion": "Eje de la manivela, Ø10 h6 con cara plana como los de pivote: del plato 2 (1 por debajo) al plato 3, el volante encima de el y la manivela, 1 por encima. No estaba en el listado",
+          "tolerancia": ""
         },
         {
           "nombre": "mordaza_entre_tornillos",
@@ -868,10 +903,10 @@
         },
         {
           "nombre": "balancin_eje_largo",
-          "valor": 0.085,
+          "valor": 0.0977,
           "unidad": "m",
-          "descripcion": "Del brazo de entrada a la palanca, mas los dos apoyos y el margen",
-          "tolerancia": ""
+          "descripcion": "Del balancin a la palanca mas dos margenes de 2. Derivado del ojo de la bieleta (y = -11,25) y de tirante_y, con la bieleta de 3 y el bulon del tirante que sobresale 4 de la palanca: el balancin y la palanca quedan a 90,75 y no a 78",
+          "tolerancia": "PENDIENTE"
         },
         {
           "nombre": "balancin_chaveta",
@@ -886,6 +921,13 @@
           "unidad": "m",
           "descripcion": "Cuerda de la cara plana. Derivada de balancin_eje_diametro y balancin_chaveta: esta porque el CAD deja acotar el plano por cualquiera de las dos y la raiz de cabeza se falla",
           "tolerancia": ""
+        },
+        {
+          "nombre": "balancin_chaveta_angulo",
+          "valor": 1.5707963267948966,
+          "unidad": "rad",
+          "descripcion": "Giro de la cara plana del agujero en D del balancin respecto de su linea de centros. Con el eje de UNA cara plana, la palanca queda horizontal y el balancin apuntando HACIA ARRIBA: es el cuarto de vuelta. Arriba y no colgando por el signo: desviacion positiva del seguidor 3 es lapiz arriba en el compilador, y colgando ese empuje subia la mesa",
+          "tolerancia": "+-0,5 grados"
         },
         {
           "nombre": "balancin_espesor",
@@ -917,16 +959,16 @@
         },
         {
           "nombre": "balancin_eje_x",
-          "valor": 0.025,
+          "valor": 0.02502813489465372,
           "unidad": "m",
-          "descripcion": "A que distancia del eje de simetria corre el eje del balancin. Lo fija la bieleta: el pasador del seguidor esta en el eje y el tirante tiene que caer a 65, fuera del plato y al lado de la tarjeta",
+          "descripcion": "A que distancia del eje de simetria corre el eje del balancin. Derivada (compile/levantamiento.py): tirante_x - brazo_palanca*cos(calaje_elevador), para que el tirante caiga en 65 con la palanca a +-calaje y no en 64,97",
           "tolerancia": ""
         },
         {
           "nombre": "bieleta_entre_centros",
-          "valor": 0.025,
+          "valor": 0.06024160574987849,
           "unidad": "m",
-          "descripcion": "Del pasador del seguidor al brazo de entrada del balancin. Va en el plano de los seguidores y en la misma direccion en que se mueven los dos extremos, que es lo que la deja trabajar a traccion y compresion puras",
+          "descripcion": "Del pasador del seguidor 3 al del balancin. Derivada (compile/levantamiento.py): bieleta ISOGONA, orientada para que el balancin se mueva lo mismo que el pasador del seguidor, asi la relacion es exactamente 6. El pasador del seguidor NO esta en el eje de simetria: esta en (-29,41, 14,55) del cinco barras. Con la de 25 que habia, la mesa bajaba 2,45 mm en vez de 3",
           "tolerancia": ""
         },
         {

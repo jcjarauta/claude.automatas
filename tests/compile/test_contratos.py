@@ -368,16 +368,26 @@ def test_el_volante_gira_dentro_de_la_silueta_del_plato():
     assert llega <= c["platina_diametro"] / 2
 
 
+def test_el_volante_no_puede_ir_en_la_bahia():
+    """Va encima del plato 3, y no es un gusto: centrado en el eje de la
+    manivela, a 28 del árbol, un volante de R52 tendría el árbol DENTRO, y la
+    rueda Z60, que va en el árbol en esa misma bahía, lo solaparía. Su ficha
+    lo ponía «en la bahía del reductor, junto al piñón» hasta 2026-10-04."""
+    c = contrato_mm()
+    assert c["reductor_entre_ejes"] < c["volante_diametro"] / 2
+
+
 def test_la_bahia_del_reductor_cabe_lo_que_se_apila_dentro():
     """La bahía la fija lo que lleva dentro, no un número redondo: el ancho
-    del piñón, el espesor del volante y las holguras. Si alguien engorda el
-    volante sin tocar la bahía, el plato 3 se apoya encima de él."""
+    del engranaje —piñón y rueda en el mismo plano— y una holgura de 2 por
+    arriba y por abajo. Si alguien ensancha el engranaje sin tocar la bahía,
+    el plato 3 se apoya encima de él."""
     c = contrato_mm()
     ficha = PiezaComercial.model_validate(
         json.loads((PIEZAS / "pinon_reductor.json").read_text(encoding="utf-8"))
     )
     ancho = float(ficha.cota("ancho").valor) * 1000.0
-    apilado = ancho + c["volante_espesor"] + 3 * 2.0
+    apilado = ancho + 2 * 2.0
     assert c["reductor_bahia"] >= apilado, (
         f"la bahía mide {c['reductor_bahia']:g} y dentro se apilan {apilado:g}"
     )

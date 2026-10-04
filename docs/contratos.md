@@ -399,8 +399,12 @@ decisión se tome con él delante.
 3 acaba a 180 y la máquina mide los 200 de alto que dice la ficha, dejando
 unos 60 mm de portaminas por debajo del varillaje. El número de verdad sale
 de cómo se sujeta el lápiz, que es la decisión que sigue abierta. Con él se
-cierran de golpe `poste_largo`, el largo de los tres separadores que apoyan
-el plato 1 y `eje_pivote_largo`, que lleva desde el principio con 45.
+cierran de golpe `poste_largo` y el largo de los tres separadores que apoyan
+el plato 1.
+
+`eje_pivote_largo` ya no está aquí: no depende de `base_al_plato`, sino de lo
+que se apila entre el collar del proximal y el tambor, todo colgado del plato
+1. Son **55**, uno solo para los dos lados.
 
 ---
 
@@ -442,6 +446,36 @@ sus dos mordazas y un eje: `sector` y `tambor` pasan a ×2, `mordaza` a ×4 y
 
 El pasador que lo ataca va en **el agujero que dejó el sector**, a 38 del
 pivote, así que el seguidor sigue siendo la misma pieza en los tres canales.
+
+### La bieleta, que no era de 25 (2026-10-04)
+
+La bieleta de 25 suponía que **el pasador del seguidor 3 estaba en el eje de
+simetría** del cinco barras. No está ahí: el seguidor apunta a 9,3° en el
+marco de la leva, y el pasador cae en **(−29,41, 14,55)**. Con la de 25
+estirada hasta ese punto, la bieleta trabajaba a 37° del movimiento del
+seguidor y **la mesa bajaba 2,45 mm en vez de 3**.
+
+La solución es una bieleta **isógona**: se orienta para que el balancín se
+mueva exactamente lo mismo que el pasador, así que la relación vuelve a ser 6
+sin tocar la leva, el balancín ni su pared.
+
+- **No hace falta «tracción pura».** Una bieleta articulada en sus dos
+  extremos solo trabaja a tracción o compresión con cualquier ángulo. Lo que
+  el ángulo cambia es la relación.
+- **Mide 60,24** y lo calcula `compile/levantamiento.py`.
+  `tests/compile/test_levantamiento.py` la cruza con este contrato y resuelve
+  la cinemática exacta: 3,000 mm de bajada.
+
+Con ella se mueven tres cosas:
+
+- **El balancín apunta HACIA ARRIBA**, con su cara plana girada
+  `balancin_chaveta_angulo` = 90°. Así la palanca y él van en un eje de una
+  sola cara plana. Hacia arriba y no colgando por el signo: en el compilador,
+  una desviación positiva del seguidor 3 es lápiz arriba, y colgando ese
+  empuje subía la mesa.
+- **El eje del balancín** pasa a x = 25,028 (el tirante cae en 65 con la
+  palanca a ±calaje, no en 64,97). Mide 97,7, y la palanca queda a 90,75 del
+  balancín, no a 78.
 
 ### La pared que decide el diámetro del eje
 
@@ -510,4 +544,6 @@ absorbe el alabeo es la flexura, y 0,5 es todo su recorrido.
 | 2026-10-02 | **Base** | Añadido el grupo: 190 × 275 × 25 de nogal, tres agujeros ciegos de Ø8 en triángulo equilátero y la tarjeta A7 | La planta la cierran el plato por detrás y el papel por delante, con 10 mm a cada punta. Los 210 × 160 de la ficha se quedaban 115 mm cortos de fondo |
 | 2026-10-02 | Bastidor | **Añadido `poste_vano`** y `poste_largo` de 105 a **195**, derivado de la cadena entera | El poste baja hasta la base y hace de pata, así que no hace falta pilar y los tres platos siguen siendo la misma pieza. Y el «70 de antes» llevaba dentro, sin declarar, el vano entre el plato 1 y el plato 2 |
 | 2026-10-02 | **Levantamiento** | Añadido el grupo: balancín 6,333/40, tirante a x = 65, mesa del papel sobre dos bielas de 40 y flexura de dos láminas | El canal 3 no tenía etapa de salida. Medir tumbó el 1:1 —41,4° de presión contra 30— así que la relación 6 se queda y la hace un balancín: una pieza en vez de cinco, y la leva no se toca |
+| 2026-10-04 | Levantamiento | **Bieleta isógona de 60,24** (era 25), `balancin_chaveta_angulo` **90°** (nuevo), `balancin_eje_x` **25,028**, `balancin_eje_largo` **97,7** | El pasador del seguidor 3 no está en el eje de simetría: con la de 25, la mesa bajaba 2,45 en vez de 3. Las tres salen de `compile/levantamiento.py` y un test las cruza |
+| 2026-10-04 | Bastidor | `eje_pivote_largo` de 45 a **55**; nuevos `brazo_arandela` 0,5, `punta_tubo_exterior/interior` 12/10,6, `distal_punta_diametro` 18 y `eje_manivela_largo` 51 | 45 no llegaba del collar del proximal al tambor (hacen falta 51 y 54,5). Los brazos se solapaban con 1 de desnivel y 3 de espesor. El lápiz y el perno de la punta no caben en el mismo eje: la punta se hace hueca. El eje de la manivela no existía |
 | 2026-10-02 | Levantamiento | Eje del balancín de **Ø4**, no Ø10 como los otros tres, y pasador de Ø2 | Con el brazo de entrada en 6,333, un Ø10 mete el pasador DENTRO del agujero del eje: pared −0,17. Con Ø4 y Ø2 quedan 3,33. Arrastra el cubo y la cara plana de la palanca del lápiz, que hay que redibujar |
