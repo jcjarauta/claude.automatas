@@ -125,8 +125,9 @@ relación × brazo proximal / brazo del seguidor = 6 × 90 / 45 = 12×
 | 0,30 mm — a mano, con cuidado | 3,60 mm |
 | 0,50 mm — a mano, primera vez | 6,00 mm |
 
-**El error de trazo simulado es 0,108 mm y la tolerancia de fabricación
-permite 0,60.** O sea que el modelo es seis veces más fino que la pieza: la
+**El error de trazo simulado era 0,108 mm y la tolerancia de fabricación
+permite 0,60.** (Desde el 2026-10-04 se mide contra la línea escrita y es
+de 3 µm: el argumento se refuerza.) O sea que el modelo es seis veces más fino que la pieza: la
 precisión de la máquina no la decide el compilador, la decide el taller que
 corta. Dejar de perseguir décimas en el modelo y empezar a perseguirlas en la
 tolerancia del canto es, probablemente, el cambio de foco más rentable que

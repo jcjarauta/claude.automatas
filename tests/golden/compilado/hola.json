@@ -8,7 +8,7 @@
   },
   "caso": "hola",
   "desviacion_de_lo_capturado_mm": 0.289789,
-  "error_trazo_mm": 0.143636,
+  "error_trazo_mm": 0.002835,
   "errores": [],
   "levas": [
     {

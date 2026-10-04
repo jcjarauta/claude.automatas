@@ -1114,9 +1114,11 @@ que se decidieron midiendo y no eligiendo:
   (`compile/tolerancias.py`), el presupuesto completo con «hola» da
   **2,79 mm en el peor caso y 1,64 mm cuadrático**, y lo domina el corte: los
   ±0,05 mm que se le piden al taller llegan a la punta como 1,16 mm. Desde el
-  2026-10-04 se piden **±0,02** (rotulado en el plano de cada leva): 1,49 mm
-  peor caso y 0,64 cuadrático, y el corte sigue mandando, pero la cinta y el
-  muestreo del modelo pasan a pesar casi la mitad que él. El
+  2026-10-04 se piden **±0,02** (rotulado en el plano de cada leva): 1,35 mm
+  peor caso y 0,62 cuadrático. El corte sigue mandando y la cinta (0,18 mm)
+  es la siguiente palanca. El «muestreo del modelo» es de **3 µm**: los
+  0,108–0,144 mm que se daban eran de medir contra puntos sueltos y de contar
+  como vuelo los arranques de los trazos (umbral de apoyo de 1e-9 m). El
   varillaje amplifica un error del canto unas 12 veces de cuenta corta —
   `relacion × proximal / brazo_seguidor`— y **23 veces según el jacobiano
   real del cinco barras**, que mueve la punta con una palanca efectiva mayor

@@ -102,10 +102,11 @@ def test_el_hardware_domina_sobre_el_modelo():
     muestreo de la leva aporta menos de la quinta parte que el dominante,
     sea cual sea. Ajustar el muestreo no arregla esta máquina.
 
-    Con el perfil a ±0,05 era cinco veces más que el muestreo. **Al pedir
-    ±0,02 deja de serlo**: el corte sigue mandando, pero el muestreo pasa a
-    ser un tercio del dominante, y subir las muestras empieza a valer la pena.
-    Las dos cosas quedan dichas aquí.
+    Con ±0,02 se llegó a escribir aquí que el muestreo pesaba un tercio del
+    corte. Era un número inflado: `simular` medía contra puntos sueltos y daba
+    por vuelo los arranques de los trazos, y el «muestreo del modelo» salía en
+    144 µm. Medido contra la línea escrita son 3 µm, y el corte vuelve a
+    mandar con más de cien veces de margen, con ±0,05 y con ±0,02.
     """
     flojo = presupuesto(holguras=Holguras(error_de_perfil=mm(0.05)))
     modelo = next(c for c in flojo.cadena.contribuciones if "modelo" in c.nombre)
@@ -117,7 +118,7 @@ def test_el_hardware_domina_sobre_el_modelo():
     modelo = next(c for c in p.cadena.contribuciones if "modelo" in c.nombre)
     assert p.dominante is not None
     assert "modelo" not in p.dominante.nombre
-    assert 2.0 * modelo.en_punta < p.dominante.en_punta < 5.0 * modelo.en_punta
+    assert p.dominante.en_punta > 100.0 * modelo.en_punta
 
 
 def test_la_cinta_no_le_quita_el_primer_puesto_al_corte():

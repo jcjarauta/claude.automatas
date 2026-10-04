@@ -65,6 +65,13 @@ mismo tamaño ese eje atravesaba las de arriba casi 2 mm. El elevador va
 abajo y conserva su radio porque tiene el recorrido más corto y de él cuelga
 toda la cadena del levantamiento."""
 
+UMBRAL_DE_APOYO = 5e-5
+"""Metros. Por debajo, el lápiz está apoyado: 0,05 mm frente a los 3 del
+levantamiento. Era 1e-9, y el spline oscila hasta una micra en los arranques
+de cada trazo: veinte puntos que escribían contaban como vuelo y dejaban
+huecos en la tinta. De ahí salían los 0,144 mm de error de «hola», que son
+2,8 µm con el lápiz donde está."""
+
 ERROR_DE_TRAZO_MAXIMO = 0.0005
 """Medio milímetro. Por encima de eso, la letra deja de parecerse."""
 
@@ -270,7 +277,7 @@ class Simulacion:
     @property
     def escritos(self) -> Arreglo:
         """Solo los puntos con el lápiz apoyado: lo que queda en el papel."""
-        return np.asarray(self.puntos[self.altura <= 1e-9], dtype=np.float64)
+        return np.asarray(self.puntos[self.altura <= UMBRAL_DE_APOYO], dtype=np.float64)
 
 
 @dataclass(frozen=True)
@@ -354,6 +361,40 @@ def _psi_desde_la_leva(
     )
 
 
+def distancias_a_la_tinta(
+    escritura: Escritura, puntos: Arreglo, apoyado: npt.NDArray[np.bool_]
+) -> list[float]:
+    """Cuánto se aparta cada punto de lo pedido de la LÍNEA que escribe la
+    máquina: los segmentos entre ángulos seguidos con el lápiz apoyado.
+
+    Medía contra los puntos sueltos, y la distancia al punto más cercano se
+    divide por dos cada vez que se dobla el muestreo: lo que daba era la
+    separación entre muestras —144 µm en «hola»— y no la leva —14 µm—. Ese
+    número decidía `trazo_infiel` y entraba en el presupuesto de tolerancias
+    como «muestreo del modelo».
+    """
+    indices = np.arange(len(puntos))
+    siguiente = np.roll(indices, -1)
+    anterior = np.roll(indices, 1)
+    tinta = apoyado & apoyado[siguiente]
+    desde, hasta = puntos[tinta], puntos[siguiente][tinta]
+    sueltos = puntos[apoyado & ~tinta & ~apoyado[anterior]]
+    salida = []
+    for trazo in escritura.trazos:
+        for punto in remuestrear(trazo, 64):
+            mejor = np.inf
+            if len(desde):
+                d = hasta - desde
+                largo = np.einsum("ij,ij->i", d, d)
+                t = np.einsum("ij,ij->i", punto - desde, d) / np.where(largo > 0, largo, 1.0)
+                t = np.clip(t, 0.0, 1.0)
+                mejor = float(np.min(np.linalg.norm(desde + t[:, None] * d - punto, axis=1)))
+            if len(sueltos):
+                mejor = min(mejor, float(np.min(np.linalg.norm(sueltos - punto, axis=1))))
+            salida.append(mejor)
+    return salida
+
+
 def simular(
     perfiles: dict[str, PerfilLeva],
     calajes: dict[str, float],
@@ -376,14 +417,11 @@ def simular(
     puntos = maquina.brazo.directa(np.column_stack([psi["izquierdo"], psi["derecho"]]))
     altura = maquina.palanca.directa(psi["elevador"][:, None])[:, 0]
 
-    apoyados = puntos[altura <= 1e-9]
-    if apoyados.size == 0:
+    apoyado = altura <= UMBRAL_DE_APOYO
+    if not apoyado.any():
         return Simulacion(thetas, puntos, altura, np.inf, np.inf)
 
-    distancias = []
-    for trazo in escritura.trazos:
-        for punto in remuestrear(trazo, 64):
-            distancias.append(float(np.min(np.linalg.norm(apoyados - punto, axis=1))))
+    distancias = distancias_a_la_tinta(escritura, puntos, apoyado)
     return Simulacion(
         thetas=thetas,
         puntos=np.asarray(puntos, dtype=np.float64),
@@ -779,10 +817,12 @@ __all__ = [
     "MUESTRAS_DE_CONTACTO",
     "ORDEN_EN_LA_PILA",
     "SEGUIDORES",
+    "UMBRAL_DE_APOYO",
     "Compilacion",
     "Escribiente",
     "Simulacion",
     "compilar",
+    "distancias_a_la_tinta",
     "encajar_en_la_caja",
     "holguras_de_los_ejes",
     "pieza_de_leva",

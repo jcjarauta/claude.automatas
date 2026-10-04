@@ -8,7 +8,7 @@
   },
   "caso": "firma",
   "desviacion_de_lo_capturado_mm": 0.052743,
-  "error_trazo_mm": 0.067602,
+  "error_trazo_mm": 0.001887,
   "errores": [],
   "levas": [
     {

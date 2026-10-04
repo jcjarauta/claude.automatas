@@ -25,17 +25,16 @@ from dataclasses import dataclass
 import numpy as np
 import numpy.typing as npt
 
-from compile.escribiente import SEGUIDORES, Compilacion, Escribiente
+from compile.escribiente import (
+    SEGUIDORES,
+    UMBRAL_DE_APOYO,
+    Compilacion,
+    Escribiente,
+    distancias_a_la_tinta,
+)
 from core.cam.contacto import psi_por_contacto
-from core.escritura import remuestrear
 
 Arreglo = npt.NDArray[np.float64]
-
-UMBRAL_DE_APOYO = 5e-5
-"""Metros. Por debajo, el lápiz está apoyado. `simular` usa 1e-9 porque su
-altura sale exacta de la síntesis; aquí sale de apoyar un rodillo en un
-polígono, con un ruido de décimas de micra, y un umbral de 0 haría pasar por
-vuelos los trazos. 0,05 mm frente a los 3 del levantamiento."""
 
 
 @dataclass(frozen=True)
@@ -100,18 +99,7 @@ def recorrer(
     apoyado = altura <= UMBRAL_DE_APOYO
     if not apoyado.any():
         return Recorrido(thetas, puntos, altura, np.inf, np.inf)
-    # Contra la LÍNEA escrita, no contra sus puntos: la distancia al punto
-    # más cercano se divide por dos cada vez que se dobla el muestreo, y lo
-    # que mediría es la separación entre muestras y no la leva.
-    siguiente = np.roll(np.arange(len(thetas)), -1)
-    tinta = apoyado & apoyado[siguiente]
-    desde, hasta = puntos[tinta], puntos[siguiente][tinta]
-    sueltos = puntos[apoyado & ~tinta & ~apoyado[np.roll(np.arange(len(thetas)), 1)]]
-    distancias = [
-        _a_la_linea(punto, desde, hasta, sueltos)
-        for trazo in compilacion.escritura.trazos
-        for punto in remuestrear(trazo, 64)
-    ]
+    distancias = distancias_a_la_tinta(compilacion.escritura, puntos, apoyado)
     return Recorrido(
         thetas=thetas,
         puntos=np.asarray(puntos, dtype=np.float64),
@@ -119,20 +107,6 @@ def recorrer(
         error_maximo=max(distancias),
         error_medio=float(np.mean(distancias)),
     )
-
-
-def _a_la_linea(punto: Arreglo, desde: Arreglo, hasta: Arreglo, sueltos: Arreglo) -> float:
-    """Distancia de un punto a la tinta: a los segmentos escritos y a los
-    puntos sueltos, si un trazo cabe en una sola muestra."""
-    mejor = np.inf
-    if len(desde):
-        d = hasta - desde
-        largo = np.einsum("ij,ij->i", d, d)
-        t = np.clip(np.einsum("ij,ij->i", punto - desde, d) / np.where(largo > 0, largo, 1.0), 0, 1)
-        mejor = float(np.min(np.linalg.norm(desde + t[:, None] * d - punto, axis=1)))
-    if len(sueltos):
-        mejor = min(mejor, float(np.min(np.linalg.norm(sueltos - punto, axis=1))))
-    return mejor
 
 
 def segundos_por_vuelta(rpm_manivela: float, reduccion: float) -> float:

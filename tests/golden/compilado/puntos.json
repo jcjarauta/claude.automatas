@@ -8,7 +8,7 @@
   },
   "caso": "puntos",
   "desviacion_de_lo_capturado_mm": 0.0,
-  "error_trazo_mm": 0.12471,
+  "error_trazo_mm": 0.00086,
   "errores": [],
   "levas": [
     {

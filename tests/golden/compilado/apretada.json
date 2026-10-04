@@ -11,7 +11,7 @@
   },
   "caso": "apretada",
   "desviacion_de_lo_capturado_mm": 0.0,
-  "error_trazo_mm": 0.241965,
+  "error_trazo_mm": 0.007991,
   "errores": [
     "capacidad_superada",
     "perfil_autointersecado",
