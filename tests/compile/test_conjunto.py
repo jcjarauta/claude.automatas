@@ -198,3 +198,24 @@ def test_el_hueco_al_poste_es_el_que_dice_el_contrato_de_bastidor():
     al escalonar la pila, que deja como leva mayor la del elevador."""
     montaje, _ = montar(compilar(hola()), Escribiente())
     assert float(montaje.holgura_al_poste) == pytest.approx(0.0113, abs=1e-4)
+
+
+def test_los_estados_por_el_perfil_cortado_son_los_de_la_curva_de_paso():
+    """La animación sale del perfil cortado; el barrido, de la curva de paso.
+    Leen la misma leva, así que dan la misma máquina a micro-radianes: si un
+    día discrepan, la pieza cortada no es el diseño."""
+    import numpy as np
+
+    from compile.conjunto import estados
+
+    compilacion = compilar(hola())
+    m = Escribiente()
+    thetas = np.linspace(0.0, 2.0 * np.pi, 24, endpoint=False)
+    paso = estados(compilacion, m, thetas)
+    contacto = estados(compilacion, m, thetas, camino="contacto")
+    for a, b in zip(paso, contacto, strict=True):
+        assert abs(a.psi_izquierdo - b.psi_izquierdo) < 1e-5
+        assert abs(a.psi_derecho - b.psi_derecho) < 1e-5
+        assert abs(a.giro_balancin - b.giro_balancin) < 1e-4
+    with pytest.raises(ValueError, match="camino"):
+        estados(compilacion, m, thetas, camino="programa")

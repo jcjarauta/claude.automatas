@@ -140,9 +140,9 @@ sobrerrestricción, y aquí no hace falta ni una vez.
 | M8 | **Revolute** | distal der ↔ proximal der | codo derecho | Rz |
 | M9 | **Cylindrical** | distal izq ↔ distal der | la punta, (0, 100) | Rz + Tz ← **cierra el lazo** |
 | M10 | **Revolute** | accionamiento ↔ plato 2 | (−14, −8,202) | Rz |
-| M11 | **Tangent** | vértice del rodillo izq. ↔ curva de paso izquierda | — | §5 |
-| M12 | **Tangent** | vértice del rodillo der. ↔ curva de paso derecha | — | §5 |
-| M13 | **Tangent** | vértice del rodillo elev. ↔ curva de paso del elevador | — | §5 |
+| ~~M11~~ | ~~**Tangent**~~ (retirado, ver paso 10) | vértice del rodillo izq. ↔ curva de paso izquierda | — | §5 |
+| ~~M12~~ | ~~**Tangent**~~ (retirado, ver paso 10) | vértice del rodillo der. ↔ curva de paso derecha | — | §5 |
+| ~~M13~~ | ~~**Tangent**~~ (retirado, ver paso 10) | vértice del rodillo elev. ↔ curva de paso del elevador | — | §5 |
 
 Coordenadas en el **marco del cinco barras**, que es el de la base y el de la
 planta del plano de conjunto. El árbol cae en (0, −32,451).
@@ -364,7 +364,7 @@ sirviendo.
 | **7** | **R1 R2**, ratio 6 | Arrastra el seguidor: el brazo le sigue **seis veces**. Comprueba el SENTIDO |
 | **8** | Dos distales, **M7 M8**, y al final **M9 cilíndrico** | Arrastra un seguidor: la punta se mueve por la caja. Aquí sale el rojo (§4) |
 | **9** | **Accionamiento** + **M10** + **R3** ratio 3 | Gira la manivela: el árbol va a un tercio y todo el varillaje le sigue |
-| **10** | Curvas de paso + **M11 M12 M13** tangentes | Botón derecho sobre M1 → **Animate** → Play |
+| ~~**10**~~ | ~~Curvas de paso + **M11 M12 M13** tangentes~~ | **Retirado el 2026-10-04.** Era el paso más frágil del plan: tres tangentes rodillo–curva que Onshape resuelve con un solver de relaciones y que se pierden a la primera curva mal importada, y además animaba la **curva de paso**, el diseño y no la pieza. Lo sustituye `scripts/animar.py`: la máquina entera moviéndose en el visor OCP, con los seguidores girando lo que manda el **perfil cortado** (`estados(..., camino="contacto")`) y la tinta de lo que escriben esas levas sobre la mesa. Un test comprueba que cada pieza animada cae a menos de 0,02 mm de donde la pone `colocar` |
 | **11** | Barrido de θ con *Interference Detection* | El hueco al poste (§6) |
 | **12** | **Eje del balancín** en sus dos apoyos, con el balancín a 90° y la palanca; la **bieleta** del seguidor 3 al balancín | Arrastra el seguidor 3: el balancín le sigue y la palanca gira seis veces más |
 | **13** | **Mesa** sobre sus cuatro bielas laterales; el **tirante** de la palanca al eje móvil trasero | Arrastra el seguidor 3: la mesa baja 3 mm sin girar y se corre 0,113 |

@@ -241,7 +241,9 @@ __all__ = ["Cartucho", "Montaje", "montar"]
 # ---------------------------------------------------------------------------
 
 
-def estados(compilacion: Compilacion, maquina: Escribiente, thetas: Any) -> list[Estado]:
+def estados(
+    compilacion: Compilacion, maquina: Escribiente, thetas: Any, camino: str = "paso"
+) -> list[Estado]:
     """La máquina en cada ángulo del árbol, leyendo las levas sintetizadas.
 
     **Hacen falta al menos ocho ángulos de golpe**, y no es un capricho de
@@ -262,13 +264,29 @@ def estados(compilacion: Compilacion, maquina: Escribiente, thetas: Any) -> list
     contratos = cargar()
     bieleta = bieleta_isogona(contratos, maquina)
     thetas = np.asarray(thetas, dtype=np.float64)
-    crudo = {n: _psi_desde_la_leva(compilacion.perfiles[n], thetas) for n in SEGUIDORES}
-    brazo = {
-        n: _psi_desde_la_leva(
-            compilacion.perfiles[n], thetas, compilacion.calajes[n], maquina.relacion
-        )
-        for n in SEGUIDORES
-    }
+    if camino == "contacto":
+        # Por el PERFIL CORTADO: el rodillo apoyado en el polígono del DXF.
+        # Es lo que hace la pieza que se fabrica, y lo que se enseña cuando se
+        # quiere ver qué escribe la máquina (scripts/animar.py).
+        from core.cam.contacto import psi_por_contacto
+
+        crudo = {
+            n: psi_por_contacto(
+                compilacion.perfiles[n].perfil, compilacion.perfiles[n].seguidor, thetas
+            )
+            for n in SEGUIDORES
+        }
+        brazo = {n: crudo[n] * maquina.relacion + compilacion.calajes[n] for n in SEGUIDORES}
+    elif camino == "paso":
+        crudo = {n: _psi_desde_la_leva(compilacion.perfiles[n], thetas) for n in SEGUIDORES}
+        brazo = {
+            n: _psi_desde_la_leva(
+                compilacion.perfiles[n], thetas, compilacion.calajes[n], maquina.relacion
+            )
+            for n in SEGUIDORES
+        }
+    else:
+        raise ValueError(f"camino «{camino}»: o «paso» (la curva de paso) o «contacto»")
     return [
         Estado(
             theta=float(theta),
