@@ -40,6 +40,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 RAIZ = Path(__file__).resolve().parent.parent
 RAIZ_DEL_ARBOL = "escribiente"
 
+LEVAS_SOCAVADAS: set[str] = set()
+"""Las levas colocadas (leva_1…) que solo se pueden dibujar como silueta."""
+
 QUIETAS = ("cinta_", "muelle_seguidor_", "bieleta", "biela_mesa_")
 """Lo que no se anima: deformable o con movimiento compuesto."""
 
@@ -119,6 +122,34 @@ def _miembros(nombre: str) -> str:
     return "fijo"
 
 
+SOCAVADA = " (socavada)"
+"""Lo que se añade al nombre de una leva que solo se puede dibujar como
+silueta: el visor la pinta en rojo."""
+
+
+def _dibujable(pieza: Any) -> Any:
+    """La leva tal cual si se puede construir su sólido; si su perfil se cruza
+    consigo mismo, su silueta: el contorno exterior del polígono válido, que
+    es lo que dejaría una fresa al recortarla.
+
+    **Solo para mirarla.** `emit.step` no la arregla a propósito, porque es
+    geometría de producción: una leva socavada no existe y el compilador ya
+    la ha rechazado. Aquí se enseña para ver dónde y cuánto."""
+    from shapely.geometry import Polygon
+
+    from core.units import Metros
+    from emit.step import solido_de_pieza
+
+    try:
+        solido_de_pieza(pieza)
+        return pieza
+    except Exception:
+        valido = Polygon([(float(x), float(y)) for x, y in pieza.contorno]).buffer(0)
+        mayor = max(getattr(valido, "geoms", [valido]), key=lambda g: g.area)
+        contorno = [(Metros(x), Metros(y)) for x, y in list(mayor.exterior.coords)[:-1]]
+        return pieza.model_copy(update={"contorno": contorno, "nombre": pieza.nombre + SOCAVADA})
+
+
 def _centro(solido: Any) -> np.ndarray:
     caja = solido.bounding_box()
     return np.array(
@@ -176,7 +207,24 @@ def construir(pedido: Path, fotogramas: int = 72):
     recorrido = recorrer(compilacion, maquina, muestras=720)
     seguidores = [maquina.seguidor(i) for i in range(len(SEGUIDORES))]
     hecho = taller(c)
-    levas = list(compilacion.piezas)
+    levas = [_dibujable(p) for p in compilacion.piezas]
+    socavadas = [p.nombre for p, q in zip(compilacion.piezas, levas, strict=True) if p is not q]
+    for nombre in socavadas:
+        print(
+            f"AVISO: la {nombre} se cruza consigo misma (socavada) y NO es fabricable; "
+            "se dibuja su silueta, en rojo"
+        )
+    LEVAS_SOCAVADAS.clear()
+    LEVAS_SOCAVADAS.update(
+        f"leva_{i + 1}"
+        for i, (p, q) in enumerate(zip(compilacion.piezas, levas, strict=True))
+        if p is not q
+    )
+    if not compilacion.veredicto.apto:
+        print(
+            "AVISO: el pedido NO es apto: "
+            + ", ".join(sorted({i.codigo for i in compilacion.veredicto.errores}))
+        )
 
     def colocadas(estado: Any) -> dict[str, Any]:
         return {p.nombre: p.solido for p in colocar(levas, seguidores, estado, c, hecho)}
@@ -369,6 +417,10 @@ def compuesto(nodo: Nodo, colores: dict[str, str]) -> Any:
         solido.label = nombre
         try:
             grupo = grupo_de(nombre).nombre
+            if nombre in LEVAS_SOCAVADAS:
+                solido.color = Color("#d00000")
+                hijos.append(solido)
+                continue
             # El bastidor, translúcido: si no, los platos tapan las levas.
             alfa = 0.25 if grupo == "bastidor" else 1.0
             solido.color = Color(colores.get(grupo, "#9aa0a6"), alfa)
@@ -457,7 +509,20 @@ def main(argv: list[str] | None = None) -> int:
         f"{100 * recorrido.fraccion_escribiendo:.0f} % de la vuelta"
     )
     colores = {g.nombre: g.color for g in GRUPOS}
-    show(compuesto(raiz, colores), reset_camera=Camera.ISO, grid=(False, False, False), axes=False)
+    try:
+        show(
+            compuesto(raiz, colores),
+            reset_camera=Camera.ISO,
+            grid=(False, False, False),
+            axes=False,
+        )
+    except Exception as fallo:
+        print(
+            f"\nNo hay visor OCP abierto ({type(fallo).__name__}). En VS Code: paleta de "
+            "comandos (Ctrl+Shift+P) -> «OCP CAD Viewer: Open viewer», y vuelve a lanzarlo.",
+            file=sys.stderr,
+        )
+        return 1
     animacion = Animation()
     for ruta, (accion, valores) in rutas(raiz).items():
         animacion.add_track(ruta, accion, tiempos, valores)
