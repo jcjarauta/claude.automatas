@@ -1,4 +1,4 @@
-"""El cabestrante 6:1, acotado desde el contrato, para dibujarlo en el CAD.
+"""El cabestrante 8:1, acotado desde el contrato, para dibujarlo en el CAD.
 
     uv run python scripts/dibujar_amplificador.py --out build/amplificador.svg
 
@@ -243,7 +243,7 @@ def hoja() -> str:
         f'viewBox="0 0 {w:.0f} {h:.0f}">',
         f"<style>{ESTILO}</style>",
         f'<rect width="{w:.0f}" height="{h:.0f}" fill="#fff"/>',
-        f'<text class="h1" x="{borde}" y="20">Amplificador 6:1 · cabestrante de cinta</text>',
+        f'<text class="h1" x="{borde}" y="20">Amplificador 8:1 · cabestrante de cinta</text>',
         f'<text class="sub" x="{borde}" y="30">Generado desde docs/contratos.json con '
         "scripts/dibujar_amplificador.py. Piezas de PLATAFORMA: se dibujan a mano en el CAD, "
         "una vez, y no cambian entre pedidos.</text>",

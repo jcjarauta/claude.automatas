@@ -13,23 +13,23 @@
   "levas": [
     {
       "canal": "izquierdo",
-      "curvatura_minima_mm": 14.55219,
+      "curvatura_minima_mm": 21.718003,
       "numero": "L-001",
-      "presion_maxima_grados": 11.420838,
+      "presion_maxima_grados": 7.394102,
       "puntos_del_contorno": 720,
-      "radio_maximo_mm": 39.30704,
-      "radio_minimo_mm": 35.10689,
-      "sha256": "80f2ae733253408de13d6ecd3b676782eab04b8b4ead552c5acf7c74da6cc7ab"
+      "radio_maximo_mm": 43.885481,
+      "radio_minimo_mm": 40.948604,
+      "sha256": "226d9ebc29e71df789e1471b4e37e725e9f3b6748f3095e2dcac5ea6234ed376"
     },
     {
       "canal": "derecho",
-      "curvatura_minima_mm": 20.975897,
+      "curvatura_minima_mm": 26.387464,
       "numero": "L-002",
-      "presion_maxima_grados": 8.322634,
+      "presion_maxima_grados": 5.793303,
       "puntos_del_contorno": 720,
-      "radio_maximo_mm": 47.603784,
-      "radio_minimo_mm": 44.097376,
-      "sha256": "280893c8615f096c23188d209b1d678737f020915bb94676a0e23d4f9779d878"
+      "radio_maximo_mm": 49.061356,
+      "radio_minimo_mm": 46.532465,
+      "sha256": "70c0792044bac8b497d7e66b6d073ff9fa8688c08f64e808e6989af28114abc3"
     },
     {
       "canal": "elevador",

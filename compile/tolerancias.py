@@ -247,7 +247,7 @@ def amplificacion_del_canto(maquina: Escribiente) -> float:
 
     La cuenta corta, sin corregir por ángulo de presión:
 
-        relacion × brazo proximal / brazo del seguidor = 6 × 90 / 52 ≈ 10,4
+        relacion × brazo proximal / brazo del seguidor = 8 × 90 / 50 = 14,4
 
     con el brazo de seguidor más corto de los dos que mueven la punta, que es
     el que más amplifica.

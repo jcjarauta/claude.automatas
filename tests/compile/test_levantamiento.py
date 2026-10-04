@@ -78,7 +78,7 @@ def test_la_mesa_baja_lo_que_la_leva_manda(contratos, bieleta):
     r = _valor(contratos, "levantamiento_pasador_al_pivote")
     e = _valor(contratos, "balancin_entrada")
     palanca = _valor(contratos, "brazo_palanca")
-    relacion = Escribiente().relacion
+    relacion = Escribiente().relacion_elevador
     calaje = calaje_elevador(contratos)
     medio_giro = calaje / relacion  # lo que se desvía el seguidor a cada lado
     psi0 = math.atan2(
@@ -166,7 +166,7 @@ def test_la_cadena_baja_la_mesa_lo_que_el_compilador_levanta(contratos):
     calaje = calaje_elevador(contratos)
     peor = 0.0
     for e in estados(compilacion, maquina, thetas):
-        manda = palanca * math.sin(e.desviaciones[2] * maquina.relacion + calaje)
+        manda = palanca * math.sin(e.desviaciones[2] * maquina.relacion_elevador + calaje)
         peor = max(peor, abs(e.caida_mesa - manda))
     assert peor < 5e-6, f"la mesa se separa {peor * 1e6:.1f} µm de lo que manda el compilador"
 

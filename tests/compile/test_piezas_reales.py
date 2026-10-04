@@ -258,7 +258,7 @@ def test_la_cinta_abraza_el_lado_opuesto_al_tambor():
     El punto de tangencia es aquel cuyo radio es perpendicular a la cinta.
     Imponiendo esa perpendicularidad sale cos(t) = (R-r)/a, o sea 53,97
     grados desde la direccion al tambor; y de los dos arcos que separan los
-    dos puntos de tangencia, el que la cinta abraza es el de 252 grados, que
+    dos puntos de tangencia, el que la cinta abraza es el de 272 grados, que
     pasa por el lado OPUESTO al tambor. Lo confirma la formula de correa
     abierta, pi + 2*gamma con sin(gamma) = (R-r)/a.
 
@@ -280,7 +280,7 @@ def test_la_cinta_abraza_el_lado_opuesto_al_tambor():
     abrazado = 2.0 * (math.pi - tang)
     gamma = math.asin((sector - tambor) / entre)
     assert abrazado == pytest.approx(math.pi + 2.0 * gamma)
-    assert math.degrees(abrazado) == pytest.approx(252.06, abs=0.01)
+    assert math.degrees(abrazado) == pytest.approx(272.21, abs=0.01)
     # El vano libre es el cateto, y sale igual por los dos caminos.
     assert contrato("amplificador_vano_libre") == pytest.approx(entre * math.sin(tang))
     assert contrato("amplificador_vano_libre") == pytest.approx(entre * math.cos(gamma))

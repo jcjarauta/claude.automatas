@@ -90,7 +90,7 @@ def recorrer(
         nombre: psi_por_contacto(
             compilacion.perfiles[nombre].perfil, compilacion.perfiles[nombre].seguidor, thetas
         )
-        * maquina.relacion
+        * maquina.relacion_de(nombre)
         + compilacion.calajes[nombre]
         for nombre in SEGUIDORES
     }

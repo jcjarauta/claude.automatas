@@ -350,7 +350,7 @@ GRUPOS: tuple[Grupo, ...] = (
     ),
     Grupo(
         "amplificador",
-        "El cabestrante 6:1: sectores, tambores y ejes de pivote",
+        "El cabestrante 8:1: sectores, tambores y ejes de pivote",
         "#f1c40f",
         1.0,
         (
@@ -974,7 +974,7 @@ def _cinta(
 
     Correa abierta: deja el sector y el tambor por las dos tangentes
     exteriores, a ±`amplificador_tangencia` de la línea de centros. Abraza
-    el sector por detrás, los 252°, y allí la sujeta la **mordaza**, cuya
+    el sector por detrás, los 272°, y allí la sujeta la **mordaza**, cuya
     ranura da el calaje. En el tambor abraza el lado lejano, y sus **dos
     extremos se solapan** bajo un M2 radial que pasa por un agujero del
     fleje: el fleje no se dobla para anclarse, queda plano sobre el

@@ -77,8 +77,9 @@ def informe(
             )
         lineas += [
             "",
-            f"Relación seguidor → brazo: **{maquina.relacion:g}:1**. El varillaje "
-            f"amplifica por ese mismo factor el error del perfil y el juego.",
+            f"Relación seguidor → brazo: **{maquina.relacion:g}:1** (el levantamiento, "
+            f"{maquina.relacion_elevador:g}:1). El varillaje amplifica por ese mismo factor "
+            "el error del perfil y el juego.",
             "",
             "El calaje es a qué ángulo va montado cada brazo sobre el eje de su "
             "seguidor, medido desde la marca de fase. Montarlo mal escribe basura.",

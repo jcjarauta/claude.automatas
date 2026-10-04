@@ -276,12 +276,12 @@ def estados(
             )
             for n in SEGUIDORES
         }
-        brazo = {n: crudo[n] * maquina.relacion + compilacion.calajes[n] for n in SEGUIDORES}
+        brazo = {n: crudo[n] * maquina.relacion_de(n) + compilacion.calajes[n] for n in SEGUIDORES}
     elif camino == "paso":
         crudo = {n: _psi_desde_la_leva(compilacion.perfiles[n], thetas) for n in SEGUIDORES}
         brazo = {
             n: _psi_desde_la_leva(
-                compilacion.perfiles[n], thetas, compilacion.calajes[n], maquina.relacion
+                compilacion.perfiles[n], thetas, compilacion.calajes[n], maquina.relacion_de(n)
             )
             for n in SEGUIDORES
         }

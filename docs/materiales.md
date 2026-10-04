@@ -8,9 +8,9 @@ Barra, tubo y alambre se piden por largo: el de cada pieza más 2 mm de corte. L
 
 | Material | Forma | Se pide | Cantidad | Piezas |
 | --- | --- | --- | ---: | --- |
-| POM-C negro, plancha de 5 | chapa | plancha 1000 × 1000 × 5; la misma que las levas | 25 969 mm² | sector ×2, seguidor ×3 |
+| POM-C negro, plancha de 5 | chapa | plancha 1000 × 1000 × 5; la misma que las levas | 32 741 mm² | sector ×2, seguidor ×3 |
 | contrachapado de abedul de 9 | chapa | tablero de abedul de 9, calidad B/BB | 92 928 mm² | platina_levas ×3 |
-| nogal americano macizo de 25 | tabla | tabla cepillada de 25, 240 de ancho útil | 69 126 mm² | base ×1 |
+| nogal americano macizo de 25 | tabla | tabla cepillada de 25, 240 de ancho útil | 73 622 mm² | base ×1 |
 | aluminio 5083, chapa de 4 | chapa | chapa de 4 | 12 096 mm² | mesa ×1 |
 | chapa de latón de 2 | chapa | chapa CuZn39Pb3 de 2 | 6 917 mm² | separador ×2, placa_tope ×3 |
 | chapa de latón de 3 | chapa | chapa CuZn39Pb3 de 3 | 126 566 mm² | brazo_proximal ×2, brazo_distal ×2, palanca_lapiz ×1, manivela ×1, balancin ×1, biela_mesa ×4, brazo_horquilla ×1, calzo_sector ×2 |
@@ -47,7 +47,7 @@ Las cantidades salen de las piezas del listado: si cambia cuántos sectores o co
 | DIN 439 M4 (tuerca fina) | 2 | bajo el sector |
 | DIN 913 M3 × 6, punta plana | 2 | aprieta la cinta en la mordaza |
 | DIN 913 M3 × 4, punta plana | 11 | collares, casquillo de la rueda y pinza del portaminas |
-| DIN 912 M2 × 4 | 2 | extremos de la cinta en el tambor |
+| DIN 912 M2 × 3 | 2 | extremos de la cinta en el tambor |
 | DIN 912 M2 × 5 | 4 | pestañas de las láminas |
 | DIN 912 M2 × 8 | 2 | mesa a sus orejetas |
 | DIN 912 M2 × 30 | 4 | soportes de la mesa, desde bajo la base |

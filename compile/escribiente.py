@@ -122,12 +122,16 @@ class Escribiente(BaseModel):
     """Estos dos sitúan los postes: el pivote va a `hypot(radio_base,
     brazo_seguidor)` del árbol. Son también el radio y el brazo de la leva de
     abajo de la pila, la del elevador."""
-    brazos_de_canal: tuple[Longitud, Longitud, Longitud] = (mm(59.0), mm(52.0), mm(45.0))
+    brazos_de_canal: tuple[Longitud, Longitud, Longitud] = (mm(55.0), mm(50.0), mm(45.0))
     """El brazo de cada seguidor, en el orden de `SEGUIDORES`. Con el poste
     fijo, un brazo más largo da una leva más pequeña (`Seguidor.en_el_poste`):
-    así se escalona la pila sin mover el bastidor. Van de 7 en 7 para que sea
-    UNA sola pieza de seguidor con tres agujeros de rodillo, y 52 es el mínimo
-    para que la tuerca del eje quede fuera del sector."""
+    así se escalona la pila sin mover el bastidor. Son los tres agujeros de
+    rodillo de UNA sola pieza de seguidor.
+
+    Van de 5 en 5 y no de 7 en 7 (eran 59/52/45) porque la capacidad la pone
+    la leva más pequeña: la de arriba, la del canal izquierdo, pasa de radio
+    base 39,6 a 45,8 y la tinta por vuelta sube un 16 %. Menos escalón ya no
+    deja los 3 mm entre el eje del rodillo y la leva de al lado."""
     sentidos: tuple[int, int, int] = (-1, 1, 1)
     """A qué lado del poste cae cada rodillo. El izquierdo va al revés para
     que ningún rodillo quede en el pasillo por el que sale el cartucho, entre
@@ -151,7 +155,7 @@ class Escribiente(BaseModel):
     """Ø6 mm: el exterior de un **MR63 (3×6×2,5)**, que es un rodamiento
     miniatura corriente y barato. Antes eran 2 mm, un diámetro para el que no
     existe rodamiento decente y que obligaba a un pasador rozando."""
-    relacion: float = Field(default=6.0, ge=1.0, le=10.0)
+    relacion: float = Field(default=8.0, ge=1.0, le=10.0)
     """Cuánto amplifica el varillaje entre seguidor y brazo.
 
     Con relación 1 el seguidor gira lo mismo que el brazo, y para que el
@@ -162,7 +166,20 @@ class Escribiente(BaseModel):
 
     No es gratis: el varillaje amplifica por el mismo factor el error del
     perfil, el juego de los rodamientos y el desgaste. Es la cadena de
-    tolerancias de C4, y es la que decide hasta dónde se puede subir."""
+    tolerancias de C4, y es la que decide hasta dónde se puede subir.
+
+    Es 8 y no 6 para escribir varias palabras por vuelta: con los brazos
+    55/50/45, de 220 a 314 mm de tinta, a cambio de 1,78 mm de peor caso en
+    la punta en vez de 1,35. El cabestrante que la da es un sector de R56 y
+    un tambor de R7 (`relacion_varillaje` en el contrato de bastidor).
+
+    Es la de los dos canales del cinco barras. El elevador no pasa por el
+    cabestrante: lleva la suya, `relacion_elevador`."""
+    relacion_elevador: float = Field(default=6.0, ge=1.0, le=10.0)
+    """La del canal del levantamiento, que amplifica el balancín y no el
+    cabestrante. Se queda en 6 cuando el cabestrante pasa a 8: la leva del
+    elevador es la grande de la pila y no es la que limita la capacidad, y
+    tocarla obligaría a rehacer el balancín."""
     taladro_eje: Longitud = mm(10.0)
     pasador_indice: Longitud = mm(3.0)
     radio_del_pasador: Longitud = mm(18.0)
@@ -233,6 +250,11 @@ class Escribiente(BaseModel):
         return Seguidor.radio_base_en_el_poste(
             self.distancia_al_poste, float(self.brazos_de_canal[indice])
         )
+
+    def relacion_de(self, nombre: str) -> float:
+        """La relación seguidor → salida del canal: el cabestrante en los dos
+        del cinco barras, el balancín en el elevador."""
+        return self.relacion_elevador if nombre == "elevador" else self.relacion
 
     def seguidor(self, indice: int) -> Seguidor:
         """El seguidor de cada leva.
@@ -410,7 +432,9 @@ def simular(
     """
     thetas = np.linspace(0.0, 2.0 * np.pi, muestras, endpoint=False)
     psi = {
-        nombre: _psi_desde_la_leva(perfiles[nombre], thetas, calajes[nombre], maquina.relacion)
+        nombre: _psi_desde_la_leva(
+            perfiles[nombre], thetas, calajes[nombre], maquina.relacion_de(nombre)
+        )
         for nombre in SEGUIDORES
     }
 
@@ -470,9 +494,22 @@ def verificar_por_contacto(
         ) % len(perfil)
         indices = np.unique(np.concatenate([uniformes, apretados]))
         thetas = perfil.thetas[indices]
-        desviacion = np.abs(
-            psi_por_contacto(perfil.perfil, perfil.seguidor, thetas) - perfil.psi[indices]
-        )
+        try:
+            por_contacto = psi_por_contacto(perfil.perfil, perfil.seguidor, thetas)
+        except ValueError as fallo:
+            # Una leva en la que el rodillo no llega a apoyar en algún ángulo
+            # es una leva que no se puede montar: es un veredicto, no una
+            # excepción que tumbe la compilación.
+            incidencias.append(
+                Incidencia(
+                    gravedad="error",
+                    codigo="contacto_perdido",
+                    mensaje=f"leva {nombre}: {fallo}",
+                    sugerencia="simplifica la frase o reduce la caja de escritura",
+                )
+            )
+            continue
+        desviacion = np.abs(por_contacto - perfil.psi[indices])
         maxima = float(np.max(desviacion))
         peor = max(peor, maxima)
         if maxima > ERROR_DE_CONTACTO_GRAVE:
@@ -681,7 +718,8 @@ def compilar(
     # stock. Ver `Escribiente.calajes`.
     calajes = maquina.calajes(capacidad.altura_levantamiento)
     crudos = {
-        nombre: (valores - calajes[nombre]) / maquina.relacion for nombre, valores in crudos.items()
+        nombre: (valores - calajes[nombre]) / maquina.relacion_de(nombre)
+        for nombre, valores in crudos.items()
     }
 
     perfiles: dict[str, PerfilLeva] = {}

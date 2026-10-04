@@ -29,6 +29,7 @@ from scipy.interpolate import CubicSpline
 
 RAIZ = Path(__file__).resolve().parent.parent
 DESTINO = RAIZ / "demo" / "hola_mundo.json"
+SIN_RUBRICA = RAIZ / "demo" / "hola_mundo_sin_rubrica.json"
 
 ESCALA = 10.0
 """mm por unidad de altura de x. El compilador encaja la frase en la caja de
@@ -276,14 +277,29 @@ def trazo(puntos: list[tuple[float, float]], suavizado: float = SUAVIZADO) -> li
     return [[round(float(x), 4), round(float(y), 4)] for x, y in linea]
 
 
+FIN_DE_LA_O = MUNDO.index((9.62, 0.82)) + 1
+"""Donde acaba la o de «Mundo» y empieza la rúbrica."""
+
+
 def pedido() -> dict[str, object]:
     return {"nombre": "hola_mundo", "trazos": [trazo(HOLA), trazo(MUNDO)]}
 
 
+def pedido_sin_rubrica() -> dict[str, object]:
+    """Las mismas dos palabras con sus lazos, sin la rúbrica: 342 mm de tinta.
+    Es lo que cabe en una vuelta con el cabestrante 8:1; con la rúbrica son
+    451 y la leva de arriba sale socavada."""
+    return {
+        "nombre": "hola_mundo_sin_rubrica",
+        "trazos": [trazo(HOLA), trazo(MUNDO[:FIN_DE_LA_O])],
+    }
+
+
 def main() -> int:
-    DESTINO.write_text(json.dumps(pedido(), indent=1) + "\n", encoding="utf-8", newline="\n")
     sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
-    print(f"{DESTINO.relative_to(RAIZ)}: 2 trazos")
+    for destino, datos in ((DESTINO, pedido()), (SIN_RUBRICA, pedido_sin_rubrica())):
+        destino.write_text(json.dumps(datos, indent=1) + "\n", encoding="utf-8", newline="\n")
+        print(f"{destino.relative_to(RAIZ)}: 2 trazos")
     return 0
 
 

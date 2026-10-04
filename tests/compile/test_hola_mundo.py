@@ -9,7 +9,7 @@ y deje de socavarse, salta: y entonces hay un juego de levas nuevo.
 Lo que dice la auditoría (docs/auditoria_conjunto.md, A9): la exigencia
 sobre la leva crece con el cuadrado de la tinta por grado y con la inversa
 del radio de cada giro de la letra. «Hola Mundo» en cursiva lleva unos
-450 mm de tinta en una vuelta; los pedidos que caben, de 60 a 141.
+450 mm de tinta en una vuelta. Sin la rúbrica, 342, y eso sí cabe desde el cabestrante 8:1.
 """
 
 from __future__ import annotations
@@ -41,3 +41,21 @@ def test_hola_mundo_con_florituras_no_cabe_en_una_vuelta():
     assert "perfil_autointersecado" in {i.codigo for i in v.errores}
     # Y lo que manda es la leva pequeña de la pila: la izquierda.
     assert v.metricas["radio_curvatura_min_izquierdo"] < v.metricas["radio_curvatura_min_derecho"]
+
+
+SIN_RUBRICA = PEDIDO.with_name("hola_mundo_sin_rubrica.json")
+
+
+def test_hola_mundo_sin_rubrica_cabe_en_una_vuelta():
+    """**Varias palabras en una vuelta**, que es para lo que se subió la
+    capacidad (brazos 55/50/45 y cabestrante 8:1): las dos palabras con los
+    lazos de la H, la l y la d, 342 mm de tinta. Con los brazos 59/52/45 y
+    la relación 6 cabían unos 190. La rúbrica sigue sin caber."""
+    import json
+
+    from scripts.escritura_hola_mundo import pedido_sin_rubrica
+
+    datos = json.loads(SIN_RUBRICA.read_text(encoding="utf-8"))
+    assert datos == json.loads(json.dumps(pedido_sin_rubrica()))
+    v = compilar(leer(SIN_RUBRICA)).veredicto
+    assert v.apto, [i.codigo for i in v.errores]

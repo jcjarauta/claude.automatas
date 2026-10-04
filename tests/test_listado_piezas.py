@@ -138,9 +138,9 @@ def test_toda_cota_que_el_perfil_resuelve_la_comprueba_el_comparador():
 
 def test_la_tabla_sale_con_coma_decimal():
     """La hoja, el plano y el informe se leen en el mismo taller: un
-    separador que cambia de sitio invita a leer 47.975 como cuarenta y siete
+    separador que cambia de sitio invita a leer 55.975 como cincuenta y cinco
     mil."""
     tabla = tabla_markdown()
-    assert "95,95" in tabla
-    assert "53,968" in tabla
-    assert "47.975" not in tabla
+    assert "111,95" in tabla
+    assert "43,897" in tabla
+    assert "55.975" not in tabla

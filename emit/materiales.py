@@ -172,7 +172,7 @@ def tornilleria() -> list[Fijacion]:
             n["collar"] + n["casquillo_rueda"] + n["pinza"],
             "collares, casquillo de la rueda y pinza del portaminas",
         ),
-        Fijacion("DIN 912 M2 × 4", n["tambor"], "extremos de la cinta en el tambor"),
+        Fijacion("DIN 912 M2 × 3", n["tambor"], "extremos de la cinta en el tambor"),
         Fijacion("DIN 912 M2 × 5", 2 * n["lamina_flexura"], "pestañas de las láminas"),
         Fijacion("DIN 912 M2 × 8", n["orejeta_mesa"], "mesa a sus orejetas"),
         Fijacion("DIN 912 M2 × 30", n["soporte_mesa"], "soportes de la mesa, desde bajo la base"),

@@ -194,7 +194,7 @@ def sector(c: dict[str, float] | None = None) -> Perfil:
     **Dos círculos no eran la pieza entera.** Se dio por buena cuando sector y
     seguidor eran lo único dibujado de su lado, y su agujero central es de
     PASO —libra la valona de Ø15— así que no sujeta ni orienta nada: sin estos
-    dos tornillos el sector gira suelto sobre el casquillo y la relación 6:1
+    dos tornillos el sector gira suelto sobre el casquillo y la relación 8:1
     no llega al brazo.
 
     Y al ponerlos, el disco **gana una orientación** que antes no tenía. Eso
@@ -219,7 +219,7 @@ def tambor(c: dict[str, float] | None = None) -> Perfil:
     """El tambor, con el agujero en D del eje de pivote.
 
     Era redondo, y así no cala: el par que la cinta le da no llegaba al eje
-    ni, por tanto, al brazo. El cabestrante 6:1 entero colgaba de esa cara
+    ni, por tanto, al brazo. El cabestrante 8:1 entero colgaba de esa cara
     plana que faltaba.
     """
     c = contrato_mm() if c is None else c
@@ -953,7 +953,7 @@ LISTADO: dict[str, Ficha] = {
         montaje=(
             "Se atornilla sobre la cara libre del sector, con el M4 pasando por su ranura. La "
             "cinta entra entre el bloque y el sector, y el M3 la aprieta contra el canto. UNA "
-            "por cinta, detrás, en el centro de los 252° que la cinta abraza al sector: el otro "
+            "por cinta, detrás, en el centro de los 272° que la cinta abraza al sector: el otro "
             "anclaje es el M2 del tambor, que sujeta los dos extremos solapados."
         ),
         material="chapa de latón de 6",
@@ -1007,7 +1007,7 @@ LISTADO: dict[str, Ficha] = {
         "el lado libre no hay nada que librar. Lo que sí le pone orientación son los DOS "
         "tornillos que lo calan al seguidor, y hacen falta: su agujero central es de paso "
         "—libra la valona de Ø15— y no sujeta ni orienta nada, así que sin ellos el disco "
-        "gira suelto sobre el casquillo y la relación 6:1 no llega al brazo.",
+        "gira suelto sobre el casquillo y la relación 8:1 no llega al brazo.",
         montaje=(
             "Se atornilla a la cara de ARRIBA del seguidor con los dos M3, así que gira con él "
             "sobre el poste. Su agujero de Ø16 libra la valona del casquillo. El canto tiene "
@@ -1032,10 +1032,12 @@ LISTADO: dict[str, Ficha] = {
         ("barra", "amplificador_tambor_ancho"),
         "Cilindro liso, sin pestañas. Lo que mantiene la cinta en su sitio no son las "
         "pestañas sino que los dos asientos sean coplanarios, y eso es una tolerancia y "
-        "no un resalte. R8 son 160 espesores de cinta: pasa de sobra el radio mínimo.",
+        "no un resalte. R7 son 140 espesores de cinta: pasa de sobra el radio mínimo, y "
+        "deja 2 mm de pared al agujero de 10 (R6 dejaba 1). El M2 de la cinta es de 3 y no "
+        "de 4 para no asomar al agujero más que con el tambor de R8.",
         montaje=(
             "Cala en el eje de pivote por la cara plana, por encima del plato 1, enfrentado al "
-            "sector de su canal: de 111,5 a 117,5, coplanario con él. La cinta lo abraza 185 "
+            "sector de su canal: de 111,5 a 117,5, coplanario con él. La cinta lo abraza 165 "
             "grados y se ancla en el sector, no aquí."
         ),
         material="latón, barra de Ø16",

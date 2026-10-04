@@ -328,17 +328,17 @@
         },
         {
           "nombre": "brazo_seguidor_derecho",
-          "valor": 0.052,
+          "valor": 0.05,
           "unidad": "m",
           "tolerancia": "",
-          "descripcion": "Del pivote al rodillo del seguidor DERECHO, la leva del medio. Con el poste fijo, un brazo más largo da una leva más pequeña: radio base = raíz(poste² − brazo²) = 48,44. 52 es el mínimo para que la tuerca del eje del rodillo quede fuera del sector"
+          "descripcion": "Del pivote al rodillo del seguidor DERECHO, la leva del medio. Con el poste fijo, un brazo más largo da una leva más pequeña: radio base = raíz(poste² − brazo²) = 50,03"
         },
         {
           "nombre": "brazo_seguidor_izquierdo",
-          "valor": 0.059,
+          "valor": 0.055,
           "unidad": "m",
           "tolerancia": "",
-          "descripcion": "Del pivote al rodillo del seguidor IZQUIERDO, la leva de arriba: radio base 39,61. Los tres brazos van de 7 en 7 para que el seguidor sea UNA pieza con tres agujeros de rodillo; el rodillo va en el de su canal. Este seguidor va además al revés (rodillo al otro lado del poste) para dejar libre el pasillo por el que sale el cartucho"
+          "descripcion": "Del pivote al rodillo del seguidor IZQUIERDO, la leva de arriba: radio base 45,78. Los tres brazos van de 5 en 5 (eran 59/52/45: más capacidad por vuelta, la pone la leva más pequeña) para que el seguidor sea UNA pieza con tres agujeros de rodillo; el rodillo va en el de su canal. Este seguidor va además al revés (rodillo al otro lado del poste) para dejar libre el pasillo por el que sale el cartucho"
         },
         {
           "nombre": "rodillo_radio",
@@ -349,9 +349,9 @@
         },
         {
           "nombre": "relacion_varillaje",
-          "valor": 6.0,
+          "valor": 8.0,
           "unidad": "adimensional",
-          "descripcion": "Cuánto amplifica el varillaje entre seguidor y brazo",
+          "descripcion": "Cuánto amplifica el varillaje entre seguidor y brazo: R/r del cabestrante. Era 6; con 8 cabe una frase de varias palabras por vuelta (314 mm de tinta frente a 220) a cambio de 1,78 mm de peor caso en la punta",
           "tolerancia": ""
         },
         {
@@ -419,16 +419,16 @@
         },
         {
           "nombre": "amplificador_sector_radio",
-          "valor": 0.048,
+          "valor": 0.056,
           "unidad": "m",
-          "descripcion": "Cabestrante 6:1: radio de FIBRA NEUTRA del sector, en el poste del seguidor",
+          "descripcion": "Cabestrante 8:1: radio de FIBRA NEUTRA del sector, en el poste del seguidor. No puede pasar de entre_ejes − r − holgura: a R64 se montaba sobre el tambor",
           "tolerancia": ""
         },
         {
           "nombre": "amplificador_tambor_radio",
-          "valor": 0.008,
+          "valor": 0.007,
           "unidad": "m",
-          "descripcion": "Cabestrante 6:1: radio de FIBRA NEUTRA del tambor, en el eje del brazo. R/r = 6 exacto",
+          "descripcion": "Cabestrante 8:1: radio de FIBRA NEUTRA del tambor, en el eje del brazo. R/r = 8 exacto. R7 deja 2 mm de pared al agujero de 10 y 3 sobre su cara plana, donde va el M2; R6 dejaba 1",
           "tolerancia": ""
         },
         {
@@ -440,7 +440,7 @@
         },
         {
           "nombre": "amplificador_vano_libre",
-          "valor": 0.054990908,
+          "valor": 0.047148701,
           "unidad": "m",
           "descripcion": "Tramo recto de cinta entre sector y tambor: sqrt(entre_ejes^2 - (R-r)^2)",
           "tolerancia": ""
@@ -482,28 +482,28 @@
         },
         {
           "nombre": "amplificador_sector_radio_mecanizado",
-          "valor": 0.047975000000000004,
+          "valor": 0.055975000000000004,
           "unidad": "m",
           "descripcion": "Radio MECANIZADO del sector: fibra neutra menos medio espesor de cinta",
           "tolerancia": "+0/-0,02"
         },
         {
           "nombre": "amplificador_tambor_radio_mecanizado",
-          "valor": 0.007975,
+          "valor": 0.006975,
           "unidad": "m",
           "descripcion": "Radio MECANIZADO del tambor: fibra neutra menos medio espesor de cinta",
           "tolerancia": "+0/-0,02"
         },
         {
           "nombre": "amplificador_tambor_abrazado",
-          "valor": 3.2288591161895095,
+          "valor": 2.877308317092772,
           "unidad": "rad",
-          "descripcion": "Lo que la cinta abraza al tambor: 107,94 de correa abierta, 33 de barrido y dos anclajes",
+          "descripcion": "Lo que la cinta abraza al tambor: 87,79 de correa abierta y los mismos 77,06 de barrido y anclaje que con el cabestrante 6:1 (el barrido del brazo no cambia: lo fija la caja de escritura)",
           "tolerancia": ""
         },
         {
           "nombre": "amplificador_tangencia",
-          "valor": 0.9419214012998448,
+          "valor": 0.7661460017514758,
           "unidad": "rad",
           "descripcion": "Donde la cinta deja el sector, desde la direccion al tambor: acos((R-r)/a). Abraza el arco OPUESTO, y los anclajes van justo por fuera de estos dos puntos",
           "tolerancia": ""
@@ -993,7 +993,7 @@
         },
         {
           "nombre": "tope_angulo",
-          "valor": 0.52238,
+          "valor": 0.51931,
           "unidad": "rad",
           "descripcion": "Del brazo del seguidor en reposo al brazo de la placa, hacia el lado en que el rodillo se mete hacia el árbol. Derivado: con él, el seguidor toca el pasador justo al girar tope_giro",
           "tolerancia": ""
@@ -1091,21 +1091,21 @@
         },
         {
           "nombre": "sector_mordaza_al_centro",
-          "valor": 0.0430796,
+          "valor": 0.0510632,
           "unidad": "m",
           "tolerancia": "",
-          "descripcion": "Del centro del sector al agujero del M4 de la mordaza: el centro de su ranura con la mordaza a media carrera, detrás, en el centro de los 252° que abraza la cinta. Derivado (tests/emit/test_montaje.py)"
+          "descripcion": "Del centro del sector al agujero del M4 de la mordaza: el centro de su ranura con la mordaza a media carrera, detrás, en el centro de los 272° que abraza la cinta. Derivado (tests/emit/test_montaje.py)"
         },
         {
           "nombre": "sector_mordaza_angulo_izquierdo",
-          "valor": -2.6386374,
+          "valor": -2.7440283,
           "unidad": "rad",
           "tolerancia": "",
           "descripcion": "Ángulo del agujero de la mordaza en el sector izquierdo, desde el brazo del seguidor. El sector lleva LOS DOS agujeros, uno sin usar: el tambor cae a un lado distinto del brazo en cada canal, y así el sector sigue siendo una sola pieza ×2"
         },
         {
           "nombre": "sector_mordaza_angulo_derecho",
-          "valor": 2.9367012,
+          "valor": 2.9662166,
           "unidad": "rad",
           "tolerancia": "",
           "descripcion": "Lo mismo en el sector derecho"
@@ -1239,9 +1239,9 @@
       "valores": [
         {
           "nombre": "base_ancho",
-          "valor": 0.24,
+          "valor": 0.256,
           "unidad": "m",
-          "descripcion": "Ancho de la tabla de nogal. Lo fijan los SECTORES del cabestrante, no el plato: el poste a 61,54 del centro y el sector de R47,975 encima llegan a 109,52 por cada lado, mas 10 de nogal. Con 190 se salian 14,5 (auditoria A1)",
+          "descripcion": "Ancho de la tabla de nogal. Lo fijan los SECTORES del cabestrante, no el plato: el poste a 61,54 del centro y el sector de R55,975 encima llegan a 117,52 por cada lado, mas 10 de nogal. Con 190 se salian 14,5 (auditoria A1); con el cabestrante 8:1 paso de 240 a 256",
           "tolerancia": ""
         },
         {
@@ -1295,7 +1295,7 @@
         },
         {
           "nombre": "base_poste_al_borde_izquierdo",
-          "valor": 0.0584573318745441,
+          "valor": 0.06645733187433586,
           "unidad": "m",
           "descripcion": "Del poste datum al borde izquierdo. Derivada de base_ancho y poste_radio_al_arbol: es lo que se teclea para situar el rectangulo, porque el ancho se mide entre bordes y el datum es un agujero",
           "tolerancia": ""

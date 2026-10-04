@@ -378,7 +378,7 @@ def test_cada_grupo_esta_en_un_nivel_y_los_niveles_se_contienen():
 
 def test_los_agujeros_de_la_mordaza_en_el_sector_son_los_de_la_cinta():
     """El sector lleva un agujero de mordaza por canal, detrás, en el centro
-    de los 252° que abraza la cinta. Sale de dónde cae el tambor de cada
+    de los 272° que abraza la cinta. Sale de dónde cae el tambor de cada
     canal respecto del brazo del seguidor; si cambia el cinco barras o el
     seguidor, el contrato tiene que cambiar con él."""
     from compile.escribiente import Escribiente

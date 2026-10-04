@@ -62,14 +62,14 @@ def test_un_error_en_el_canto_llega_a_la_punta_muy_amplificado():
 
 
 def test_la_cuenta_de_cabeza_se_queda_corta_frente_al_jacobiano():
-    """`relacion × proximal / brazo_seguidor` da 10,4 con el brazo de 52 del
-    derecho, y sirve para hablar con
+    """`relacion × proximal / brazo_seguidor` da 14,4 con el brazo de 50 del
+    derecho y el cabestrante 8:1, y sirve para hablar con
     el taller. Pero el cinco barras mueve la punta con una palanca efectiva
     mayor que el brazo proximal, así que la amplificación real es casi el
     doble. La cuenta corta es optimista y conviene no confundirlas."""
     maquina = Escribiente()
     de_cabeza = amplificacion_del_canto(maquina)
-    assert de_cabeza == pytest.approx(6.0 * 90.0 / 52.0)
+    assert de_cabeza == pytest.approx(8.0 * 90.0 / 50.0)
     real = max(c.amplificacion for c in presupuesto().cadena.contribuciones if "perfil" in c.nombre)
     assert real > de_cabeza
 
@@ -138,8 +138,11 @@ def test_la_cinta_no_le_quita_el_primer_puesto_al_corte():
     como el corte, la decisión habrá dejado de estar justificada y esto
     tiene que decirlo.
 
-    Con el perfil a ±0,02 la cinta sigue sin mandar, pero ya pesa casi la
-    mitad que el corte: es la siguiente palanca, después del corte.
+    Con el perfil a ±0,02 la cinta sigue sin mandar, pero pesa más de la
+    quinta parte que el corte: es la siguiente palanca, después del corte.
+    Con el cabestrante 8:1 pesa algo menos que con el 6:1 (0,15 mm frente a
+    0,56 del corte; era casi la mitad): el par en el brazo baja con la
+    relación y el vano es más corto.
     """
     flojo = Holguras(error_de_perfil=mm(0.05))
     con = presupuesto(holguras=flojo)
@@ -154,7 +157,7 @@ def test_la_cinta_no_le_quita_el_primer_puesto_al_corte():
     assert fino.dominante is not None
     assert "perfil" in fino.dominante.nombre
     cinta = sum(c.en_punta for c in fino.cadena.contribuciones if "transmisión" in c.nombre)
-    assert 0.3 * fino.dominante.en_punta < cinta < fino.dominante.en_punta
+    assert 0.2 * fino.dominante.en_punta < cinta < fino.dominante.en_punta
 
 
 def test_el_juego_de_flanco_no_lo_divide_la_relacion():

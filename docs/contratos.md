@@ -180,9 +180,9 @@ banco diga que el modelo predice:
   de seguidores hasta su leva pasando junto a las que tiene encima; con las
   tres del mismo radio base, el de abajo las atravesaba casi 2 mm. Cada leva
   es ahora más pequeña que la de debajo: de abajo arriba, **elevador R 55,
-  derecho R 48,4 e izquierdo R 39,6** de radio base. No se mueve el bastidor:
+  derecho R 50,0 e izquierdo R 45,8** de radio base. No se mueve el bastidor:
   con el poste fijo, un brazo de seguidor más largo da una leva más pequeña
-  (`radio_base² + brazo² = 71,06²`), y los brazos son **45, 52 y 59**, los
+  (`radio_base² + brazo² = 71,06²`), y los brazos son **45, 50 y 55**, los
   tres agujeros de rodillo de UN solo seguidor. El izquierdo va al revés para
   dejar libre el pasillo por el que sale el cartucho. El compilador lo vigila:
   `eje_de_rodillo_contra_leva` si un eje pasa a menos de 3 mm de una leva.
@@ -193,7 +193,7 @@ banco diga que el modelo predice:
   12 del seguidor—. El de compresión de 68 de largo no cabía: su anclaje
   caía fuera de los platos. El tope deja girar el seguidor 4° hacia dentro;
   ninguna frase llega (`seguidor_contra_tope`) y, sin cartucho, el rodillo
-  se queda ahí. La placa va girada `tope_angulo` = 29,93°, derivado.
+  se queda ahí. La placa va girada `tope_angulo` = 29,75°, derivado.
 - Poste de seguidor de **Ø8** con casquillo igus GFM-0810. **Lo que la leva ve
   no es el poste: es la valona del casquillo**, que mide **Ø15** —confirmado
   en la ficha del fabricante, d3 = 15 mm—. Con los Ø16 que se suponían antes
@@ -214,26 +214,31 @@ banco diga que el modelo predice:
   del brazo estirado, y la consecuencia visible es que los dos proximales se
   cruzan: con la punta en el centro de la caja, los codos caen a 5,9 mm **por
   debajo** de la línea de pivotes.
-- **El amplificador 6:1 es un cabestrante de cinta**: sector de R 48 en el
-  poste del seguidor, tambor de R 8 en el eje del brazo, fleje de 1.4310 de
+- **El amplificador 8:1 es un cabestrante de cinta**: sector de R 56 en el
+  poste del seguidor, tambor de R 7 en el eje del brazo, fleje de 1.4310 de
   0,05 × 5 anclado por los dos extremos. La relación es el cociente de
   radios y es exacta; una cinta anclada no desliza.
 
   **Los radios del contrato son los de la FIBRA NEUTRA, y los mecanizados
   valen medio espesor menos.** Restar lo mismo a dos números no conserva su
-  cociente: tornear 48 y 8 daría 5,9844 en vez de 6, un 0,26 % de escala de
+  cociente: tornear 56 y 7 daría 7,9751 en vez de 8, un 0,31 % de escala de
   menos en todo lo que escriba la máquina, sistemático y sin aviso.
 
-  **Espesor 0,05 y no 0,1**: arrollada en el tambor de R 8, la de 0,1 trabaja
-  a 1206 MPa con una relación r/t de 80, por debajo del 100 que se respeta en
+  **Espesor 0,05 y no 0,1**: arrollada en el tambor de R 7, la de 0,1 trabaja
+  a unos 1380 MPa con una relación r/t de 70, por debajo del 100 que se respeta en
   una cinta que va a doblarse millones de veces. **Ancho 5** porque el sector
   es una plancha de POM de 5, el mismo material y el mismo corte que las
   levas: con 10 hacían falta dos laminadas, una operación de montaje más por
   canal, a cambio de 0,046 mm de elasticidad.
 
-  **La cinta deja el sector a ±54° de la línea de centros** —`cos t = (R−r)/a`,
+  **La cinta deja el sector a ±43,9° de la línea de centros** —`cos t = (R−r)/a`,
   porque el radio a la tangencia es perpendicular a la cinta— y **abraza los
-  252° del lado opuesto al tambor**. Los anclajes van justo por fuera de esos
+  272° del lado opuesto al tambor**.
+
+  **Por qué R 56 y R 7, y no R 64 y R 8.** La relación 8 con el tambor de R 8
+  pedía un sector de R 64, y 64 + 8 = 72 no cabe en los 68 entre ejes que fija
+  el cinco barras: el sector se montaba sobre el tambor. R 6 dejaba 1 mm de
+  pared al agujero de 10. R 7 deja 2, y 5 mm de hueco entre sector y tambor. Los anclajes van justo por fuera de esos
   dos puntos.
 
   **El sector es un disco entero y ninguna de las dos piezas lleva pestañas.**
@@ -347,10 +352,12 @@ sector obligan a que uno de los dos ramales cruce.
 
 | | Una en cada pieza (correa abierta) | Las dos en el sector (un ramal cruzado) |
 | --- | --- | --- |
-| Vano recto | `sqrt(a²−(R−r)²)` = **54,990908** | `sqrt(a²−(R+r)²)` = 38,574603 |
-| Abrazado al sector | **252,064°** | 290,879° |
+| Vano recto | `sqrt(a²−(R−r)²)` = **47,148701** | `sqrt(a²−(R+r)²)` = 25,592968 |
+| Abrazado al sector | **272,206°** | 315,782° |
 
-`amplificador_vano_libre` vale 54,990908 y el abrazado al sector 252,06°, con
+(Con el cabestrante 6:1 eran 54,990908 y 252,06°.)
+
+`amplificador_vano_libre` vale 47,148701 y el abrazado al sector 272,21°, con
 test. Son los dos números de la correa abierta, a seis decimales y por dos
 caminos distintos. El otro arreglo no aparece por ningún lado.
 
@@ -359,12 +366,13 @@ bloque de 24 × 10 con su M4 no cabe en un tambor de Ø16 cuyo centro es el
 agujero en D del eje. Los dos extremos de la cinta se solapan en el lado
 lejano del tambor y los sujeta **un M2 radial** por un agujero del fleje,
 que queda plano sobre el cilindro sin doblarse. En el sector, **una
-mordaza**, detrás, en el centro de los 252°: su ranura sigue dando el
+mordaza**, detrás, en el centro de los 272°: su ranura sigue dando el
 calaje. Mordazas: dos, no cuatro.
 
 Lo que quedaba por cerrar era **dónde cae la mordaza en el tambor**, y con
-cuánto margen. Los 185° de `amplificador_tambor_abrazado` son 107,94 de correa
-abierta más 33 de barrido más **44 repartidos en «dos anclajes»**, y en el
+cuánto margen. Los 164,86° de `amplificador_tambor_abrazado` son 87,79 de
+correa abierta más 33 de barrido más **44 repartidos en «dos anclajes»** (con
+el 6:1 eran 185, con 107,94 de correa abierta), y en el
 tambor hay uno solo: o el margen es generoso a propósito, o el número se
 calculó con el arreglo que los números descartan. Se vuelve a derivar al
 dibujar el tambor, que es la pieza a la que afecta.
@@ -400,8 +408,9 @@ en el conjunto por sus tres agujeros, que son los de los platos.
 
 Por detrás manda el plato —85 de radio— y por delante el borde lejano del
 papel. **A los lados mandan los sectores del cabestrante**, no el plato: el
-poste está a 61,5 del centro y el sector de R48 encima llega a 109,5. Con
-**10 mm de nogal a las cuatro puntas** salen **240 × 275 × 25**. Fueron 190
+poste está a 61,5 del centro y el sector de R56 encima llega a 117,5. Con
+**10 mm de nogal a las cuatro puntas** salen **256 × 275 × 25** (240 con el
+cabestrante 6:1). Fueron 190
 hasta el 2026-10-04: los sectores se salían 14,5 por cada lado y el test que
 debía verlo comparaba cajas con la base girada (auditoría A1).
 
@@ -596,6 +605,7 @@ absorbe el alabeo es la flexura, y 0,5 es todo su recorrido.
 
 | Fecha | Contrato | Cambio | Motivo |
 | --- | --- | --- | --- |
+| 2026-10-04 | Bastidor, base | **Más capacidad por vuelta**: brazos de seguidor 45 / **50 / 55** (radios base 55 / 50,0 / 45,8), `relacion_varillaje` de 6 a **8** con un cabestrante de sector **R 56** y tambor **R 7**; base de 240 a **256**; derivados recalculados (tangencia, vano, abrazados, mordaza, `tope_angulo`) | Escribir varias palabras por vuelta: de unos 190 mm de tinta a 314, a cambio de 1,78 mm de peor caso en la punta en vez de 1,30. R 64 con tambor R 8 no cabía en los 68 entre ejes. No toca contratos congelados: el calaje no depende de la relación |
 | 2026-09-29 | Fase | Congelado. Pasador de índice Ø3 a 18 mm sobre +X, igual en las tres levas | El cartucho de una pieza deja el error de fase fuera de lo posible, en vez de fuera de lo probable |
 | 2026-09-29 | Eje | Congelado Ø10 h7, pila de 19 mm, giro horario | Medidas corrientes de catálogo; la pila sale de la geometría y está comprobada |
 | 2026-09-29 | Fase | **Añadido el ajuste** del pasador: deslizante en las tres levas, apretado solo en el plato metálico | El m6 del DIN 6325 aprieta en acero; en POM la interferencia se relaja por fluencia y el calaje se pierde tras la venta. La geometría congelada no se toca: Ø3 a 18 mm sobre +X |

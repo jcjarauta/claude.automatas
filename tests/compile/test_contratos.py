@@ -581,7 +581,8 @@ def test_la_planta_dice_por_donde_pasa_la_mano():
     De ahí salen tres números que conviene tener delante antes de poner la
     máquina en una mesa: el volante gira entero dentro de la tabla, el pomo
     de la manivela se salía 19 mm por la izquierda —con la base de 240 que
-    pidieron los sectores (auditoría A1) queda 6 mm dentro—, y en su paso de delante
+    pidieron los sectores (auditoría A1) quedaba 6 mm dentro, y con la de 256
+    del cabestrante 8:1, 14—, y en su paso de delante
     cruza 29 mm sobre la tarjeta, a 190 mm de altura. No choca con nada; lo
     que hace es que la mano pase por encima de lo escrito una vez por vuelta.
 
@@ -603,7 +604,7 @@ def test_la_planta_dice_por_donde_pasa_la_mano():
 
     # La manivela, por dónde: ya no se sale por la izquierda.
     r = c["manivela_entre_centros"]
-    assert -(eje[0] - r) - media == pytest.approx(-6.0, abs=0.5)
+    assert -(eje[0] - r) - media == pytest.approx(-14.0, abs=0.5)
     assert (eje[1] - r) - atras == pytest.approx(19.2, abs=0.5)
     sobre_la_tarjeta = (eje[1] + r) - (c["papel_al_arbol"] - c["papel_fondo"] / 2.0)
     assert sobre_la_tarjeta == pytest.approx(28.8, abs=0.5)

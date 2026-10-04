@@ -34,7 +34,7 @@ from scripts.acotar import ESTILO, FLECHA, MM, arco, auxiliar, contrato, cota_h,
 def sector_frente(c: dict[str, float], x: float, y: float, ancho: float, alto: float) -> list[str]:
     """El sector es un DISCO ENTERO, y eso hay que explicarlo.
 
-    La cinta solo abraza 252°, así que durante un rato el sector se dibujó
+    La cinta solo abraza 272°, así que durante un rato el sector se dibujó
     como un pac-man con una muesca de 80° mirando al tambor. La muesca no
     compra nada: el ramal sale **tangente** y se aleja, así que no roza el
     disco; el tambor queda a 10 mm del borde; y los discos vecinos se llevan
@@ -284,12 +284,12 @@ def hoja() -> str:
         f'viewBox="0 0 {w:.0f} {h:.0f}">',
         f"<style>{ESTILO}</style><defs>{FLECHA}</defs>",
         f'<rect width="{w:.0f}" height="{h:.0f}" fill="#fff"/>',
-        f'<text class="h1" x="{borde}" y="20">Cabestrante 6:1 · plano del sector y del '
+        f'<text class="h1" x="{borde}" y="20">Cabestrante 8:1 · plano del sector y del '
         "tambor</text>",
         f'<text class="sub" x="{borde}" y="30">Cotas en mm, sacadas de docs/contratos.json '
         "con scripts/dibujar_plano_cabestrante.py. Tres de cada. El sector gira con el "
         "seguidor; el tambor, con el brazo.</text>",
-        f'<text class="sub" x="{borde}" y="38">La relación 6:1 la dan los radios de FIBRA '
+        f'<text class="sub" x="{borde}" y="38">La relación 8:1 la dan los radios de FIBRA '
         f"NEUTRA —{c['amplificador_sector_radio'] * MM:g} y "
         f"{c['amplificador_tambor_radio'] * MM:g}—; lo que se mecaniza es medio espesor de "
         "cinta menos.</text>",
