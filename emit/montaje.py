@@ -358,7 +358,6 @@ def taller(c: dict[str, float] | None = None) -> dict[str, Any]:
     comerciales = {p.nombre: p for p in cargar()}
     piezas["poste"] = solido_comercial(comerciales["poste_pivote"])
     for nombre in (
-        "arbol_de_levas",
         "rodamiento_arbol",
         "rodillo_seguidor",
         "rueda_reductor",
@@ -366,7 +365,109 @@ def taller(c: dict[str, float] | None = None) -> dict[str, Any]:
         "portaminas",
     ):
         piezas[nombre] = solido_comercial(comerciales[nombre])
+    piezas.update(_detalles_del_cartucho(c, piezas))
     return piezas
+
+
+def _direccion_de_salida(c: dict[str, float]) -> tuple[Punto, Punto]:
+    """La dirección por la que sale el cartucho y la que queda a su derecha,
+    en el marco de la leva y en fase cero. La ranura de la garra y la U del
+    muñón van a lo largo de la primera: así el cartucho entra deslizando."""
+    a = c["cartucho_salida_angulo"]
+    return (math.cos(a), math.sin(a)), (math.sin(a), -math.cos(a))
+
+
+def _caja(
+    c: dict[str, float], centro: tuple[float, float, float], largo: float, ancho: float, alto: float
+) -> Any:
+    """Una caja con el largo a lo largo de la salida, centrada en `centro`."""
+    from build123d import Box, Pos, Rot
+
+    return Pos(*centro) * Rot(Z=math.degrees(c["cartucho_salida_angulo"])) * Box(largo, ancho, alto)
+
+
+def _detalles_del_cartucho(c: dict[str, float], piezas: dict[str, Any]) -> dict[str, Any]:
+    """Lo que el perfil extruido no lleva: el tetón y la ranura del eje del
+    cartucho, la U del muñón, la lengüeta y las ranuras de la garra, y el
+    pasador de la garra. Cada uno en el marco de su pieza: el eje en el
+    origen, z = 0 en su cara de abajo y +X en fase cero."""
+    from build123d import Align, Cylinder, Pos
+
+    u, n = _direccion_de_salida(c)
+    abajo = (Align.CENTER, Align.CENTER, Align.MIN)
+    r_eje = c["eje_diametro"] / 2.0
+    fuera = c["garra_ranura_desplazamiento"]
+
+    # El eje del cartucho: tetón abajo y ranura descentrada arriba, pasante a
+    # lo largo de la salida.
+    largo = c["cartucho_eje_largo"]
+    teton = Pos(0, 0, -c["cartucho_teton_largo"]) * Cylinder(
+        c["cartucho_teton_diametro"] / 2.0, c["cartucho_teton_largo"], align=abajo
+    )
+    fondo = c["garra_ranura_profundidad"]
+    ranura = _caja(
+        c,
+        (n[0] * fuera, n[1] * fuera, largo - fondo / 2.0),
+        4 * r_eje,
+        c["garra_ranura_ancho"],
+        fondo,
+    )
+    eje_cartucho = piezas["eje_cartucho"] + teton - ranura
+
+    # El muñón: la U, de boca `munon_horquilla_ancho`, desde el eje hacia la
+    # salida, en lo alto.
+    alto_u = c["munon_horquilla_alto"]
+    boca = c["munon_horquilla_ancho"]
+    tope = c["munon_largo"]
+    u_recta = _caja(
+        c, (u[0] * 2 * r_eje / 2, u[1] * 2 * r_eje / 2, tope - alto_u / 2), 2 * r_eje, boca, alto_u
+    )
+    u_fondo = Pos(0, 0, tope - alto_u) * Cylinder(boca / 2.0, alto_u, align=abajo)
+    munon = piezas["munon"] - u_recta - u_fondo
+
+    # La garra: lengüeta 0,1 más estrecha que la ranura y 0,1 más corta que
+    # su fondo, para que el manguito apoye con su cara y no con la lengüeta;
+    # y las dos ranuras verticales del pasador, a lo largo de la salida.
+    lengueta = _caja(
+        c,
+        (n[0] * fuera, n[1] * fuera, -(fondo - 0.1) / 2.0),
+        2 * r_eje - 0.2,
+        c["garra_ranura_ancho"] - 0.1,
+        fondo - 0.1,
+    )
+    alto = c["garra_alto"]
+    paso = c["garra_pasador_diametro"] + 0.1
+    ranuras = _caja(
+        c,
+        (0.0, 0.0, alto / 2.0),
+        c["garra_diametro"] + 2.0,
+        paso,
+        alto - 0.8,
+    ) - Cylinder(r_eje, alto, align=abajo)
+    garra = piezas["garra"] + lengueta - ranuras
+
+    # El pasador de la garra, transversal al eje motriz, a lo largo de la salida.
+    from build123d import Location, Plane, Vector
+
+    r_pasador = c["garra_pasador_diametro"] / 2.0 - JUEGO_GIRATORIO / 2.0
+    medio = c["garra_diametro"] / 2.0 + 0.5
+    pasador_garra = Location(
+        Plane(origin=Vector(-u[0] * medio, -u[1] * medio, 0.0), z_dir=Vector(u[0], u[1], 0.0))
+    ) * Cylinder(r_pasador, 2 * medio, align=abajo)
+    # El taladro del pasador en el eje motriz, cuyo pie queda 1 sobre la
+    # cabeza del cartucho: el pasador está a `garra_pasador_alto` de ella.
+    z_taladro = c["garra_pasador_alto"] - 1.0
+    taladro = Location(
+        Plane(origin=Vector(-u[0] * 6, -u[1] * 6, z_taladro), z_dir=Vector(u[0], u[1], 0.0))
+    ) * Cylinder(c["garra_pasador_diametro"] / 2.0, 12.0, align=abajo)
+    eje_motriz = piezas["eje_motriz"] - taladro
+    return {
+        "eje_cartucho": eje_cartucho,
+        "munon": munon,
+        "garra": garra,
+        "pasador_garra": pasador_garra,
+        "eje_motriz": eje_motriz,
+    }
 
 
 def _cilindro(
@@ -575,6 +676,68 @@ def _eje_del_rodillo(
     return eje
 
 
+def _entre_puntos(
+    c: dict[str, float], hecho: dict[str, Any], estado: Estado, z: dict[str, tuple[float, float]]
+) -> list[Colocada]:
+    """El cartucho entre puntos y lo que lo sujeta: el muñón abajo, el eje del
+    cartucho con su cubo, sus separadores y su pasador, y arriba la garra en
+    el eje motriz con su pasador, su muelle y el anillo. Todo gira con θ.
+
+    Lo que antes era un árbol de 92 de una pieza, que no dejaba sacar las
+    levas sin desmontar media torre.
+    """
+    t = estado.theta
+    piezas: list[Colocada] = []
+    pie_cartucho = z["plato1"][1] + c["munon_holgura"] + c["munon_horquilla_alto"]
+    if abs(pie_cartucho + c["cubo_espesor"] - z["levas"][0]) > 1e-6:
+        raise ValueError("el cubo no llega a la primera leva: revisa leva_sobre_plato")
+    piezas.append(
+        Colocada("munon", _poner(hecho["munon"], t, z=pie_cartucho - c["munon_largo"]), True)
+    )
+    piezas.append(Colocada("eje_cartucho", _poner(hecho["eje_cartucho"], t, z=pie_cartucho), True))
+    piezas.append(Colocada("cubo", _poner(hecho["cubo"], t, z=pie_cartucho), True))
+    # Los separadores, encima de las dos levas de abajo.
+    seg_medio = z["seguidores"][0] + c["seguidor_espesor"] / 2.0
+    pies = sorted(
+        seg_medio - c[f"rodillo_descuelgue_{i}"] - ESPESOR_DE_LEVA / 2.0 for i in (1, 2, 3)
+    )
+    for k, pie in enumerate(pies[:2], start=1):
+        piezas.append(
+            Colocada(f"separador_{k}", _poner(hecho["separador"], t, z=pie + ESPESOR_DE_LEVA), True)
+        )
+    rp = c["pasador_diametro"] / 2.0 - JUEGO_GIRATORIO / 2.0
+    pasador = _cilindro(
+        rp, (c["pasador_radio"], 0.0, 0.0), (c["pasador_radio"], 0.0, c["pasador_longitud"])
+    )
+    piezas.append(Colocada("pasador_indice", _poner(pasador, t, z=pie_cartucho), True))
+
+    cabeza = pie_cartucho + c["cartucho_eje_largo"]
+    pie_motriz = cabeza + 1.0
+    if abs(pie_motriz + c["eje_motriz_largo"] - (z["plato3"][0] + 2.0 + 5.0)) > 1e-6:
+        raise ValueError("el eje motriz no acaba en el rodamiento del plato 3: eje_motriz_largo")
+    piezas.append(Colocada("eje_motriz", _poner(hecho["eje_motriz"], t, z=pie_motriz), True))
+    piezas.append(Colocada("garra", _poner(hecho["garra"], t, z=cabeza), True))
+    piezas.append(
+        Colocada(
+            "pasador_garra",
+            _poner(hecho["pasador_garra"], t, z=cabeza + c["garra_pasador_alto"]),
+            True,
+        )
+    )
+    techo_garra = cabeza + c["garra_alto"]
+    muelle = _cilindro(6.8, (0, 0, techo_garra), (0, 0, techo_garra + c["garra_muelle_largo"]))
+    muelle -= _cilindro(
+        5.6, (0, 0, techo_garra - 1), (0, 0, techo_garra + c["garra_muelle_largo"] + 1)
+    )
+    piezas.append(Colocada("muelle_garra", muelle, True))
+    anillo_z = techo_garra + c["garra_muelle_largo"]
+    anillo = _cilindro(8.0, (0, 0, anillo_z), (0, 0, anillo_z + 1.0)) - _cilindro(
+        c["eje_diametro"] / 2.0, (0, 0, anillo_z - 1), (0, 0, anillo_z + 2.0)
+    )
+    piezas.append(Colocada("anillo_garra", anillo, True))
+    return piezas
+
+
 def _punta(codo_1: Punto, codo_2: Punto, distal: float) -> Punto:
     """Donde se cortan los dos distales: la punta del cinco barras, la que
     escribe. Es la solución hacia la caja —la de más Y—, la misma rama que
@@ -602,19 +765,11 @@ def _transmision(
     """
     from build123d import Align, Cylinder
 
-    piezas = []
-    largo_arbol = float(hecho["arbol_de_levas"].bounding_box().size.Z)
-    piezas.append(
-        Colocada(
-            "arbol", _poner(hecho["arbol_de_levas"], estado.theta, z=z["plato1"][0] - 2.0), True
-        )
-    )
-    if abs(z["plato1"][0] - 2.0 + largo_arbol - (z["engrane"][1] + 2.0)) > 1e-6:
-        raise ValueError("el árbol no acaba 2 por encima de la rueda: revisa arbol_de_levas")
+    piezas = _entre_puntos(c, hecho, estado, z)
     rodamiento = hecho["rodamiento_arbol"]
     t = c["platina_manivela_angulo"]
     manivela_en = (c["reductor_entre_ejes"] * math.cos(t), c["reductor_entre_ejes"] * math.sin(t))
-    for plato, n in (("plato1", 1), ("plato2", 2)):
+    for plato, n in (("plato1", 1), ("plato2", 2), ("plato3", 3)):
         piezas.append(
             Colocada(f"rodamiento_arbol_{n}", _poner(rodamiento, z=z[plato][0] + 2.0), False)
         )

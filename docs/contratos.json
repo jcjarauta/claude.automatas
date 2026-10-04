@@ -219,6 +219,69 @@
           "unidad": "m",
           "descripcion": "Lo que se sube la garra a mano contra su muelle para soltar el cartucho: la profundidad de la ranura más 2",
           "tolerancia": ""
+        },
+        {
+          "nombre": "separador_espesor",
+          "valor": 0.002,
+          "unidad": "m",
+          "descripcion": "Los dos separadores entre leva y leva: dejan sitio a la cabeza del eje del rodillo, que asoma 0,75 bajo su leva",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "separador_diametro",
+          "valor": 0.044,
+          "unidad": "m",
+          "descripcion": "Disco de latón con el agujero del eje y el del pasador, como pide el contrato de fase: el pasador a 18 y 2 de pared fuera de él dan Ø44. Queda dentro de la leva más pequeña",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "munon_largo",
+          "valor": 0.016,
+          "unidad": "m",
+          "descripcion": "El muñón de abajo, Ø10 h6: de 2 bajo el plato 1 —donde va el anillo de retención— a lo alto de la horquilla. Gira en el rodamiento del plato 1",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "eje_motriz_largo",
+          "valor": 0.061,
+          "unidad": "m",
+          "descripcion": "El eje de arriba, Ø10 h6: de 1 sobre la cabeza del cartucho al rodamiento del plato 3, pasando por el del plato 2 y la rueda. Dos rodamientos: con uno solo bailaría",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "garra_diametro",
+          "valor": 0.014,
+          "unidad": "m",
+          "descripcion": "El manguito de latón de la garra, que corre por el eje motriz",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "garra_alto",
+          "valor": 0.008,
+          "unidad": "m",
+          "descripcion": "Alto del manguito, sin la lengüeta",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "garra_pasador_diametro",
+          "valor": 0.002,
+          "unidad": "m",
+          "descripcion": "El pasador transversal del eje motriz que arrastra la garra por sus dos ranuras verticales. Es lo que pasa el par",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "garra_pasador_alto",
+          "valor": 0.0065,
+          "unidad": "m",
+          "descripcion": "Del pie de la garra al eje del pasador, en reposo. Con la garra subida su carrera, el pasador sigue en la ranura",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "garra_muelle_largo",
+          "valor": 0.012,
+          "unidad": "m",
+          "descripcion": "El muelle de la garra montado: de la cara alta de la garra al anillo de retención del eje motriz",
+          "tolerancia": ""
         }
       ]
     },

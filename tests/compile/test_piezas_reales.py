@@ -23,6 +23,7 @@ import pytest
 from compile.conjunto import Cartucho
 from compile.escribiente import Escribiente
 from core.comercial import PiezaComercial
+from emit.plataforma import contrato_mm
 
 pytestmark = pytest.mark.core
 
@@ -89,8 +90,10 @@ def test_el_espesor_de_la_leva_es_el_de_la_plancha_que_se_compra():
     assert float(Escribiente().espesor_leva) == pytest.approx(cota("plancha_pom", "espesor"))
 
 
-def test_el_separador_de_la_pila_es_el_que_se_compra():
-    assert float(Cartucho().separador) == pytest.approx(cota("separador_pila", "espesor"))
+def test_el_separador_de_la_pila_es_el_del_contrato():
+    """Ya no se compra: es un disco de latón de 2 con el eje y el pasador,
+    cortado en la misma chapa que el resto (contrato de cartucho)."""
+    assert float(Cartucho().separador) * 1000.0 == pytest.approx(contrato_mm()["separador_espesor"])
 
 
 def test_el_obstaculo_del_conjunto_es_la_valona_del_casquillo_real():
@@ -336,7 +339,9 @@ def test_la_cinta_no_toca_ni_las_levas_vecinas_ni_el_sector_de_al_lado():
 def test_la_pila_del_cartucho_sale_de_las_piezas_reales():
     """Tres levas del espesor de la plancha más dos separadores. Es el
     contrato de eje comprobado contra el catálogo en vez de contra sí mismo."""
-    altura = 3.0 * cota("plancha_pom", "espesor") + 2.0 * cota("separador_pila", "espesor")
+    altura = (
+        3.0 * cota("plancha_pom", "espesor") + 2.0 * contrato_mm()["separador_espesor"] / 1000.0
+    )
     assert altura == pytest.approx(0.019)
 
 
@@ -348,9 +353,9 @@ def test_el_pasador_atraviesa_la_pila_entera():
     no llegaba a la tercera leva. No se habría visto hasta montarlo, porque
     en el plano cada leva lleva su taladro y parecen bien.
 
-    Ahora el pasador es de 24 y le sobran 5 mm para el plato de arrastre.
+    Ahora el pasador es de 24 y le sobran 5 mm para el cubo del cartucho.
     """
-    pila = 3.0 * cota("plancha_pom", "espesor") + 2.0 * cota("separador_pila", "espesor")
+    pila = 3.0 * cota("plancha_pom", "espesor") + 2.0 * contrato_mm()["separador_espesor"] / 1000.0
     largo = cota("pasador_indice", "longitud")
     assert largo > pila, f"el pasador de {largo * 1000:.0f} mm no cala la pila de {pila * 1000:.0f}"
-    assert largo - pila >= 0.004, "no queda pasador suficiente para el plato de arrastre"
+    assert largo - pila >= 0.004, "no queda pasador suficiente para el cubo del cartucho"

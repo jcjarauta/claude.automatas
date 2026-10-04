@@ -484,6 +484,28 @@ def varilla(diametro: str) -> Callable[[dict[str, float] | None], Perfil]:
     return perfil
 
 
+def disco_con_pasador(diametro: str) -> Callable[[dict[str, float] | None], Perfil]:
+    """Un disco con el agujero del eje y el del pasador de índice: el cubo
+    y los separadores del cartucho. El pasador a `pasador_radio` sobre +X,
+    como en las levas: es el contrato de fase."""
+
+    def perfil(c: dict[str, float] | None = None) -> Perfil:
+        c = contrato_mm() if c is None else c
+        return disco(c[diametro] / 2, c["eje_diametro"]) + circulo(
+            (c["pasador_radio"], 0.0), c["pasador_diametro"] / 2
+        )
+
+    return perfil
+
+
+def garra(c: dict[str, float] | None = None) -> Perfil:
+    """El manguito de la garra visto desde arriba. La lengüeta de abajo y las
+    dos ranuras del pasador son de la tercera dimensión: van en la hoja como
+    cotas y en el montaje, no en el contorno."""
+    c = contrato_mm() if c is None else c
+    return disco(c["garra_diametro"] / 2, c["eje_diametro"])
+
+
 def casquillo_bieleta(c: dict[str, float] | None = None) -> Perfil:
     c = contrato_mm() if c is None else c
     return disco(c["casquillo_bieleta_diametro"] / 2, c["bieleta_diametro"])
@@ -598,6 +620,12 @@ PERFILES = {
     "poste_horquilla": lambda c: poste_horquilla(c),
     "pinza": lambda c: pinza(c),
     "lamina_flexura": lambda c: lamina_flexura(c),
+    "eje_cartucho": lambda c: varilla("eje_diametro")(c),
+    "cubo": lambda c: disco_con_pasador("cubo_diametro")(c),
+    "separador": lambda c: disco_con_pasador("separador_diametro")(c),
+    "munon": lambda c: varilla("eje_diametro")(c),
+    "eje_motriz": lambda c: varilla("eje_diametro")(c),
+    "garra": lambda c: garra(c),
 }
 """Las piezas prismáticas que no son barras. El resto sale de `BRAZOS`.
 
@@ -744,6 +772,9 @@ class Ficha:
     """
     proceso: str = ""
     """Cómo se saca la pieza del material. Decide quién la hace y dónde."""
+    conjunto: str = "plataforma"
+    """Plataforma, que va a stock y es la misma en todas, o cartucho, que viaja
+    con las levas de cada pedido aunque estas piezas sean iguales en todos."""
 
 
 def _barra_calada(
@@ -1529,6 +1560,134 @@ LISTADO: dict[str, Ficha] = {
         ),
         material="fleje 1.4310 de 0,15",
         proceso="corte + taladro + doblado de las pestañas",
+    ),
+    # --- el cartucho entre puntos (contrato de cartucho) ----------------------
+    "eje_cartucho": Ficha(
+        "barra Ø10 h6 con un tetón Ø5 abajo y una ranura descentrada arriba",
+        1,
+        (
+            Variable("cota", "eje_diametro", "Ø", "h6"),
+            Variable("cota", "cartucho_eje_largo", "largo", en_el_perfil=False),
+            Variable("cota", "cartucho_teton_diametro", "Ø del tetón", "g6", en_el_perfil=False),
+            Variable("cota", "cartucho_teton_largo", "largo del tetón", en_el_perfil=False),
+            Variable("cota", "garra_ranura_ancho", "ancho de la ranura", en_el_perfil=False),
+            Variable("cota", "garra_ranura_profundidad", "fondo de la ranura", en_el_perfil=False),
+            Variable(
+                "cota", "garra_ranura_desplazamiento", "ranura fuera del centro", en_el_perfil=False
+            ),
+        ),
+        ("barra", "cartucho_eje_largo"),
+        "Es lo que hace del cartucho una pieza que se saca: va entre puntos, el tetón en la "
+        "horquilla del muñón y la ranura bajo la garra. La ranura va descentrada para que solo "
+        "entre en fase cero, y corre a lo largo de la dirección de salida para que la lengüeta "
+        "entre y salga deslizando.",
+        montaje=(
+            "Abajo, el tetón en la horquilla del muñón y la cara del cubo apoyada en lo alto del "
+            "muñón. Encima, el cubo a presión, las tres levas y los dos separadores enhebrados en "
+            "el pasador. Arriba, la ranura, con la lengüeta de la garra dentro."
+        ),
+        material="barra W10 h6 rectificada",
+        proceso="corte + torneado del tetón + fresado de la ranura",
+        conjunto="cartucho",
+    ),
+    "cubo": Ficha(
+        "disco de latón con el agujero del eje y el del pasador",
+        1,
+        (
+            Variable("cota", "cubo_diametro", "Ø exterior"),
+            Variable("cota", "cubo_espesor", "espesor", en_el_perfil=False),
+            Variable("cota", "eje_diametro", "Ø del eje", "p6"),
+            Variable("cota", "pasador_diametro", "Ø del pasador", "m6 (apretado)"),
+            Variable("cota", "pasador_radio", "del eje al pasador"),
+        ),
+        ("plancha", "cubo_espesor"),
+        "El antiguo «plato de arrastre»: el único sitio donde el pasador de índice aprieta. En "
+        "el POM la interferencia se relajaría; en latón no.",
+        montaje=(
+            "A presión en el eje del cartucho, con la cara baja enrasada con el arranque del "
+            "tetón. Encima, la primera leva, la del elevador. El pasador entra los 5 del cubo."
+        ),
+        material="latón, barra de Ø25",
+        proceso="torneado + taladro con plantilla de fase",
+        conjunto="cartucho",
+    ),
+    "separador": Ficha(
+        "disco de latón de 2 con el agujero del eje y el del pasador",
+        2,
+        (
+            Variable("cota", "separador_diametro", "Ø exterior"),
+            Variable("cota", "separador_espesor", "espesor", en_el_perfil=False),
+            Variable("cota", "eje_diametro", "Ø del eje", "H8"),
+            Variable("cota", "pasador_diametro", "Ø del pasador", "H8"),
+            Variable("cota", "pasador_radio", "del eje al pasador"),
+        ),
+        ("plancha", "separador_espesor"),
+        "Separa las levas lo que asoma la cabeza del eje de cada rodillo. Lleva el pasador "
+        "porque el contrato de fase lo pide de todo lo que va en la pila: así no hay forma de "
+        "enhebrarlo girado.",
+        montaje="Entre leva y leva, enhebrado en el eje y en el pasador.",
+        material="chapa de latón de 2",
+        proceso="corte láser, en la misma chapa que el resto del latón",
+        conjunto="cartucho",
+    ),
+    "munon": Ficha(
+        "barra Ø10 h6 con una horquilla en U arriba",
+        1,
+        (
+            Variable("cota", "eje_diametro", "Ø", "h6"),
+            Variable("cota", "munon_largo", "largo", en_el_perfil=False),
+            Variable("cota", "munon_horquilla_ancho", "boca de la U", "H9", en_el_perfil=False),
+            Variable("cota", "munon_horquilla_alto", "fondo de la U", en_el_perfil=False),
+        ),
+        ("barra", "munon_largo"),
+        "La punta de abajo del cartucho. La U solo mira hacia la salida en fase cero, así que "
+        "el cartucho solo entra y sale con la manivela en su marca.",
+        montaje=(
+            "En el rodamiento del plato 1, con un anillo de retención por debajo. Asoma 5 sobre "
+            "el plato: 1 de holgura y los 4 de la U."
+        ),
+        material="barra W10 h6 rectificada",
+        proceso="corte + fresado de la U",
+    ),
+    "eje_motriz": Ficha(
+        "barra Ø10 h6 con un taladro transversal de 2 abajo",
+        1,
+        (
+            Variable("cota", "eje_diametro", "Ø", "h6"),
+            Variable("cota", "eje_motriz_largo", "largo", en_el_perfil=False),
+            Variable("cota", "garra_pasador_diametro", "taladro del pasador", en_el_perfil=False),
+        ),
+        ("barra", "eje_motriz_largo"),
+        "Lo que queda del árbol en la plataforma: lleva la rueda y la garra, entre los "
+        "rodamientos de los platos 2 y 3.",
+        montaje=(
+            "En los rodamientos de los platos 2 y 3. En la bahía, la rueda con su casquillo y "
+            "su prisionero. Abajo, el pasador de la garra, y sobre la garra el muelle contra un "
+            "anillo de retención."
+        ),
+        material="barra W10 h6 rectificada",
+        proceso="corte + taladro transversal Ø2",
+    ),
+    "garra": Ficha(
+        "manguito de latón con una lengüeta descentrada y dos ranuras verticales",
+        1,
+        (
+            Variable("cota", "garra_diametro", "Ø exterior"),
+            Variable("cota", "eje_diametro", "Ø interior", "F7, corre"),
+            Variable("cota", "garra_alto", "alto", en_el_perfil=False),
+            Variable("cota", "garra_ranura_ancho", "lengüeta, 0,1 menos", en_el_perfil=False),
+            Variable("cota", "garra_ranura_desplazamiento", "fuera del centro", en_el_perfil=False),
+            Variable("cota", "garra_carrera", "carrera", en_el_perfil=False),
+        ),
+        ("plancha", "garra_alto"),
+        "Pasa el par al cartucho y le pone la fase: la lengüeta solo entra en la ranura en fase "
+        "cero. Corre por el eje para soltarlo, y su muelle aprieta la pila contra el muñón.",
+        montaje=(
+            "En el eje motriz, con el pasador transversal en sus dos ranuras. Abajo, la lengüeta "
+            "en la ranura del eje del cartucho; arriba, el muelle."
+        ),
+        material="latón, barra de Ø16",
+        proceso="torneado + fresado de la lengüeta y las ranuras",
     ),
 }
 """Qué se teclea en cada pieza de la plataforma, y nada más.

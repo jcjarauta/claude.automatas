@@ -62,11 +62,13 @@ máquina se arrastre sin pensárselo.
 
 ```
 escribiente                      ← el conjunto de arriba
-├── bastidor            RÍGIDO   base FIJA + 3 postes + 3 platos + 4 rodamientos
+├── bastidor            RÍGIDO   base FIJA + 3 postes + 3 platos + 5 rodamientos
 │                                + 2 apoyos del eje del balancín (colgados del plato 2)
 │                                + 4 soportes de la mesa + 4 ejes fijos de la mesa
-├── cartucho            RÍGIDO   árbol (92) + 3 levas + 2 separadores + pasador
-│                                + casquillo de la rueda + rueda Z60
+├── motriz              RÍGIDO   muñón (abajo) + eje motriz + garra + pasador de la garra
+│                                + muelle + anillo + casquillo de la rueda + rueda Z60
+├── cartucho            RÍGIDO   eje del cartucho (27) + cubo + 3 levas + 2 separadores
+│                                + pasador. Entra y sale por detrás, entre los postes 1 y 2
 ├── canal               RÍGIDO   seguidor + sector + 2 mordazas + casquillo + rodillo
 │                                ×2 (canal izquierdo y canal derecho)
 ├── canal_elevador      RÍGIDO   seguidor + casquillo + rodillo + casquillo de la bieleta
@@ -86,9 +88,12 @@ escribiente                      ← el conjunto de arriba
 
 Tres decisiones de agrupación que no son evidentes:
 
-**El árbol va dentro del cartucho**, no fuera. Las tres levas, los dos
-separadores, el pasador de índice y la rueda Z60 no se mueven unos respecto de
-otros ni respecto del árbol: son un solo sólido con un solo grado de libertad.
+**El cartucho es su propio subconjunto, y el árbol ya no existe** (2026-10-04,
+`docs/propuesta_cartucho.md`). Las tres levas, los dos separadores, el pasador
+de índice, el cubo y el eje del cartucho no se mueven unos respecto de otros:
+son un solo sólido con un solo grado de libertad, y es lo que se cambia de un
+pedido a otro. Va entre puntos: el tetón en la U del muñón y la ranura bajo la
+garra del eje motriz, que solo encaja en fase cero.
 Metidos juntos, el nivel de arriba gasta **un** emparejamiento donde si no
 gastaría seis, y es además donde el pasador de índice hace su trabajo: si
 atraviesa los tres taladros, la fase está bien, y eso se ve dentro del
@@ -350,7 +355,7 @@ sirviendo.
 | --- | --- | --- |
 | **1** | **Variable Studio** al día: los cinco mapas importados | `scripts/csv_pendientes.py` no dice nada |
 | **2** | **Bastidor**: base FIJA, 3 postes, 3 platos, 4 rodamientos | Icono de conjunto rígido. Nada se arrastra |
-| **3** | **Cartucho**: árbol, 3 levas, 2 separadores, pasador, rueda Z60 | El pasador atraviesa los tres taladros. Rígido |
+| **3** | **Cartucho**: eje del cartucho, cubo, 3 levas, 2 separadores, pasador | El pasador atraviesa cubo, levas y separadores. Rígido |
 | **4** | Nivel de arriba: bastidor (fijo) + cartucho + **M1** | Arrastra el cartucho: gira y nada más se mueve |
 | **5** | **Canal** ×2 (izq. y der.) + canal elevador, **M2 M3 M4** | Arrastra un seguidor: bascula en su poste |
 | **6** | **Pivote** ×2 (el derecho volteado), **M5 M6** | Arrastra un brazo proximal: gira en su pivote |

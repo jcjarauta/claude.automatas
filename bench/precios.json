@@ -130,13 +130,13 @@
     },
     {
       "concepto": "Separador de pila",
-      "referencia": "RS 224-0382, latón Ø3,2 x Ø6 x 2",
-      "proveedor": "RS España",
+      "referencia": "disco de latón de 2, Ø44, con eje y pasador (pieza fabricada)",
+      "proveedor": "corte láser, en la chapa del latón",
       "cantidad": 2,
-      "precio": 0.19,
+      "precio": 0.6,
       "iva_incluido": true,
-      "verificado": true,
-      "url": "https://es.rs-online.com/web/p/espaciadores/2240382"
+      "verificado": false,
+      "url": "https://randrade.com/laton/300-plancha-laton.html"
     },
     {
       "concepto": "Pasador de índice",
@@ -162,10 +162,10 @@
       "url": "https://www.123rodamiento.es/rodamiento-cojinete/rodamiento-bola/una-hilera/mr63-zz"
     },
     {
-      "concepto": "Rodamiento del árbol de levas",
+      "concepto": "Rodamientos de los ejes del cartucho",
       "referencia": "6800-2Z genérico (10 x 19 x 5)",
       "proveedor": "123rodamiento",
-      "cantidad": 2,
+      "cantidad": 3,
       "precio": 0.69,
       "escalado": "50+",
       "iva_incluido": true,
@@ -174,7 +174,7 @@
     },
     {
       "concepto": "Árbol de levas",
-      "referencia": "W10H6, CF53 rectificado, cortado a 92 mm",
+      "referencia": "W10H6, CF53 rectificado, barra de 106 para muñón, eje del cartucho y eje motriz",
       "proveedor": "Motedis",
       "cantidad": 1,
       "precio": 0.47,

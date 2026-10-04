@@ -50,7 +50,7 @@ un kit de hobby caro, hemos perdido.
 | L-001 | Leva izquierda | 1 | POM-C negro 5 mm | Fresado CNC |
 | L-002 | Leva derecha | 1 | POM-C negro 5 mm | Fresado CNC |
 | L-003 | Leva del elevador | 1 | POM-C negro 5 mm | Fresado CNC |
-| S-001 | Separador de pila | 2 | Latón, Ø3,2 × Ø6 × 2 | Comercial |
+| S-001 | Separador de pila | 2 | Latón de 2, Ø44, con eje y pasador | Corte láser |
 
 Las tres levas son **escalonadas** —de abajo arriba, unos Ø105, Ø95 y Ø78
 según la frase: elevador, derecho e izquierdo—, con taladro de eje Ø10 y pasador de índice Ø3
@@ -105,10 +105,10 @@ alemanes y cotizan en neto.
 | | € |
 | --- | --- |
 | POM-C, tres levas | 2,70 |
-| Dos separadores de latón | 0,38 |
+| Dos separadores de latón Ø44 × 2, corte láser *(estimado)* | 1,20 |
 | Pasador de índice DIN 6325 Ø3 × 24 | 0,14 |
 | **Corte del bloque, externalizado a precio cerrado** | **35,00** |
-| **Cartucho** | **38,22** |
+| **Cartucho** | **39,04** |
 
 Los 35 € son **una previsión nuestra, no un precio pactado**: el fichero de
 precios lo marca con `cerrado: false` y el informe de cada pedido lo dice.
@@ -132,11 +132,11 @@ suba, está en la sección siguiente.
 | Postes de pivote, inox Ø8 h6 | 3 | 1,21 | 3,63 |
 | Volante, material (disco de plancha de latón Ø104 × 6) | 1 | 5,57 | 5,57 |
 | Casquillos igus GFM-0810-06 | 3 | 0,74 | 2,21 |
-| Rodamientos del árbol, 6800-2Z | 2 | 0,69 | 1,38 |
+| Rodamientos de los ejes del cartucho, 6800-2Z | 3 | 0,69 | 2,07 |
 | Tornillería inox A2 | 20 | 0,04 | 0,80 |
 | Árbol de levas, Ø10 h6 rectificado | 1 | 0,47 | 0,47 |
 | Acabado Osmo 3062 | 1 | 0,30 | 0,30 |
-| **Plataforma** | | | **96,97** |
+| **Plataforma** | | | **97,66** |
 
 La **base casi dobla** su línea, de 10,39 a 19,30: al cerrar la planta pasó
 de 154 a 275 mm de fondo, así que una tabla de 2 m da 7 bases y no 13. El
@@ -148,9 +148,9 @@ sin verificar.
 
 | | € |
 | --- | --- |
-| Cartucho | 38,22 |
-| Plataforma | 96,97 |
-| **Material y compras de un escribiente** | **135,19** |
+| Cartucho | 39,04 |
+| Plataforma | 97,66 |
+| **Material y compras de un escribiente** | **136,70** |
 
 Son **70 € más** de lo que decía la estimación anterior de 60-65 €, y la
 diferencia no es que algo haya subido: es que antes faltaban el corte, los

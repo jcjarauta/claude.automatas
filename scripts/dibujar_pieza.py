@@ -88,6 +88,12 @@ PERFIL_DE = {
     "poste_horquilla": PERFILES["poste_horquilla"],
     "pinza": PERFILES["pinza"],
     "lamina_flexura": PERFILES["lamina_flexura"],
+    "eje_cartucho": PERFILES["eje_cartucho"],
+    "cubo": PERFILES["cubo"],
+    "separador": PERFILES["separador"],
+    "munon": PERFILES["munon"],
+    "eje_motriz": PERFILES["eje_motriz"],
+    "garra": PERFILES["garra"],
 }
 """De dónde sale la forma de cada pieza.
 

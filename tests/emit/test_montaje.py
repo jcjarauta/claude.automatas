@@ -239,40 +239,80 @@ def test_la_maquina_entera_no_choca_en_todo_el_ciclo():
     )
 
 
-@pytest.mark.slow
-def test_el_cartucho_sale_por_detras_entre_los_dos_postes():
-    """**El cartucho se puede cambiar sin desmontar la máquina.**
+CARTUCHO = ("leva_", "eje_cartucho", "cubo", "separador_", "pasador_indice")
+"""Lo que sale con el cartucho: las levas y el metal que las enhebra."""
 
-    Las tres levas, en fase cero, salen en línea recta por el hueco entre los
-    postes 1 y 2 —el que da a la parte de atrás de la base— sin tocar nada:
-    ni postes, ni platos, ni seguidores, ni los ejes de los rodillos. Lo
-    único que se interpone es el árbol, que el cartucho lleva dentro.
 
-    Es lo que hace posible la pila escalonada con el seguidor izquierdo al
-    revés: con las tres levas iguales y los tres rodillos del mismo lado,
-    uno de ellos quedaba en el pasillo.
-    """
-    from build123d import Pos
+def _volumen_comun(una, otra) -> float:
+    from compile.conjunto import _volumen_comun as comun
 
+    return comun(una, otra)
+
+
+def _del_cartucho(nombre: str) -> bool:
+    return nombre.startswith(CARTUCHO)
+
+
+def _cartucho_y_resto(theta: float = 0.0):
     from compile.conjunto import piezas_en
     from compile.escribiente import Escribiente, compilar
     from scripts.exportar_para_cad import leer
 
-    maquina = Escribiente()
-    piezas = piezas_en(compilar(leer(RAIZ / "demo" / "hola.json")), maquina, 0.0)
-    levas = [p.solido for p in piezas if p.nombre.startswith("leva_")]
-    cartucho = levas[0] + levas[1] + levas[2]
-    resto = [p for p in piezas if not p.nombre.startswith("leva_") and p.nombre != "arbol"]
+    piezas = piezas_en(compilar(leer(RAIZ / "demo" / "hola.json")), Escribiente(), theta)
+    cartucho = [p.solido for p in piezas if _del_cartucho(p.nombre)]
+    solido = cartucho[0]
+    for otro in cartucho[1:]:
+        solido = solido + otro
+    return solido, [p for p in piezas if not _del_cartucho(p.nombre)]
 
-    # Hacia atrás: lejos del tercer poste, por el medio de los otros dos.
-    x, y = maquina.seguidor(2).pivote
-    n = math.hypot(x, y)
-    atras = (-x / n * 1000.0, -y / n * 1000.0)
-    radio = cartucho.bounding_box().size.X / 2.0
-    for paso in range(1, 13):
-        d = paso * 10.0 / 1000.0
-        movido = Pos(atras[0] * d, atras[1] * d, 0.0) * cartucho
+
+@pytest.mark.slow
+def test_el_cartucho_sale_por_detras_entre_los_dos_postes():
+    """**El cartucho se puede cambiar sin desmontar la máquina.**
+
+    El cartucho entero —las tres levas, su eje, el cubo, los separadores y el
+    pasador—, en fase cero, sale en línea recta por el hueco entre los postes
+    1 y 2 sin tocar nada: ni postes, ni platos, ni seguidores, ni los ejes de
+    los rodillos. El tetón sale por la boca de la U del muñón y la ranura de
+    la cabeza se desliza bajo la lengüeta de la garra, porque las dos van a
+    lo largo de la dirección de salida.
+    """
+    from build123d import Pos
+
+    c = contrato_mm()
+    cartucho, resto = _cartucho_y_resto()
+    a = c["cartucho_salida_angulo"]
+    radio = c["cartucho_radio_maximo"]
+    pasos = int((c["poste_radio_al_arbol"] / 2.0 + radio) // 10.0) + 2
+    for paso in range(1, pasos + 1):
+        d = paso * 10.0
+        movido = Pos(d * math.cos(a), d * math.sin(a), 0.0) * cartucho
         for pieza in resto:
-            holgura = movido.distance_to(pieza.solido)
-            assert holgura > 1.0, f"a {paso * 10} mm el cartucho roza {pieza.nombre}: {holgura:.2f}"
-    assert maquina.distancia_al_poste * 1000.0 / 2.0 + radio < 12 * 10.0, "no ha llegado a salir"
+            if movido.distance_to(pieza.solido) > 1e-9:
+                continue
+            # Tocar sí: el cubo se desliza apoyado en lo alto del muñón. Meterse no.
+            assert _volumen_comun(movido, pieza.solido) < 1e-3, (
+                f"a {d:g} mm el cartucho se mete en {pieza.nombre}"
+            )
+
+
+@pytest.mark.slow
+def test_el_cartucho_solo_entra_en_fase_cero():
+    """La garra y la U solo dejan pasar el cartucho en fase cero. Girado
+    media vuelta, la lengüeta choca con la cabeza del eje del cartucho y no
+    entra: el error de fase deja de ser posible."""
+    from build123d import Pos, Rot
+
+    cartucho, resto = _cartucho_y_resto()
+    garra = next(p.solido for p in resto if p.nombre == "garra")
+    munon = next(p.solido for p in resto if p.nombre == "munon")
+    # Bien puesto, ni la garra ni el muñón se meten en el cartucho.
+    assert _volumen_comun(cartucho, garra) < 1e-3
+    assert _volumen_comun(cartucho, munon) < 1e-3
+    # Girado media vuelta sobre su eje, la lengüeta cae en la cabeza maciza.
+    girado = Rot(Z=180.0) * cartucho
+    assert _volumen_comun(girado, garra) > 1.0, "girado tendría que chocar con la lengüeta"
+    # Y a medio meter, el tetón girado tampoco encuentra la boca de la U.
+    c_a = contrato_mm()["cartucho_salida_angulo"]
+    medio = Pos(4.0 * math.cos(c_a), 4.0 * math.sin(c_a), 0.0) * Rot(Z=180.0) * cartucho
+    assert _volumen_comun(medio, garra) > 1.0

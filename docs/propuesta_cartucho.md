@@ -5,7 +5,14 @@ cubo, y cambio de los contratos de fase y eje. **Fases 1 y 2 hechas**: §0
 para la 1; la 2 es el contrato de cartucho en `docs/contratos.md` (radio
 máximo 55,5 vigilado por el compilador, salida a 60°, muñón, cubo, garra con
 ranura descentrada), fase y eje ajustados, la pila subida 8 mm para el muñón y
-el cubo, el pasador como uno de 24 por cartucho y los costes al día. No toca código ni contratos
+el cubo, el pasador como uno de 24 por cartucho y los costes al día.
+**Fase 3 hecha** (2026-10-04): muñón, eje del cartucho, cubo, separadores
+Ø44, eje motriz entre los platos 2 y 3, garra con lengüeta, pasador, muelle y
+anillo, en el listado y en el montaje 3D. El cartucho entra y sale
+**deslizando**, sin levantar la garra: la ranura y la U van a lo largo de la
+salida. Tests: sale sin meterse en nada y, girado media vuelta, choca con la
+lengüeta. Pendiente de la fase 4: el tope que sujeta los seguidores al sacarlo,
+y el muelle concreto de la garra (precio y referencia). No toca código ni contratos
 hasta que se apruebe. Lo que cambia un contrato congelado está marcado
 **[CONTRATO]**.
 

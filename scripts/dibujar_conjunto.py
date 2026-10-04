@@ -270,7 +270,7 @@ def _alzado_y_leyenda(lam, c, z, s, k, arbol):
     )
     # el árbol y los postes, de parte a parte
     for yy, z0, z1, w in (
-        (arbol[1], z["plato1"][0] - 2, z["engrane"][1] + 2, c["eje_diametro"]),
+        (arbol[1], z["plato1"][0] - 2, z["plato3"][0] + 7, c["eje_diametro"]),
         (s["poste3"][1], z["poste"][0], z["poste"][1], c["poste_eje_diametro"]),
         (s["manivela"][1], z["plato2"][0] - 1, z["manivela"][1] + 1, c["brazo_eje_diametro"]),
     ):
@@ -344,6 +344,12 @@ def despiece() -> list[tuple[int, str, int, str, str]]:
     orden = [
         "base",
         "platina_levas",
+        "munon",
+        "cubo",
+        "separador",
+        "eje_cartucho",
+        "eje_motriz",
+        "garra",
         "casquillo_rueda",
         "eje_manivela",
         "eje_pivote",

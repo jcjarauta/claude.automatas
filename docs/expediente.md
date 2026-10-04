@@ -70,7 +70,7 @@ La decisión que sostiene el negocio:
 | Cambia entre pedidos | No | **Sí, es la frase del cliente** |
 | Se fabrica | A stock | Por pedido |
 | Se cambia | — | En un minuto, a mano |
-| Cuesta | 96,97 € de material y compras | 38,22 € |
+| Cuesta | 97,66 € de material y compras | 39,04 € |
 
 La plataforma es **fija** y el cartucho varía dentro de una envolvente. Es
 tentador pensar lo contrario —que la máquina se adapta al tamaño de la leva—
@@ -118,7 +118,7 @@ Con el pedido de ejemplo «hola» y la geometría de hoy:
 | Error esperado en la punta | **2,79 mm peor caso, 1,64 mm cuadrático** |
 | Tiempo de fresado de las tres levas | 7,5 min |
 | Levas por plancha de 1 × 1 m | 81, o sea 27 cartuchos |
-| Material y compras por máquina | 135,19 € con IVA (2026-10-04, antes del cubo, el muñón y la garra) |
+| Material y compras por máquina | 136,70 € con IVA (2026-10-04; faltan el cubo, la garra y su muelle, sin precio todavía) |
 
 ## El despiece, en tres categorías
 

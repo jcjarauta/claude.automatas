@@ -205,9 +205,8 @@ def test_el_step_se_puede_volver_a_leer(tmp_path: Path):
 
 MASAS_VERIFICADAS = {
     "poste_pivote": 70.573,  # sin contrastar: 76,454 · 180/195, con base_al_plato ESTIMADO
-    "arbol_de_levas": 56.721,  # pendiente de rehacer en Onshape: de 120 a 92, 73,985 · 92/120
+    "arbol_de_levas": 65.353,  # la barra de los tres ejes: 73,985 · 106/120
     "pasador_indice": 1.332,
-    "separador_pila": 0.344,
     "casquillo_pivote": 0.388,
 }
 """Gramos. **Medidos en Onshape el 2026-09-30 y coincidentes con estos.**

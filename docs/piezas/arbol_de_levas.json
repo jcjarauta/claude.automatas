@@ -20,10 +20,10 @@
     },
     {
       "nombre": "longitud",
-      "valor": 0.092,
+      "valor": 0.106,
       "tolerancia": "",
       "critica": false
     }
   ],
-  "nota": "Contrato de eje: Ø10 porque es la varilla calibrada más corriente y tiene rodamiento barato en cualquier catálogo. Cortado a 92: del plato 1 (2 por debajo) a la bahía del reductor, 2 por encima de la rueda. Con 120 asomaba 13 por encima del plato 3 sin llevar nada, y ahí va el volante."
+  "nota": "Contrato de eje: Ø10 h6 rectificado. Ya no es un árbol de una pieza: es la BARRA de la que se cortan los tres ejes del cartucho entre puntos (contrato de cartucho): el muñón de 16, el eje del cartucho de 27 y el eje motriz de 61. Son 104 más dos cortes de 1. Un árbol de una pieza no dejaba sacar las levas sin desmontar la torre."
 }
