@@ -8,6 +8,7 @@ camino que no comparte una línea de código con él.
 
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
 import pytest
@@ -97,8 +98,10 @@ def test_los_arcos_entran_como_arcos_y_no_como_polilinea():
 
     c = contrato_mm()
     ancho = solido_de("brazo_distal", c).bounding_box().size.Y
-    # El extremo más ancho es el de la punta, que lleva el tubo hueco.
-    assert ancho == pytest.approx(c["distal_punta_diametro"], rel=1e-9)
+    # El distal es curvo: de lo más bajo del cubo de la punta a lo más alto
+    # del arco, que está a la flecha más medio ancho del brazo.
+    esperado = c["distal_punta_diametro"] / 2 + c["distal_flecha"] + c["brazo_extremo_diametro"] / 2
+    assert ancho == pytest.approx(esperado, rel=1e-6)
 
 
 # ---------------------------------------------------------------------------
@@ -168,3 +171,46 @@ def test_la_caja_envolvente_del_montaje_cabe_en_la_base():
         assert caja.max.X <= base.max.X + 1e-6, pieza.nombre
         assert caja.min.Y >= base.min.Y - 1e-6, pieza.nombre
         assert caja.max.Y <= base.max.Y + 1e-6, pieza.nombre
+
+
+CONTACTOS_A_PROPOSITO = {
+    frozenset({"rueda", "pinon"}),
+    frozenset({"mesa", "portaminas"}),
+}
+"""Los dos pares que se tocan porque tienen que tocarse: el engrane —los
+discos al diámetro exterior del catálogo se meten dos módulos— y la mina
+sobre el papel al escribir, que absorbe la precarga de la flexura."""
+
+
+@pytest.mark.slow
+def test_la_maquina_entera_no_choca_en_todo_el_ciclo():
+    """**La prueba de que se puede fabricar y montar.** Todas las piezas —la
+    plataforma, la transmisión, la cadena del levantamiento y el portalápiz—
+    en doce ángulos del árbol, movidas por la leva real, y ningún par que se
+    atraviese salvo los dos que se tocan a propósito.
+
+    Lo que encontró la primera vez: los proximales solapados donde se cruzan,
+    el balancín metido en la leva 3, el volante atravesado por el árbol, la
+    bieleta cruzando el balancín, el lápiz en el mismo eje que el perno de la
+    punta y los distales rectos pasando por el poste 3.
+    """
+    from compile.conjunto import barrer
+    from compile.escribiente import Escribiente, compilar
+    from scripts.exportar_para_cad import leer
+
+    raiz = Path(__file__).resolve().parents[2]
+    compilacion = compilar(leer(raiz / "demo" / "hola.json"))
+    roces = barrer(compilacion, Escribiente(), pasos=12, cerca=1.0)
+    # Que el detector ve solapes: el engrane se mete dos módulos y tiene que
+    # salir con holgura NEGATIVA. Con `distance_to` solo salía 0.
+    engrane = next(r for r in roces if {r.una, r.otra} == {"rueda", "pinon"})
+    assert engrane.holgura < -1.0, engrane
+    choques = [
+        r
+        for r in roces
+        if r.holgura < 0 and frozenset({r.una, r.otra}) not in CONTACTOS_A_PROPOSITO
+    ]
+    assert not choques, "\n".join(
+        f"{r.una} con {r.otra}: {r.holgura:.3f} en θ = {math.degrees(r.theta):.0f}°"
+        for r in choques
+    )

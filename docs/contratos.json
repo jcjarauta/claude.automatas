@@ -386,7 +386,7 @@
           "nombre": "punta_tubo_largo",
           "valor": 0.016,
           "unidad": "m",
-          "descripcion": "Largo del tubo de la punta: de 1 por debajo del distal de abajo hasta la horquilla, encima del proximal de arriba",
+          "descripcion": "Largo del tubo de la punta: de 1,5 por debajo del distal de abajo hasta la cara baja del plato 1, donde apoya la horquilla",
           "tolerancia": ""
         },
         {
@@ -717,6 +717,41 @@
           "unidad": "rad",
           "descripcion": "Angulo del pivote derecho. Los dos son simetricos respecto de la bisectriz de 60 grados entre el poste 1 y el 2",
           "tolerancia": ""
+        },
+        {
+          "nombre": "distal_flecha",
+          "valor": 0.015,
+          "unidad": "m",
+          "descripcion": "Flecha del arco del distal: es una barra CURVA. Los proximales se cruzan, asi que cada distal atraviesa la linea central, y recto pasaba a 2,4 del poste 3 cuando la punta baja a las esquinas de la caja. Con 15 pasa a 17, y a 24 del pivote del otro lado. Los dos pernos siguen a brazo_distal: la cinematica no cambia",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "distal_curva_radio",
+          "valor": 0.10833333333333332,
+          "unidad": "m",
+          "descripcion": "Radio de la linea media del distal, y distancia del perno del codo al centro del arco. Derivado: (brazo_distal^2/4 + distal_flecha^2) / (2 distal_flecha)",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "distal_curva_interior_radio",
+          "valor": 0.10233333333333333,
+          "unidad": "m",
+          "descripcion": "Canto de dentro del arco del distal: la linea media menos medio ancho del brazo",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "distal_curva_exterior_radio",
+          "valor": 0.11433333333333333,
+          "unidad": "m",
+          "descripcion": "Canto de fuera del arco del distal: la linea media mas medio ancho del brazo",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "distal_curva_centro_angulo",
+          "valor": -1.0382922284930458,
+          "unidad": "rad",
+          "descripcion": "Donde cae el centro del arco del distal visto desde el perno del codo, con la punta sobre +X",
+          "tolerancia": ""
         }
       ]
     },
@@ -931,10 +966,10 @@
         },
         {
           "nombre": "balancin_eje_largo",
-          "valor": 0.0977,
+          "valor": 0.09674778210896544,
           "unidad": "m",
-          "descripcion": "Del balancin a la palanca mas dos margenes de 2. Derivado del ojo de la bieleta (y = -11,25) y de tirante_y, con la bieleta de 3 y el bulon del tirante que sobresale 4 de la palanca: el balancin y la palanca quedan a 90,75 y no a 78",
-          "tolerancia": "PENDIENTE"
+          "descripcion": "Del balancin a la palanca mas dos margenes de 2. Derivado (compile/levantamiento.py): el balancin va por detras del codo de la bieleta, cuya pata sale hacia popa y lo atraviesa, y el bulon del tirante sale de la palanca y lo cruza a 5,5, en tirante_y. Balancin y palanca quedan a 89,75",
+          "tolerancia": ""
         },
         {
           "nombre": "balancin_chaveta",
@@ -1178,7 +1213,7 @@
           "nombre": "bieleta_pata_balancin",
           "valor": 0.004,
           "unidad": "m",
-          "descripcion": "Pata horizontal que hace de pasador del balancin: sus 3 y 1 para la arandela de retencion",
+          "descripcion": "Pata horizontal, hacia popa, que hace de pasador del balancin: sus 3 y 1 para la arandela de retencion",
           "tolerancia": ""
         },
         {
@@ -1474,6 +1509,27 @@
           "unidad": "m",
           "descripcion": "Agujero de la pinza: el cuerpo del portaminas, 10 NOMINAL y sin medir. Se ajusta al portaminas comprado antes de taladrar; el prisionero M3 recoge el resto",
           "tolerancia": "ajustar al medido"
+        },
+        {
+          "nombre": "balancin_ojo_y",
+          "valor": -0.011247782108965437,
+          "unidad": "m",
+          "descripcion": "Y del codo de la bieleta junto al balancin, en el marco del cinco barras. Derivado de la bieleta isogona (compile/levantamiento.py): es lo que coloca el eje del balancin de proa a popa",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "bieleta_holgura_balancin",
+          "valor": 0.001,
+          "unidad": "m",
+          "descripcion": "Del codo de la bieleta a la cara de proa del balancin, que va detras: el radio de doblado de una varilla de 2 se come casi 1, y con 0,5 la varilla entraba en el balancin",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "bulon_tirante_taladro",
+          "valor": 0.0055,
+          "unidad": "m",
+          "descripcion": "De la cara de popa de la palanca al centro del taladro del bulon por donde cruza el tirante: los 3 de la palanca y 2,5",
+          "tolerancia": ""
         }
       ]
     }

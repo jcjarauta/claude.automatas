@@ -200,15 +200,17 @@ FICHAS: dict[str, Ficha] = {
         datum="brazo_eje_diametro_radio",
     ),
     "brazo_distal": Ficha(
-        "biela sin cara plana: perno en el codo, tubo hueco en la punta",
+        "biela curva sin cara plana: perno en el codo, tubo hueco en la punta",
         {
             "brazo_extremo_diametro_radio": 1,
             "distal_punta_diametro_radio": 1,
             "brazo_perno_diametro_radio": 1,
             "punta_tubo_diametro_radio": 1,
+            "distal_curva_interior_radio": 1,
+            "distal_curva_exterior_radio": 1,
         },
         entre_centros=("brazo_distal",),
-        tangentes=4,
+        polares=(("distal_curva_radio", "distal_curva_centro_angulo", 1),),
         datum="brazo_perno_diametro_radio",
     ),
     "palanca_lapiz": Ficha(

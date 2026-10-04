@@ -303,7 +303,7 @@ def balancin(c: dict[str, float] | None = None) -> Perfil:
     con 10 el pasador se metería dentro del agujero del eje.
 
     Cala por la cara plana, igual que los brazos, y en el mismo eje va la
-    palanca del lápiz 90,75 mm más adelante. El eje corre de proa a popa, y
+    palanca del lápiz 89,75 mm más adelante. El eje corre de proa a popa, y
     esa orientación es toda la invención: convierte el movimiento del
     seguidor, que va de lado, en el vertical que necesita la mesa. Su cara
     plana va girada 90°: con el eje de una sola cara, eso deja la palanca
@@ -608,6 +608,55 @@ BRAZOS = {
 }
 
 
+def distal_curvo(c: dict[str, float] | None = None) -> Perfil:
+    """El distal: una barra CURVA del perno del codo (en el datum) al tubo de
+    la punta (sobre +X, a `brazo_distal`).
+
+    Recto, cruzaba el poste 3: los proximales se cruzan, así que cada distal
+    atraviesa la línea central y, con la punta en las esquinas bajas de la
+    caja, pasaba a 2,4 del eje del poste. Curvado con `distal_flecha` hacia +Y
+    lo libra con 17. Los dos pernos siguen donde estaban: la cinemática es la
+    de los dos centros, no la del cuerpo. El otro distal es este volteado.
+
+    El cuerpo es un arco de ancho `brazo_extremo_diametro` alrededor de la
+    línea media, con el cubo del codo tangente a sus dos cantos y el de la
+    punta, más grande por el tubo, cortándolos.
+    """
+    c = contrato_mm() if c is None else c
+    largo = c["brazo_distal"]
+    r_codo = c["brazo_extremo_diametro"] / 2
+    r_punta = c["distal_punta_diametro"] / 2
+    radio = c["distal_curva_radio"]
+    ang = c["distal_curva_centro_angulo"]
+    centro = (radio * math.cos(ang), radio * math.sin(ang))
+    fuera, dentro = c["distal_curva_exterior_radio"], c["distal_curva_interior_radio"]
+    phi_codo = math.atan2(-centro[1], -centro[0])
+    phi_punta = math.atan2(-centro[1], largo - centro[0])
+
+    def corte(r_arco: float) -> float:
+        """Ángulo, en el arco de radio `r_arco`, donde lo corta el cubo de la
+        punta: del lado del cuerpo, que es el de los ángulos mayores."""
+        coseno = (r_arco**2 + radio**2 - r_punta**2) / (2 * r_arco * radio)
+        return phi_punta + math.acos(coseno)
+
+    def en(r_arco: float, phi: float) -> Punto:
+        return (centro[0] + r_arco * math.cos(phi), centro[1] + r_arco * math.sin(phi))
+
+    phi_fuera, phi_dentro = corte(fuera), corte(dentro)
+    a_fuera = math.atan2(en(fuera, phi_fuera)[1], en(fuera, phi_fuera)[0] - largo)
+    a_dentro = math.atan2(en(dentro, phi_dentro)[1], en(dentro, phi_dentro)[0] - largo)
+    while a_fuera <= a_dentro:
+        a_fuera += 2 * math.pi
+    return [
+        Arco(centro, fuera, phi_fuera, phi_codo),
+        Arco((0.0, 0.0), r_codo, phi_codo, phi_codo + math.pi),
+        Arco(centro, dentro, phi_dentro, phi_codo),
+        Arco((largo, 0.0), r_punta, a_dentro, a_fuera),
+        *circulo((0.0, 0.0), c["brazo_perno_diametro"] / 2),
+        *circulo((largo, 0.0), c["punta_tubo_diametro"] / 2),
+    ]
+
+
 def brazo(cual: str, c: dict[str, float] | None = None) -> Perfil:
     """Una de las tres barras del cinco barras, en su marco y en el datum."""
     if cual not in BRAZOS:
@@ -617,15 +666,7 @@ def brazo(cual: str, c: dict[str, float] | None = None) -> Perfil:
     largo = c[entre_centros]
     extremo, perno = c["brazo_extremo_diametro"] / 2, c["brazo_perno_diametro"] / 2
     if not calado:
-        # Biela: no cala nada. El extremo del codo lleva su perno de 6; el de
-        # la punta, el tubo hueco por el que pasa el lápiz, y por eso es más
-        # grande. Los dos distales comparten ese tubo.
-        punta = c["distal_punta_diametro"] / 2
-        return (
-            barra(largo, extremo, punta)
-            + circulo((0.0, 0.0), perno)
-            + circulo((largo, 0.0), c["punta_tubo_diametro"] / 2)
-        )
+        return distal_curvo(c)
     cubo, radio = c[f"{eje}_cubo_diametro"] / 2, c[f"{eje}_eje_diametro"] / 2
     return (
         barra(largo, cubo, extremo)
@@ -746,7 +787,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte + taladro",
     ),
     "brazo_distal": Ficha(
-        "barra de dos cubos desiguales en pletina de latón: codo y punta",
+        "barra CURVA de pletina de latón: codo y punta",
         2,
         (
             Variable("cota", "brazo_distal", "entre centros"),
@@ -755,15 +796,23 @@ LISTADO: dict[str, Ficha] = {
             Variable("cota", "brazo_extremo_diametro_radio", "R del codo"),
             Variable("cota", "punta_tubo_diametro", "Ø tubo de la punta", "H7"),
             Variable("cota", "distal_punta_diametro_radio", "R de la punta"),
+            Variable("cota", "distal_curva_radio", "del codo al centro del arco"),
+            Variable("angulo", "distal_curva_centro_angulo_positivo", "centro del arco a, bajo +X"),
+            Variable("cota", "distal_curva_interior_radio", "R canto de dentro"),
+            Variable("cota", "distal_curva_exterior_radio", "R canto de fuera"),
+            Variable("cota", "distal_flecha", "flecha", en_el_perfil=False),
         ),
         ("plancha", "brazo_espesor"),
-        "Es una biela: gira libre y no cala nada. La punta es hueca —un tubo de 13 por el "
-        "que pasa el lápiz— y por eso ese extremo es más grande que el del codo: con el "
-        "lápiz en el eje de la punta, nada de lo que gire sobre ella mueve la mina.",
+        "Es una biela: gira libre y no cala nada. Es CURVA porque recta cruzaba el poste 3 "
+        "—los proximales se cruzan y cada distal atraviesa la línea central—, y la curva "
+        "no cambia nada de la cinemática, que es la de los dos pernos. La punta es hueca, "
+        "un tubo de 13 por el que pasa el lápiz: con el lápiz en el eje de la punta, nada "
+        "de lo que gire sobre ella mueve la mina.",
         montaje=(
             "Por debajo de los dos proximales, cada distal en su plano: 3 de pletina y 0,5 de "
             "arandela entre brazo y brazo. El codo gira en su perno de Ø6; la punta, en el tubo "
-            "común de Ø13. El cubo grande va siempre a la punta."
+            "común de Ø13. El cubo grande va siempre a la punta, y la curva hacia la caja: el "
+            "izquierdo es el derecho volteado."
         ),
         material="latón, pletina de 3",
         proceso="corte + taladro",
@@ -1010,7 +1059,7 @@ LISTADO: dict[str, Ficha] = {
             "Calado por la cara plana en el extremo de popa del eje del balancín, apuntando "
             "HACIA ARRIBA y con el cubo por encima del plano de seguidores. El pasador de Ø2 "
             "recibe la bieleta isógona, que viene horizontal desde el agujero del seguidor 3. "
-            "En el mismo eje, 90,75 mm a proa, va la palanca del lápiz."
+            "En el mismo eje, 89,75 mm a proa, va la palanca del lápiz."
         ),
         material="latón, pletina de 3",
         proceso="corte + taladro",
@@ -1162,7 +1211,7 @@ LISTADO: dict[str, Ficha] = {
         montaje=(
             "Horizontal y de proa a popa, a z = 120 y x = 25,028 del cinco barras. Gira en los dos "
             "apoyos colgados del plato 2. En la punta de popa, el balancín apuntando hacia arriba; "
-            "90,75 a proa, la palanca. Un circlip por fuera de cada pieza."
+            "89,75 a proa, la palanca. Un circlip por fuera de cada pieza."
         ),
         material="acero plata Ø4 h6",
         proceso="corte a medida + fresado de la cara plana",
@@ -1198,15 +1247,15 @@ LISTADO: dict[str, Ficha] = {
             ),
             Variable("cota", "bieleta_entre_centros", "entre ejes", en_el_perfil=False),
             Variable("cota", "bieleta_pata_seguidor", "pata hacia abajo", en_el_perfil=False),
-            Variable("cota", "bieleta_pata_balancin", "pata hacia proa", en_el_perfil=False),
+            Variable("cota", "bieleta_pata_balancin", "pata hacia popa", en_el_perfil=False),
         ),
         ("barra", "bieleta_largo_desarrollado"),
         "Une un pasador vertical —el del seguidor— con uno horizontal —el del balancín—, y una "
-        "pletina con dos agujeros no puede. La varilla doblada sí, y su pata de proa ES el "
+        "pletina con dos agujeros no puede. La varilla doblada sí, y su pata de popa ES el "
         "pasador del balancín. Va isógona: el balancín se mueve lo mismo que el seguidor.",
         montaje=(
             "Horizontal a z = 126,33, del agujero de 38 del seguidor 3 al balancín. La pata de "
-            "abajo entra en el casquillo del seguidor; la de proa atraviesa el balancín y se "
+            "abajo entra en el casquillo del seguidor; la de popa atraviesa el balancín y se "
             "retiene con una arandela de presión."
         ),
         material="cuerda de piano Ø2",

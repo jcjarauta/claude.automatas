@@ -137,6 +137,45 @@ def giro_del_eje(
     return (a + z) / 2
 
 
+@dataclass(frozen=True)
+class EjeBalancin:
+    """Dónde va cada cosa a lo largo del eje del balancín, en Y del cinco
+    barras (metros). El eje corre de proa a popa."""
+
+    popa: float
+    """La punta de popa del eje."""
+    balancin: float
+    """La cara de popa del balancín, que va por DETRÁS del codo de la
+    bieleta: su pata sale hacia popa y lo atraviesa. Por delante, la varilla
+    —que llega del seguidor 3, a proa— cruzaría el extremo del balancín."""
+    palanca: float
+    """La cara de popa de la palanca: el bulón del tirante sale de ella y el
+    tirante cruza el bulón a 3 + 2,5, que tiene que caer en `tirante_y`."""
+    proa: float
+
+    @property
+    def largo(self) -> float:
+        return self.proa - self.popa
+
+    @property
+    def balancin_a_palanca(self) -> float:
+        return self.palanca - self.balancin
+
+
+def eje_balancin(c: Contratos | None = None, bieleta: Bieleta | None = None) -> EjeBalancin:
+    c = c or cargar()
+    b = bieleta or bieleta_isogona(c)
+    margen = 0.002
+    balancin = b.ojo[1] - _m(c, "bieleta_holgura_balancin") - _m(c, "balancin_espesor")
+    palanca = _m(c, "tirante_y") - _m(c, "bulon_tirante_taladro")
+    return EjeBalancin(
+        popa=balancin - margen,
+        balancin=balancin,
+        palanca=palanca,
+        proa=palanca + _m(c, "brazo_espesor") + margen,
+    )
+
+
 def caida_de_la_mesa(giro: float, c: Contratos | None = None) -> float:
     """Metros que baja la mesa desde la posición de escritura. La palanca va
     a -calaje escribiendo, así que su perno baja palanca·(sen giro + sen calaje)."""
@@ -200,6 +239,7 @@ def tirante_largo(c: Contratos | None = None) -> float:
 
 __all__ = [
     "Bieleta",
+    "EjeBalancin",
     "Pila",
     "al_cinco_barras",
     "apoyo_balancin_alto",
@@ -207,6 +247,7 @@ __all__ = [
     "bieleta_pata_seguidor",
     "caida_de_la_mesa",
     "calaje_elevador",
+    "eje_balancin",
     "eje_balancin_x",
     "giro_del_eje",
     "pila",

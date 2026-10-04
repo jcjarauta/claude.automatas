@@ -89,7 +89,8 @@ def test_una_cara_plana_que_parte_el_agujero_no_pasa():
 def test_el_distal_sale_sin_cara_plana_y_con_la_punta_hueca():
     """Es una biela: gira libre y no cala nada, así que una D ahí sería un
     calaje que no necesita. El extremo de la punta es mayor que el del codo
-    porque lleva el tubo hueco por el que pasa el lápiz."""
+    porque lleva el tubo hueco por el que pasa el lápiz, y el cuerpo es un
+    arco: recto cruzaba el poste 3."""
     c = contrato_mm()
     perfil = brazo("brazo_distal")
     radios = sorted(e.radio for e in perfil if isinstance(e, Arco))
@@ -100,15 +101,38 @@ def test_el_distal_sale_sin_cara_plana_y_con_la_punta_hueca():
                 c["distal_punta_diametro"] / 2,
                 c["brazo_perno_diametro"] / 2,
                 c["punta_tubo_diametro"] / 2,
+                c["distal_curva_interior_radio"],
+                c["distal_curva_exterior_radio"],
             ]
         )
     )
-    assert sum(isinstance(e, Segmento) for e in perfil) == 2, "sobra una cuerda"
-    # El tubo va en la punta, que es el extremo en +X.
+    assert not any(isinstance(e, Segmento) for e in perfil), "el cuerpo es un arco, no rectas"
+    r_tubo = c["punta_tubo_diametro"] / 2
     tubo = next(
-        e for e in perfil if isinstance(e, Arco) and e.radio == c["punta_tubo_diametro"] / 2
+        e
+        for e in perfil
+        if isinstance(e, Arco)
+        and abs(e.hasta - e.desde - 2 * math.pi) < 1e-9
+        and e.radio == pytest.approx(r_tubo)
     )
     assert tubo.centro == pytest.approx((c["brazo_distal"], 0.0))
+
+
+def test_la_curva_del_distal_sale_de_su_flecha():
+    """El radio y el centro del arco son derivados: con la flecha y el
+    entre centros, el arco pasa por los dos pernos."""
+    c = contrato_mm()
+    largo, flecha = c["brazo_distal"], c["distal_flecha"]
+    radio = (largo**2 / 4 + flecha**2) / (2 * flecha)
+    assert c["distal_curva_radio"] == pytest.approx(radio)
+    centro = (largo / 2, flecha - radio)
+    assert c["distal_curva_centro_angulo"] == pytest.approx(math.atan2(centro[1], centro[0]))
+    assert c["distal_curva_interior_radio"] == pytest.approx(
+        radio - c["brazo_extremo_diametro"] / 2
+    )
+    assert c["distal_curva_exterior_radio"] == pytest.approx(
+        radio + c["brazo_extremo_diametro"] / 2
+    )
 
 
 def test_el_tambor_cala_con_la_misma_cara_que_el_eje():

@@ -198,9 +198,9 @@ def alturas(c: dict[str, float] | None = None) -> dict[str, tuple[float, float]]
     """La pila vertical, de la cara alta de la base hacia arriba, en mm.
 
     Todo sale de la cadena declarada: `base_al_plato`, `platina_espesor`,
-    `pila_altura`, `seguidor_plano_z`, `poste_vano` y `reductor_bahia`. No
-    hay ni un número suelto, y por eso mover `base_al_plato` mueve la
-    máquina entera.
+    `leva_sobre_plato`, `pila_altura`, `seguidor_plano_z`, `poste_vano`,
+    `reductor_bahia`, `brazo_espesor` y `brazo_arandela`. No hay ni un número
+    suelto, y por eso mover `base_al_plato` mueve la máquina entera.
 
     Vive aquí y no en el script del plano de conjunto porque la usan los
     dos: **el dibujo en dos vistas y el montaje en tres dimensiones tienen
@@ -210,23 +210,67 @@ def alturas(c: dict[str, float] | None = None) -> dict[str, tuple[float, float]]
     c = contrato_mm() if c is None else c
     bap, pl = c["base_al_plato"], c["platina_espesor"]
     p1 = (bap, bap + pl)
-    leva0 = p1[1] + 2.0
+    leva0 = p1[1] + c["leva_sobre_plato"]
     seg = leva0 + c["seguidor_plano_z"]
+    sector = (
+        seg + c["seguidor_espesor"],
+        seg + c["seguidor_espesor"] + c["amplificador_sector_espesor"],
+    )
     p2 = (p1[1] + c["poste_vano"], p1[1] + c["poste_vano"] + pl)
     p3 = (p2[1] + c["reductor_bahia"], p2[1] + c["reductor_bahia"] + pl)
+    eje_balancin = (
+        seg + c["seguidor_espesor"] + c["holgura_minima"] + c["balancin_cubo_diametro"] / 2
+    )
+    # El varillaje, de arriba abajo bajo el plato 1: cada brazo en su plano,
+    # 3 de pletina y medio de arandela entre uno y otro. Con 1 de desnivel
+    # los proximales se solapaban donde se cruzan.
+    paso = c["brazo_espesor"] + c["brazo_arandela"]
+    tope = p1[0] - HOLGURA_AXIAL
+    brazos = {
+        nombre: (tope - (i + 1) * c["brazo_espesor"] - i * c["brazo_arandela"], tope - i * paso)
+        for i, nombre in enumerate(("proximal_1", "proximal_2", "distal_1", "distal_2"))
+    }
+    # El tambor, centrado en el sector: coplanarios, que es lo que sustituye
+    # a las pestañas.
+    medio_sector = sum(sector) / 2
+    tambor = (
+        medio_sector - c["amplificador_tambor_ancho"] / 2,
+        medio_sector + c["amplificador_tambor_ancho"] / 2,
+    )
+    bahia = (p2[1], p3[0])
+    medio_bahia = sum(bahia) / 2
+    volante = (p3[1] + HOLGURA_AXIAL, p3[1] + HOLGURA_AXIAL + c["volante_espesor"])
+    manivela = (volante[1] + HOLGURA_AXIAL, volante[1] + HOLGURA_AXIAL + c["brazo_espesor"])
     return {
         "base": (-c["base_espesor"], 0.0),
         "mesa": (c["mesa_altura"] - c["mesa_espesor"], c["mesa_altura"]),
         "plato1": p1,
         "levas": (leva0, leva0 + c["pila_altura"]),
         "seguidores": (seg, seg + c["seguidor_espesor"]),
-        "sector": (seg + c["seguidor_espesor"], seg + c["seguidor_espesor"] + 5.0),
-        "balancin": (seg + c["balancin_entrada"], seg + c["balancin_entrada"]),
+        "sector": sector,
+        "balancin": (eje_balancin, eje_balancin),
         "plato2": p2,
-        "bahia": (p2[1], p3[0]),
+        "bahia": bahia,
+        "engrane": (
+            medio_bahia - c["casquillo_rueda_largo"] / 2,
+            medio_bahia + c["casquillo_rueda_largo"] / 2,
+        ),
         "plato3": p3,
+        "volante": volante,
+        "manivela": manivela,
+        "tambor": tambor,
+        "punta_tubo": (p1[0] - c["punta_tubo_largo"], p1[0]),
         "poste": (-c["base_poste_empotrado"], p3[1]),
+        **brazos,
     }
+
+
+JUEGO_GIRATORIO = 0.02
+"""Juego diametral de un pasador que gira en su agujero (H7/h8 en Ø2)."""
+
+HOLGURA_AXIAL = 1.0
+"""La holgura de 1 mm que ya pedía la ficha del proximal contra el plato 1,
+y la que se deja entre el plato 3, el volante y la manivela."""
 
 
 @dataclass(frozen=True)
@@ -295,7 +339,7 @@ def _del_cinco_barras(c: dict[str, float]) -> Callable[[Punto], Punto]:
 
 
 def taller(c: dict[str, float] | None = None) -> dict[str, Any]:
-    """Los sólidos de la plataforma sin colocar, uno por pieza distinta.
+    """Los sólidos de la máquina sin colocar, uno por pieza distinta.
 
     Extruir un perfil cuesta, y en un barrido se repite en cada ángulo la
     misma plancha. Construirlos una vez y recolocarlos deja el barrido en
@@ -306,11 +350,46 @@ def taller(c: dict[str, float] | None = None) -> dict[str, Any]:
     from emit.catalogo import solido_de as solido_comercial
 
     c = contrato_mm() if c is None else c
-    piezas = {n: solido_de(n, c) for n in ("platina_levas", "base", "seguidor", "sector")}
-    piezas["brazo_proximal"] = solido_de("brazo_proximal", c)
-    piezas["brazo_distal"] = solido_de("brazo_distal", c)
-    piezas["poste"] = solido_comercial(next(p for p in cargar() if p.nombre == "poste_pivote"))
+    from build123d import Plane, mirror
+
+    piezas = {n: solido_de(n, c) for n in LISTADO}
+    # El distal es curvo y los dos son la misma pieza: el izquierdo, volteado.
+    piezas["brazo_distal_volteado"] = mirror(piezas["brazo_distal"], about=Plane.XZ)
+    comerciales = {p.nombre: p for p in cargar()}
+    piezas["poste"] = solido_comercial(comerciales["poste_pivote"])
+    for nombre in (
+        "arbol_de_levas",
+        "rodamiento_arbol",
+        "rueda_reductor",
+        "pinon_reductor",
+        "portaminas",
+    ):
+        piezas[nombre] = solido_comercial(comerciales[nombre])
     return piezas
+
+
+def _cilindro(
+    radio: float, desde: tuple[float, float, float], hasta: tuple[float, float, float]
+) -> Any:
+    """Un cilindro entre dos puntos: varillas, patas y taladros."""
+    from build123d import Align, Cylinder, Location, Plane, Vector
+
+    a, b = Vector(*desde), Vector(*hasta)
+    return Location(Plane(origin=a, z_dir=b - a)) * Cylinder(
+        radio, (b - a).length, align=(Align.CENTER, Align.CENTER, Align.MIN)
+    )
+
+
+def _en_plano(
+    solido: Any,
+    origen: tuple[float, float, float],
+    x: tuple[float, float, float],
+    z: tuple[float, float, float],
+) -> Any:
+    """Lleva un sólido de su marco al plano dado: su X a `x`, su Z a `z`."""
+    from build123d import Location, Plane
+
+    return Location(Plane(origin=origen, x_dir=x, z_dir=z)) * solido
 
 
 def colocar(
@@ -320,17 +399,16 @@ def colocar(
     c: dict[str, float] | None = None,
     piezas_base: dict[str, Any] | None = None,
 ) -> list[Colocada]:
-    """Las piezas de la máquina colocadas en 3D, en el marco de la leva.
+    """La máquina entera en 3D, en el marco de la leva, en el estado dado.
 
     `levas` son las `Pieza` que salen de compilar el pedido y `seguidores`
     los `core.cam.synth.Seguidor` de la máquina: este módulo **no importa
     el compilador**, porque los emisores están debajo de él. Quien llame
-    calcula el estado; aquí solo se coloca.
+    calcula el estado —el giro de cada brazo, el del eje del balancín y lo
+    que baja la mesa—; aquí solo se coloca.
 
-    **Lo que todavía no entra**: la cadena del levantamiento —bieleta,
-    tirante, mesa y sus bielas— porque esas piezas aún no están dibujadas,
-    y con ellas el balancín y la palanca, que existen pero no tienen a qué
-    agarrarse. Está en `docs/ensamblaje.md` §8.
+    Lo que no entra: la cinta del cabestrante y sus cuatro mordazas, cuya
+    posición sobre el sector dice su ficha, y la tornillería.
     """
     from emit.step import solido_de_pieza
 
@@ -381,35 +459,362 @@ def colocar(
                 )
             )
 
-    # --- el varillaje --------------------------------------------------------
+    # --- el varillaje, cada brazo en su plano --------------------------------
     proximal, distal = hecho["brazo_proximal"], hecho["brazo_distal"]
     sep = c["brazo_separacion"] / 2.0
-    for lado, (x, psi) in enumerate(
-        ((-sep, estado.psi_izquierdo), (sep, estado.psi_derecho)),
-    ):
+    lados = ((-sep, estado.psi_izquierdo), (sep, estado.psi_derecho))
+    codos = [
+        (x + c["brazo_proximal"] * math.cos(psi), c["brazo_proximal"] * math.sin(psi))
+        for x, psi in lados
+    ]
+    punta = _punta(codos[0], codos[1], c["brazo_distal"])
+    for lado, (x, psi) in enumerate(lados):
+        n = lado + 1
         pivote = al_marco((x, 0.0))
         giro = psi + c["brazo_origen_giro"]
         piezas.append(
-            Colocada(
-                f"proximal_{lado + 1}",
-                _poner(proximal, giro, pivote, z["plato1"][0] - 4.0 - lado),
-                True,
-            )
+            Colocada(f"proximal_{n}", _poner(proximal, giro, pivote, z[f"proximal_{n}"][0]), True)
         )
-        codo_plano = (x + c["brazo_proximal"] * math.cos(psi), c["brazo_proximal"] * math.sin(psi))
-        punta = (0.0, c["caja_centro_y"])
+        codo_plano = codos[lado]
+        # Curvado hacia la caja: el izquierdo cruza de derecha a izquierda y
+        # lleva la pieza volteada para que la curva quede del mismo lado.
+        cuerpo = hecho["brazo_distal_volteado"] if lado == 0 else distal
         piezas.append(
             Colocada(
-                f"distal_{lado + 1}",
+                f"distal_{n}",
                 _poner(
-                    distal,
+                    cuerpo,
                     math.atan2(punta[1] - codo_plano[1], punta[0] - codo_plano[0])
                     + c["brazo_origen_giro"],
                     al_marco(codo_plano),
-                    z["plato1"][0] - 8.0 - lado,
+                    z[f"distal_{n}"][0],
                 ),
                 True,
             )
         )
+        # El eje de pivote cala el proximal por debajo y el tambor por encima:
+        # los dos giran con el brazo, con la cara plana mirando a su otro cubo.
+        tope_eje = z["tambor"][1] + 1.5
+        piezas.append(
+            Colocada(
+                f"eje_pivote_{n}",
+                _poner(hecho["eje_pivote"], giro, pivote, tope_eje - c["eje_pivote_largo"]),
+                True,
+            )
+        )
+        piezas.append(
+            Colocada(f"tambor_{n}", _poner(hecho["tambor"], giro, pivote, z["tambor"][0]), True)
+        )
 
+    piezas += _transmision(c, hecho, estado, z)
+    piezas += _levantamiento(c, hecho, estado, seguidores, z)
+    piezas += _portalapiz(c, hecho, z, al_marco(punta))
+    return piezas
+
+
+def _punta(codo_1: Punto, codo_2: Punto, distal: float) -> Punto:
+    """Donde se cortan los dos distales: la punta del cinco barras, la que
+    escribe. Es la solución hacia la caja —la de más Y—, la misma rama que
+    usa el núcleo. Apuntar los distales a un punto fijo los dejaba bien solo
+    en el centro de la caja; el lápiz va aquí y se mueve con la frase."""
+    dx, dy = codo_2[0] - codo_1[0], codo_2[1] - codo_1[1]
+    d = math.hypot(dx, dy)
+    if d > 2 * distal:
+        raise ValueError("los dos codos están más lejos que dos distales: no hay punta")
+    medio = (codo_1[0] + dx / 2, codo_1[1] + dy / 2)
+    h = math.sqrt(distal**2 - (d / 2) ** 2)
+    candidatas = [(medio[0] - s * h * dy / d, medio[1] + s * h * dx / d) for s in (1, -1)]
+    return max(candidatas, key=lambda p: p[1])
+
+
+def _transmision(
+    c: dict[str, float], hecho: dict[str, Any], estado: Estado, z: dict[str, tuple[float, float]]
+) -> list[Colocada]:
+    """El árbol, el reductor, el volante y la manivela.
+
+    El árbol va de 2 por debajo del plato 1 a 2 por encima de la rueda: con
+    120 asomaba por encima del plato 3, donde va el volante. El volante va
+    encima del plato 3 y no en la bahía: centrado a 28 del árbol y con R52,
+    lo atravesaban el árbol y la rueda.
+    """
+    from build123d import Align, Cylinder
+
+    piezas = []
+    largo_arbol = float(hecho["arbol_de_levas"].bounding_box().size.Z)
+    piezas.append(
+        Colocada(
+            "arbol", _poner(hecho["arbol_de_levas"], estado.theta, z=z["plato1"][0] - 2.0), True
+        )
+    )
+    if abs(z["plato1"][0] - 2.0 + largo_arbol - (z["engrane"][1] + 2.0)) > 1e-6:
+        raise ValueError("el árbol no acaba 2 por encima de la rueda: revisa arbol_de_levas")
+    rodamiento = hecho["rodamiento_arbol"]
+    t = c["platina_manivela_angulo"]
+    manivela_en = (c["reductor_entre_ejes"] * math.cos(t), c["reductor_entre_ejes"] * math.sin(t))
+    for plato, n in (("plato1", 1), ("plato2", 2)):
+        piezas.append(
+            Colocada(f"rodamiento_arbol_{n}", _poner(rodamiento, z=z[plato][0] + 2.0), False)
+        )
+    for plato, n in (("plato2", 1), ("plato3", 2)):
+        piezas.append(
+            Colocada(
+                f"rodamiento_manivela_{n}",
+                _poner(rodamiento, 0.0, manivela_en, z[plato][0] + 2.0),
+                False,
+            )
+        )
+    # La rueda Z60 viene a 15 y el árbol es de 10: el casquillo los une.
+    agujero_rueda = Cylinder(
+        c["casquillo_rueda_diametro"] / 2, 20.0, align=(Align.CENTER, Align.CENTER, Align.CENTER)
+    )
+    rueda = hecho["rueda_reductor"] - agujero_rueda
+    piezas.append(Colocada("rueda", _poner(rueda, estado.theta, z=z["engrane"][0]), True))
+    piezas.append(
+        Colocada(
+            "casquillo_rueda",
+            _poner(hecho["casquillo_rueda"], estado.theta, z=z["engrane"][0]),
+            True,
+        )
+    )
+    # La manivela da 3 vueltas por cada una del árbol, y al revés: es un
+    # engrane exterior. Lo que gira con ella va en su eje, con la misma cara.
+    giro_m = t - c["reductor_relacion"] * estado.theta
+    agujero_pinon = Cylinder(
+        c["brazo_eje_diametro"] / 2, 20.0, align=(Align.CENTER, Align.CENTER, Align.CENTER)
+    )
+    pinon = hecho["pinon_reductor"] - agujero_pinon
+    piezas.append(Colocada("pinon", _poner(pinon, giro_m, manivela_en, z["engrane"][0]), True))
+    piezas.append(
+        Colocada(
+            "eje_manivela",
+            _poner(hecho["eje_manivela"], giro_m, manivela_en, z["plato2"][0] - HOLGURA_AXIAL),
+            True,
+        )
+    )
+    piezas.append(
+        Colocada("volante", _poner(hecho["volante"], giro_m, manivela_en, z["volante"][0]), True)
+    )
+    piezas.append(
+        Colocada("manivela", _poner(hecho["manivela"], giro_m, manivela_en, z["manivela"][0]), True)
+    )
+    return piezas
+
+
+def _levantamiento(
+    c: dict[str, float],
+    hecho: dict[str, Any],
+    estado: Estado,
+    seguidores: list[Any],
+    z: dict[str, tuple[float, float]],
+) -> list[Colocada]:
+    """La cadena del levantamiento, en el marco del cinco barras y llevada al
+    de la leva: el seguidor 3 empuja la bieleta, la bieleta gira el eje del
+    balancín, la palanca baja el tirante y el tirante baja la mesa.
+
+    El giro del eje y lo que baja la mesa vienen en el `Estado`: los calcula
+    `compile.levantamiento`, que cierra el lazo de la bieleta.
+    """
+    from build123d import Pos, Rot
+
+    g = c["brazo_origen_giro"]
+    a_leva = Pos(c["brazo_origen_x"], c["brazo_origen_y"], 0.0) * Rot(Z=math.degrees(g))
+    piezas: list[Colocada] = []
+
+    def poner(nombre: str, solido: Any, movil: bool) -> None:
+        piezas.append(Colocada(nombre, a_leva * solido, movil))
+
+    # --- el eje del balancín, de proa a popa, y lo que lleva calado --------
+    x_eje, z_eje = c["balancin_eje_x"], z["balancin"][0]
+    # El balancín va por DETRÁS del codo de la bieleta: la varilla llega del
+    # seguidor 3, que está a proa, y por delante cruzaría su extremo.
+    y_balancin = c["balancin_ojo_y"] - c["bieleta_holgura_balancin"] - c["balancin_espesor"]
+    y_palanca = c["tirante_y"] - c["bulon_tirante_taladro"]
+    y_proa = y_palanca + c["brazo_espesor"] + 2.0
+    y_popa = y_proa - c["balancin_eje_largo"]
+    giro = math.degrees(estado.giro_balancin)
+    # Marco del eje: su Z local corre a +Y, y gira `giro` en sus apoyos.
+    eje = Pos(x_eje, y_popa, z_eje) * Rot(Y=giro) * Rot(X=-90)
+    poner("eje_balancin", eje * hecho["eje_balancin"], True)
+    # El balancín lleva su cara plana a +90°: calado en la misma cara que la
+    # palanca, apunta hacia arriba.
+    alfa = math.degrees(c["balancin_chaveta_angulo"])
+    poner("balancin", eje * Pos(0, 0, y_balancin - y_popa) * Rot(Z=-alfa) * hecho["balancin"], True)
+    poner("palanca_lapiz", eje * Pos(0, 0, y_palanca - y_popa) * hecho["palanca_lapiz"], True)
+
+    # Los dos apoyos, colgados del plato 2, con el agujero del eje.
+    for cual in ("trasero", "delantero"):
+        y = c[f"apoyo_balancin_{cual}_y"]
+        poner(
+            f"apoyo_balancin_{cual}",
+            _en_plano(
+                hecho["apoyo_balancin"],
+                (x_eje, y - c["apoyo_balancin_fondo"] / 2, z_eje),
+                (0, 0, 1),
+                (0, 1, 0),
+            ),
+            False,
+        )
+
+    # --- la bieleta: el seguidor donde lo deja la leva, el ojo donde lo deja el eje
+    seg3 = seguidores[2]
+    psi = seg3.psi_cero + estado.desviaciones[2]
+    r = c["levantamiento_pasador_al_pivote"]
+    px, py = (
+        seg3.pivote[0] * 1000.0 + r * math.cos(psi),
+        seg3.pivote[1] * 1000.0 + r * math.sin(psi),
+    )
+    # Del marco de la leva al del cinco barras: la inversa de `a_leva`.
+    lx, ly = px - c["brazo_origen_x"], py - c["brazo_origen_y"]
+    sx, sy = lx * math.cos(g) + ly * math.sin(g), -lx * math.sin(g) + ly * math.cos(g)
+    e = c["balancin_entrada"]
+    ojo = (
+        x_eje + e * math.sin(estado.giro_balancin),
+        c["balancin_ojo_y"],
+        z_eje + e * math.cos(estado.giro_balancin),
+    )
+    # La pata gira en su agujero: se modela con el juego de un H7/h8 de 2,
+    # 0,02 en diámetro. Línea con línea, el kernel no sabe si dos cilindros
+    # iguales se tocan o se atraviesan.
+    rb = c["bieleta_diametro"] / 2 - JUEGO_GIRATORIO / 2
+    bieleta = (
+        _cilindro(rb, (sx, sy, z["seguidores"][0]), (sx, sy, ojo[2]))
+        + _cilindro(rb, (sx, sy, ojo[2]), ojo)
+        + _cilindro(rb, ojo, (ojo[0], ojo[1] - c["bieleta_pata_balancin"], ojo[2]))
+    )
+    poner("bieleta", bieleta, True)
+    poner("casquillo_bieleta", Pos(sx, sy, z["seguidores"][0]) * hecho["casquillo_bieleta"], True)
+
+    # --- el tirante, a plomo desde el perno de la palanca -------------------
+    perno = (
+        x_eje + c["brazo_palanca"] * math.cos(estado.giro_balancin),
+        z_eje - c["brazo_palanca"] * math.sin(estado.giro_balancin),
+    )
+    bulon = _en_plano(hecho["bulon_tirante"], (perno[0], y_palanca, perno[1]), (1, 0, 0), (0, 1, 0))
+    taladro_bulon = _cilindro(
+        c["tirante_diametro"] / 2,
+        (perno[0], c["tirante_y"], perno[1] - 10.0),
+        (perno[0], c["tirante_y"], perno[1] + 10.0),
+    )
+    poner("bulon_tirante", bulon - taladro_bulon, True)
+    arriba = perno[1] + c["brazo_perno_diametro"] / 2
+    tirante = Pos(perno[0], c["tirante_y"], arriba - c["tirante_largo"]) * hecho["tirante"]
+    ojo_tirante = _cilindro(
+        c["tirante_ojo_diametro"] / 2,
+        (perno[0] - 5.0, c["tirante_y"], arriba - c["tirante_largo"] + 2.0),
+        (perno[0] + 5.0, c["tirante_y"], arriba - c["tirante_largo"] + 2.0),
+    )
+    poner("tirante", tirante - ojo_tirante, True)
+
+    # --- la mesa y sus bielas laterales --------------------------------------
+    biela = c["mesa_biela"]
+    caida = estado.caida_mesa * 1000.0
+    a = -math.asin(max(-1.0, min(1.0, caida / biela)))
+    zb = c["mesa_bisagra_z"]
+    dentro, ancho = c["mesa_biela_x_dentro"], c["mesa_biela_espesor"]
+    fuera = dentro + ancho
+    for lado, y_fijo in (
+        ("trasera", c["mesa_bisagra_cerca"]),
+        ("delantera", c["mesa_bisagra_lejos"]),
+    ):
+        y_movil, z_movil = y_fijo + biela * math.cos(a), zb + biela * math.sin(a)
+        for signo, x0 in (("d", dentro), ("i", -fuera)):
+            poner(
+                f"biela_mesa_{lado}_{signo}",
+                _en_plano(
+                    hecho["biela_mesa"], (x0, y_fijo, zb), (0, math.cos(a), math.sin(a)), (1, 0, 0)
+                ),
+                True,
+            )
+            x_sop = x0 + ancho if signo == "d" else x0 - c["soporte_mesa_ancho"]
+            poner(
+                f"soporte_mesa_{lado}_{signo}",
+                _en_plano(hecho["soporte_mesa"], (x_sop, y_fijo, zb), (0, 0, 1), (1, 0, 0)),
+                False,
+            )
+            x_eje_fijo = dentro if signo == "d" else -dentro - c["mesa_eje_fijo_largo"]
+            poner(
+                f"eje_mesa_fijo_{lado}_{signo}",
+                _en_plano(hecho["eje_mesa_fijo"], (x_eje_fijo, y_fijo, zb), (0, 1, 0), (1, 0, 0)),
+                False,
+            )
+        poner(
+            f"eje_mesa_movil_{lado}",
+            _en_plano(hecho["eje_mesa_movil"], (-fuera, y_movil, z_movil), (0, 1, 0), (1, 0, 0)),
+            True,
+        )
+        poner(
+            f"orejeta_mesa_{lado}",
+            _en_plano(
+                hecho["orejeta_mesa"],
+                (-c["orejeta_mesa_ancho"] / 2, y_movil, z_movil),
+                (0, 0, 1),
+                (1, 0, 0),
+            ),
+            True,
+        )
+    corrimiento = biela - biela * math.cos(a)
+    mesa = (
+        Pos(0.0, c["mesa_bisagra_cerca"] + biela - corrimiento, z["mesa"][0] - caida)
+        * Rot(Z=90)
+        * hecho["mesa"]
+    )
+    poner("mesa", mesa, True)
+    return piezas
+
+
+def _portalapiz(
+    c: dict[str, float], hecho: dict[str, Any], z: dict[str, tuple[float, float]], punta: Punto
+) -> list[Colocada]:
+    """El lápiz y lo que lo sujeta, en la punta del cinco barras.
+
+    La punta es un tubo hueco y el portaminas pasa por dentro: así lo que gira
+    sobre la punta no mueve la mina. El portaminas va rígido sobre las dos
+    láminas, y es la mesa la que baja para levantar.
+    """
+    from build123d import Align, Box, Pos, Rot
+
+    piezas: list[Colocada] = []
+    g = math.degrees(c["brazo_origen_giro"])
+    hacia = Pos(punta[0], punta[1], 0.0) * Rot(Z=g)
+
+    def poner(nombre: str, solido: Any) -> None:
+        piezas.append(Colocada(nombre, hacia * solido, True))
+
+    tubo = z["punta_tubo"]
+    poner("tubo_punta", Pos(0, 0, tubo[0]) * hecho["tubo_punta"])
+    # Marco del cinco barras con el origen en la punta: el brazo va a +Y.
+    poner("brazo_horquilla", Pos(0, 0, tubo[1]) * Rot(Z=90) * hecho["brazo_horquilla"])
+    pie = tubo[1] + c["horquilla_espesor"]
+    cara_poste = c["horquilla_largo"] - c["poste_horquilla_fondo"] / 2
+    poner(
+        "poste_horquilla",
+        _en_plano(
+            hecho["poste_horquilla"],
+            (0.0, cara_poste, pie + c["poste_horquilla_tornillo_al_pie"]),
+            (0, 0, 1),
+            (0, 1, 0),
+        ),
+    )
+    tope = pie + c["poste_horquilla_alto"]
+    poner("pinza", Pos(0, 0, tope - c["pinza_largo"]) * hecho["pinza"])
+    # Las láminas: el largo libre, horizontal, y cada pestaña doblada hacia
+    # abajo contra su cara.
+    cara_pinza = c["pinza_al_borde"]
+    libre = cara_poste - cara_pinza
+    for n, zl in enumerate((tope - 22.0, tope - 2.0), start=1):
+        lamina = Pos(0, cara_pinza, zl) * Box(
+            c["flexura_ancho"],
+            libre,
+            c["flexura_espesor"],
+            align=(Align.CENTER, Align.MIN, Align.CENTER),
+        )
+        for y_pestana in (cara_pinza, cara_poste - c["flexura_espesor"]):
+            lamina += Pos(0, y_pestana, zl) * Box(
+                c["flexura_ancho"],
+                c["flexura_espesor"],
+                c["flexura_empotramiento"],
+                align=(Align.CENTER, Align.MIN, Align.MAX),
+            )
+        poner(f"lamina_flexura_{n}", lamina)
+    poner("portaminas", Pos(0, 0, c["mesa_altura"]) * hecho["portaminas"])
     return piezas

@@ -169,3 +169,18 @@ def test_la_cadena_baja_la_mesa_lo_que_el_compilador_levanta(contratos):
         manda = palanca * math.sin(e.desviaciones[2] * maquina.relacion + calaje)
         peor = max(peor, abs(e.caida_mesa - manda))
     assert peor < 5e-6, f"la mesa se separa {peor * 1e6:.1f} µm de lo que manda el compilador"
+
+
+def test_el_largo_del_eje_del_balancin_es_el_que_sale_de_la_cadena(contratos):
+    """Del codo de la bieleta, cuya pata atraviesa el balancín, al bulón del
+    tirante, que tiene que caer en tirante_y; y 2 de margen a cada punta."""
+    from compile.levantamiento import eje_balancin
+
+    eje = eje_balancin(contratos)
+    assert _valor(contratos, "balancin_eje_largo") == pytest.approx(eje.largo, abs=1e-6)
+
+
+def test_el_contrato_lleva_el_ojo_de_la_bieleta(contratos, bieleta):
+    """El montaje no importa el compilador: coloca el eje del balancín con
+    este número, así que tiene que ser el que sale de la bieleta isógona."""
+    assert _valor(contratos, "balancin_ojo_y") == pytest.approx(bieleta.ojo[1], abs=1e-9)

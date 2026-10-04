@@ -440,7 +440,10 @@ def test_cada_cota_circular_tiene_sus_dos_formas(paquete: Path):
     # Y 51 con las piezas de esa cadena: los M2 de la mesa y de la flexura,
     # los M3 de los apoyos, el agujero de la pinza y el cubo del brazo del
     # portalápiz; la pinza dejó de ser un collar y su `_diametro` se fue.
-    assert gemelos == 51, f"esperaba 51 cotas circulares con gemelo, hay {gemelos}"
+    #
+    # Y 54 con el distal curvo: el radio de su línea media y los de sus dos
+    # cantos, que el CAD pide en radio porque son arcos.
+    assert gemelos == 54, f"esperaba 54 cotas circulares con gemelo, hay {gemelos}"
 
 
 def test_el_gemelo_dice_que_es_derivado(paquete: Path):

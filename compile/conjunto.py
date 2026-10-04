@@ -308,6 +308,19 @@ def piezas_en(
     )
 
 
+SOLAPE_DE_AJUSTE = 1e-3
+"""mm³. Por debajo, dos piezas que encajan línea con línea —un eje en su
+agujero— y que el kernel no sabe si se tocan o se atraviesan."""
+
+
+def _volumen_comun(una: Any, otra: Any) -> float:
+    comun = una.intersect(otra)
+    if comun is None:
+        return 0.0
+    formas = comun if isinstance(comun, list) else [comun]
+    return float(sum(s.volume for f in formas for s in f.solids()))
+
+
 @dataclass(frozen=True)
 class Roce:
     """Lo más cerca que llegan dos piezas durante el barrido."""
@@ -315,7 +328,10 @@ class Roce:
     una: str
     otra: str
     holgura: float
-    """En milímetros. Negativa si se solapan."""
+    """En milímetros. Negativa si se solapan: menos la raíz cúbica del volumen
+    común, que tiene unidades de longitud y crece con el solape. `distance_to`
+    da 0 tanto si dos sólidos se tocan como si se atraviesan, y con eso solo
+    el barrido no veía los proximales solapados 1580 mm³."""
     theta: float
 
 
@@ -389,6 +405,10 @@ def barrer(
                     continue
                 clave = (una.nombre, otra.nombre)
                 holgura = float(una.solido.distance_to(otra.solido))
+                if holgura <= 1e-9:
+                    comun = _volumen_comun(una.solido, otra.solido)
+                    if comun > SOLAPE_DE_AJUSTE:
+                        holgura = -(comun ** (1.0 / 3.0))
                 if clave not in peor or holgura < peor[clave].holgura:
                     peor[clave] = Roce(una.nombre, otra.nombre, holgura, float(theta))
     return sorted(peor.values(), key=lambda r: r.holgura)
