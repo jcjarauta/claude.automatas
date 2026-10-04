@@ -207,6 +207,11 @@ def sector(c: dict[str, float] | None = None) -> Perfil:
     )
     for cota in ("union_sector_seguidor_cerca", "union_sector_seguidor_lejos"):
         perfil += circulo((c[cota], 0.0), c["union_sector_seguidor_diametro"] / 2)
+    # Los dos agujeros de la mordaza, uno por canal: el sector es el mismo ×2.
+    r = c["sector_mordaza_al_centro"]
+    for lado in ("izquierdo", "derecho"):
+        a = c[f"sector_mordaza_angulo_{lado}"]
+        perfil += circulo((r * math.cos(a), r * math.sin(a)), c["sector_mordaza_diametro"] / 2)
     return perfil
 
 
@@ -666,7 +671,7 @@ PERFILES = {
     "garra": lambda c: garra(c),
     "placa_tope": lambda c: placa_tope(c),
     "calzo_sector": lambda c: calzo_sector(c),
-    "collar_seguidor": lambda c: anillo("collar_seguidor_diametro", "poste_eje_diametro")(c),
+    "collar": lambda c: anillo("collar_seguidor_diametro", "poste_eje_diametro")(c),
     "casquillo_rodillo": lambda c: anillo(
         "casquillo_rodillo_diametro", "casquillo_rodillo_interior_diametro"
     )(c),
@@ -968,8 +973,8 @@ LISTADO: dict[str, Ficha] = {
         "del brazo, para que encajen.",
         montaje=(
             "Atraviesa el plato 1. Por debajo cala el brazo proximal; por encima, el tambor del "
-            "cabestrante, cuya cara alta queda a 33,5 del plato. Un collar bajo el proximal y "
-            "un circlip sobre el tambor: 55 en los dos lados. La cara plana mira al otro cubo "
+            "cabestrante, cuya cara alta queda a 44,5 del plato. Un collar bajo el proximal y "
+            "un circlip sobre el tambor: 66 en los dos lados. La cara plana mira al otro cubo "
             "del brazo y es lo único que fija el calaje."
         ),
         material="barra W10 h6 rectificada",
@@ -986,6 +991,14 @@ LISTADO: dict[str, Ficha] = {
             Variable("cota", "union_sector_seguidor_cerca", "centro al tornillo cercano"),
             Variable("cota", "union_sector_seguidor_lejos", "centro al tornillo lejano"),
             Variable("cota", "union_sector_seguidor_diametro", "Ø paso de los dos al seguidor"),
+            Variable("cota", "sector_mordaza_al_centro", "centro a la mordaza"),
+            Variable(
+                "angulo",
+                "sector_mordaza_angulo_izquierdo_positivo",
+                "mordaza, canal izquierdo, por debajo de X",
+            ),
+            Variable("angulo", "sector_mordaza_angulo_derecho", "mordaza, canal derecho"),
+            Variable("cota", "sector_mordaza_diametro", "Ø paso del M4 de la mordaza"),
         ),
         ("plancha", "amplificador_sector_espesor"),
         "Disco entero, sin muesca: la cinta abraza el lado OPUESTO al tambor, así que en "
@@ -1714,21 +1727,24 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte + taladro transversal Ø2",
     ),
     # --- lo que sostiene y empuja cada seguidor ---------------------------------
-    "collar_seguidor": Ficha(
+    "collar": Ficha(
         "collar de latón con un prisionero M3 radial",
-        3,
+        18,
         (
             Variable("cota", "collar_seguidor_diametro", "Ø exterior"),
             Variable("cota", "poste_eje_diametro", "Ø interior", "F7"),
             Variable("cota", "collar_seguidor_largo", "largo", en_el_perfil=False),
         ),
         ("barra", "collar_seguidor_largo"),
-        "Sostiene el seguidor a su altura —era lo único que no decía nadie— y lleva el muelle "
-        "de torsión alrededor. Girarlo a la marca antes de apretar el prisionero pone a la vez "
-        "el tope y la precarga.",
+        "Lo que fija las alturas en los postes, que nadie decía: sostiene cada seguidor y "
+        "lleva su muelle de torsión, y aprieta cada plato por arriba y por abajo. Una sola "
+        "pieza para las dos cosas. Bajo el seguidor, girarlo a la marca antes de apretar pone "
+        "a la vez el tope y la precarga.",
         montaje=(
-            "En el poste, con la cara alta 1 por debajo del seguidor: ahí va la valona del "
-            "casquillo igus. Encima, soldada, la placa de tope. Alrededor, el muelle de torsión."
+            "En cada poste, seis: uno arriba y otro abajo de los platos 1 y 2, uno bajo el "
+            "plato 3 —encima lo sujeta un M3 avellanado en la punta del poste— y uno bajo el "
+            "seguidor, con la cara alta 1 por debajo de él, donde va la valona del casquillo "
+            "igus; encima de este, soldada, la placa de tope, y alrededor el muelle de torsión."
         ),
         material="latón, barra de Ø16",
         proceso="torneado de la barra de Ø16, la del tambor y la garra, + roscado M3 radial",

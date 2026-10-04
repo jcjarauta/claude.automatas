@@ -134,10 +134,10 @@ suba, está en la sección siguiente.
 | Volante, material (disco de plancha de latón Ø104 × 6) | 1 | 5,57 | 5,57 |
 | Casquillos igus GFM-0810-06 | 3 | 0,74 | 2,21 |
 | Rodamientos de los ejes del cartucho, 6800-2Z | 3 | 0,69 | 2,07 |
-| Tornillería inox A2 | 20 | 0,04 | 0,80 |
+| Tornillería y retención inox A2, surtido de `docs/materiales.md` *(estimado)* | 79 | 0,06 | 4,74 |
 | Árbol de levas, Ø10 h6 rectificado | 1 | 0,47 | 0,47 |
 | Acabado Osmo 3062 | 1 | 0,30 | 0,30 |
-| **Plataforma** | | | **104,64** |
+| **Plataforma** | | | **108,58** |
 
 La **base casi dobla** su línea, de 10,39 a 19,30: al cerrar la planta pasó
 de 154 a 275 mm de fondo, así que una tabla de 2 m da 7 bases y no 13. El
@@ -150,8 +150,8 @@ sin verificar.
 | | € |
 | --- | --- |
 | Cartucho | 39,04 |
-| Plataforma | 104,64 |
-| **Material y compras de un escribiente** | **143,68** |
+| Plataforma | 108,58 |
+| **Material y compras de un escribiente** | **147,62** |
 
 Son **70 € más** de lo que decía la estimación anterior de 60-65 €, y la
 diferencia no es que algo haya subido: es que antes faltaban el corte, los

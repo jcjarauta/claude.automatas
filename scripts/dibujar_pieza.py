@@ -96,7 +96,7 @@ PERFIL_DE = {
     "garra": PERFILES["garra"],
     "placa_tope": PERFILES["placa_tope"],
     "calzo_sector": PERFILES["calzo_sector"],
-    "collar_seguidor": PERFILES["collar_seguidor"],
+    "collar": PERFILES["collar"],
     "casquillo_rodillo": PERFILES["casquillo_rodillo"],
 }
 """De dónde sale la forma de cada pieza.

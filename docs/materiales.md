@@ -23,10 +23,39 @@ Barra, tubo y alambre se piden por largo: el de cada pieza más 2 mm de corte. L
 | acero plata Ø6 | barra | acero plata Ø6 h9 | 11 mm | bulon_tirante ×1 |
 | cuerda de piano Ø2 | alambre | cuerda de piano Ø2, recta | 86 mm | bieleta ×1 |
 | latón, barra de Ø4 | barra | barra de latón Ø4 | 116 mm | tirante ×1 |
-| latón, barra de Ø16 | barra | barra de latón CuZn39Pb3 Ø16 | 59 mm | tambor ×2, casquillo_rueda ×1, collar_seguidor ×3, garra ×1 |
+| latón, barra de Ø16 | barra | barra de latón CuZn39Pb3 Ø16 | 194 mm | tambor ×2, casquillo_rueda ×1, collar ×18, garra ×1 |
 | latón, barra de Ø25 | barra | barra de latón CuZn39Pb3 Ø25 | 7 mm | cubo ×1 |
 | latón, barra cuadrada de 16 | barra | barra cuadrada de latón de 16 | 30 mm | pinza ×1 |
 | latón, barra de 6 × 5 | barra | pletina de latón 6 × 5 | 84 mm | orejeta_mesa ×2 |
 | latón, tubo 13/10,6 | tubo | tubo de latón 13 × 1,2 | 18 mm | tubo_punta ×1 |
 | latón, tubo 4/3,1 | tubo | tubo de latón 4 × 0,45 | 37 mm | casquillo_rodillo ×3 |
 | latón, tubo 3,2/2 | tubo | tubo de latón 3,2 × 0,6 | 7 mm | casquillo_bieleta ×1 |
+
+## Tornillería y retención
+
+Las cantidades salen de las piezas del listado: si cambia cuántos sectores o collares hay, cambia aquí. Todo inox A2.
+
+| Designación | Cantidad | Para |
+| --- | ---: | --- |
+| DIN 912 M3 × 16 | 4 | sector, calzo y seguidor |
+| DIN 912 M3 × 16 | 2 | apoyos del balancín, del plato 2 |
+| DIN 7991 M3 × 30, cortado a 12,5 / 19,5 / 26,5 | 3 | ejes de rodillo |
+| DIN 7991 M3 × 10 | 3 | punta roscada de cada poste, sobre el plato 3 |
+| DIN 439 M3 (tuerca fina) | 7 | unión del sector, ejes de rodillo |
+| DIN 912 M4 × 16 | 2 | mordaza al sector, por su ranura |
+| DIN 439 M4 (tuerca fina) | 2 | bajo el sector |
+| DIN 913 M3 × 6, punta plana | 2 | aprieta la cinta en la mordaza |
+| DIN 913 M3 × 4, punta plana | 20 | collares, casquillo de la rueda y pinza del portaminas |
+| DIN 912 M2 × 4 | 2 | extremos de la cinta en el tambor |
+| DIN 912 M2 × 5 | 4 | pestañas de las láminas |
+| DIN 912 M2 × 8 | 2 | mesa a sus orejetas |
+| DIN 912 M2 × 30 | 4 | soportes de la mesa, desde bajo la base |
+| DIN 705 Ø10, anillo de ajuste | 2 | bajo cada brazo proximal |
+| DIN 6799 para eje Ø10 | 4 | sobre cada tambor, bajo el muñón y sobre el muelle de la garra |
+| DIN 6799 para eje Ø6 | 1 | bulón del tirante |
+| DIN 6799 para eje Ø4 | 2 | eje del balancín, por fuera |
+| DIN 6799 para eje Ø1,5 | 8 | ejes de la mesa |
+| DIN 7 Ø2 × 16 | 1 | pasador de la garra |
+| DIN 7 Ø3 × 6 | 3 | pasadores de tope, de pie en la placa |
+| arandela de presión Ø2 | 1 | bieleta en el balancín |
+| **total** | **79** | |

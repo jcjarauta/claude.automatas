@@ -49,3 +49,16 @@ def test_el_documento_esta_al_dia():
     assert DOCUMENTO.read_text(encoding="utf-8") == documento(), (
         "docs/materiales.md no está al día: uv run python scripts/lista_materiales.py --escribir"
     )
+
+
+def test_los_precios_cuentan_la_tornilleria_de_la_lista():
+    import json
+    from pathlib import Path
+
+    from emit.materiales import tornilleria
+
+    precios = json.loads(
+        (Path(__file__).resolve().parents[2] / "bench" / "precios.json").read_text(encoding="utf-8")
+    )
+    linea = next(x for x in precios["plataforma"] if x["concepto"].startswith("Tornillería"))
+    assert linea["cantidad"] == sum(f.cantidad for f in tornilleria())

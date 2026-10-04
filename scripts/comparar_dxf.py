@@ -348,8 +348,13 @@ FICHAS: dict[str, Ficha] = {
             "amplificador_sector_radio_mecanizado": 1,
             "amplificador_sector_agujero_diametro_radio": 1,
             "union_sector_seguidor_diametro_radio": 2,
+            "sector_mordaza_diametro_radio": 2,
         },
         desde_datum=("union_sector_seguidor_cerca", "union_sector_seguidor_lejos"),
+        polares=(
+            ("sector_mordaza_al_centro", "sector_mordaza_angulo_izquierdo", 1),
+            ("sector_mordaza_al_centro", "sector_mordaza_angulo_derecho", 1),
+        ),
         datum="amplificador_sector_agujero_diametro_radio",
     ),
     "tambor": Ficha(
@@ -426,7 +431,7 @@ FICHAS: dict[str, Ficha] = {
         desde_datum=("pasador_radio",),
         datum="eje_diametro_radio",
     ),
-    "collar_seguidor": Ficha(
+    "collar": Ficha(
         "anillo: el collar sobre el poste",
         {"collar_seguidor_diametro_radio": 1, "poste_eje_diametro_radio": 1},
         datum="poste_eje_diametro_radio",

@@ -361,3 +361,50 @@ def test_toda_pieza_colocada_cae_en_un_solo_grupo():
             assert not p.movil, p.nombre
         if g == "cartucho":
             assert p.movil, p.nombre
+
+
+def test_los_agujeros_de_la_mordaza_en_el_sector_son_los_de_la_cinta():
+    """El sector lleva un agujero de mordaza por canal, detrás, en el centro
+    de los 252° que abraza la cinta. Sale de dónde cae el tambor de cada
+    canal respecto del brazo del seguidor; si cambia el cinco barras o el
+    seguidor, el contrato tiene que cambiar con él."""
+    from compile.escribiente import Escribiente
+    from emit.montaje import _del_cinco_barras
+
+    c = contrato_mm()
+    m = Escribiente()
+    al = _del_cinco_barras(c)
+    radial = c["amplificador_sector_radio_mecanizado"] - c["mordaza_ancho"] / 2.0
+    hueco = c["mordaza_entre_tornillos"] + c["mordaza_voladizo"] - c["mordaza_largo"] / 2.0
+    sep = c["brazo_separacion"] / 2.0
+    for i, (lado, x) in enumerate((("izquierdo", -sep), ("derecho", sep))):
+        s = m.seguidor(i)
+        px, py = s.pivote[0] * 1000.0, s.pivote[1] * 1000.0
+        tx, ty = al((x, 0.0))
+        atras = math.atan2(ty - py, tx - px) + math.pi - s.psi_cero
+        hx = radial * math.cos(atras) + hueco * math.cos(atras + math.pi / 2.0)
+        hy = radial * math.sin(atras) + hueco * math.sin(atras + math.pi / 2.0)
+        assert math.hypot(hx, hy) == pytest.approx(c["sector_mordaza_al_centro"], abs=1e-4)
+        assert math.atan2(hy, hx) == pytest.approx(c[f"sector_mordaza_angulo_{lado}"], abs=1e-6)
+
+
+def test_el_montaje_coloca_las_piezas_que_dice_el_listado():
+    """Cuántas unidades de cada pieza fabricada hay en el 3D tiene que ser lo
+    que dice su ficha: es lo que se corta y lo que se compra. Cazó los
+    collares, que el listado contaba 21 con el plato 3 sin collar encima."""
+    from collections import Counter
+
+    from compile.conjunto import piezas_en
+    from compile.escribiente import Escribiente, compilar
+    from scripts.exportar_para_cad import leer
+
+    piezas = piezas_en(compilar(leer(RAIZ / "demo" / "hola.json")), Escribiente(), 0.0)
+    nombres = [p.nombre for p in piezas]
+    cuenta = Counter()
+    for nombre in nombres:
+        for pieza in ("collar", "mordaza", "calzo_sector", "sector", "tambor", "seguidor"):
+            if nombre.startswith(pieza + "_") and not nombre.startswith(("sector_mordaza",)):
+                cuenta[pieza] += 1
+    for pieza in ("mordaza", "calzo_sector", "sector", "tambor", "seguidor"):
+        assert cuenta[pieza] == LISTADO[pieza].cantidad, pieza
+    assert cuenta["collar"] == LISTADO["collar"].cantidad

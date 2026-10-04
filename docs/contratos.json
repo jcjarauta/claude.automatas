@@ -1088,6 +1088,34 @@
           "unidad": "m",
           "tolerancia": "",
           "descripcion": "Taladro roscado M2, radial, en el lado lejano del tambor: ahí los dos extremos de la cinta se solapan y un M2 los sujeta por un agujero del fleje. La cinta no se dobla para anclarse: queda plana sobre el cilindro. Cierra el anclaje del tambor que el contrato dejaba abierto"
+        },
+        {
+          "nombre": "sector_mordaza_al_centro",
+          "valor": 0.0430796,
+          "unidad": "m",
+          "tolerancia": "",
+          "descripcion": "Del centro del sector al agujero del M4 de la mordaza: el centro de su ranura con la mordaza a media carrera, detrás, en el centro de los 252° que abraza la cinta. Derivado (tests/emit/test_montaje.py)"
+        },
+        {
+          "nombre": "sector_mordaza_angulo_izquierdo",
+          "valor": -2.6386374,
+          "unidad": "rad",
+          "tolerancia": "",
+          "descripcion": "Ángulo del agujero de la mordaza en el sector izquierdo, desde el brazo del seguidor. El sector lleva LOS DOS agujeros, uno sin usar: el tambor cae a un lado distinto del brazo en cada canal, y así el sector sigue siendo una sola pieza ×2"
+        },
+        {
+          "nombre": "sector_mordaza_angulo_derecho",
+          "valor": 2.9367012,
+          "unidad": "rad",
+          "tolerancia": "",
+          "descripcion": "Lo mismo en el sector derecho"
+        },
+        {
+          "nombre": "sector_mordaza_diametro",
+          "valor": 0.0043,
+          "unidad": "m",
+          "tolerancia": "",
+          "descripcion": "Paso del M4 que fija la mordaza al sector, con su tuerca debajo"
         }
       ]
     },

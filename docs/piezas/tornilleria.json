@@ -1,8 +1,8 @@
 {
   "nombre": "tornilleria",
   "familia": "fijacion",
-  "designacion": "DIN 912 M3 inox A2",
-  "cantidad": 20,
+  "designacion": "surtido inox A2, M2 a M4 (docs/materiales.md)",
+  "cantidad": 79,
   "material": "inox A2",
   "fuente": {
     "proveedor": "Ferretería Campollano",
@@ -25,5 +25,5 @@
       "critica": false
     }
   ],
-  "nota": "Allen inox. Se compra en cajas de 100."
+  "nota": "Allen, avellanados, prisioneros, tuercas finas, anillos y pasadores: la lista por norma y medida la genera emit/materiales.py (tornilleria()). Se compra en cajas de 100."
 }

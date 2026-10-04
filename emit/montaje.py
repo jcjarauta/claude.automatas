@@ -294,7 +294,7 @@ GRUPOS: tuple[Grupo, ...] = (
         "Lo que no se mueve: base, postes, platos y rodamientos",
         "#9aa0a6",
         0.25,
-        ("base", "poste1", "poste2", "poste3", "plato", "rodamiento_"),
+        ("base", "poste1", "poste2", "poste3", "plato", "rodamiento_", "collar_plato_"),
     ),
     Grupo(
         "cartucho",
@@ -337,7 +337,17 @@ GRUPOS: tuple[Grupo, ...] = (
         "El cabestrante 6:1: sectores, tambores y ejes de pivote",
         "#f1c40f",
         1.0,
-        ("sector_", "tambor_", "eje_pivote_", "cinta_", "mordaza_", "tornillo_tambor_"),
+        (
+            "sector_",
+            "tambor_",
+            "eje_pivote_",
+            "cinta_",
+            "mordaza_",
+            "tornillo_tambor_",
+            "calzo_sector_",
+            "tornillos_sector_",
+            "tornillo_mordaza_",
+        ),
     ),
     Grupo(
         "cinco_barras",
@@ -659,6 +669,21 @@ def colocar(
     poste = hecho["poste"]
     for i, pivote in enumerate(pivotes):
         piezas.append(Colocada(f"poste{i + 1}", _poner(poste, 0.0, pivote, z["poste"][0]), False))
+        # Cada plato, apretado entre dos collares: es lo que fija su altura. El 3
+        # no lleva collar encima: el poste acaba en su cara alta y ahí lo sujeta
+        # un M3 avellanado en la punta roscada; encima va el volante.
+        for plato in ("plato1", "plato2", "plato3"):
+            lados = [("bajo", z[plato][0] - c["collar_seguidor_largo"])]
+            if plato != "plato3":
+                lados.append(("sobre", z[plato][1]))
+            for lado, pie in lados:
+                piezas.append(
+                    Colocada(
+                        f"collar_plato_{plato[-1]}{lado}_{i + 1}",
+                        _poner(hecho["collar"], 0.0, pivote, pie),
+                        False,
+                    )
+                )
 
     # --- lo que gira con el árbol -------------------------------------------
     # Cada leva a la altura de su rodillo: el contrato dice cuánto baja cada
@@ -703,6 +728,7 @@ def colocar(
         )
         piezas += _tope_y_muelle(c, z, hecho, i + 1, pivote, seg.psi_cero, seg.hacia_dentro, angulo)
         if i < 2:  # el canal del elevador no lleva cabestrante
+            piezas += _union_del_sector(c, z, hecho, i + 1, pivote, angulo)
             piezas.append(
                 Colocada(
                     f"sector_{i + 1}", _poner(sector_solido, angulo, pivote, z["sector"][0]), True
@@ -782,6 +808,46 @@ rodillo. Va por DEBAJO del rodillo: por arriba está el sector."""
 
 TUERCA_DEL_EJE = (6.0, 1.8)
 """Entre aristas y alto de la tuerca fina M3 DIN 439, sobre el seguidor."""
+
+
+def _union_del_sector(
+    c: dict[str, float],
+    z: dict[str, tuple[float, float]],
+    hecho: dict[str, Any],
+    n: int,
+    pivote: Punto,
+    angulo: float,
+) -> list[Colocada]:
+    """El calzo entre seguidor y sector, y los dos M3 DIN 912 que atraviesan
+    sector, calzo y seguidor, con su tuerca fina debajo del seguidor."""
+    x, y = pivote
+    piezas = [
+        Colocada(
+            f"calzo_sector_{n}",
+            _poner(
+                hecho["calzo_sector"], angulo, pivote, z["sector"][0] - c["calzo_sector_espesor"]
+            ),
+            True,
+        )
+    ]
+    tornillos = None
+    for cota in ("union_sector_seguidor_cerca", "union_sector_seguidor_lejos"):
+        px, py = x + c[cota] * math.cos(angulo), y + c[cota] * math.sin(angulo)
+        bajo = z["seguidores"][0] - TUERCA_DEL_EJE[1]
+        uno = _cilindro(1.5 - JUEGO_GIRATORIO / 2.0, (px, py, bajo), (px, py, z["sector"][1]))
+        uno += _cilindro(
+            CABEZA_DIN_912_M3[0] / 2.0,
+            (px, py, z["sector"][1]),
+            (px, py, z["sector"][1] + CABEZA_DIN_912_M3[1]),
+        )
+        uno += _cilindro(TUERCA_DEL_EJE[0] / 2.0, (px, py, bajo), (px, py, z["seguidores"][0]))
+        tornillos = uno if tornillos is None else tornillos + uno
+    piezas.append(Colocada(f"tornillos_sector_{n}", tornillos, True))
+    return piezas
+
+
+CABEZA_DIN_912_M3 = (5.5, 3.0)
+"""Ø y alto de la cabeza de un M3 Allen DIN 912."""
 
 
 def _arco(
@@ -875,6 +941,15 @@ def _cinta(
         * hecho["mordaza"]
     )
     piezas.append(Colocada(f"mordaza_{n}", mordaza, True))
+    # El centro de la ranura, con la mordaza a media carrera.
+    hueco = c["mordaza_entre_tornillos"] + c["mordaza_voladizo"] - c["mordaza_largo"] / 2.0
+    mx = sx + radial * math.cos(atras) + hueco * math.cos(atras + math.pi / 2.0)
+    my = sy + radial * math.sin(atras) + hueco * math.sin(atras + math.pi / 2.0)
+    arriba = plano[1] + c["mordaza_espesor"]
+    m4 = _cilindro(2.0 - JUEGO_GIRATORIO / 2.0, (mx, my, plano[0] - 2.2), (mx, my, arriba))
+    m4 += _cilindro(3.5, (mx, my, arriba), (mx, my, arriba + 4.0))
+    m4 += _cilindro(3.6, (mx, my, plano[0] - 2.2), (mx, my, plano[0]))
+    piezas.append(Colocada(f"tornillo_mordaza_{n}", m4, True))
 
     # El M2 del tambor, radial, en el lado lejano: cabeza de Ø3,8 × 1,3
     # sobre los dos extremos solapados de la cinta.
@@ -910,9 +985,7 @@ def _tope_y_muelle(
     pie_collar = pie_placa - c["collar_seguidor_largo"]
     a = reposo + hacia_dentro * c["tope_angulo"]
     piezas = [
-        Colocada(
-            f"collar_seguidor_{n}", _poner(hecho["collar_seguidor"], a, pivote, pie_collar), False
-        ),
+        Colocada(f"collar_seguidor_{n}", _poner(hecho["collar"], a, pivote, pie_collar), False),
         Colocada(f"placa_tope_{n}", _poner(hecho["placa_tope"], a, pivote, pie_placa), False),
     ]
     px, py = x + c["tope_brazo"] * math.cos(a), y + c["tope_brazo"] * math.sin(a)

@@ -302,14 +302,15 @@
       "url": "https://www.osmo.es/"
     },
     {
-      "concepto": "Tornillería M3/M4 inox A2",
-      "referencia": "DIN 912, cajas de 100",
+      "concepto": "Tornillería y retención inox A2",
+      "referencia": "surtido de docs/materiales.md: DIN 912, 7991, 913, 439, 705, 6799 y 7, M2 a M4",
       "proveedor": "Ferretería Campollano",
-      "cantidad": 20,
-      "precio": 0.04,
+      "cantidad": 79,
+      "precio": 0.06,
       "iva_incluido": true,
-      "verificado": true,
-      "url": "https://www.ferreteriacampollano.com/tornilleria-y-fijaciones/tornillos-allen/din-912.html"
+      "verificado": false,
+      "url": "https://www.ferreteriacampollano.com/tornilleria-y-fijaciones/tornillos-allen/din-912.html",
+      "pedir": "precio del surtido completo de docs/materiales.md; el 0,04 verificado era solo el DIN 912 M3"
     },
     {
       "concepto": "Cinta del amplificador 6:1",

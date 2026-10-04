@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from emit.materiales import CORTE, MARGEN_DE_CHAPA, STOCK, tabla_markdown
+from emit.materiales import CORTE, MARGEN_DE_CHAPA, STOCK, tabla_markdown, tabla_tornilleria
 
 RAIZ = Path(__file__).resolve().parent.parent
 DOCUMENTO = RAIZ / "docs" / "materiales.md"
@@ -30,7 +30,9 @@ def documento() -> str:
         f"Barra, tubo y alambre se piden por largo: el de cada pieza más {CORTE:g} mm de corte. "
         f"La chapa, por superficie: la caja de cada perfil más {MARGEN_DE_CHAPA:g} mm alrededor, "
         "sin anidar. Las levas del cartucho salen de la misma plancha de POM y no cuentan aquí: "
-        "son del pedido.\n\n" + tabla_markdown()
+        "son del pedido.\n\n" + tabla_markdown() + "\n## Tornillería y retención\n\n"
+        "Las cantidades salen de las piezas del listado: si cambia cuántos sectores o "
+        "collares hay, cambia aquí. Todo inox A2.\n\n" + tabla_tornilleria()
     )
 
 

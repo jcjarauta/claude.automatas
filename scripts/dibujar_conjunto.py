@@ -353,7 +353,7 @@ def despiece() -> list[tuple[int, str, int, str, str]]:
         "casquillo_rueda",
         "eje_manivela",
         "eje_pivote",
-        "collar_seguidor",
+        "collar",
         "placa_tope",
         "seguidor",
         "casquillo_rodillo",
