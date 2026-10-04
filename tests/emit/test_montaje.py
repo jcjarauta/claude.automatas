@@ -59,6 +59,22 @@ def test_un_perfil_que_no_cierra_se_queja():
         bucles([Segmento((0.0, 0.0), (10.0, 0.0))])
 
 
+def test_el_eje_de_pivote_llega_del_collar_al_circlip_en_los_dos_brazos():
+    """El eje de pivote atraviesa el proximal —con su collar de 3 debajo— y
+    sube hasta el tambor, que va en el plano del sector. Si la pila sube, el
+    tambor sube con ella y un eje del largo de antes deja de atravesar el
+    proximal: nadie lo vería en el barrido, porque un eje corto no choca con
+    nada. Pasó al subir la pila 8 mm para el cubo del cartucho."""
+    from emit.montaje import alturas
+
+    c = contrato_mm()
+    z = alturas(c)
+    tope = z["tambor"][1] + 1.5
+    pide = [tope - (z[f"proximal_{n}"][0] - 3.0) for n in (1, 2)]
+    assert c["eje_pivote_largo"] >= max(pide) - 1e-9, pide
+    assert c["eje_pivote_largo"] - max(pide) < 1.0, "sobra más de un milímetro de barra"
+
+
 # ---------------------------------------------------------------------------
 # Los sólidos
 # ---------------------------------------------------------------------------

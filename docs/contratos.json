@@ -12,8 +12,8 @@
           "nombre": "eje_diametro",
           "valor": 0.01,
           "unidad": "m",
-          "descripcion": "Diámetro del árbol de levas",
-          "tolerancia": "h7"
+          "descripcion": "Diámetro del eje del cartucho y de los dos ejes de la plataforma que lo sujetan entre puntos: el muñón de abajo y el eje motriz de arriba. h6, el de la barra rectificada de catálogo; el h7 que decía aquí no lo pedía nada y la pieza ya era h6",
+          "tolerancia": "h6"
         },
         {
           "nombre": "eje_sentido_horario",
@@ -42,14 +42,14 @@
       "nombre": "fase",
       "estado": "congelado",
       "congelado_el": "2026-09-29",
-      "porque": "El cartucho es una sola pieza lógica y solo se puede montar de una manera",
+      "porque": "El cartucho es una sola pieza lógica y solo se puede montar de una manera. Desde el 2026-10-04 el «plato de arrastre» es el cubo de latón del propio cartucho, y la fase respecto del árbol la da la garra (contrato de cartucho)",
       "valores": [
         {
           "nombre": "pasador_diametro",
           "valor": 0.003,
           "unidad": "m",
           "descripcion": "Pasador de índice: orienta la leva",
-          "tolerancia": "m6 en el plato metálico, deslizante en el POM"
+          "tolerancia": "m6 en el cubo del cartucho (latón), deslizante en el POM"
         },
         {
           "nombre": "pasador_radio",
@@ -62,7 +62,7 @@
           "nombre": "pasador_longitud",
           "valor": 0.024,
           "unidad": "m",
-          "descripcion": "Atraviesa la pila de 19 mm y deja 5 para el plato de arrastre",
+          "descripcion": "Atraviesa los 5 del cubo del cartucho y la pila de 19 mm, justo",
           "tolerancia": ""
         },
         {
@@ -106,6 +106,118 @@
           "valor": 0.037508794629,
           "unidad": "rad",
           "descripcion": "Ángulo de la palanca a media altura de levantamiento",
+          "tolerancia": ""
+        }
+      ]
+    },
+    {
+      "nombre": "cartucho",
+      "estado": "pendiente",
+      "porque": "La interfaz entre la plataforma, que va a stock, y el cartucho, que se fabrica por pedido. Se congela cuando el primer cartucho entre y salga en el banco: es la H3.5 del baseline, y a partir de ahí todo cartucho vendido tiene que caber en toda plataforma",
+      "valores": [
+        {
+          "nombre": "cartucho_radio_maximo",
+          "valor": 0.0555,
+          "unidad": "m",
+          "descripcion": "Lo más que puede medir de radio cualquier leva. Sale del pasillo de salida: entre los dos postes traseros quedan 123,1 − Ø8 = 115,1, menos 2 de paso a cada lado. Lo vigila el compilador (cartucho_no_sale)",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "cartucho_salida_angulo",
+          "valor": 1.0471975511965976,
+          "unidad": "rad",
+          "tolerancia": "",
+          "descripcion": "Hacia dónde sale el cartucho, en el marco de la leva: lejos del poste 3, por el medio de los postes 1 y 2, hacia la parte de atrás de la base. Por ahí no puede ir nada entre la cara alta del plato 1 y la baja de los seguidores"
+        },
+        {
+          "nombre": "cartucho_holgura_de_paso",
+          "valor": 0.001,
+          "unidad": "m",
+          "descripcion": "Lo mínimo que libra el cartucho al sacarlo y meterlo en fase cero. Es un movimiento a mano y lento, no un giro, y por eso es menor que holgura_minima",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "cartucho_eje_largo",
+          "valor": 0.027,
+          "unidad": "m",
+          "descripcion": "El eje Ø10 del cartucho: los 5 del cubo, la pila de 19 y 3 por encima, donde va la ranura de la garra",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "cartucho_teton_diametro",
+          "valor": 0.005,
+          "unidad": "m",
+          "descripcion": "El tetón de abajo del eje del cartucho, que entra de lado en la horquilla del muñón",
+          "tolerancia": "g6"
+        },
+        {
+          "nombre": "cartucho_teton_largo",
+          "valor": 0.004,
+          "unidad": "m",
+          "descripcion": "Lo que baja el tetón: el alto de la horquilla",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "cubo_diametro",
+          "valor": 0.024,
+          "unidad": "m",
+          "descripcion": "El cubo de latón del cartucho, el antiguo «plato de arrastre». Lleva el pasador de índice a 18, así que su borde queda a 4,5 del pasador",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "cubo_espesor",
+          "valor": 0.005,
+          "unidad": "m",
+          "descripcion": "Lo que el pasador entra en el cubo: los 24 del pasador menos la pila de 19",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "munon_holgura",
+          "valor": 0.001,
+          "unidad": "m",
+          "descripcion": "De la cara alta del plato 1 a la cara baja del muñón, que gira",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "munon_horquilla_alto",
+          "valor": 0.004,
+          "unidad": "m",
+          "descripcion": "El collar del muñón con la horquilla en U donde entra el tetón. La U solo mira hacia cartucho_salida_angulo en fase cero",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "munon_horquilla_ancho",
+          "valor": 0.0051,
+          "unidad": "m",
+          "descripcion": "La boca de la U: el tetón de 5 con 0,1 de juego",
+          "tolerancia": "H9"
+        },
+        {
+          "nombre": "garra_ranura_ancho",
+          "valor": 0.003,
+          "unidad": "m",
+          "descripcion": "La ranura de la cabeza del eje del cartucho donde entra la lengüeta de la garra",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "garra_ranura_profundidad",
+          "valor": 0.003,
+          "unidad": "m",
+          "descripcion": "Lo que entra la lengüeta",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "garra_ranura_desplazamiento",
+          "valor": 0.0015,
+          "unidad": "m",
+          "descripcion": "Lo que la ranura se aparta del centro del eje. Una ranura centrada entraría también girada 180°; descentrada, solo entra en una posición, y esa es la fase cero",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "garra_carrera",
+          "valor": 0.005,
+          "unidad": "m",
+          "descripcion": "Lo que se sube la garra a mano contra su muelle para soltar el cartucho: la profundidad de la ranura más 2",
           "tolerancia": ""
         }
       ]
@@ -531,9 +643,9 @@
         },
         {
           "nombre": "eje_pivote_largo",
-          "valor": 0.055,
+          "valor": 0.063,
           "unidad": "m",
-          "descripcion": "Largo del eje de pivote, el mismo para los dos: del collar bajo el proximal al circlip sobre el tambor, cuya cara alta queda a 33,5 del plato 1. El derecho pide 54,5 y el izquierdo 51; uno solo de 55 es un corte de barra y lo que sobra queda bajo el proximal",
+          "descripcion": "Largo del eje de pivote, el mismo para los dos: del collar de 3 bajo el proximal al circlip 1,5 sobre el tambor, cuya cara alta queda a 41,5 del plato 1. El derecho pide 62,5 y el izquierdo 59; uno solo de 63 es un corte de barra y lo que sobra queda bajo el proximal. Eran 55 hasta que la pila subió 8 para el cubo y el muñón del cartucho (tests/emit/test_montaje.py lo ata a la pila)",
           "tolerancia": ""
         },
         {
@@ -671,9 +783,9 @@
         },
         {
           "nombre": "leva_sobre_plato",
-          "valor": 0.002,
+          "valor": 0.01,
           "unidad": "m",
-          "descripcion": "De la cara alta del plato 1 a la cara baja de la primera leva: el hueco del plato de arrastre. Estaba como un 2.0 suelto en emit/montaje.py",
+          "descripcion": "De la cara alta del plato 1 a la cara baja de la primera leva: 1 de holgura, los 4 del muñón con su horquilla y los 5 del cubo del cartucho (contrato de cartucho). Eran 2, el hueco de un plato de arrastre que nunca se definió",
           "tolerancia": ""
         },
         {
@@ -1190,7 +1302,7 @@
         },
         {
           "nombre": "apoyo_balancin_alto",
-          "valor": 0.027,
+          "valor": 0.019,
           "unidad": "m",
           "descripcion": "Alto de cada apoyo, de la cara baja del plato 2 a 5 por debajo del eje. Derivado (compile/levantamiento.py): no depende de base_al_plato, todo cuelga del plato 2",
           "tolerancia": ""
@@ -1239,7 +1351,7 @@
         },
         {
           "nombre": "tirante_largo",
-          "valor": 0.10550000000000001,
+          "valor": 0.1135,
           "unidad": "m",
           "descripcion": "Largo de la varilla del tirante: del eje del perno de la palanca con la mesa arriba al del eje movil trasero, mas 3 por arriba (cruza el bulon) y 2 por abajo (bajo su ojo). Derivado, y PENDIENTE con base_al_plato: es la unica cota de la cadena que cruza la pila entera",
           "tolerancia": "ESTIMADO"

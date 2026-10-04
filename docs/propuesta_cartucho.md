@@ -1,7 +1,11 @@
 # Propuesta: cartucho intercambiable y fabricación
 
 Estado: **APROBADA** (2026-10-04): garra con muelle, cartucho con su eje y su
-cubo, y cambio de los contratos de fase y eje. **Fase 1 hecha**, ver §0. No toca código ni contratos
+cubo, y cambio de los contratos de fase y eje. **Fases 1 y 2 hechas**: §0
+para la 1; la 2 es el contrato de cartucho en `docs/contratos.md` (radio
+máximo 55,5 vigilado por el compilador, salida a 60°, muñón, cubo, garra con
+ranura descentrada), fase y eje ajustados, la pila subida 8 mm para el muñón y
+el cubo, el pasador como uno de 24 por cartucho y los costes al día. No toca código ni contratos
 hasta que se apruebe. Lo que cambia un contrato congelado está marcado
 **[CONTRATO]**.
 

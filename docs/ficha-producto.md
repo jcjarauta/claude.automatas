@@ -74,8 +74,8 @@ está congelado en `docs/contratos.md`.
 | --- | --- | --- | --- | --- |
 | Rodillo seguidor | 3 | **MR63ZZ** (3 × 6 × **2,5**) | [123rodamiento](https://www.123rodamiento.es/rodamiento-cojinete/rodamiento-bola/una-hilera/mr63-zz), tarifa 50+ | 1,19 |
 | Rodamiento del árbol | 2 | **6800-2Z** (10 × 19 × 5) | [123rodamiento](https://www.123rodamiento.es/rodamiento-cojinete/rodamiento-bola/una-hilera/6800-2rs) | 0,87 *(precio del 2RS)* |
-| Árbol de levas | 1 | **W10H6**, CF53 h6 rectificado, Ra 0,3 | [Motedis](https://www.motedis.es/es/Eje-de-precision-10-mm-H6-acero-templado-y-rectificado) | 0,47 /120 mm |
-| Pasador de índice | 3 | **DIN 6325 Ø3 × 16** m6 | [esutil.es](https://www.esutil.es/pasador-din-6325-cilindrico-templado-de-acero-b53d0/) | 0,14 |
+| Árbol de levas | 1 | **W10H6**, CF53 h6 rectificado, Ra 0,3, cortado a 92 | [Motedis](https://www.motedis.es/es/Eje-de-precision-10-mm-H6-acero-templado-y-rectificado) | 0,47 |
+| Pasador de índice | 1 por cartucho | **DIN 6325 Ø3 × 24** m6 | [esutil.es](https://www.esutil.es/pasador-din-6325-cilindrico-templado-de-acero-b53d0/) | 0,14 |
 | Separador de pila | 6 | **RS 224-0382**, latón Ø3,2 × Ø6 × 2 | [RS España](https://es.rs-online.com/web/p/espaciadores/2240382) | 0,19 |
 | Casquillo de pivote | 3 | **igus GFM-0810-06**, valona Ø15 × 1 | [RS España](https://es.rs-online.com/web/p/plain-bearings/2692707) | 0,61 *(neto)* |
 | Poste de pivote | 3 | Eje inox X46Cr13 Ø8 h6, **195 mm** (baja hasta la base y hace de pata) | [Dold Mechatronik](https://www.dold-mechatronik.de/) | ~1,00 *(sin IVA ni portes)* |
@@ -106,8 +106,9 @@ alemanes y cotizan en neto.
 | --- | --- |
 | POM-C, tres levas | 2,70 |
 | Dos separadores de latón | 0,38 |
+| Pasador de índice DIN 6325 Ø3 × 24 | 0,14 |
 | **Corte del bloque, externalizado a precio cerrado** | **35,00** |
-| **Cartucho** | **38,08** |
+| **Cartucho** | **38,22** |
 
 Los 35 € son **una previsión nuestra, no un precio pactado**: el fichero de
 precios lo marca con `cerrado: false` y el informe de cada pedido lo dice.
@@ -134,9 +135,8 @@ suba, está en la sección siguiente.
 | Rodamientos del árbol, 6800-2Z | 2 | 0,69 | 1,38 |
 | Tornillería inox A2 | 20 | 0,04 | 0,80 |
 | Árbol de levas, Ø10 h6 rectificado | 1 | 0,47 | 0,47 |
-| Pasadores de índice DIN 6325 Ø3 | 3 | 0,14 | 0,42 |
 | Acabado Osmo 3062 | 1 | 0,30 | 0,30 |
-| **Plataforma** | | | **97,39** |
+| **Plataforma** | | | **96,97** |
 
 La **base casi dobla** su línea, de 10,39 a 19,30: al cerrar la planta pasó
 de 154 a 275 mm de fondo, así que una tabla de 2 m da 7 bases y no 13. El
@@ -148,9 +148,9 @@ sin verificar.
 
 | | € |
 | --- | --- |
-| Cartucho | 38,08 |
-| Plataforma | 97,39 |
-| **Material y compras de un escribiente** | **135,47** |
+| Cartucho | 38,22 |
+| Plataforma | 96,97 |
+| **Material y compras de un escribiente** | **135,19** |
 
 Son **70 € más** de lo que decía la estimación anterior de 60-65 €, y la
 diferencia no es que algo haya subido: es que antes faltaban el corte, los
@@ -357,8 +357,8 @@ el error de trazo deje de ser repetible.
 `docs/contratos.md` congela un pasador Ø3 m6. Pero **m6 está pensado para
 apretar en acero**, y el POM fluye en frío: el apriete se relaja en semanas y
 el calaje se pierde **después de la venta**, en silencio. El pasador debe ser
-**deslizante en las tres levas y apretado solo en el plato de arrastre
-metálico**. El argumento del contrato se mantiene —el error de fase sigue
+**deslizante en las tres levas y apretado solo en el cubo de latón del
+cartucho**. El argumento del contrato se mantiene —el error de fase sigue
 siendo imposible, no improbable— y deja de depender de una interferencia sobre
 plástico.
 

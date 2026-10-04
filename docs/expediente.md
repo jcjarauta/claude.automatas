@@ -66,11 +66,11 @@ La decisión que sostiene el negocio:
 
 | | **La plataforma** | **El cartucho** |
 | --- | --- | --- |
-| Qué es | La máquina: bastidor, brazos, manivela, volante | Tres levas y dos separadores |
+| Qué es | La máquina: bastidor, brazos, manivela, volante | Tres levas, dos separadores y el pasador |
 | Cambia entre pedidos | No | **Sí, es la frase del cliente** |
 | Se fabrica | A stock | Por pedido |
 | Se cambia | — | En un minuto, a mano |
-| Cuesta | 81,09 € de material y compras | 38,08 € |
+| Cuesta | 96,97 € de material y compras | 38,22 € |
 
 La plataforma es **fija** y el cartucho varía dentro de una envolvente. Es
 tentador pensar lo contrario —que la máquina se adapta al tamaño de la leva—
@@ -118,7 +118,7 @@ Con el pedido de ejemplo «hola» y la geometría de hoy:
 | Error esperado en la punta | **2,79 mm peor caso, 1,64 mm cuadrático** |
 | Tiempo de fresado de las tres levas | 7,5 min |
 | Levas por plancha de 1 × 1 m | 81, o sea 27 cartuchos |
-| Material y compras por máquina | 119,17 € con IVA |
+| Material y compras por máquina | 135,19 € con IVA (2026-10-04, antes del cubo, el muñón y la garra) |
 
 ## El despiece, en tres categorías
 
@@ -159,8 +159,8 @@ enhebradas quedan caladas entre sí. **El error de fase deja de ser posible en
 vez de ser improbable.** Un cartucho montado desfasado escribe basura y no se
 nota hasta que se gira la manivela.
 
-El pasador va **deslizante en el POM y apretado solo en el plato de arrastre
-metálico**: el m6 de la norma aprieta en acero, pero el POM fluye en frío y
+El pasador va **deslizante en el POM y apretado solo en el cubo de latón del
+cartucho**: el m6 de la norma aprieta en acero, pero el POM fluye en frío y
 la interferencia se relajaría en semanas, perdiendo el calaje después de la
 venta y en silencio.
 

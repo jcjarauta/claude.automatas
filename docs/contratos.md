@@ -25,7 +25,7 @@ donde no toca escribe basura, y no se nota hasta que se gira la manivela.
 | Pasador de índice | Ø3 mm, **largo 24**, a **18 mm** del centro, sobre +X |
 | Marca grabada | Una línea del pasador al borde, rotulada `FASE 0`. Apunta al pasador |
 | Alcance | **Las tres levas y los separadores llevan el pasador en el mismo sitio** |
-| Ajuste | **Deslizante en las tres levas** (POM, H8). Apretado solo en el plato de arrastre metálico |
+| Ajuste | **Deslizante en las tres levas** (POM, H8). Apretado solo en el cubo de latón del cartucho, el antiguo «plato de arrastre» |
 
 ### Por qué así
 
@@ -48,8 +48,9 @@ redondo se queda como lo que es, un cojinete.
 **El pasador no aprieta en el POM.** Un DIN 6325 es m6, un ajuste pensado para
 apretar en acero, y el POM fluye en frío: la interferencia se relaja en semanas
 y el calaje se pierde **después de la venta**, en silencio y sin que nada avise.
-El pasador va deslizante en las tres levas y apretado en un solo sitio, el plato
-de arrastre metálico que lo lleva. El argumento del contrato no cambia —sigue
+El pasador va deslizante en las tres levas y apretado en un solo sitio, el cubo
+de latón del cartucho, que lo lleva (hasta el 2026-10-04 se llamaba «plato de
+arrastre» y no estaba definido; ver el contrato de cartucho). El argumento del contrato no cambia —sigue
 habiendo una sola forma de enhebrar las tres levas— y deja de depender de una
 interferencia sobre plástico.
 
@@ -64,13 +65,17 @@ pasador y llega al borde, para que la pieza y el dibujo digan lo mismo.
 `test_la_marca_grabada_apunta_al_pasador_y_no_a_otro_sitio`,
 `test_dos_frases_distintas_comparten_el_mismo_pasador`.
 
+**La fase del cartucho respecto de la plataforma** no la da el pasador sino la
+garra del eje motriz, que solo entra en la ranura descentrada de la cabeza
+del eje del cartucho en fase cero. Es del contrato de cartucho, más abajo.
+
 ---
 
 ## Contrato de eje · CONGELADO 2026-09-29
 
 | | |
 | --- | --- |
-| Diámetro | **Ø10 mm**, tolerancia h7 |
+| Diámetro | **Ø10 mm**, tolerancia **h6** (eje del cartucho, muñón y eje motriz) |
 | Sentido de giro | Horario visto desde arriba, θ creciente |
 | Índice | Un pasador Ø3 × 24 transversal, a 18 mm del centro (ver contrato de fase) |
 | Pila del cartucho | 3 levas de 5 mm + 2 separadores de 2 mm = **19 mm** |
@@ -80,9 +85,43 @@ pasador y llega al borde, para que la pieza y el dibujo digan lo mismo.
 rodamiento barato en cualquier catálogo. La pila de 19 mm sale de la
 geometría y la comprueba `tests/compile/test_conjunto.py::test_la_pila_son_tres_levas_y_dos_separadores`.
 
-**Lo que no se congela todavía:** el rodamiento concreto y el sistema de
-retención axial. Dependen de la investigación de proveedores y de medir el
-juego en el banco (E4), y ninguna de las dos cosas está hecha.
+**Lo que no se congela todavía:** el rodamiento concreto. Depende de la
+investigación de proveedores y de medir el juego en el banco (E4). La
+retención axial, que también estaba aquí abierta, la resuelve el cartucho
+entre puntos: la garra baja empujada por su muelle y aprieta la pila contra
+el muñón (contrato de cartucho).
+
+El «árbol» deja de ser una pieza (2026-10-04): son tres ejes Ø10 h6 en línea,
+el muñón de abajo, el eje del cartucho y el eje motriz de arriba. El
+diámetro, el sentido y la pila no cambian.
+
+---
+
+## Contrato de cartucho · PENDIENTE
+
+**La interfaz entre la plataforma, que va a stock, y el cartucho, que se
+fabrica por pedido.** Se congela cuando el primer cartucho entre y salga en el
+banco (H3.5 del baseline): a partir de ahí, todo cartucho vendido tiene que
+caber en toda plataforma vendida.
+
+El cartucho va **entre puntos**, como una pieza en el torno: abajo, un muñón
+de la plataforma con una horquilla en U donde entra de lado el tetón del eje
+del cartucho; arriba, una garra que baja con un muelle y mete su lengüeta en
+la ranura de la cabeza del eje. Se saca hacia atrás, entre los postes 1 y 2.
+
+| | |
+| --- | --- |
+| Radio máximo de leva | **55,5 mm**: el hueco entre los postes traseros (115,1) menos 2 de paso a cada lado. Lo vigila el compilador: `cartucho_no_sale` |
+| Dirección de salida | 60° en el marco de la leva: lejos del poste 3, hacia atrás. **Por ahí no puede ir nada** entre el plato 1 y los seguidores |
+| Bajo las levas | 1 de holgura + 4 del muñón con su horquilla + 5 del cubo = `leva_sobre_plato` **10** (eran 2) |
+| Eje del cartucho | Ø10 h6 × 27: cubo, pila y 3 de cabeza ranurada. Tetón Ø5 × 4 debajo |
+| Cubo | Latón Ø24 × 5, con el pasador m6. Es el antiguo «plato de arrastre» |
+| Garra | Ranura de 3 × 3 **descentrada 1,5**: girada media vuelta no coincide, así que solo entra en fase cero. Carrera 5 |
+| Holgura de paso | 1 mm al sacar y meter, que es a mano y despacio |
+
+Lo comprueban `tests/compile/test_contratos.py` (que las cotas sumen lo que
+tienen que sumar y que la ranura solo entre de una manera) y
+`tests/emit/test_montaje.py::test_el_cartucho_sale_por_detras_entre_los_dos_postes`.
 
 ---
 
@@ -546,6 +585,10 @@ absorbe el alabeo es la flexura, y 0,5 es todo su recorrido.
 | 2026-09-30 | **Calaje** | Congelado. El calaje pasa de ser la media de los ángulos de la frase a ser el ángulo del brazo en el centro de la caja | Con la media, el calaje se movía 3,3° entre frases y el brazo dejaba de ser pieza de stock. Cuesta décimas de milímetro de leva |
 | 2026-09-30 | Bastidor | Hueco al poste de 9,5 a **9,7 mm** con «hola» | Consecuencia de fijar el calaje. No es una decisión, es el número que sale |
 | 2026-09-30 | Fase | Pasador de índice de Ø3 × 16 a **Ø3 × 24** | Con 16 no llegaba a la tercera leva de una pila de 19 mm, que es justo lo que el contrato promete calar. Lo encontró un test que cruza la ficha del pasador con la de la plancha y la del separador |
+| 2026-10-04 | **Fase** | El «plato de arrastre» pasa a ser el **cubo de latón del cartucho**. Ningún valor cambia: Ø3 × 24 a 18 sobre +X | Aprobado con la propuesta del cartucho intercambiable. Era texto sin pieza |
+| 2026-10-04 | **Eje** | Tolerancia de h7 a **h6**; el árbol se parte en muñón, eje del cartucho y eje motriz; la retención axial la da la garra | Aprobado con la propuesta. La pieza ya era h6 |
+| 2026-10-04 | Cartucho | **Nuevo contrato, pendiente**: radio máximo 55,5, salida a 60°, muñón, cubo, garra con ranura descentrada | La interfaz plataforma-cartucho estaba repartida en textos y no la vigilaba nada |
+| 2026-10-04 | Bastidor | `leva_sobre_plato` de 2 a **10**, `eje_pivote_largo` de 55 a **63**, `apoyo_balancin_alto` de 27 a **19**, `tirante_largo` de 105,5 a **113,5** | Sitio para el muñón y el cubo bajo las levas; lo demás es lo que cuelga de la pila |
 | 2026-10-04 | Bastidor | **Pila escalonada**: radios base 55 / 48,4 / 39,6 (elevador abajo, derecho, izquierdo arriba), brazos de seguidor 45 / 52 / 59 en una sola pieza, izquierdo al revés, descuelgues 21 / 14 / 7 reasignados. Hueco al poste de 9,7 a **11,3 mm** | Al meter los rodillos y sus ejes en el montaje 3D, el eje del rodillo de abajo atravesaba las dos levas de encima entre 1,4 y 2 mm en los tres casos de referencia. No toca ningún contrato congelado: calaje, fase y pila de 19 siguen igual |
 | 2026-10-01 | Bastidor | **Añadido el amplificador 6:1**: cabestrante de cinta, sector R 48 y tambor R 8 | Era un escalar en el código sin mecanismo. Se eligió frente a engranajes por el juego: un par de calidad 8d daba 1,98 mm en la punta y llevaba el peor caso de 2,84 a 6,74; la cinta da 0,0115 |
 | 2026-10-01 | Bastidor | **Añadida la transformación** entre el marco de la leva y el del cinco barras: origen (−16,225, −28,103), 150° | Eran dos sistemas de coordenadas sin relación. Con cinta el entre-ejes es libre, así que es una elección de empaquetado y `brazo_separacion` no se toca |

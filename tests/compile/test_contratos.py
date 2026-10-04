@@ -23,6 +23,7 @@ from compile.contratos import Contrato, Contratos, Estado, Valor, cargar
 from compile.escribiente import Escribiente
 from core.comercial import PiezaComercial
 from core.escritura import Capacidad
+from core.units import mm
 from emit.plataforma import contrato_mm
 from scripts.exportar_variables import csv, featurescript
 
@@ -597,3 +598,78 @@ def test_la_planta_dice_por_donde_pasa_la_mano():
     assert (eje[1] - r) - atras == pytest.approx(19.2, abs=0.5)
     sobre_la_tarjeta = (eje[1] + r) - (c["papel_al_arbol"] - c["papel_fondo"] / 2.0)
     assert sobre_la_tarjeta == pytest.approx(28.8, abs=0.5)
+
+
+# ---------------------------------------------------------------------------
+# El contrato de cartucho
+# ---------------------------------------------------------------------------
+
+
+def _mm(contratos: Contratos, contrato: str, nombre: str) -> float:
+    return contratos.valor(contrato, nombre).metros * 1000.0
+
+
+def test_lo_que_hay_bajo_las_levas_es_el_cubo_y_el_muñon(contratos: Contratos):
+    """El hueco entre el plato 1 y la primera leva no es un número suelto:
+    es la holgura del muñón, su horquilla y el cubo del cartucho."""
+    suma = sum(
+        _mm(contratos, "cartucho", n)
+        for n in ("munon_holgura", "munon_horquilla_alto", "cubo_espesor")
+    )
+    assert _mm(contratos, "bastidor", "leva_sobre_plato") == pytest.approx(suma)
+
+
+def test_el_pasador_atraviesa_el_cubo_y_la_pila_justo(contratos: Contratos):
+    pila = _mm(contratos, "eje", "pila_altura")
+    assert _mm(contratos, "fase", "pasador_longitud") == pytest.approx(
+        pila + _mm(contratos, "cartucho", "cubo_espesor")
+    )
+    assert (
+        _mm(contratos, "cartucho", "cartucho_eje_largo")
+        > pila
+        + _mm(contratos, "cartucho", "cubo_espesor")
+        + _mm(contratos, "cartucho", "garra_ranura_profundidad")
+        - 1e-9
+    )
+
+
+def test_el_radio_maximo_del_cartucho_sale_del_hueco_entre_postes(contratos: Contratos):
+    """Entre los dos postes traseros cabe el cartucho con su holgura de paso.
+    Lo que el compilador vigila es lo que el bastidor permite."""
+    poste = _mm(contratos, "bastidor", "poste_radio_al_arbol")
+    hueco = 2.0 * poste * math.sin(math.pi / 3.0) - 8.0  # menos el poste de Ø8
+    radio = _mm(contratos, "cartucho", "cartucho_radio_maximo")
+    assert (
+        radio <= hueco / 2.0 - 2.0 * _mm(contratos, "cartucho", "cartucho_holgura_de_paso") + 1e-9
+    )
+    assert float(Escribiente().radio_maximo_cartucho) * 1000.0 == pytest.approx(radio)
+
+
+def test_el_cartucho_sale_lejos_del_tercer_poste(contratos: Contratos):
+    angulo = contratos.valor("cartucho", "cartucho_salida_angulo").valor
+    x, y = Escribiente().seguidor(2).pivote
+    assert angulo == pytest.approx(math.atan2(-y, -x))
+
+
+def test_la_ranura_de_la_garra_solo_entra_de_una_manera(contratos: Contratos):
+    """Descentrada más de lo que mide de ancho la mitad, la ranura girada
+    180° no se solapa con la de verdad: la lengüeta solo entra en fase cero.
+    Y cabe en la cabeza del eje sin salirse del Ø10."""
+    ancho = _mm(contratos, "cartucho", "garra_ranura_ancho")
+    fuera = _mm(contratos, "cartucho", "garra_ranura_desplazamiento")
+    assert 2.0 * fuera >= ancho  # girada media vuelta no coincide
+    assert fuera + ancho / 2.0 < _mm(contratos, "eje", "eje_diametro") / 2.0 - 1.0  # pared
+    assert _mm(contratos, "cartucho", "garra_carrera") > _mm(
+        contratos, "cartucho", "garra_ranura_profundidad"
+    )
+
+
+def test_una_leva_demasiado_grande_no_deja_salir_el_cartucho():
+    from compile.escribiente import compilar
+
+    estrecha = Escribiente(radio_maximo_cartucho=mm(45.0))
+    from tests.casos import hola
+
+    v = compilar(hola(), estrecha).veredicto
+    assert "cartucho_no_sale" in {i.codigo for i in v.incidencias}
+    assert "cartucho_no_sale" not in {i.codigo for i in compilar(hola()).veredicto.incidencias}

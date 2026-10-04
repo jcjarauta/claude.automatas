@@ -128,9 +128,12 @@ class Escribiente(BaseModel):
     radio_eje_rodillo: Longitud = mm(2.0)
     """El casquillo de Ø4 que baja el rodillo desde el seguidor hasta su
     leva. Es lo que pasa junto a las levas de encima."""
-    holgura_eje_rodillo: Longitud = mm(2.0)
+    holgura_eje_rodillo: Longitud = mm(3.0)
     """Lo mínimo entre ese casquillo y una leva que gira a su lado: la
-    `holgura_minima` del contrato."""
+    `holgura_minima` del contrato de bastidor."""
+    radio_maximo_cartucho: Longitud = mm(55.5)
+    """Lo más que puede medir de radio una leva para que el cartucho salga
+    entre los dos postes traseros: `cartucho_radio_maximo`."""
     radio_rodillo: Longitud = mm(3.0)
     """Ø6 mm: el exterior de un **MR63 (3×6×2,5)**, que es un rodamiento
     miniatura corriente y barato. Antes eran 2 mm, un diámetro para el que no
@@ -652,6 +655,19 @@ def compilar(
                     sugerencia="reduce la caja de escritura o escalona más la pila",
                 )
             )
+    mayor = max((float(p.radio_maximo) for p in perfiles.values()), default=0.0)
+    if mayor > float(maquina.radio_maximo_cartucho):
+        veredicto = veredicto.con(
+            Incidencia(
+                gravedad="error",
+                codigo="cartucho_no_sale",
+                mensaje=(
+                    f"la leva mayor mide {a_mm(Metros(mayor)):.1f} mm de radio y el cartucho "
+                    f"solo sale entre los postes hasta {a_mm(maquina.radio_maximo_cartucho):.1f}"
+                ),
+                sugerencia="reduce la caja de escritura",
+            )
+        )
     if holguras:
         veredicto = Veredicto(
             incidencias=veredicto.incidencias,

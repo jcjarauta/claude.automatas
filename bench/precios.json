@@ -137,6 +137,16 @@
       "iva_incluido": true,
       "verificado": true,
       "url": "https://es.rs-online.com/web/p/espaciadores/2240382"
+    },
+    {
+      "concepto": "Pasador de índice",
+      "referencia": "DIN 6325 Ø3 x 24",
+      "proveedor": "esutil.es",
+      "cantidad": 1,
+      "precio": 0.14,
+      "iva_incluido": true,
+      "verificado": true,
+      "url": "https://www.esutil.es/pasador-din-6325-cilindrico-templado-de-acero-b53d0/"
     }
   ],
   "plataforma": [
@@ -164,23 +174,13 @@
     },
     {
       "concepto": "Árbol de levas",
-      "referencia": "W10H6, CF53 rectificado, 120 mm",
+      "referencia": "W10H6, CF53 rectificado, cortado a 92 mm",
       "proveedor": "Motedis",
       "cantidad": 1,
       "precio": 0.47,
       "iva_incluido": true,
       "verificado": true,
       "url": "https://www.motedis.es/es/Eje-de-precision-10-mm-H6-acero-templado-y-rectificado"
-    },
-    {
-      "concepto": "Pasador de índice",
-      "referencia": "DIN 6325 Ø3 x 16",
-      "proveedor": "esutil.es",
-      "cantidad": 3,
-      "precio": 0.14,
-      "iva_incluido": true,
-      "verificado": true,
-      "url": "https://www.esutil.es/pasador-din-6325-cilindrico-templado-de-acero-b53d0/"
     },
     {
       "concepto": "Casquillo de pivote del seguidor",
