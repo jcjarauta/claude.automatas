@@ -169,11 +169,6 @@ def test_el_hueco_al_poste_en_3d_coincide_con_el_que_mide_el_compilador():
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="A1 de docs/auditoria_conjunto.md: los sectores, discos enteros de R48, "
-    "sobresalen 14,5 mm por cada lado de la base",
-)
 def test_la_caja_envolvente_del_montaje_cabe_en_la_base():
     """Nada puede salirse de la tabla por los lados mientras gira, salvo el
     pomo de la manivela, que se sale a propósito y está documentado.
@@ -182,7 +177,9 @@ def test_la_caja_envolvente_del_montaje_cabe_en_la_base():
     marco de la leva, donde la base va girada; comparar cajas ahí era
     comparar contra la caja de un rectángulo girado, mucho más grande que
     él, y este test pasaba con los sectores fuera de la tabla 14,5 mm por
-    cada lado. Lo encontró la vista agrupada del visor.
+    cada lado. Lo encontró la vista agrupada del visor (auditoría A1), y se
+    resolvió ensanchando la base de 190 a 240: el sector trabaja con la cinta
+    justo hacia fuera de la base, así que recortarlo no servía.
     """
     from build123d import Rot
 

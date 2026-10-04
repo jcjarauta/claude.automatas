@@ -27,7 +27,7 @@ un minuto.
 | Precio de venta objetivo | 150 – 400 € |
 | Volumen | 20 – 100 unidades al año |
 | Fabricación | Taller ocupacional de Arrels Fundació, Barcelona |
-| Tamaño aproximado | **190 × 275 mm** de base, unos 200 mm de alto |
+| Tamaño aproximado | **240 × 275 mm** de base, unos 200 mm de alto |
 
 ### Lo que ya existe y compite
 
@@ -61,7 +61,7 @@ está congelado en `docs/contratos.md`.
 
 | Pieza | Cant. | Material |
 | --- | --- | --- |
-| Base | 1 | Nogal americano macizo 25 mm, 190 × 275 |
+| Base | 1 | Nogal americano macizo 25 mm, 240 × 275 |
 | Bastidor y soportes | — | Contrachapado de abedul 9 mm |
 | Brazos del cinco barras | 4 | Latón o contrachapado |
 | Seguidores | 3 | Contrachapado o latón |
@@ -122,7 +122,7 @@ suba, está en la sección siguiente.
 | --- | --- | --- | --- |
 | Rueda del reductor, Mädler m0,7 Z60 latón | 1 | 14,88 | 14,88 |
 | Piñón del reductor, Mädler m0,7 Z20 latón | 1 | 10,76 | 10,76 |
-| Base de nogal americano 25 mm, 190 × 275 | 1 | 19,30 | 19,30 |
+| Base de nogal americano 25 mm, 240 × 275 *(estimado)* | 1 | 24,38 | 24,38 |
 | Portaminas Staedtler 780 C | 1 | 8,98 | 8,98 |
 | Rodillos y pivotes, MR63ZZ | 7 | 1,19 | 8,33 |
 | Anillo de apriete del lápiz | 1 | 6,81 | 6,81 |
@@ -136,7 +136,7 @@ suba, está en la sección siguiente.
 | Tornillería inox A2 | 20 | 0,04 | 0,80 |
 | Árbol de levas, Ø10 h6 rectificado | 1 | 0,47 | 0,47 |
 | Acabado Osmo 3062 | 1 | 0,30 | 0,30 |
-| **Plataforma** | | | **98,56** |
+| **Plataforma** | | | **103,64** |
 
 La **base casi dobla** su línea, de 10,39 a 19,30: al cerrar la planta pasó
 de 154 a 275 mm de fondo, así que una tabla de 2 m da 7 bases y no 13. El
@@ -149,8 +149,8 @@ sin verificar.
 | | € |
 | --- | --- |
 | Cartucho | 39,04 |
-| Plataforma | 98,56 |
-| **Material y compras de un escribiente** | **137,60** |
+| Plataforma | 103,64 |
+| **Material y compras de un escribiente** | **142,68** |
 
 Son **70 € más** de lo que decía la estimación anterior de 60-65 €, y la
 diferencia no es que algo haya subido: es que antes faltaban el corte, los

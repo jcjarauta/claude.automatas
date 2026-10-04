@@ -1148,7 +1148,8 @@ dos postes atrás y uno delante en (0, +38,61). No hace falta cota: la base
 se sitúa por sus tres agujeros, que son los de los platos.
 
 **La planta la cierran el plato por detrás y la tarjeta por delante**, con
-10 mm de nogal a las cuatro puntas: 190 × 275 × 25. La ficha de producto
+10 mm de nogal a las cuatro puntas: 240 × 275 × 25 (a los lados mandan los
+sectores, no el plato: con 190 se salían 14,5, auditoría A1). La ficha de producto
 decía 210 × 160 y se quedaba **115 mm corta de fondo**; eso casi dobla la
 línea del nogal, porque una tabla de 2 m da 7 bases y no 13.
 

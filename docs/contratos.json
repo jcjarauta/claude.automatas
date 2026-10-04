@@ -1148,9 +1148,9 @@
       "valores": [
         {
           "nombre": "base_ancho",
-          "valor": 0.19,
+          "valor": 0.24,
           "unidad": "m",
-          "descripcion": "Ancho de la tabla de nogal. Lo fija el plato, que es lo mas ancho que hay: Ø170 mas 10 de nogal a cada lado",
+          "descripcion": "Ancho de la tabla de nogal. Lo fijan los SECTORES del cabestrante, no el plato: el poste a 61,54 del centro y el sector de R47,975 encima llegan a 109,52 por cada lado, mas 10 de nogal. Con 190 se salian 14,5 (auditoria A1)",
           "tolerancia": ""
         },
         {
@@ -1204,7 +1204,7 @@
         },
         {
           "nombre": "base_poste_al_borde_izquierdo",
-          "valor": 0.03345733187433585,
+          "valor": 0.0584573318745441,
           "unidad": "m",
           "descripcion": "Del poste datum al borde izquierdo. Derivada de base_ancho y poste_radio_al_arbol: es lo que se teclea para situar el rectangulo, porque el ancho se mide entre bordes y el datum es un agujero",
           "tolerancia": ""

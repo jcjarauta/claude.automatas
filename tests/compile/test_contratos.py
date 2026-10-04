@@ -522,8 +522,16 @@ def test_la_base_deja_diez_milimetros_de_nogal_alrededor_de_todo():
     c = contrato_mm()
     margen = 10.0
     r = c["platina_diametro"] / 2.0
-    # A los lados manda el plato; delante, la tarjeta; detrás, el plato.
-    assert c["base_ancho"] / 2.0 - r >= margen
+    # A los lados mandan los SECTORES, no el plato (auditoría A1): el poste
+    # está a media base_entre_postes del centro y el sector va encima.
+    sector = c["base_entre_postes"] / 2.0 + c["amplificador_sector_radio_mecanizado"]
+    assert sector > r, "si el plato vuelve a mandar, esta línea sobra"
+    assert c["base_ancho"] / 2.0 - sector >= margen
+    assert c["base_ancho"] / 2.0 - sector < margen + 1.0, "sobra nogal"
+    assert c["base_poste_al_borde_izquierdo"] == pytest.approx(
+        c["base_ancho"] / 2.0 - c["base_entre_postes"] / 2.0
+    )
+    # Delante, la tarjeta; detrás, el plato.
     assert c["base_arbol_al_borde_trasero"] - r >= margen
     delantero = c["base_fondo"] - c["base_arbol_al_borde_trasero"]
     assert delantero - (c["papel_al_arbol"] + c["papel_fondo"] / 2.0) >= margen
@@ -572,7 +580,8 @@ def test_la_planta_dice_por_donde_pasa_la_mano():
 
     De ahí salen tres números que conviene tener delante antes de poner la
     máquina en una mesa: el volante gira entero dentro de la tabla, el pomo
-    de la manivela se sale 19 mm por la izquierda, y en su paso de delante
+    de la manivela se salía 19 mm por la izquierda —con la base de 240 que
+    pidieron los sectores (auditoría A1) queda 6 mm dentro—, y en su paso de delante
     cruza 29 mm sobre la tarjeta, a 190 mm de altura. No choca con nada; lo
     que hace es que la mano pase por encima de lo escrito una vez por vuelta.
 
@@ -592,9 +601,9 @@ def test_la_planta_dice_por_donde_pasa_la_mano():
     assert eje[1] - c["volante_diametro"] / 2.0 > atras
     assert abs(eje[0]) + c["volante_diametro"] / 2.0 < media
 
-    # La manivela, no, y por dónde.
+    # La manivela, por dónde: ya no se sale por la izquierda.
     r = c["manivela_entre_centros"]
-    assert -(eje[0] - r) - media == pytest.approx(19.0, abs=0.5)
+    assert -(eje[0] - r) - media == pytest.approx(-6.0, abs=0.5)
     assert (eje[1] - r) - atras == pytest.approx(19.2, abs=0.5)
     sobre_la_tarjeta = (eje[1] + r) - (c["papel_al_arbol"] - c["papel_fondo"] / 2.0)
     assert sobre_la_tarjeta == pytest.approx(28.8, abs=0.5)

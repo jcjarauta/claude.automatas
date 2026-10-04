@@ -390,9 +390,12 @@ en el conjunto por sus tres agujeros, que son los de los platos.
 
 ### La planta la cierran el plato y la tarjeta
 
-Nada más. Por detrás manda el plato —85 de radio—, por delante el borde
-lejano del papel, y a los lados el plato otra vez. Con **10 mm de nogal a las
-cuatro puntas** salen **190 × 275 × 25**.
+Por detrás manda el plato —85 de radio— y por delante el borde lejano del
+papel. **A los lados mandan los sectores del cabestrante**, no el plato: el
+poste está a 61,5 del centro y el sector de R48 encima llega a 109,5. Con
+**10 mm de nogal a las cuatro puntas** salen **240 × 275 × 25**. Fueron 190
+hasta el 2026-10-04: los sectores se salían 14,5 por cada lado y el test que
+debía verlo comparaba cajas con la base girada (auditoría A1).
 
 `docs/ficha-producto.md` decía «210 × 160 mm de base»: se escribió antes de
 saber dónde cae el papel y el fondo se queda **115 mm corto**. Eso mueve la
@@ -437,7 +440,7 @@ Tres números que salieron al cerrar la planta y que conviene tener delante:
 
 - El **volante** gira entero dentro de la tabla. Son 294 g de latón al
   alcance de una manga.
-- El **pomo de la manivela** se sale **19 mm por la izquierda**, y por detrás
+- El **pomo de la manivela** se salía **19 mm por la izquierda** (con la base de 240, desde la auditoría A1, queda 6 dentro), y por detrás
   le sobran 19.
 - En su paso de delante, la manivela cruza **29 mm sobre la tarjeta**, a unos
   190 mm de altura.
@@ -593,6 +596,7 @@ absorbe el alabeo es la flexura, y 0,5 es todo su recorrido.
 | 2026-09-30 | **Calaje** | Congelado. El calaje pasa de ser la media de los ángulos de la frase a ser el ángulo del brazo en el centro de la caja | Con la media, el calaje se movía 3,3° entre frases y el brazo dejaba de ser pieza de stock. Cuesta décimas de milímetro de leva |
 | 2026-09-30 | Bastidor | Hueco al poste de 9,5 a **9,7 mm** con «hola» | Consecuencia de fijar el calaje. No es una decisión, es el número que sale |
 | 2026-09-30 | Fase | Pasador de índice de Ø3 × 16 a **Ø3 × 24** | Con 16 no llegaba a la tercera leva de una pila de 19 mm, que es justo lo que el contrato promete calar. Lo encontró un test que cruza la ficha del pasador con la de la plancha y la del separador |
+| 2026-10-04 | Base | Ancho de 190 a **240** | Auditoría A1: los sectores se salían 14,5 por cada lado. Trabajan con la cinta justo hacia fuera, así que recortarlos no servía |
 | 2026-10-04 | Bastidor | **Muelle de torsión y tope de servicio** en cada poste: collar, placa de tope, pasador; tope a 4°; casquillo del rodillo Ø4 con sus tres largos | El muelle de compresión no cabía dentro de los platos, y sin tope el rodillo se metía en el hueco del cartucho al sacarlo |
 | 2026-10-04 | **Fase** | El «plato de arrastre» pasa a ser el **cubo de latón del cartucho**. Ningún valor cambia: Ø3 × 24 a 18 sobre +X | Aprobado con la propuesta del cartucho intercambiable. Era texto sin pieza |
 | 2026-10-04 | **Eje** | Tolerancia de h7 a **h6**; el árbol se parte en muñón, eje del cartucho y eje motriz; la retención axial la da la garra | Aprobado con la propuesta. La pieza ya era h6 |
