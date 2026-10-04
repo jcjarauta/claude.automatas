@@ -397,7 +397,7 @@ def svg(c: dict[str, float] | None = None) -> str:
         '<text class="h1" x="16" y="24">El escribiente · plano de conjunto</text>',
         '<text class="sub" x="16" y="38">Generado desde docs/contratos.json con '
         "scripts/dibujar_conjunto.py. Rojo: lo que se mueve. Azul: el lápiz y los ejes. "
-        "La altura entera cuelga de base_al_plato, que sigue PENDIENTE.</text>",
+        "La altura entera cuelga de base_al_plato, ESTIMADO con el portaminas estimado.</text>",
         f'<text class="cab" x="706" y="72">DESPIECE · {len(filas)} piezas, {total} unidades</text>',
     ]
     for i, (n, pieza, cant, material, proceso) in enumerate(filas):

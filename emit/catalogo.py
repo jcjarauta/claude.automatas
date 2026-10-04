@@ -81,6 +81,30 @@ def _tubo(exterior: float, agujero: float, alto: float) -> Part:
     return solido
 
 
+def _instrumento(pieza: PiezaComercial) -> Part:
+    """El portaminas: si el catálogo trae el agarre, con su forma —punta
+    cónica, agarre metálico y cuerpo de plástico—; si no, un cilindro al
+    cuerpo. La forma es lo que deja VER en el montaje que la pinza aprieta
+    plástico. El clip no se dibuja: no es de revolución, y dónde cae lo
+    vigila la ventana de `compile/portaminas.py`."""
+    from build123d import Cone
+
+    largo = _mm(pieza, "longitud", LARGO_POR_DEFECTO)
+    cuerpo = _mm(pieza, "cuerpo")
+    try:
+        agarre = _mm(pieza, "agarre")
+        grueso = _mm(pieza, "agarre_diametro")
+    except FichaIncompleta:
+        return _tubo(cuerpo, 0.0, largo)
+    mina = _mm(pieza, "mina", 2.0)
+    abajo = (Align.CENTER, Align.CENTER, Align.MIN)
+    cono = min(10.0, agarre / 3)
+    solido = Cone(mina / 2, grueso / 2, cono, align=abajo)
+    solido += Pos(0, 0, cono) * Cylinder(grueso / 2, agarre - cono, align=abajo)
+    solido += Pos(0, 0, agarre) * Cylinder(cuerpo / 2, largo - agarre, align=abajo)
+    return solido
+
+
 def solido_de(pieza: PiezaComercial) -> Part:
     """La envolvente de una pieza comercial, en MILÍMETROS y apoyada en Z = 0.
 
@@ -114,7 +138,7 @@ def solido_de(pieza: PiezaComercial) -> Part:
         return _tubo(_mm(pieza, "exterior"), _mm(pieza, "agujero"), _mm(pieza, "ancho", 4.0))
 
     if f is FamiliaComercial.INSTRUMENTO:
-        return _tubo(_mm(pieza, "cuerpo"), 0.0, _mm(pieza, "longitud", LARGO_POR_DEFECTO))
+        return _instrumento(pieza)
 
     if f is FamiliaComercial.FIJACION:
         # La familia tiene dos formas muy distintas y se distinguen por las

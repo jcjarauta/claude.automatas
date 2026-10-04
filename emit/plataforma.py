@@ -1026,7 +1026,8 @@ LISTADO: dict[str, Ficha] = {
         "Los agujeros son CIEGOS, 15 de los 25: la base no se taladra de parte a parte "
         "para que no asome el acero por debajo. "
         "Lo que esta tabla todavía no sabe es a qué altura queda el plato 1: "
-        "base_al_plato son 75 provisionales y de ahí cuelga el largo del poste.",
+        "base_al_plato son 60 ESTIMADOS con el portaminas estimado, y de ahí cuelga el "
+        "largo del poste.",
         montaje=(
             "Es la pieza de abajo y no se monta sobre nada. Recibe los tres postes en sus "
             "agujeros ciegos de 15, y sobre ella apoyan los soportes de la mesa del papel. La "

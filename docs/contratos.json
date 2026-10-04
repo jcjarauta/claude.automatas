@@ -636,10 +636,10 @@
         },
         {
           "nombre": "poste_largo",
-          "valor": 0.195,
+          "valor": 0.18,
           "unidad": "m",
           "descripcion": "Largo del poste. Ya no sostiene solo el bastidor: baja hasta la base y es la pata de la maquina, asi que los tres platos siguen siendo la misma pieza y no hace falta ningun pilar. Derivada: base_poste_empotrado 15 + base_al_plato 75 + tres platos 27 + poste_vano 58 + reductor_bahia 20. PENDIENTE mientras lo este base_al_plato",
-          "tolerancia": "PENDIENTE"
+          "tolerancia": "ESTIMADO"
         },
         {
           "nombre": "rodamiento_arbol_alojamiento_diametro",
@@ -875,10 +875,10 @@
         },
         {
           "nombre": "base_al_plato",
-          "valor": 0.075,
+          "valor": 0.06,
           "unidad": "m",
-          "descripcion": "Hueco libre de la cara alta de la base a la cara baja del plato 1. PENDIENTE DE MEDIR EL PORTAMINAS: lo fija la pinza, que cuelga del plato 1 y tiene que apretar plastico liso, entre el agarre metalico y el clip (compile/portaminas.py). Con 150 de largo, 40 de agarre y 50 de clip la ventana es 46..72 y el 75 de hoy pone la pinza sobre el clip. Se cierra con scripts/medir_portaminas.py, que escribe tambien el poste y el tirante",
-          "tolerancia": "PENDIENTE"
+          "descripcion": "Hueco libre de la cara alta de la base a la cara baja del plato 1. Lo fija el portaminas (compile/portaminas.py): la pinza cuelga del plato 1 y tiene que apretar plastico liso, entre el agarre metalico y el clip. ESTIMADO el 2026-10-04: el centro de la ventana con el portaminas estimado, para que la pieza real tenga sitio a los dos lados. Se afina con scripts/medir_portaminas.py y las medidas de pie de rey",
+          "tolerancia": "ESTIMADO"
         },
         {
           "nombre": "base_poste_empotrado",
@@ -1225,10 +1225,10 @@
         },
         {
           "nombre": "tirante_largo",
-          "valor": 0.1205,
+          "valor": 0.10550000000000001,
           "unidad": "m",
           "descripcion": "Largo de la varilla del tirante: del eje del perno de la palanca con la mesa arriba al del eje movil trasero, mas 3 por arriba (cruza el bulon) y 2 por abajo (bajo su ojo). Derivado, y PENDIENTE con base_al_plato: es la unica cota de la cadena que cruza la pila entera",
-          "tolerancia": "PENDIENTE"
+          "tolerancia": "ESTIMADO"
         },
         {
           "nombre": "tirante_ojo_diametro",
@@ -1505,10 +1505,10 @@
         },
         {
           "nombre": "pinza_agujero_diametro",
-          "valor": 0.01,
+          "valor": 0.0081,
           "unidad": "m",
           "descripcion": "Agujero de la pinza: el cuerpo del portaminas, 10 NOMINAL y sin medir. Se ajusta al portaminas comprado antes de taladrar; el prisionero M3 recoge el resto",
-          "tolerancia": "ajustar al medido"
+          "tolerancia": "cuerpo ESTIMADO + 0.1"
         },
         {
           "nombre": "balancin_ojo_y",

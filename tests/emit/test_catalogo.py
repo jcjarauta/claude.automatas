@@ -169,7 +169,8 @@ def test_las_cotas_criticas_del_catalogo_estan_en_el_solido():
         radiales = [
             float(c.valor)
             for c in p.criticas
-            if c.nombre in ("exterior", "valona", "diametro", "cuerpo", "ancho_plancha")
+            if c.nombre
+            in ("exterior", "valona", "diametro", "cuerpo", "agarre_diametro", "ancho_plancha")
         ]
         if not radiales:
             continue
@@ -203,7 +204,7 @@ def test_el_step_se_puede_volver_a_leer(tmp_path: Path):
 # ---------------------------------------------------------------------------
 
 MASAS_VERIFICADAS = {
-    "poste_pivote": 76.454,  # pendiente de rehacer en Onshape: el poste va ya por 195
+    "poste_pivote": 70.573,  # sin contrastar: 76,454 · 180/195, con base_al_plato ESTIMADO
     "arbol_de_levas": 56.721,  # pendiente de rehacer en Onshape: de 120 a 92, 73,985 · 92/120
     "pasador_indice": 1.332,
     "separador_pila": 0.344,
@@ -357,10 +358,13 @@ def test_el_step_mide_lo_mismo_leido_con_la_unidad_que_declara(tmp_path: Path):
         )
 
 
-def test_el_poste_mide_195_mm_en_el_archivo(tmp_path: Path):
-    """El caso concreto, con el número a la vista. El poste es un cilindro
-    más alto que ancho, así que su mayor coordenada **es** su largo: 195 mm
-    y no 0,195, que es lo que salía."""
+def test_el_poste_mide_en_el_archivo_lo_que_dice_el_contrato(tmp_path: Path):
+    """El caso concreto. El poste es un cilindro más alto que ancho, así que
+    su mayor coordenada **es** su largo, en metros y no en milímetros, que es
+    lo que salía. Fue 195 hasta que el portaminas fijó `base_al_plato`; ahora
+    es lo que diga `poste_largo`."""
+    from emit.plataforma import contrato_mm
+
     poste = next(x for x in cargar() if x.nombre == "poste_pivote")
     factor, coordenada = _unidad_y_mayor_coordenada(escribir_catalogo([poste], tmp_path)[0])
-    assert coordenada * factor == pytest.approx(0.195, rel=1e-9)
+    assert coordenada * factor == pytest.approx(contrato_mm()["poste_largo"] / 1000.0, rel=1e-9)

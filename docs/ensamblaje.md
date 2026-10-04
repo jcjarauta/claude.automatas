@@ -432,13 +432,13 @@ proceso, y la máquina entera se monta y se mueve sin chocar en
   (balancín girado, tambor en D, distal curvo, eje de pivote de 55, platina
   con los dos M3 de los apoyos). El STEP guardado de la platina lo dice en
   su test.
-- **`base_al_plato` sigue pendiente**, 75 provisionales, y ya se sabe de qué:
-  la pinza cuelga del plato 1 y tiene que apretar plástico liso, entre el
-  agarre metálico y el clip del portaminas (`compile/portaminas.py`). Con un
-  portaminas razonable la ventana es de 46 a 72, y **el 75 de hoy pondría la
-  pinza sobre el clip**. Se cierra midiendo el lápiz:
-  `scripts/medir_portaminas.py`, que escribe a la vez la pinza, el plato 1,
-  el poste y el tirante.
+- **`base_al_plato` está ESTIMADO en 60**, y ya se sabe de qué depende: la
+  pinza cuelga del plato 1 y tiene que apretar plástico liso, entre el agarre
+  metálico y el clip del portaminas (`compile/portaminas.py`). Con el
+  portaminas estimado la ventana va de 46 a 74 y se ha tomado el centro, para
+  que la pieza real tenga sitio a los dos lados. Se afina midiendo el lápiz:
+  `scripts/medir_portaminas.py` (sin `--estimado`), que reescribe a la vez la
+  pinza, el plato 1, el poste y el tirante.
 - **Precios**: `bench/precios.json` no tiene las piezas nuevas, así que el
   coste de la plataforma del informe se queda corto.
 - **El portaminas sin medir**: cinco medidas con pie de rey —largo, cuerpo,

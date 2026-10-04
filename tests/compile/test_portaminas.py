@@ -121,10 +121,12 @@ def test_medir_escribe_todo_lo_que_cuelga(tmp_path):
         shutil.copy(PIEZAS / f"{n}.json", piezas / f"{n}.json")
 
     lapiz = Portaminas(longitud=152.0, cuerpo=8.1, agarre=38.0, clip=50.0, agarre_diametro=9.0)
+    antes = _contrato_mm()
+    esperado = recomendar(lapiz, antes, antes["base_al_plato"])
     elegido = aplicar(lapiz, contratos, piezas, hoy="2026-10-04")
     c = {k: v.valor * 1000.0 for k, v in cargar(contratos).variables().items() if v.unidad == "m"}
     assert c["base_al_plato"] == pytest.approx(elegido)
-    assert c["base_al_plato"] == pytest.approx(ventana(lapiz, _contrato_mm()).maximo)
+    assert c["base_al_plato"] == pytest.approx(esperado)
     assert c["pinza_agujero_diametro"] == pytest.approx(8.2)
     assert c["tirante_largo"] == pytest.approx(tirante_largo(cargar(contratos)) * 1000.0)
     ficha = json.loads((piezas / "portaminas.json").read_text(encoding="utf-8"))
@@ -132,3 +134,14 @@ def test_medir_escribe_todo_lo_que_cuelga(tmp_path):
     poste = json.loads((piezas / "poste_pivote.json").read_text(encoding="utf-8"))
     largo = next(k for k in poste["cotas"] if k["nombre"] == "longitud")["valor"] * 1000.0
     assert largo == pytest.approx(c["poste_largo"])
+
+
+def test_con_el_portaminas_estimado_se_toma_el_centro():
+    """Con números estimados se elige el centro de la ventana: es lo que deja
+    sitio a los dos lados cuando llegue la pieza real."""
+    c = _contrato_mm()
+    lapiz = Portaminas(152.0, 8.0, 40.0, 50.0, agarre_diametro=9.0)
+    v = ventana(lapiz, c)
+    assert recomendar(lapiz, c, actual=75.0, modo="centro") == pytest.approx(
+        (v.minimo + v.maximo) / 2
+    )

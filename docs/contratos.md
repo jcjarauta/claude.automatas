@@ -395,12 +395,13 @@ decisión se tome con él delante.
 
 ### Lo que falta
 
-`base_al_plato` son **75 provisionales**, elegidos porque con ellos el plato
-3 acaba a 180 y la máquina mide los 200 de alto que dice la ficha, dejando
-unos 60 mm de portaminas por debajo del varillaje. El número de verdad sale
-de cómo se sujeta el lápiz, que es la decisión que sigue abierta. Con él se
-cierran de golpe `poste_largo` y el largo de los tres separadores que apoyan
-el plato 1.
+`base_al_plato` son **60 ESTIMADOS** (2026-10-04). Fueron 75 provisionales,
+elegidos para que la máquina midiera los 200 de alto de la ficha; ahora los
+fija el portaminas, con medidas estimadas mientras no haya un ejemplar en la
+mano: 152 de largo, cuerpo de 8, agarre hasta 40 y de Ø9, clip de 50. La
+ventana sale de 46 a 74 y se toma el CENTRO, que es lo que deja sitio a los
+dos lados cuando lleguen las medidas de verdad. Con él se mueven el poste
+(180) y el tirante (105,5). La máquina baja 15 mm.
 
 **Ya se sabe qué lo fija** (2026-10-04): la pinza del portaminas cuelga del
 plato 1 y tiene que apretar plástico liso, por encima del agarre metálico y

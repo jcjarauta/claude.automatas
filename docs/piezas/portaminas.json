@@ -20,18 +20,36 @@
     },
     {
       "nombre": "cuerpo",
-      "valor": 0.01,
-      "tolerancia": "nominal, SIN MEDIR",
+      "valor": 0.008,
+      "tolerancia": "ESTIMADO 2026-10-04",
       "critica": true
     },
     {
       "nombre": "longitud",
-      "valor": 0.15,
-      "tolerancia": "",
+      "valor": 0.152,
+      "tolerancia": "ESTIMADO 2026-10-04",
       "critica": false
+    },
+    {
+      "nombre": "agarre",
+      "valor": 0.04,
+      "tolerancia": "ESTIMADO 2026-10-04",
+      "critica": true
+    },
+    {
+      "nombre": "clip",
+      "valor": 0.05,
+      "tolerancia": "ESTIMADO 2026-10-04",
+      "critica": true
+    },
+    {
+      "nombre": "agarre_diametro",
+      "valor": 0.009,
+      "tolerancia": "ESTIMADO 2026-10-04",
+      "critica": true
     }
   ],
-  "nota": "De pinza y 2 mm, no de 0,5: el de 2 mm no necesita avanzar la mina y la mina no se rompe. NINGUNA MEDIDA ESTA TOMADA: el fabricante no las publica y las tiendas no coinciden (Ø8 o Ø10, 150, 152 o 155 de largo). Con pie de rey sobre el ejemplar que se va a montar se miden cinco cosas —largo, cuerpo, donde acaba el agarre metalico, el pie del clip y el diametro del agarre— y se pasan por scripts/medir_portaminas.py, que cierra la pinza y base_al_plato.",
+  "nota": "De pinza y 2 mm, no de 0,5: el de 2 mm no necesita avanzar la mina y la mina no se rompe. LAS MEDIDAS SON ESTIMADAS (2026-10-04), no tomadas: el fabricante no las publica. Largo 152, entre los 150 que habia y los 155 de Galaxus, con la mina asomando; cuerpo 8, el que da Galaxus (los 10 eran la cota de la caja); agarre hasta 40 y clip de 50, los de un portaminas de 2 mm tipico; agarre de 9, algo mas gordo que el cuerpo. Con el ejemplar en la mano se miden con pie de rey y se pasan por scripts/medir_portaminas.py (sin --estimado): todo lo que cuelga se recalcula solo.",
   "sustitutos": [
     "Caran d'Ache Fixpencil 22: todo metal y mucho mejor acabado, pero cuerpo hexagonal y 20,80 EUR"
   ]

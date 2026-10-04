@@ -99,7 +99,15 @@ def perfil_de(pieza: PiezaComercial) -> tuple[list[tuple[float, float]], list[st
 
     if f is FamiliaComercial.INSTRUMENTO:
         r, largo = _mm(pieza, "cuerpo") / 2, _mm(pieza, "longitud", POR_DEFECTO)
-        return [(0, 0), (r, 0), (r, largo), (0, largo)], ["cuerpo", "longitud"]
+        if not _tiene(pieza, "agarre"):
+            return [(0, 0), (r, 0), (r, largo), (0, largo)], ["cuerpo", "longitud"]
+        # Como el sólido: punta cónica, agarre metálico y cuerpo de plástico.
+        agarre, rg = _mm(pieza, "agarre"), _mm(pieza, "agarre_diametro") / 2
+        cono, rm = min(10.0, agarre / 3), _mm(pieza, "mina", 2.0) / 2
+        return (
+            [(0, 0), (rm, 0), (rg, cono), (rg, agarre), (r, agarre), (r, largo), (0, largo)],
+            ["cuerpo", "longitud", "agarre", "agarre_diametro"],
+        )
 
     if f is FamiliaComercial.FIJACION:
         if _tiene(pieza, "metrica"):

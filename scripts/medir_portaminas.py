@@ -71,19 +71,26 @@ def aplicar(
     piezas: Path,
     base: float | None = None,
     hoy: str | None = None,
+    estimado: bool = False,
 ) -> float:
-    """Escribe las medidas y lo que sale de ellas. Devuelve `base_al_plato`."""
+    """Escribe las medidas y lo que sale de ellas. Devuelve `base_al_plato`.
+
+    Con `estimado` las medidas entran como ESTIMADO —no medidas— y el plato 1
+    va al centro de la ventana, para que la pieza real tenga sitio a los dos
+    lados cuando llegue."""
     hoy = hoy or datetime.date.today().isoformat()
+    marca = f"ESTIMADO {hoy}" if estimado else f"medido {hoy}"
     d = json.loads(contratos.read_text(encoding="utf-8"))
     c = _contrato_mm(d)
-    elegido = recomendar(lapiz, c, c["base_al_plato"]) if base is None else base
+    modo = "centro" if estimado else "cercano"
+    elegido = recomendar(lapiz, c, c["base_al_plato"], modo) if base is None else base
     if not ventana(lapiz, c).admite(elegido):
         v = ventana(lapiz, c)
         raise ValueError(
             f"base_al_plato {elegido:g} cae fuera de la ventana {v.minimo:g}..{v.maximo:g}"
         )
 
-    # El catálogo: las cinco medidas, como medidas.
+    # El catálogo: las cinco medidas, marcadas como lo que son.
     ruta = piezas / "portaminas.json"
     ficha = json.loads(ruta.read_text(encoding="utf-8"))
     medidas = {
@@ -100,26 +107,33 @@ def aplicar(
             cota = {"nombre": nombre, "valor": 0.0, "tolerancia": "", "critica": True}
             ficha["cotas"].append(cota)
         cota["valor"] = mm / 1000.0
-        cota["tolerancia"] = f"medido {hoy}"
+        cota["tolerancia"] = marca
     _escribir_json(ruta, ficha)
 
     # El contrato: la pinza, el plato 1 y lo que cuelga de él.
+    que = "ESTIMADO" if estimado else "medido"
     _poner(
         d,
         "pinza_agujero_diametro",
         agujero_de_la_pinza(lapiz),
-        tolerancia=f"cuerpo medido + {0.1:g}",
+        tolerancia=f"cuerpo {que} + {0.1:g}",
+    )
+    cierre = (
+        f"ESTIMADO el {hoy}: el centro de la ventana con el portaminas estimado, para que la "
+        "pieza real tenga sitio a los dos lados. Se afina con scripts/medir_portaminas.py y "
+        "las medidas de pie de rey"
+        if estimado
+        else f"Cerrado el {hoy} con el portaminas medido"
     )
     _poner(
         d,
         "base_al_plato",
         elegido,
-        tolerancia="",
+        tolerancia="ESTIMADO" if estimado else "",
         descripcion=(
             "Hueco libre de la cara alta de la base a la cara baja del plato 1. Lo fija el "
-            "portaminas (compile/portaminas.py): el portalapiz agarra una franja fija respecto "
-            "del plato 1 y tiene que caer en el plastico liso, entre el agarre metalico y el "
-            f"clip. Cerrado el {hoy} con el portaminas medido"
+            "portaminas (compile/portaminas.py): la pinza cuelga del plato 1 y tiene que "
+            "apretar plastico liso, entre el agarre metalico y el clip. " + cierre
         ),
     )
     c = _contrato_mm(d)
@@ -130,14 +144,19 @@ def aplicar(
         + c["poste_vano"]
         + c["reductor_bahia"]
     )
-    _poner(d, "poste_largo", poste, tolerancia="")
+    _poner(d, "poste_largo", poste, tolerancia="ESTIMADO" if estimado else "")
     _escribir_json(contratos, d)
 
     # El tirante cruza la pila entera: se recalcula con el contrato ya escrito.
     from compile.contratos import cargar
     from compile.levantamiento import tirante_largo
 
-    _poner(d, "tirante_largo", tirante_largo(cargar(contratos)) * 1000.0, tolerancia="")
+    _poner(
+        d,
+        "tirante_largo",
+        tirante_largo(cargar(contratos)) * 1000.0,
+        tolerancia="ESTIMADO" if estimado else "",
+    )
     _escribir_json(contratos, d)
 
     # Y el poste del catálogo, que es el mismo número.
@@ -159,16 +178,22 @@ def main(argv: list[str] | None = None) -> int:
         p.add_argument(f"--{nombre}", type=float, required=True, help="mm")
     p.add_argument("--base", type=float, help="base_al_plato a mano; si no, el recomendado")
     p.add_argument("--escribir", action="store_true")
+    p.add_argument(
+        "--estimado",
+        action="store_true",
+        help="medidas estimadas: se marcan así y el plato 1 va al centro de la ventana",
+    )
     op = p.parse_args(argv)
     lapiz = Portaminas(op.longitud, op.cuerpo, op.agarre, op.clip, op.agarre_diametro)
     contratos = RAIZ / "docs" / "contratos.json"
     c = _contrato_mm(json.loads(contratos.read_text(encoding="utf-8")))
     v = ventana(lapiz, c)
     print(f"base_al_plato admite de {v.minimo:g} a {v.maximo:g}; hoy vale {c['base_al_plato']:g}")
-    elegido = op.base if op.base is not None else recomendar(lapiz, c, c["base_al_plato"])
+    modo = "centro" if op.estimado else "cercano"
+    elegido = op.base if op.base is not None else recomendar(lapiz, c, c["base_al_plato"], modo)
     print(f"se queda en {elegido:g}; la pinza se taladra a {agujero_de_la_pinza(lapiz):g}")
     if op.escribir:
-        aplicar(lapiz, contratos, RAIZ / "docs" / "piezas", base=op.base)
+        aplicar(lapiz, contratos, RAIZ / "docs" / "piezas", base=op.base, estimado=op.estimado)
         print("escrito. Ahora: scripts/listado_piezas.py --escribir y los tests")
     return 0
 

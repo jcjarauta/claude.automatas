@@ -97,15 +97,28 @@ def ventana(lapiz: Portaminas, c: dict[str, float]) -> Ventana:
     return Ventana(max(minimos), maximo)
 
 
-def recomendar(lapiz: Portaminas, c: dict[str, float], actual: float) -> float:
-    """El valor de la ventana más cercano al actual: mover el plato 1 mueve
-    la máquina entera, así que no se mueve si no hace falta."""
+def recomendar(
+    lapiz: Portaminas, c: dict[str, float], actual: float, modo: str = "cercano"
+) -> float:
+    """Qué `base_al_plato` tomar dentro de la ventana.
+
+    - "cercano", con el portaminas MEDIDO: lo más cerca del valor actual,
+      porque mover el plato 1 mueve la máquina entera.
+    - "centro", con el portaminas ESTIMADO: el centro de la ventana, que es
+      lo que más aguanta cuando lleguen las medidas de verdad y la ventana se
+      corra unos milímetros. Elegir el borde con números estimados es elegir
+      volver a mover la máquina.
+    """
     v = ventana(lapiz, c)
     if v.minimo > v.maximo:
         raise ValueError(
             f"el portalápiz no cabe en el plástico liso: hace falta "
             f"base_al_plato ≥ {v.minimo:g} por el agarre y ≤ {v.maximo:g} por el clip"
         )
+    if modo == "centro":
+        return (v.minimo + v.maximo) / 2
+    if modo != "cercano":
+        raise ValueError(f"modo «{modo}»: o «cercano» o «centro»")
     return min(max(actual, v.minimo), v.maximo)
 
 
