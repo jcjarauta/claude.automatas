@@ -164,6 +164,12 @@ class Escribiente(BaseModel):
     escribe basura. Con un segundo taladro fuera del centro solo hay **una**
     forma de montarla. Contrato de fase, `docs/contratos.md`."""
     espesor_leva: Longitud = mm(5.0)
+    ajuste_de_los_taladros: str = "H8"
+    """El del contrato de fase: deslizante en el POM, así que el plano lo
+    rotula en los dos taladros de cada leva."""
+    tolerancia_de_perfil: str = "±0,02"
+    """La que se pide al taller para el contorno de cada leva. La misma que
+    `compile.tolerancias.Holguras.error_de_perfil`."""
     material_leva: str = Field(default="POM 5 mm", min_length=1)
 
     @property
@@ -468,6 +474,7 @@ def pieza_de_leva(
     numero: str,
     conjunto: str,
     maquina: Escribiente,
+    grabado: str | None = None,
 ) -> Pieza:
     """El perfil, su taladro de eje, su pasador de índice y su marca de fase.
 
@@ -501,10 +508,15 @@ def pieza_de_leva(
         veta=Veta.INDIFERENTE,
         contorno=contorno,
         taladros=[
-            Taladro(centro=(Metros(0.0), Metros(0.0)), diametro=maquina.taladro_eje),
+            Taladro(
+                centro=(Metros(0.0), Metros(0.0)),
+                diametro=maquina.taladro_eje,
+                tolerancia=maquina.ajuste_de_los_taladros,
+            ),
             Taladro(
                 centro=(Metros(radio_pasador), Metros(0.0)),
                 diametro=maquina.pasador_indice,
+                tolerancia=maquina.ajuste_de_los_taladros,
             ),
         ],
         referencias=[
@@ -516,6 +528,11 @@ def pieza_de_leva(
             )
         ],
         marca_fase=(Metros(float(fase[0])), Metros(float(fase[1]))),
+        tolerancia_perfil=maquina.tolerancia_de_perfil,
+        # El pedido y el número, al lado contrario del pasador: entre el eje y
+        # el canto de la leva más pequeña caben de sobra.
+        grabado=numero if grabado is None else grabado,
+        grabado_en=(Metros(-0.030), Metros(-0.0015)),
     )
 
 
@@ -738,6 +755,7 @@ def compilar(
             numero=f"L-{indice + 1:03d}",
             conjunto=f"cartucho {escritura.nombre}",
             maquina=maquina,
+            grabado=f"{escritura.nombre} {indice + 1:03d}",
         )
         for indice, nombre in enumerate(SEGUIDORES)
     ]

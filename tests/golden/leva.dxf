@@ -549,7 +549,7 @@ $SPLINESEGS
   9
 $HANDSEED
   5
-3C
+3D
   9
 $SURFTAB1
  70
@@ -1549,7 +1549,7 @@ LAYER
 100
 AcDbSymbolTable
  70
-7
+8
   0
 LAYER
   5
@@ -1721,6 +1721,30 @@ Continuous
 347
 21
   0
+LAYER
+  5
+34
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+GRABADO
+ 70
+0
+ 62
+2
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
 ENDTAB
   0
 TABLE
@@ -1821,7 +1845,7 @@ ACAD
   0
 APPID
   5
-39
+3A
 330
 3
 100
@@ -1835,7 +1859,7 @@ HATCHBACKGROUNDCOLOR
   0
 APPID
   5
-3A
+3B
 330
 3
 100
@@ -2145,7 +2169,7 @@ ENTITIES
   0
 LWPOLYLINE
   5
-34
+35
 330
 17
 100
@@ -2881,7 +2905,7 @@ AcDbPolyline
   0
 CIRCLE
   5
-35
+36
 330
 17
 100
@@ -2901,7 +2925,7 @@ AcDbCircle
   0
 LWPOLYLINE
   5
-36
+37
 330
 17
 100
@@ -2925,7 +2949,7 @@ AcDbPolyline
   0
 CIRCLE
   5
-37
+38
 330
 17
 100
@@ -2945,7 +2969,7 @@ AcDbCircle
   0
 TEXT
   5
-38
+39
 330
 17
 100
@@ -3963,7 +3987,7 @@ CREATED_BY_EZDXF
   3
 WRITTEN_BY_EZDXF
 350
-3B
+3C
   0
 DICTIONARYVAR
   5
@@ -3979,7 +4003,7 @@ DictionaryVariables
   0
 DICTIONARYVAR
   5
-3B
+3C
 330
 2D
 100

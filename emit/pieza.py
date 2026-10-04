@@ -41,6 +41,10 @@ class Taladro(BaseModel):
 
     centro: Punto
     diametro: Longitud
+    tolerancia: str = ""
+    """El ajuste que pide el plano, como se rotula: «H8». Vacío si da igual.
+    Sin esto el DXF sale a nominal y el taller corta lo que quiera: el
+    contrato de fase pedía H8 en las levas y no llegaba a ningún archivo."""
 
 
 class Polilinea(BaseModel):
@@ -74,6 +78,15 @@ class Pieza(BaseModel):
     marca_fase: Punto | None = None
     """Dónde está el cero del cartucho. Sin esto, una leva se monta desfasada
     y la máquina escribe basura."""
+    tolerancia_perfil: str = ""
+    """Lo que puede desviarse el contorno cortado, como se rotula: «±0,02».
+    En las levas es lo que más pesa en la punta del lápiz."""
+    grabado: str = ""
+    """Un texto que se graba en la pieza, en la misma pasada que la marca de
+    fase: el pedido y el número de la leva, para que una leva suelta diga de
+    quién es."""
+    grabado_en: Punto | None = None
+    """Dónde empieza el grabado, en el sistema de la pieza."""
 
     @model_validator(mode="after")
     def _contorno_sin_repetir_el_cierre(self) -> Pieza:

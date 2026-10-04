@@ -42,10 +42,10 @@ levas, y la máquina no lleva ninguna de las dos.
 
 | # | Mejora | Por qué | Esfuerzo |
 | --- | --- | --- | --- |
-| L1 | **Pedir el perfil a ±0,02** al taller, o cortar las levas en casa | El peor caso en la punta baja de 2,6 a 1,5 mm. Es la mejora de calidad más grande que hay, y está en un proveedor, no en el diseño | Medio: presupuesto o máquina |
-| L2 | **Que el plano diga H8 en los dos taladros** | El contrato pide Ø10 y Ø3 H8 (deslizantes), pero `Taladro` no tiene campo de tolerancia: el DXF sale a nominal y el taller corta lo que quiera | Bajo: un campo en `emit/pieza.py` y su rótulo |
+| L1 | **Pedir el perfil a ±0,02** al taller, o cortar las levas en casa | **Hecho en el plano** (2026-10-04): el rótulo de cada leva lo pide y `Holguras.error_de_perfil` lo usa. Peor caso en la punta de 2,62 a **1,49 mm**, cuadrático de 1,38 a 0,64. Ahora la cinta (0,18 mm) y el muestreo del modelo (0,14) pesan casi la mitad que el corte: son las siguientes palancas. Falta que un taller lo acepte por ese precio | Medio: presupuesto |
+| L2 | **Que el plano diga H8 en los dos taladros** | **Hecho** (2026-10-04): `Taladro.tolerancia`, rotulado en el DXF de taller y en la plantilla 1:1 | — |
 | L3 | **Cerrar el precio del corte por bloque** | 35 € es una previsión y es el 90 % del cartucho. El caso malo es cortar las tres levas en tres amarres: eso es lo que hay que pactar | Bajo: negociación |
-| L4 | **Grabar en cada leva el número de pedido**, en la misma pasada que la marca FASE 0 | Un cliente con varios cartuchos, o un taller con varios pedidos abiertos, tiene que saber de quién es cada leva suelta | Bajo: un texto más en el DXF |
+| L4 | **Grabar en cada leva el pedido y su número** | **Hecho** (2026-10-04): «hola 001» en la capa GRABADO del DXF de taller, al otro lado del pasador. No va a los DXF del CAD, que no admiten texto | — |
 
 ## Cartucho: la fase no debería montarse
 

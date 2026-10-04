@@ -38,9 +38,14 @@ CAPAS: dict[str, int] = {
     "REFERENCIA": 5,
     "FASE": 6,
     "ROTULO": 7,
+    "GRABADO": 2,
 }
 """Capa -> color ACI. Separadas porque en el láser cada una lleva su
 potencia: el corte atraviesa, el rótulo solo marca."""
+
+GRABADO_ALTO = 3.0
+"""mm. Alto del texto grabado en la pieza: legible a simple vista y dentro
+de la leva más pequeña con el pedido y el número."""
 
 # Regla 4 del proyecto: mismo input, mismo DXF, **byte a byte**. Por defecto
 # un DXF lleva marca de tiempo y dos identificadores aleatorios que cambian en
@@ -195,9 +200,25 @@ def escribir_dxf(
             dxfattribs={"layer": "FASE"},
         )
 
+    # El grabado es un TEXT como el rótulo, y como él solo va al taller: el
+    # CAD no lo importa como boceto.
+    if rotulo and pieza.grabado and pieza.grabado_en is not None:
+        espacio.add_text(
+            pieza.grabado,
+            height=GRABADO_ALTO,
+            dxfattribs={"layer": "GRABADO"},
+        ).set_placement((_mm(a_mm(pieza.grabado_en[0])), _mm(a_mm(pieza.grabado_en[1]))))
+
     if rotulo:
         nota = f"{pieza.numero} {pieza.nombre} | {pieza.material} | {a_mm(pieza.espesor):.1f} mm"
         nota += f" | x{pieza.cantidad} | veta {pieza.veta.value}"
+        ajustes = sorted(
+            {f"Ø{a_mm(t.diametro):g} {t.tolerancia}" for t in pieza.taladros if t.tolerancia}
+        )
+        if ajustes:
+            nota += " | " + ", ".join(ajustes)
+        if pieza.tolerancia_perfil:
+            nota += f" | perfil {pieza.tolerancia_perfil}"
         nota += " | kerf medido" if kerf.medido else " | KERF SIN MEDIR: linea nominal"
         espacio.add_text(
             nota,

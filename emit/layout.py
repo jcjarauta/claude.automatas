@@ -290,7 +290,12 @@ def _primitivas_de_la_pieza(pieza: Pieza, dx: float, dy: float) -> _Acumulador:
             Trazo("taladro", ((centro[0], centro[1] - brazo), (centro[0], centro[1] + brazo)))
         )
         a.textos.append(
-            Texto(centro[0] + brazo + 1.5, centro[1] - 1.2, f"Ø{a_mm(taladro.diametro):.1f}", 2.8)
+            Texto(
+                centro[0] + brazo + 1.5,
+                centro[1] - 1.2,
+                f"Ø{a_mm(taladro.diametro):.1f} {taladro.tolerancia}".rstrip(),
+                2.8,
+            )
         )
 
     if pieza.marca_fase is not None:

@@ -115,7 +115,7 @@ Con el pedido de ejemplo «hola» y la geometría de hoy:
 | Inercia respecto del árbol | 2,44 × 10⁻⁴ kg·m² |
 | Trabajo por vuelta | 133 mJ |
 | Error del **modelo** | 0,108 mm |
-| Error esperado en la punta | **2,79 mm peor caso, 1,64 mm cuadrático** |
+| Error esperado en la punta | **1,49 mm peor caso, 0,64 mm cuadrático** con el perfil a ±0,02 (2026-10-04); eran 2,6 y 1,38 con ±0,05 |
 | Tiempo de fresado de las tres levas | 7,5 min |
 | Levas por plancha de 1 × 1 m | 81, o sea 27 cartuchos |
 | Material y compras por máquina | 147,62 € con IVA (2026-10-04; faltan el cubo, la garra, los collares y la placa de tope, sin precio todavía) |

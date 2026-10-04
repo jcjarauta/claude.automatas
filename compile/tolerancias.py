@@ -104,12 +104,16 @@ class Holguras(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    error_de_perfil: Longitud = mm(0.05)
+    error_de_perfil: Longitud = mm(0.02)
     """Lo que se desvía el canto cortado del canto teórico.
 
-    Es la tolerancia que se le pide al taller, no la que se ha comprobado que
-    da. Incluye el error de la máquina, el kerf mal compensado y el desgaste
-    de la herramienta a lo largo del lote."""
+    Es la tolerancia que se le pide al taller —y la que rotula el plano de
+    cada leva, `Pieza.tolerancia_perfil`—, no la que se ha comprobado que da.
+    Era ±0,05, y con ella el perfil se llevaba el 72 % del peor caso en la
+    punta (docs/niveles.md, L1); pedir ±0,02 es la mejora de calidad más
+    grande que hay, y está en un proveedor. Incluye el error de la máquina,
+    el kerf mal compensado y el desgaste de la herramienta a lo largo del
+    lote."""
 
     holgura_de_pivote: Radianes = Radianes(2.0e-4)
     """Juego angular de cada articulación, en radianes.

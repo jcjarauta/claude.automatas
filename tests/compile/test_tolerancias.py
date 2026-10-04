@@ -101,12 +101,23 @@ def test_el_hardware_domina_sobre_el_modelo():
     que no cambia es que **el término del compilador es el pequeño**: el
     muestreo de la leva aporta menos de la quinta parte que el dominante,
     sea cual sea. Ajustar el muestreo no arregla esta máquina.
+
+    Con el perfil a ±0,05 era cinco veces más que el muestreo. **Al pedir
+    ±0,02 deja de serlo**: el corte sigue mandando, pero el muestreo pasa a
+    ser un tercio del dominante, y subir las muestras empieza a valer la pena.
+    Las dos cosas quedan dichas aquí.
     """
+    flojo = presupuesto(holguras=Holguras(error_de_perfil=mm(0.05)))
+    modelo = next(c for c in flojo.cadena.contribuciones if "modelo" in c.nombre)
+    assert flojo.dominante is not None
+    assert "modelo" not in flojo.dominante.nombre
+    assert flojo.dominante.en_punta > 5.0 * modelo.en_punta
+
     p = presupuesto()
     modelo = next(c for c in p.cadena.contribuciones if "modelo" in c.nombre)
     assert p.dominante is not None
     assert "modelo" not in p.dominante.nombre
-    assert p.dominante.en_punta > 5.0 * modelo.en_punta
+    assert 2.0 * modelo.en_punta < p.dominante.en_punta < 5.0 * modelo.en_punta
 
 
 def test_la_cinta_no_le_quita_el_primer_puesto_al_corte():
@@ -125,13 +136,24 @@ def test_la_cinta_no_le_quita_el_primer_puesto_al_corte():
     alguien adelgaza la cinta o alarga el vano hasta que la elasticidad pese
     como el corte, la decisión habrá dejado de estar justificada y esto
     tiene que decirlo.
+
+    Con el perfil a ±0,02 la cinta sigue sin mandar, pero ya pesa casi la
+    mitad que el corte: es la siguiente palanca, después del corte.
     """
-    con = presupuesto()
-    sin = presupuesto(holguras=Holguras(juego_del_amplificador=Radianes(0.0)))
+    flojo = Holguras(error_de_perfil=mm(0.05))
+    con = presupuesto(holguras=flojo)
+    sin = presupuesto(holguras=flojo.model_copy(update={"juego_del_amplificador": Radianes(0.0)}))
+    assert con.dominante is not None
     assert "perfil" in con.dominante.nombre
     transmision = sum(c.en_punta for c in con.cadena.contribuciones if "transmisión" in c.nombre)
     assert transmision < 0.20 * con.dominante.en_punta
     assert con.peor_caso == pytest.approx(sin.peor_caso, abs=4e-4)
+
+    fino = presupuesto()
+    assert fino.dominante is not None
+    assert "perfil" in fino.dominante.nombre
+    cinta = sum(c.en_punta for c in fino.cadena.contribuciones if "transmisión" in c.nombre)
+    assert 0.3 * fino.dominante.en_punta < cinta < fino.dominante.en_punta
 
 
 def test_el_juego_de_flanco_no_lo_divide_la_relacion():
