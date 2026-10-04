@@ -166,24 +166,48 @@ def dibujar(c: dict[str, float]) -> str:
         lam.ln(*en_planta(*codo[1]), *en_planta(*s["punta"]), "movil")
         lam.circ(*en_planta(*codo[1]), 2.0, "vacio")
     lam.circ(*en_planta(*s["punta"]), 2.6, "lapiz")
+    # La cadena del levantamiento, con el seguidor 3 donde está de verdad:
+    # su pasador NO cae en el eje de simetría, y la bieleta es la isógona.
+    lev = _levantamiento(c)
+    lam.ln(*en_planta(*lev["pasador"]), *en_planta(*lev["ojo"]), "movil")
     lam.ln(
-        *en_planta(0.0, s["poste3"][1] - c["levantamiento_pasador_al_pivote"]),
-        *en_planta(c["balancin_eje_x"], s["poste3"][1] - c["levantamiento_pasador_al_pivote"]),
+        *en_planta(c["balancin_eje_x"], lev["popa"]),
+        *en_planta(c["balancin_eje_x"], lev["proa"]),
         "movil",
     )
     lam.ln(
-        *en_planta(c["balancin_eje_x"], s["poste3"][1] - c["levantamiento_pasador_al_pivote"]),
-        *en_planta(c["balancin_eje_x"], c["tirante_y"]),
+        *en_planta(c["balancin_eje_x"], lev["palanca"]),
+        *en_planta(c["tirante_x"], lev["palanca"]),
         "movil",
     )
+    # Las bielas de la mesa, por fuera de ella, y el brazo del portalápiz.
+    for signo in (-1, 1):
+        x = signo * (c["mesa_biela_x_dentro"] + c["mesa_biela_espesor"] / 2)
+        for y0 in (c["mesa_bisagra_cerca"], c["mesa_bisagra_lejos"]):
+            lam.ln(*en_planta(x, y0), *en_planta(x, y0 + c["mesa_biela"]), "movil")
     lam.ln(
-        *en_planta(c["balancin_eje_x"], c["tirante_y"]),
-        *en_planta(c["tirante_x"], c["tirante_y"]),
+        *en_planta(*s["punta"]),
+        *en_planta(s["punta"][0], s["punta"][1] + c["horquilla_largo"]),
         "movil",
     )
     lam.circ(*en_planta(c["tirante_x"], c["tirante_y"]), c["tirante_diametro"] / 2 * k + 0.6, "lat")
     lam.ln(*en_planta(0, arbol[1] - rp - 12), *en_planta(0, c["caja_centro_y"] + 60), "eje")
     return _alzado_y_leyenda(lam, c, z, s, k, arbol)
+
+
+def _levantamiento(c):
+    """Lo que la planta y el alzado necesitan de la cadena, en mm del cinco barras."""
+    from compile.levantamiento import bieleta_isogona, eje_balancin, pila
+
+    b, e, p = bieleta_isogona(), eje_balancin(), pila()
+    return {
+        "pasador": (b.pasador[0] * 1000.0, b.pasador[1] * 1000.0),
+        "ojo": (b.ojo[0] * 1000.0, b.ojo[1] * 1000.0),
+        "popa": e.popa * 1000.0,
+        "proa": e.proa * 1000.0,
+        "palanca": e.palanca * 1000.0,
+        "z_ojo": p.ojo * 1000.0,
+    }
 
 
 def _codos(c, s):
@@ -230,10 +254,12 @@ def _alzado_y_leyenda(lam, c, z, s, k, arbol):
         zz = z["levas"][0] + i * 7.0
         banda(arbol[1] - c["radio_base"], arbol[1] + c["radio_base"], (zz, zz + 5.0), "leva")
     banda(arbol[1] - 20, s["poste3"][1], z["seguidores"], "pom")
+    # El volante va encima del plato 3: en la bahía lo atravesaban el árbol y
+    # la rueda.
     banda(
         s["manivela"][1] - c["volante_diametro"] / 2,
         s["manivela"][1] + c["volante_diametro"] / 2,
-        (z["bahia"][0] + 7, z["bahia"][0] + 13),
+        z["volante"],
         "lat",
     )
     banda(
@@ -244,30 +270,38 @@ def _alzado_y_leyenda(lam, c, z, s, k, arbol):
     )
     # el árbol y los postes, de parte a parte
     for yy, z0, z1, w in (
-        (arbol[1], z["plato1"][0] - 4, z["plato3"][1] + 6, c["eje_diametro"]),
+        (arbol[1], z["plato1"][0] - 2, z["engrane"][1] + 2, c["eje_diametro"]),
         (s["poste3"][1], z["poste"][0], z["poste"][1], c["poste_eje_diametro"]),
-        (s["manivela"][1], z["plato2"][0], z["plato3"][1] + 26, c["brazo_eje_diametro"]),
+        (s["manivela"][1], z["plato2"][0] - 1, z["manivela"][1] + 1, c["brazo_eje_diametro"]),
     ):
         a, b = en_alzado(yy - w / 2, z1), en_alzado(yy + w / 2, z0)
         lam.rect(a[0], a[1], b[0] - a[0], b[1] - a[1], "lat")
     # el varillaje y el lápiz
-    zb = z["plato1"][0] - 5.0
+    zb = sum(z["distal_1"]) / 2
     lam.ln(*en_alzado(arbol[1], zb), *en_alzado(c["caja_centro_y"], zb), "movil")
     lam.ln(
         *en_alzado(c["caja_centro_y"], zb), *en_alzado(c["caja_centro_y"], z["mesa"][1]), "lapiz"
     )
     # la cadena del levantamiento
     zbal = z["balancin"][0]
+    lev = _levantamiento(c)
     lam.ln(
-        *en_alzado(s["poste3"][1] - c["levantamiento_pasador_al_pivote"], z["seguidores"][1]),
-        *en_alzado(c["tirante_y"], zbal),
+        *en_alzado(lev["pasador"][1], z["seguidores"][0]),
+        *en_alzado(lev["pasador"][1], lev["z_ojo"]),
         "movil",
     )
+    lam.ln(
+        *en_alzado(lev["pasador"][1], lev["z_ojo"]),
+        *en_alzado(lev["ojo"][1], lev["z_ojo"]),
+        "movil",
+    )
+    lam.ln(*en_alzado(lev["popa"], zbal), *en_alzado(lev["proa"], zbal), "movil")
     lam.ln(*en_alzado(c["tirante_y"], zbal), *en_alzado(c["tirante_y"], z["mesa"][0]), "movil")
     # la manivela
+    zm = sum(z["manivela"]) / 2
     lam.ln(
-        *en_alzado(s["manivela"][1], z["plato3"][1] + 20),
-        *en_alzado(s["manivela"][1] + c["manivela_entre_centros"], z["plato3"][1] + 20),
+        *en_alzado(s["manivela"][1], zm),
+        *en_alzado(s["manivela"][1] + c["manivela_entre_centros"], zm),
         "movil",
     )
 
@@ -278,13 +312,20 @@ def _alzado_y_leyenda(lam, c, z, s, k, arbol):
         (4, "sector", *en_alzado(s["poste3"][1] - 26, z["sector"][0] + 2.5), 16, -46),
         (5, "balancin", *en_alzado(c["tirante_y"] - 30, zbal), 34, -32),
         (6, "palanca_lapiz", *en_alzado(c["tirante_y"], zbal), 54, -14),
-        (7, "volante", *en_alzado(s["manivela"][1], z["bahia"][0] + 10), -52, 10),
-        (8, "manivela", *en_alzado(s["manivela"][1] + 70, z["plato3"][1] + 20), 30, 14),
+        (7, "volante", *en_alzado(s["manivela"][1], sum(z["volante"]) / 2), -52, 10),
+        (8, "manivela", *en_alzado(s["manivela"][1] + 70, zm), 30, 14),
         (9, "eje_pivote", *en_alzado(arbol[1] + 34, z["plato1"][1]), 30, -38),
         (10, "mordaza", *en_alzado(s["poste3"][1] - 44, z["sector"][1]), -16, -58),
+        (11, "tirante", *en_alzado(c["tirante_y"], (zbal + z["mesa"][0]) / 2), 30, 0),
+        (12, "mesa", *en_alzado(c["caja_centro_y"] - 10, z["mesa"][1]), -24, -30),
+        (13, "eje_balancin", *en_alzado((lev["popa"] + lev["proa"]) / 2, zbal), -20, -30),
     ]
-    for n, pieza, px, py, dx, dy in etiquetas:
-        lam.globo(n, px, py, dx, dy, pieza)
+    # El número del globo es el del despiece, no uno escrito aquí: con dos
+    # listas a mano, el globo 3 señalaba el seguidor y en el despiece el 3 era
+    # otra pieza.
+    numero = {pieza: n for n, pieza, *_ in despiece()}
+    for _, pieza, px, py, dx, dy in etiquetas:
+        lam.globo(numero[pieza], px, py, dx, dy, pieza)
     return lam
 
 
@@ -344,9 +385,14 @@ def despiece() -> list[tuple[int, str, int, str, str]]:
 def svg(c: dict[str, float] | None = None) -> str:
     c = contrato_mm() if c is None else c
     lam = dibujar(c)
-    ancho, alto = 980.0, 620.0
+    from emit.catalogo import cargar
+
+    ancho, alto = 1290.0, 620.0
     filas = despiece()
     total = sum(f[2] for f in filas)
+    # En dos columnas: con la cadena del levantamiento son 32 piezas y en una
+    # sola el despiece se salía por abajo.
+    por_columna = (len(filas) + 1) // 2
     cab = [
         '<text class="h1" x="16" y="24">El escribiente · plano de conjunto</text>',
         '<text class="sub" x="16" y="38">Generado desde docs/contratos.json con '
@@ -354,15 +400,18 @@ def svg(c: dict[str, float] | None = None) -> str:
         "La altura entera cuelga de base_al_plato, que sigue PENDIENTE.</text>",
         f'<text class="cab" x="706" y="72">DESPIECE · {len(filas)} piezas, {total} unidades</text>',
     ]
-    y = 86.0
-    for n, pieza, cant, material, proceso in filas:
-        cab.append(f'<text class="legb" x="706" y="{y:.0f}">{n}</text>')
-        cab.append(f'<text class="leg" x="720" y="{y:.0f}">{pieza} · ×{cant}</text>')
-        cab.append(f'<text class="sub" x="728" y="{y + 8:.0f}">{material} · {proceso}</text>')
-        y += 19
+    for i, (n, pieza, cant, material, proceso) in enumerate(filas):
+        x = 706.0 + 292.0 * (i // por_columna)
+        y = 86.0 + 19.0 * (i % por_columna)
+        cab.append(f'<text class="legb" x="{x:.0f}" y="{y:.0f}">{n}</text>')
+        cab.append(f'<text class="leg" x="{x + 14:.0f}" y="{y:.0f}">{pieza} · ×{cant}</text>')
+        cab.append(
+            f'<text class="sub" x="{x + 22:.0f}" y="{y + 8:.0f}">{material} · {proceso}</text>'
+        )
+    y = 86.0 + 19.0 * por_columna
     cab.append(
-        f'<text class="sub" x="706" y="{y + 6:.0f}">Más 14 referencias comerciales: '
-        "ver docs/ficha-producto.md §2c</text>"
+        f'<text class="sub" x="706" y="{y + 6:.0f}">Más {len(cargar())} referencias '
+        "comerciales: ver docs/piezas/ y docs/ficha-producto.md §2c</text>"
     )
     return (
         f'<?xml version="1.0" encoding="UTF-8"?>\n'

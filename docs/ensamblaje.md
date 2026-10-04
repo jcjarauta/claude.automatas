@@ -63,15 +63,25 @@ máquina se arrastre sin pensárselo.
 ```
 escribiente                      ← el conjunto de arriba
 ├── bastidor            RÍGIDO   base FIJA + 3 postes + 3 platos + 4 rodamientos
-├── cartucho            RÍGIDO   árbol + 3 levas + 2 separadores + pasador + rueda Z60
+│                                + 2 apoyos del eje del balancín (colgados del plato 2)
+│                                + 4 soportes de la mesa + 4 ejes fijos de la mesa
+├── cartucho            RÍGIDO   árbol (92) + 3 levas + 2 separadores + pasador
+│                                + casquillo de la rueda + rueda Z60
 ├── canal               RÍGIDO   seguidor + sector + 2 mordazas + casquillo + rodillo
 │                                ×2 (canal izquierdo y canal derecho)
-├── canal_elevador               seguidor + casquillo + rodillo + pasador de salida
-├── pivote              RÍGIDO   eje_pivote + tambor + brazo_proximal
+├── canal_elevador      RÍGIDO   seguidor + casquillo + rodillo + casquillo de la bieleta
+├── pivote              RÍGIDO   eje_pivote (55) + tambor (en D) + brazo_proximal
 │                                ×2 (izquierdo y derecho; el derecho VOLTEADO)
-├── accionamiento       RÍGIDO   eje + piñón Z20 + volante + manivela + pomo
-├── brazo_distal                 ×2, sueltos en el nivel de arriba
-└── levantamiento                INCOMPLETO — ver §7
+├── accionamiento       RÍGIDO   eje de la manivela + piñón Z20 + volante + manivela + pomo
+│                                (el volante ENCIMA del plato 3, no en la bahía)
+├── brazo_distal                 ×2 CURVOS, sueltos en el nivel de arriba (el izquierdo volteado)
+├── punta               RÍGIDO   tubo de la punta + brazo y poste de la horquilla
+├── lapiz               RÍGIDO   portaminas + pinza; cuelga de la punta por las 2 láminas
+├── eje_balancin        RÍGIDO   eje Ø4 + balancín (a 90°, hacia arriba) + palanca + bulón
+│                                + tirante
+├── bieleta                      varilla doblada: seguidor 3 ↔ balancín
+├── mesa                RÍGIDO   mesa + 2 orejetas + 2 ejes móviles
+└── biela_mesa                   ×4, sueltas en el nivel de arriba
 ```
 
 Tres decisiones de agrupación que no son evidentes:
@@ -349,6 +359,9 @@ sirviendo.
 | **9** | **Accionamiento** + **M10** + **R3** ratio 3 | Gira la manivela: el árbol va a un tercio y todo el varillaje le sigue |
 | **10** | Curvas de paso + **M11 M12 M13** tangentes | Botón derecho sobre M1 → **Animate** → Play |
 | **11** | Barrido de θ con *Interference Detection* | El hueco al poste (§6) |
+| **12** | **Eje del balancín** en sus dos apoyos, con el balancín a 90° y la palanca; la **bieleta** del seguidor 3 al balancín | Arrastra el seguidor 3: el balancín le sigue y la palanca gira seis veces más |
+| **13** | **Mesa** sobre sus cuatro bielas laterales; el **tirante** de la palanca al eje móvil trasero | Arrastra el seguidor 3: la mesa baja 3 mm sin girar y se corre 0,113 |
+| **14** | **Punta** (tubo y horquilla) en los dos distales; **lápiz** en sus láminas | La mina toca el papel con la mesa arriba y queda a 3 con la mesa abajo |
 
 **Solo un emparejamiento puede estar animado a la vez** en todo Onshape; el
 resto se mueve por las relaciones. Ese emparejamiento es M1 y no otro: es el
@@ -365,8 +378,9 @@ parar en algún sitio, se para después del 9 y se conduce a mano (§5).
 Lo de arriba se monta a mano en Onshape y sirve para **verlo y
 arrastrarlo**. En paralelo hay un montaje que no se toca con el ratón y
 que hace lo que Onshape no puede: `emit/montaje.py` levanta los sólidos
-de las trece piezas desde sus perfiles y los coloca a partir de lo que
-calcula el compilador.
+de **todas** las piezas desde sus perfiles —las 32 de la plataforma y las
+comerciales— y las coloca a partir de lo que calcula el compilador: el giro
+de cada brazo, el del eje del balancín y lo que baja la mesa.
 
 ```
 θ → core/ → ψ de cada seguidor → emit/montaje.py → sólidos en su sitio
@@ -397,29 +411,35 @@ obstáculo; aquí se mide con el perfil entero, los sólidos de verdad y el
 poste real de Ø8. Los dos coinciden en los 3,5 mm que separan los dos
 radios, y no comparten una línea de código.
 
-Y un aviso sobre lo que **no** es un barrido general: el poste atraviesa
-el agujero del plato por diseño y el árbol atraviesa las tres levas, así
-que «nada se toca» es falso. El test va contra una lista corta de pares
-que de verdad no deben acercarse.
+Y desde 2026-10-04 **el barrido ve los solapes**: una holgura negativa es
+menos la raíz cúbica del volumen común, y `tests/emit/test_montaje.py`
+recorre la máquina entera en doce ángulos sin más contactos que los dos
+que lo son a propósito —el engrane, que se mete dos módulos, y la mina
+sobre el papel—. Lo que encontró la primera vez está en `docs/contratos.md`:
+proximales solapados, balancín dentro de la leva 3, volante atravesado por
+el árbol, distales rectos cruzando el poste 3.
 
 ---
 
-## 8. Lo que todavía no se puede montar
+## 8. Lo que todavía no está cerrado
 
-Dos piezas del listado entran en el conjunto pero se quedan colgando, y una
-cadena entera falta:
+Desde 2026-10-04 todas las piezas tienen ficha, perfil, hoja, material y
+proceso, y la máquina entera se monta y se mueve sin chocar en
+`emit/montaje.py`. Lo que queda:
 
-- **`palanca_lapiz` hay que redibujarla.** Su cubo pasó de Ø10 a Ø4 cuando se
-  cerró el balancín, y el croquis de Onshape es el de antes.
-- **La cadena del levantamiento está sin piezas.** Faltan por dibujar la
-  bieleta, el tirante, la mesa, sus dos bielas y sus ejes, los dos soportes,
-  las dos flexuras y la pinza del lápiz. El balancín y la palanca existen,
-  pero no tienen a qué agarrarse. Hasta que estén, el canal elevador se monta
-  y gira y no levanta nada.
+- **Onshape va por detrás**, por decisión: se saltó para cerrar la máquina
+  en el repo. No están dibujadas las piezas nuevas ni las cambiadas
+  (balancín girado, tambor en D, distal curvo, eje de pivote de 55, platina
+  con los dos M3 de los apoyos). El STEP guardado de la platina lo dice en
+  su test.
 - **`base_al_plato` sigue pendiente**, 75 provisionales. Toda la pila vertical
-  cuelga de esa cota, así que el alzado del conjunto se moverá entero cuando
-  se cierre. En el CAD no es grave —es una variable— pero no hay que acotar
-  nada contra ella a mano.
+  cuelga de esa cota, y con ella el largo del tirante (`tirante_largo`).
+- **Precios**: `bench/precios.json` no tiene las piezas nuevas, así que el
+  coste de la plataforma del informe se queda corto.
+- **El portaminas sin medir**: la pinza se taladra al cuerpo medido, no al
+  nominal de 10.
+- **La cinta del cabestrante y sus mordazas** no se colocan en 3D: su sitio
+  sobre el sector lo dicen sus fichas.
 
 ---
 
