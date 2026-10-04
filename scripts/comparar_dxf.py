@@ -153,15 +153,12 @@ class Ficha:
     el croquis y otra distinta montada.
     """
     cara_plana_angulo: str = ""
-    """El ángulo que la comprobación de la cara plana deja **fijado**.
+    """Hacia dónde mira la normal de la cara plana, y la comprobación lo fija.
 
-    Una cuerda vertical obliga a que la normal de la cara vaya por ±X, y el
-    signo decide cuál de los dos: entre las dos cosas el ángulo queda clavado
-    en cero sin que nadie lo mida. Se declara para que el cruce con el
-    listado lo vea —un ángulo que el DXF trae resuelto y nadie comprueba es
-    de los que se ven bien a 119 como a 120— y para que la comprobación avise
-    si algún día el contrato pone ahí otro valor, que es donde dejaría de
-    valer.
+    La cuerda tiene que ser perpendicular a esa normal y la cara tiene que
+    caer a `cara_plana` del eje medido sobre ella, con signo: entre las dos
+    cosas el ángulo queda clavado sin que nadie lo teclee como número. En los
+    brazos vale cero; en el balancín, 90°.
     """
     datum: str = ""
     """La cota del rasgo que va en el ORIGEN, y de ahí a +X el siguiente.
@@ -203,8 +200,13 @@ FICHAS: dict[str, Ficha] = {
         datum="brazo_eje_diametro_radio",
     ),
     "brazo_distal": Ficha(
-        "biela: los dos extremos iguales, sin cara plana",
-        {"brazo_extremo_diametro_radio": 2, "brazo_perno_diametro_radio": 2},
+        "biela sin cara plana: perno en el codo, tubo hueco en la punta",
+        {
+            "brazo_extremo_diametro_radio": 1,
+            "distal_punta_diametro_radio": 1,
+            "brazo_perno_diametro_radio": 1,
+            "punta_tubo_diametro_radio": 1,
+        },
         entre_centros=("brazo_distal",),
         tangentes=4,
         datum="brazo_perno_diametro_radio",
@@ -296,7 +298,7 @@ FICHAS: dict[str, Ficha] = {
         tangentes=4,
         segmentos={"balancin_chaveta_cuerda": 1},
         cara_plana="balancin_chaveta",
-        cara_plana_angulo="brazo_chaveta_angulo",
+        cara_plana_angulo="balancin_chaveta_angulo",
         datum="balancin_eje_diametro_radio",
     ),
     "platina_levas": Ficha(
@@ -346,12 +348,28 @@ FICHAS: dict[str, Ficha] = {
         datum="amplificador_sector_agujero_diametro_radio",
     ),
     "tambor": Ficha(
-        "cilindro liso, sin pestañas: la cinta va anclada por los dos extremos",
+        "cilindro liso, sin pestañas, calado al eje por la cara plana",
         {
             "amplificador_tambor_radio_mecanizado": 1,
             "brazo_eje_diametro_radio": 1,
         },
+        segmentos={"brazo_chaveta_cuerda": 1},
+        cara_plana="brazo_chaveta",
+        cara_plana_angulo="brazo_chaveta_angulo",
         datum="brazo_eje_diametro_radio",
+    ),
+    "eje_manivela": Ficha(
+        "sección del eje: Ø10 con una cara plana, como los de pivote",
+        {"brazo_eje_diametro_radio": 1},
+        segmentos={"brazo_chaveta_cuerda": 1},
+        cara_plana="brazo_chaveta",
+        cara_plana_angulo="brazo_chaveta_angulo",
+        datum="brazo_eje_diametro_radio",
+    ),
+    "casquillo_rueda": Ficha(
+        "anillo: el agujero de 15 de la rueda sobre el árbol de 10",
+        {"casquillo_rueda_diametro_radio": 1, "eje_diametro_radio": 1},
+        datum="eje_diametro_radio",
     ),
 }
 """Las piezas prismáticas de la plataforma. No hay marco genérico a propósito:
@@ -917,31 +935,30 @@ def comparar(ruta: Path, pieza: str, tol: float = TOLERANCIA) -> Informe:
     # --- la cara plana, con signo ---
     if ficha.cara_plana:
         esperado = cotas[ficha.cara_plana]
-        if ficha.cara_plana_angulo:
-            girada = angulos_en_rad()[ficha.cara_plana_angulo]
-            if abs(girada) > 1e-9:
-                inf.hallazgos.append(
-                    Hallazgo(
-                        "falta",
-                        f"#angulo.{ficha.cara_plana_angulo} vale {math.degrees(girada):g}° y "
-                        "esta comprobación busca una cuerda VERTICAL: a otro ángulo no mira "
-                        "la pieza que hay, mira la que había",
-                    )
-                )
+        # La normal de la cara: la cuerda es perpendicular a ella, y la
+        # distancia del eje al plano se mide sobre ella, con signo.
+        girada = angulos_en_rad()[ficha.cara_plana_angulo] if ficha.cara_plana_angulo else 0.0
+        nx, ny = math.cos(girada), math.sin(girada)
         cuerda = cotas[next(iter(ficha.segmentos))] if ficha.segmentos else 0.0
         datum = min(
             (c for c, r in circulares if abs(r - cotas[ficha.datum]) <= tol),
             key=lambda c: math.hypot(*c),
             default=None,
         )
+        ox, oy = datum if datum else (0.0, 0.0)
         planas = [
-            ((a[0] + b[0]) / 2 - (datum[0] if datum else 0.0))
+            ((a[0] + b[0]) / 2 - ox) * nx + ((a[1] + b[1]) / 2 - oy) * ny
             for a, b in segmentos
-            if abs(math.dist(a, b) - cuerda) <= tol and abs(a[0] - b[0]) <= tol
+            if abs(math.dist(a, b) - cuerda) <= tol
+            and abs((b[0] - a[0]) * nx + (b[1] - a[1]) * ny) <= tol
         ]
         if not planas:
             inf.hallazgos.append(
-                Hallazgo("falta", f"#cota.{ficha.cara_plana}: no hay ninguna cara plana vertical")
+                Hallazgo(
+                    "falta",
+                    f"#cota.{ficha.cara_plana}: no hay ninguna cara plana con la normal a "
+                    f"{math.degrees(girada):g}°",
+                )
             )
         elif any(abs(x - esperado) <= tol for x in planas):
             inf.bien.append(f"cara plana a {esperado:g} del eje   #cota.{ficha.cara_plana}")

@@ -97,7 +97,8 @@ def test_los_arcos_entran_como_arcos_y_no_como_polilinea():
 
     c = contrato_mm()
     ancho = solido_de("brazo_distal", c).bounding_box().size.Y
-    assert ancho == pytest.approx(c["brazo_extremo_diametro"], rel=1e-9)
+    # El extremo más ancho es el de la punta, que lleva el tubo hueco.
+    assert ancho == pytest.approx(c["distal_punta_diametro"], rel=1e-9)
 
 
 # ---------------------------------------------------------------------------

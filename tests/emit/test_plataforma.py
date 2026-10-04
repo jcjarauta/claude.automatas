@@ -20,12 +20,14 @@ from emit.plataforma import (
     Arco,
     Segmento,
     agujero_en_d,
+    balancin,
     barra,
     brazo,
     contrato_mm,
     eje_pivote,
     escribir_dxf,
     mordaza,
+    tambor,
 )
 from scripts.comparar_dxf import comparar
 
@@ -84,16 +86,55 @@ def test_una_cara_plana_que_parte_el_agujero_no_pasa():
         agujero_en_d((0.0, 0.0), 5.0, 6.0)
 
 
-def test_el_distal_sale_sin_cara_plana_y_con_los_dos_extremos_iguales():
-    """Es una biela: gira libre en los dos pernos. Una D ahí sería un calaje
-    que no necesita y que impediría montarla."""
+def test_el_distal_sale_sin_cara_plana_y_con_la_punta_hueca():
+    """Es una biela: gira libre y no cala nada, así que una D ahí sería un
+    calaje que no necesita. El extremo de la punta es mayor que el del codo
+    porque lleva el tubo hueco por el que pasa el lápiz."""
     c = contrato_mm()
     perfil = brazo("brazo_distal")
     radios = sorted(e.radio for e in perfil if isinstance(e, Arco))
     assert radios == pytest.approx(
-        sorted([c["brazo_extremo_diametro"] / 2] * 2 + [c["brazo_perno_diametro"] / 2] * 2)
+        sorted(
+            [
+                c["brazo_extremo_diametro"] / 2,
+                c["distal_punta_diametro"] / 2,
+                c["brazo_perno_diametro"] / 2,
+                c["punta_tubo_diametro"] / 2,
+            ]
+        )
     )
     assert sum(isinstance(e, Segmento) for e in perfil) == 2, "sobra una cuerda"
+    # El tubo va en la punta, que es el extremo en +X.
+    tubo = next(
+        e for e in perfil if isinstance(e, Arco) and e.radio == c["punta_tubo_diametro"] / 2
+    )
+    assert tubo.centro == pytest.approx((c["brazo_distal"], 0.0))
+
+
+def test_el_tambor_cala_con_la_misma_cara_que_el_eje():
+    """Redondo no transmitía par: el cabestrante no movía el brazo."""
+    c = contrato_mm()
+    cuerda_tambor = next(e for e in tambor() if isinstance(e, Segmento))
+    cuerda_eje = next(e for e in eje_pivote() if isinstance(e, Segmento))
+    assert math.dist(cuerda_tambor.a, cuerda_tambor.b) == pytest.approx(
+        math.dist(cuerda_eje.a, cuerda_eje.b)
+    )
+    assert cuerda_tambor.a[0] == pytest.approx(c["brazo_chaveta"])
+
+
+def test_la_cara_plana_del_balancin_mira_a_un_cuarto_de_vuelta():
+    """La cara del balancín va girada 90° respecto de su línea de centros:
+    en el eje de UNA cara plana, deja la palanca horizontal y el balancín
+    apuntando hacia arriba."""
+    c = contrato_mm()
+    cuerda = next(
+        e
+        for e in balancin()
+        if isinstance(e, Segmento)
+        and math.dist(e.a, e.b) == pytest.approx(c["balancin_chaveta_cuerda"], abs=1e-3)
+    )
+    assert cuerda.a[1] == pytest.approx(c["balancin_chaveta"])
+    assert cuerda.b[1] == pytest.approx(c["balancin_chaveta"])
 
 
 def test_el_dxf_no_lleva_rotulos():

@@ -108,21 +108,30 @@ def barra(largo: float, r0: float, r1: float) -> Perfil:
     ]
 
 
-def agujero_en_d(centro: Punto, radio: float, chaveta: float) -> Perfil:
+def agujero_en_d(centro: Punto, radio: float, chaveta: float, angulo: float = 0.0) -> Perfil:
     """El agujero que cala: un arco y la cuerda de la cara plana.
 
-    La cara mira al otro cubo —normal en +X, `brazo_chaveta_angulo` = 0— y no
-    es una elección: a cualquier otro ángulo el brazo deja de ser simétrico
-    respecto de su propio eje, y entonces el proximal volteado no sirve para
-    el otro lado.
+    `angulo` (radianes) es hacia dónde mira la normal de la cara. En los
+    brazos es 0 —mira al otro cubo, `brazo_chaveta_angulo`— y no es una
+    elección: a cualquier otro ángulo el brazo deja de ser simétrico respecto
+    de su propio eje, y entonces el proximal volteado no sirve para el otro
+    lado. En el balancín es 90°, `balancin_chaveta_angulo`: va en el mismo
+    eje de una cara plana que la palanca y tiene que quedar a un cuarto de
+    vuelta de ella.
     """
     if not 0.0 < chaveta < radio:
         raise ValueError("la cara plana se come el agujero o no lo toca")
     t = math.acos(chaveta / radio)
-    x = centro[0] + chaveta
+    cx, cy = centro
+    co, si = math.cos(angulo), math.sin(angulo)
+
+    def girar(x: float, y: float) -> Punto:
+        return (cx + x * co - y * si, cy + x * si + y * co)
+
+    h = radio * math.sin(t)
     return [
-        Arco(centro, radio, t, 2 * math.pi - t),
-        Segmento((x, centro[1] - radio * math.sin(t)), (x, centro[1] + radio * math.sin(t))),
+        Arco(centro, radio, angulo + t, angulo + 2 * math.pi - t),
+        Segmento(girar(chaveta, -h), girar(chaveta, h)),
     ]
 
 
@@ -188,8 +197,22 @@ def sector(c: dict[str, float] | None = None) -> Perfil:
 
 
 def tambor(c: dict[str, float] | None = None) -> Perfil:
+    """El tambor, con el agujero en D del eje de pivote.
+
+    Era redondo, y así no cala: el par que la cinta le da no llegaba al eje
+    ni, por tanto, al brazo. El cabestrante 6:1 entero colgaba de esa cara
+    plana que faltaba.
+    """
     c = contrato_mm() if c is None else c
-    return disco(c["amplificador_tambor_radio_mecanizado"], c["brazo_eje_diametro"])
+    return circulo((0.0, 0.0), c["amplificador_tambor_radio_mecanizado"]) + agujero_en_d(
+        (0.0, 0.0), c["brazo_eje_diametro"] / 2, c["brazo_chaveta"]
+    )
+
+
+def casquillo_rueda(c: dict[str, float] | None = None) -> Perfil:
+    """El casquillo que pone la rueda Z60, de agujero 15, en el árbol de 10."""
+    c = contrato_mm() if c is None else c
+    return disco(c["casquillo_rueda_diametro"] / 2, c["eje_diametro"])
 
 
 def platina_levas(c: dict[str, float] | None = None) -> Perfil:
@@ -271,16 +294,23 @@ def balancin(c: dict[str, float] | None = None) -> Perfil:
     con 10 el pasador se metería dentro del agujero del eje.
 
     Cala por la cara plana, igual que los brazos, y en el mismo eje va la
-    palanca del lápiz 78 mm más adelante. El eje corre de proa a popa, y esa
-    orientación es toda la invención: convierte el movimiento del seguidor,
-    que va de lado, en el vertical que necesita la mesa.
+    palanca del lápiz 90,75 mm más adelante. El eje corre de proa a popa, y
+    esa orientación es toda la invención: convierte el movimiento del
+    seguidor, que va de lado, en el vertical que necesita la mesa. Su cara
+    plana va girada 90°: con el eje de una sola cara, eso deja la palanca
+    horizontal y el balancín apuntando hacia arriba.
     """
     c = contrato_mm() if c is None else c
     largo = c["balancin_entrada"]
     cubo, extremo = c["balancin_cubo_diametro"] / 2, c["balancin_extremo_diametro"] / 2
     return (
         barra(largo, cubo, extremo)
-        + agujero_en_d((0.0, 0.0), c["balancin_eje_diametro"] / 2, c["balancin_chaveta"])
+        + agujero_en_d(
+            (0.0, 0.0),
+            c["balancin_eje_diametro"] / 2,
+            c["balancin_chaveta"],
+            c["balancin_chaveta_angulo"],
+        )
         + circulo((largo, 0.0), c["balancin_perno_diametro"] / 2)
     )
 
@@ -400,6 +430,8 @@ PERFILES = {
     "volante": lambda c: volante(c),
     "base": lambda c: base(c),
     "balancin": lambda c: balancin(c),
+    "eje_manivela": lambda c: eje_pivote(c),
+    "casquillo_rueda": lambda c: casquillo_rueda(c),
 }
 """Las piezas prismáticas que no son barras. El resto sale de `BRAZOS`.
 
@@ -432,11 +464,14 @@ def brazo(cual: str, c: dict[str, float] | None = None) -> Perfil:
     largo = c[entre_centros]
     extremo, perno = c["brazo_extremo_diametro"] / 2, c["brazo_perno_diametro"] / 2
     if not calado:
-        # Biela: los dos extremos iguales porque no cala nada.
+        # Biela: no cala nada. El extremo del codo lleva su perno de 6; el de
+        # la punta, el tubo hueco por el que pasa el lápiz, y por eso es más
+        # grande. Los dos distales comparten ese tubo.
+        punta = c["distal_punta_diametro"] / 2
         return (
-            barra(largo, extremo, extremo)
+            barra(largo, extremo, punta)
             + circulo((0.0, 0.0), perno)
-            + circulo((largo, 0.0), perno)
+            + circulo((largo, 0.0), c["punta_tubo_diametro"] / 2)
         )
     cubo, radio = c[f"{eje}_cubo_diametro"] / 2, c[f"{eje}_eje_diametro"] / 2
     return (
@@ -558,22 +593,24 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte + taladro",
     ),
     "brazo_distal": Ficha(
-        "barra de dos cubos **iguales** en pletina de latón",
+        "barra de dos cubos desiguales en pletina de latón: codo y punta",
         2,
         (
             Variable("cota", "brazo_distal", "entre centros"),
             Variable("cota", "brazo_espesor", "espesor", en_el_perfil=False),
-            Variable("cota", "brazo_perno_diametro", "Ø los dos", "H7"),
-            Variable("cota", "brazo_extremo_diametro_radio", "R los dos"),
+            Variable("cota", "brazo_perno_diametro", "Ø perno del codo", "H7"),
+            Variable("cota", "brazo_extremo_diametro_radio", "R del codo"),
+            Variable("cota", "punta_tubo_diametro", "Ø tubo de la punta", "H7"),
+            Variable("cota", "distal_punta_diametro_radio", "R de la punta"),
         ),
         ("plancha", "brazo_espesor"),
-        "Es una biela: gira libre en los dos pernos y no cala nada. Que los dos extremos "
-        "salgan iguales es la consecuencia, no una elección; si dejaran de serlo sería "
-        "que alguien le ha puesto un calaje que no necesita.",
+        "Es una biela: gira libre y no cala nada. La punta es hueca —un tubo de 13 por el "
+        "que pasa el lápiz— y por eso ese extremo es más grande que el del codo: con el "
+        "lápiz en el eje de la punta, nada de lo que gire sobre ella mueve la mina.",
         montaje=(
-            "Va por debajo de los dos proximales, en su propio plano. Gira libre en los dos "
-            "pernos de Ø6: codo por un lado, punta por el otro. No cala nada, así que se monta "
-            "en cualquier sentido."
+            "Por debajo de los dos proximales, cada distal en su plano: 3 de pletina y 0,5 de "
+            "arandela entre brazo y brazo. El codo gira en su perno de Ø6; la punta, en el tubo "
+            "común de Ø13. El cubo grande va siempre a la punta."
         ),
         material="latón, pletina de 3",
         proceso="corte + taladro",
@@ -640,8 +677,9 @@ LISTADO: dict[str, Ficha] = {
         "del brazo, para que encajen.",
         montaje=(
             "Atraviesa el plato 1. Por debajo cala el brazo proximal; por encima, el tambor del "
-            "cabestrante, cuya cara alta queda a 33,5 del plato. Un circlip a cada punta. La "
-            "cara plana mira al otro cubo del brazo y es lo único que fija el calaje."
+            "cabestrante, cuya cara alta queda a 33,5 del plato. Un collar bajo el proximal y "
+            "un circlip sobre el tambor: 55 en los dos lados. La cara plana mira al otro cubo "
+            "del brazo y es lo único que fija el calaje."
         ),
         material="acero W10 h6 rectificado",
         proceso="corte a medida + fresado de la cara plana",
@@ -680,6 +718,9 @@ LISTADO: dict[str, Ficha] = {
             Variable("cota", "amplificador_tambor_radio_mecanizado_diametro", "Ø del canto"),
             Variable("cota", "amplificador_tambor_ancho", "ancho", en_el_perfil=False),
             Variable("cota", "brazo_eje_diametro", "Ø agujero", "H7"),
+            Variable("cota", "brazo_chaveta", "cara plana a"),
+            Variable("cota", "brazo_chaveta_cuerda", "cuerda"),
+            Variable("angulo", "brazo_chaveta_angulo", "girada"),
             Variable("angulo", "amplificador_tambor_abrazado", "abrazado", en_el_perfil=False),
         ),
         ("barra", "amplificador_tambor_ancho"),
@@ -687,8 +728,9 @@ LISTADO: dict[str, Ficha] = {
         "pestañas sino que los dos asientos sean coplanarios, y eso es una tolerancia y "
         "no un resalte. R8 son 160 espesores de cinta: pasa de sobra el radio mínimo.",
         montaje=(
-            "Cala en el eje de pivote por encima del plato 1, enfrentado al sector de su canal. "
-            "La cinta lo abraza 185 grados y se ancla en el sector, no aquí."
+            "Cala en el eje de pivote por la cara plana, por encima del plato 1, enfrentado al "
+            "sector de su canal: de 111,5 a 117,5, coplanario con él. La cinta lo abraza 185 "
+            "grados y se ancla en el sector, no aquí."
         ),
         material="latón, barra de Ø16",
         proceso="torneado",
@@ -749,8 +791,9 @@ LISTADO: dict[str, Ficha] = {
         "latón y solo un 9 % de inercia. Cala con la misma cara plana que los brazos, sin "
         "prisionero: un taladro radial no sale de una plancha cortada.",
         montaje=(
-            "Entre los dos rodamientos del eje de la manivela, en la bahía del reductor, junto "
-            "al piñón. Cala por la cara plana y no lleva prisionero."
+            "Encima del plato 3, 1 mm por encima, en el eje de la manivela y bajo ella. Cala por "
+            "la cara plana y no lleva prisionero. NO va en la bahía del reductor: centrado a 28 "
+            "del árbol con R52, el árbol y la rueda Z60 lo atravesarían."
         ),
         material="latón, plancha de 6",
         proceso="corte + taladro",
@@ -802,7 +845,7 @@ LISTADO: dict[str, Ficha] = {
             Variable("cota", "balancin_extremo_diametro_radio", "R del extremo"),
             Variable("cota", "balancin_chaveta", "cara plana a"),
             Variable("cota", "balancin_chaveta_cuerda", "cuerda"),
-            Variable("angulo", "brazo_chaveta_angulo", "girada"),
+            Variable("angulo", "balancin_chaveta_angulo", "girada"),
         ),
         ("plancha", "balancin_espesor"),
         "Mide 6,333 entre centros porque es lo que la relación 6 obliga: el pasador del "
@@ -811,10 +854,10 @@ LISTADO: dict[str, Ficha] = {
         "con 10 el pasador se metería DENTRO del agujero del eje, pared -0,17, y con 4 "
         "quedan 3,33. Esa pared es la cota que manda aquí.",
         montaje=(
-            "Calado por la cara plana en el extremo de popa del eje del balancín, por "
-            "encima del plano de seguidores. El pasador de Ø2 recibe la bieleta, que "
-            "viene horizontal desde el agujero del seguidor 3. En el otro extremo del "
-            "mismo eje, 78 mm a proa, va la palanca del lápiz."
+            "Calado por la cara plana en el extremo de popa del eje del balancín, apuntando "
+            "HACIA ARRIBA y con el cubo por encima del plano de seguidores. El pasador de Ø2 "
+            "recibe la bieleta isógona, que viene horizontal desde el agujero del seguidor 3. "
+            "En el mismo eje, 90,75 mm a proa, va la palanca del lápiz."
         ),
         material="latón, pletina de 3",
         proceso="corte + taladro",
@@ -900,6 +943,47 @@ LISTADO: dict[str, Ficha] = {
         ),
         material="POM-C negro, plancha de 5",
         proceso="fresado CNC",
+    ),
+    "eje_manivela": Ficha(
+        "barra Ø10 h6 con una cara plana, como los de pivote",
+        1,
+        (
+            Variable("cota", "brazo_eje_diametro", "Ø", "h6"),
+            Variable("cota", "eje_manivela_largo", "largo", en_el_perfil=False),
+            Variable("cota", "brazo_chaveta", "cara plana a"),
+            Variable("cota", "brazo_chaveta_cuerda", "cuerda"),
+            Variable("angulo", "brazo_chaveta_angulo", "girada"),
+        ),
+        ("barra", "eje_manivela_largo"),
+        "La misma barra que los ejes de pivote, con otro largo: lleva el piñón, el volante "
+        "y la manivela, y las tres calan por la misma cara plana. No estaba en el listado: "
+        "el volante y la manivela hablaban de él y nadie lo había declarado.",
+        montaje=(
+            "Gira en dos rodamientos 6800, en el plato 2 y en el plato 3, a 28 del árbol. En "
+            "la bahía lleva el piñón; encima del plato 3, el volante y luego la manivela. "
+            "Empieza 1 por debajo del plato 2 y acaba 1 por encima de la manivela: 51."
+        ),
+        material="acero W10 h6 rectificado",
+        proceso="corte a medida + fresado de la cara plana",
+    ),
+    "casquillo_rueda": Ficha(
+        "casquillo de latón: la rueda Z60 en el árbol",
+        1,
+        (
+            Variable("cota", "casquillo_rueda_diametro", "Ø exterior", "p6"),
+            Variable("cota", "eje_diametro", "Ø interior", "H7"),
+            Variable("cota", "casquillo_rueda_largo", "largo", en_el_perfil=False),
+        ),
+        ("barra", "casquillo_rueda_largo"),
+        "La rueda Z60 viene de fábrica con agujero de 15 H7 y el árbol es de 10: sin él no "
+        "hay encaje. Va entre una pieza de catálogo y un contrato congelado, y por eso se "
+        "hace a medida y no se cambia ninguno de los dos.",
+        montaje=(
+            "A presión en la rueda, en la bahía del reductor, a la altura del piñón. Al árbol, "
+            "con un prisionero M3: es lo que pasa el par de la manivela a las levas."
+        ),
+        material="latón, barra de Ø16",
+        proceso="torneado + taladro roscado M3",
     ),
 }
 """Qué se teclea en cada pieza de la plataforma, y nada más.

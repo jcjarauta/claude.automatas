@@ -303,6 +303,8 @@ def despiece() -> list[tuple[int, str, int, str, str]]:
     orden = [
         "base",
         "platina_levas",
+        "casquillo_rueda",
+        "eje_manivela",
         "eje_pivote",
         "seguidor",
         "sector",

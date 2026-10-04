@@ -428,10 +428,11 @@ def test_cada_cota_circular_tiene_sus_dos_formas(paquete: Path):
     # por su circunferencia de construcción, y esa el CAD la pide en
     # diámetro. Lo sabe la ficha, que declara el patrón, no el nombre.
     #
-    # Y 38 con el cubo de la punta del distal, que pasó a R9 cuando la punta
-    # se hizo hueca para que el lápiz la atraviese: es un arco del contorno y
-    # se teclea en radio. El tubo de la punta no suma: es un agujero entero.
-    assert gemelos == 38, f"esperaba 38 cotas circulares con gemelo, hay {gemelos}"
+    # Y 41 con la punta hueca del distal y el casquillo de la rueda: el cubo
+    # de la punta (R9, un arco del contorno), el tubo y su interior, y el
+    # exterior del casquillo. Se llaman `_diametro` a propósito: el
+    # comparador mira los agujeros por su radio, y sin nombre no hay gemelo.
+    assert gemelos == 41, f"esperaba 41 cotas circulares con gemelo, hay {gemelos}"
 
 
 def test_el_gemelo_dice_que_es_derivado(paquete: Path):

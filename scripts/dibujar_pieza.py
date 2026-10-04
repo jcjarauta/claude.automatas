@@ -36,6 +36,7 @@ from emit.plataforma import (
     Segmento,
     balancin,
     base,
+    casquillo_rueda,
     contrato_mm,
     eje_pivote,
     mordaza,
@@ -67,6 +68,8 @@ PERFIL_DE = {
     "volante": volante,
     "base": base,
     "balancin": balancin,
+    "eje_manivela": eje_pivote,
+    "casquillo_rueda": casquillo_rueda,
 }
 """De dónde sale la forma de cada pieza.
 
