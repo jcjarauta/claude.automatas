@@ -169,24 +169,43 @@ def test_el_hueco_al_poste_en_3d_coincide_con_el_que_mide_el_compilador():
     )
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason="A1 de docs/auditoria_conjunto.md: los sectores, discos enteros de R48, "
+    "sobresalen 14,5 mm por cada lado de la base",
+)
 def test_la_caja_envolvente_del_montaje_cabe_en_la_base():
     """Nada puede salirse de la tabla por los lados mientras gira, salvo el
-    pomo de la manivela, que se sale 19 mm a propósito y está documentado.
-    El montaje todavía no lleva la manivela, así que aquí no hay excepción
-    que hacer: si algo asoma, es un error de colocación."""
+    pomo de la manivela, que se sale a propósito y está documentado.
+
+    **Se mide con la máquina a escuadra con la base.** El montaje vive en el
+    marco de la leva, donde la base va girada; comparar cajas ahí era
+    comparar contra la caja de un rectángulo girado, mucho más grande que
+    él, y este test pasaba con los sectores fuera de la tabla 14,5 mm por
+    cada lado. Lo encontró la vista agrupada del visor.
+    """
+    from build123d import Rot
+
     from compile.conjunto import piezas_en
     from compile.escribiente import Escribiente, compilar
     from scripts.exportar_para_cad import leer
 
     compilacion = compilar(leer(RAIZ / "demo" / "hola.json"))
-    piezas = piezas_en(compilacion, Escribiente(), 0.0)
-    base = next(p for p in piezas if p.nombre == "base").solido.bounding_box()
-    for pieza in piezas:
-        caja = pieza.solido.bounding_box()
-        assert caja.min.X >= base.min.X - 1e-6, pieza.nombre
-        assert caja.max.X <= base.max.X + 1e-6, pieza.nombre
-        assert caja.min.Y >= base.min.Y - 1e-6, pieza.nombre
-        assert caja.max.Y <= base.max.Y + 1e-6, pieza.nombre
+    a_escuadra = Rot(Z=90.0 - math.degrees(contrato_mm()["cartucho_salida_angulo"]))
+    piezas = [(p.nombre, a_escuadra * p.solido) for p in piezas_en(compilacion, Escribiente(), 0.0)]
+    base = next(s for n, s in piezas if n == "base").bounding_box()
+    fuera = []
+    for nombre, solido in piezas:
+        caja = solido.bounding_box()
+        sobra = max(
+            base.min.X - caja.min.X,
+            caja.max.X - base.max.X,
+            base.min.Y - caja.min.Y,
+            caja.max.Y - base.max.Y,
+        )
+        if sobra > 1e-6:
+            fuera.append(f"{nombre}: {sobra:.1f} mm")
+    assert not fuera, "se sale de la base: " + ", ".join(fuera)
 
 
 CONTACTOS_A_PROPOSITO = {
@@ -316,3 +335,24 @@ def test_el_cartucho_solo_entra_en_fase_cero():
     c_a = contrato_mm()["cartucho_salida_angulo"]
     medio = Pos(4.0 * math.cos(c_a), 4.0 * math.sin(c_a), 0.0) * Rot(Z=180.0) * cartucho
     assert _volumen_comun(medio, garra) > 1.0
+
+
+def test_toda_pieza_colocada_cae_en_un_solo_grupo():
+    """La auditoría de conjunto va por subsistemas. Una pieza sin grupo no la
+    audita nadie, y una en dos grupos se cuenta dos veces: las dos cosas
+    saltan aquí el día que se añade una pieza al montaje."""
+    from compile.conjunto import piezas_en
+    from compile.escribiente import Escribiente, compilar
+    from emit.montaje import GRUPOS, grupo_de
+    from scripts.exportar_para_cad import leer
+
+    piezas = piezas_en(compilar(leer(RAIZ / "demo" / "hola.json")), Escribiente(), 0.0)
+    usados = {grupo_de(p.nombre).nombre for p in piezas}
+    assert usados == {g.nombre for g in GRUPOS}, "hay un grupo sin piezas"
+    # El bastidor no se mueve; el cartucho gira entero.
+    for p in piezas:
+        g = grupo_de(p.nombre).nombre
+        if g == "bastidor":
+            assert not p.movil, p.nombre
+        if g == "cartucho":
+            assert p.movil, p.nombre

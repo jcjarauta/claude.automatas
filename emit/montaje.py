@@ -274,6 +274,127 @@ y la que se deja entre el plato 3, el volante y la manivela."""
 
 
 @dataclass(frozen=True)
+class Grupo:
+    """Un subsistema del conjunto: para qué está, cómo se pinta y qué piezas
+    son suyas, por el principio de su nombre."""
+
+    nombre: str
+    objetivo: str
+    color: str
+    opacidad: float
+    prefijos: tuple[str, ...]
+
+
+GRUPOS: tuple[Grupo, ...] = (
+    Grupo(
+        "bastidor",
+        "Lo que no se mueve: base, postes, platos y rodamientos",
+        "#9aa0a6",
+        0.25,
+        ("base", "poste1", "poste2", "poste3", "plato", "rodamiento_"),
+    ),
+    Grupo(
+        "cartucho",
+        "Lo que se cambia en cada pedido: las levas y lo que las enhebra",
+        "#ff8c1a",
+        1.0,
+        ("leva_", "eje_cartucho", "cubo", "separador_", "pasador_indice"),
+    ),
+    Grupo(
+        "entre_puntos",
+        "Lo que sujeta, arrastra y pone en fase el cartucho",
+        "#2f6fdb",
+        1.0,
+        ("munon", "eje_motriz", "garra", "pasador_garra", "muelle_garra", "anillo_garra"),
+    ),
+    Grupo(
+        "accionamiento",
+        "La manivela, el volante y el reductor 3:1",
+        "#8e44ad",
+        1.0,
+        ("rueda", "casquillo_rueda", "pinon", "eje_manivela", "volante", "manivela"),
+    ),
+    Grupo(
+        "seguidores",
+        "Lo que lee las levas: seguidores, rodillos, sus ejes, topes y muelles",
+        "#27ae60",
+        1.0,
+        (
+            "seguidor_",
+            "rodillo_",
+            "eje_rodillo_",
+            "collar_seguidor_",
+            "placa_tope_",
+            "pasador_tope_",
+            "muelle_seguidor_",
+        ),
+    ),
+    Grupo(
+        "amplificador",
+        "El cabestrante 6:1: sectores, tambores y ejes de pivote",
+        "#f1c40f",
+        1.0,
+        ("sector_", "tambor_", "eje_pivote_"),
+    ),
+    Grupo(
+        "cinco_barras",
+        "El brazo que lleva la punta por el papel",
+        "#e74c3c",
+        1.0,
+        ("proximal_", "distal_"),
+    ),
+    Grupo(
+        "levantamiento",
+        "Del seguidor 3 a la mesa: balancín, bieleta, tirante y mesa",
+        "#17a2b8",
+        1.0,
+        (
+            "eje_balancin",
+            "balancin",
+            "palanca_lapiz",
+            "apoyo_balancin",
+            "bieleta",
+            "casquillo_bieleta",
+            "bulon_tirante",
+            "tirante",
+            "biela_mesa",
+            "soporte_mesa",
+            "eje_mesa",
+            "orejeta_mesa",
+            "mesa",
+        ),
+    ),
+    Grupo(
+        "portalapiz",
+        "La punta: tubo, horquilla, pinza, láminas y portaminas",
+        "#d63384",
+        1.0,
+        (
+            "tubo_punta",
+            "brazo_horquilla",
+            "poste_horquilla",
+            "pinza",
+            "lamina_flexura_",
+            "portaminas",
+        ),
+    ),
+)
+"""Los subsistemas del conjunto, en el orden en que se lee la máquina: de lo
+fijo a la punta. Es lo que el visor pinta de un color por grupo y lo que la
+auditoría de conjunto cuenta; un test exige que toda pieza colocada caiga en
+exactamente uno."""
+
+
+def grupo_de(nombre: str) -> Grupo:
+    """El grupo de una pieza colocada. Exactamente uno: dos sería ambiguo, y
+    ninguno, una pieza que nadie audita."""
+    suyos = [g for g in GRUPOS if nombre.startswith(g.prefijos)]
+    if len(suyos) != 1:
+        raise ValueError(f"«{nombre}» cae en {len(suyos)} grupos: {[g.nombre for g in suyos]}")
+    return suyos[0]
+
+
+@dataclass(frozen=True)
 class Colocada:
     """Una pieza con su sólido ya puesto donde va."""
 
