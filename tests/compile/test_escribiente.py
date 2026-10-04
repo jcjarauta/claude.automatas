@@ -564,3 +564,20 @@ def test_sin_redondear_la_curva_se_aparta_mucho_mas_de_lo_capturado():
         crudo.veredicto.metricas["desviacion_de_lo_capturado"]
         > 5.0 * (suave.veredicto.metricas["desviacion_de_lo_capturado"])
     )
+
+
+def test_una_frase_que_empieza_arriba_a_la_izquierda_no_salta_una_vuelta():
+    """El brazo derecho apunta hacia la izquierda —los proximales se cruzan—
+    y su ángulo vive junto a ±180°. Una frase que empieza arriba a la
+    izquierda de la caja lo hacía saltar de +180° a -180°, y ese salto de
+    una vuelta llegaba a la leva derecha como 360°/8 = 45° de desviación: el
+    seguidor contra el tope y 90° de presión, en una diagonal de nada. Lo
+    destapó «Feliz cumpleaños», cuya F empieza ahí."""
+    diagonal = Escritura(
+        nombre="diagonal",
+        trazos=[trazo((0.0, 30.0), (10.0, 30.0), (20.0, 20.0), (40.0, 0.0), (80.0, 10.0))],
+    )
+    compilacion = compilar(diagonal)
+    assert compilacion.veredicto.apto, [i.codigo for i in compilacion.veredicto.errores]
+    for nombre, perfil in compilacion.perfiles.items():
+        assert float(np.max(np.abs(perfil.psi))) < float(grados(5.0)), nombre

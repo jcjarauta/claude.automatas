@@ -354,6 +354,11 @@ def encajar_en_la_caja(escritura: Escritura, maquina: Escribiente) -> Escritura:
 # ---------------------------------------------------------------------------
 
 
+def _envolver(angulos: Arreglo) -> Arreglo:
+    """Ángulos a (-π, π]."""
+    return np.asarray(np.pi - np.mod(np.pi - angulos, 2.0 * np.pi), dtype=np.float64)
+
+
 def _psi_desde_la_leva(
     perfil: PerfilLeva, thetas: Arreglo, calaje: float = 0.0, relacion: float = 1.0
 ) -> Arreglo:
@@ -717,8 +722,14 @@ def compilar(
     # brazo habría que calarlo en cada pedido y dejaría de ser pieza de
     # stock. Ver `Escribiente.calajes`.
     calajes = maquina.calajes(capacidad.altura_levantamiento)
+    # La desviación se envuelve a ±180° antes de dividir por la relación. El
+    # brazo derecho apunta hacia la izquierda —los proximales se cruzan— y su
+    # ángulo vive junto a ±180°: una letra que va lo bastante a la izquierda
+    # hace saltar `arctan2` de +180° a -180°, y sin envolver ese salto de una
+    # vuelta llegaba a la leva como 360°/8 = 45° de desviación. Lo destapó
+    # «Feliz cumpleaños»: el seguidor contra el tope y 90° de presión.
     crudos = {
-        nombre: (valores - calajes[nombre]) / maquina.relacion_de(nombre)
+        nombre: _envolver(valores - calajes[nombre]) / maquina.relacion_de(nombre)
         for nombre, valores in crudos.items()
     }
 
