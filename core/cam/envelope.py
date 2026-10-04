@@ -26,10 +26,12 @@ frase solo la haría peor.
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 import numpy as np
 import numpy.typing as npt
 from pydantic import BaseModel, ConfigDict, Field
-from shapely.geometry import LinearRing
+from shapely.geometry import LinearRing, Point
 
 from core.cam.curves import derivada_ciclica, orientacion
 from core.cam.synth import PerfilLeva
@@ -118,6 +120,102 @@ def autointerseca(perfil: PerfilLeva) -> bool:
     """La comprobación definitiva: ¿el perfil se cruza consigo mismo?"""
     anillo = LinearRing(np.vstack((perfil.perfil, perfil.perfil[:1])))
     return not bool(anillo.is_simple)
+
+
+def _area_con_signo(puntos: Arreglo) -> float:
+    x, y = puntos[:, 0], puntos[:, 1]
+    return 0.5 * float(np.sum(x * np.roll(y, -1) - np.roll(x, -1) * y))
+
+
+INTERFERENCIA_TOLERADA = 1e-5
+"""Metros. Un punto del perfil que queda a menos del radio del rodillo de la
+curva de paso, por más de esto, es un punto que el rodillo atravesaría. Diez
+micras: por debajo, la cuerda del polígono de la curva de paso ya se acerca
+al perfil más que eso en las curvas cerradas, y no es interferencia."""
+
+
+def envolvente(perfil: PerfilLeva) -> Arreglo:
+    """El contorno que de verdad se corta cuando el perfil se cruza.
+
+    Un perfil socavado no es una pieza: es un contorno con lazos donde el
+    radio de curvatura no llega al del rodillo. La pieza que sí existe es la
+    que deja el propio rodillo al recorrer la curva de paso: **el interior de
+    la curva de paso erosionado en el radio del rodillo**. Su borde no tiene
+    lazos, y en ese tramo el rodillo no sigue la curva de paso: la redondea,
+    como una pluma redondea la punta de una vuelta. **Cuánto la redondea es
+    una medida, no un juicio**, y se hace en el papel (`compile`).
+
+    Devuelve los mismos N puntos y en el mismo orden, porque todo
+    `PerfilLeva` vive en la misma rejilla de θ. Solo se mueven los puntos
+    que el rodillo atravesaría —los del lazo y sus vecinos—, repartidos por
+    el borde erosionado entre los dos puntos sanos que los rodean. Un perfil
+    sano sale tal cual.
+    """
+    from shapely.geometry import LineString, Polygon
+
+    puntos = np.asarray(perfil.perfil, dtype=np.float64)
+    if LinearRing(np.vstack((puntos, puntos[:1]))).is_simple:
+        return puntos
+
+    radio = float(perfil.seguidor.radio_rodillo)
+    paso = LinearRing(np.vstack((perfil.paso, perfil.paso[:1])))
+    malos = np.array(
+        [paso.distance(Point(x, y)) < radio - INTERFERENCIA_TOLERADA for x, y in puntos]
+    )
+    if not malos.any() or malos.all():
+        return puntos
+
+    region = Polygon(perfil.paso).buffer(-radio, quad_segs=64)
+    trozos = [region] if region.geom_type == "Polygon" else list(getattr(region, "geoms", []))
+    mayor = max(trozos, key=lambda g: g.area)
+    borde = np.asarray(mayor.exterior.coords, dtype=np.float64)[:-1]
+    if np.sign(_area_con_signo(borde)) != np.sign(_area_con_signo(puntos)):
+        borde = borde[::-1]
+    contorno = LineString(np.vstack((borde, borde[:1])))
+    largo = float(contorno.length)
+
+    salida = puntos.copy()
+    n = len(puntos)
+    # Se empieza en un punto sano para que ningún tramo malo quede partido.
+    inicio = int(np.flatnonzero(~malos)[0])
+    k = 0
+    while k < n:
+        i = (inicio + k) % n
+        if not malos[i]:
+            k += 1
+            continue
+        tramo = []
+        while k < n and malos[(inicio + k) % n]:
+            tramo.append((inicio + k) % n)
+            k += 1
+        antes, despues = puntos[(tramo[0] - 1) % n], puntos[(tramo[-1] + 1) % n]
+        sa = contorno.project(Point(*antes))
+        sb = contorno.project(Point(*despues))
+        if sb <= sa:
+            sb += largo
+        for m, indice in enumerate(tramo, start=1):
+            q = contorno.interpolate(float((sa + (sb - sa) * m / (len(tramo) + 1)) % largo))
+            salida[indice] = (q.x, q.y)
+    if LinearRing(np.vstack((salida, salida[:1]))).is_simple:
+        return salida
+
+    # Quedan lazos de interferencia menor que la tolerada: los que deja un
+    # muestreo fino en las vueltas más cerradas de la letra. Proyectar punto a
+    # punto no vale ahí —junto a un cuello estrecho un punto cae en la otra
+    # orilla y desordena todo lo que viene detrás—, así que se toma el borde
+    # erosionado entero, que es simple por construcción, en N puntos a paso
+    # constante desde el primero. Lo que viene después del recorte solo usa
+    # el polígono —el contacto, el DXF, el radio máximo—, no su rejilla.
+    s0 = contorno.project(Point(*puntos[0]))
+    for i in range(n):
+        q = contorno.interpolate(float((s0 + largo * i / n) % largo))
+        salida[i] = (q.x, q.y)
+    return salida
+
+
+def recortar(perfil: PerfilLeva) -> PerfilLeva:
+    """El mismo perfil con su contorno cambiado por la envolvente que se corta."""
+    return replace(perfil, perfil=envolvente(perfil))
 
 
 def evaluar(perfil: PerfilLeva, limites: LimitesLeva | None = None) -> Veredicto:

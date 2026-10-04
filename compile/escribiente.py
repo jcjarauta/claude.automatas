@@ -28,7 +28,7 @@ from core.actors.cinco_barras import BrazoCincoBarras
 from core.actors.palanca import PalancaElevadora
 from core.cam.contacto import psi_por_contacto
 from core.cam.curves import desde_muestras
-from core.cam.envelope import LimitesLeva, evaluar, radio_de_curvatura
+from core.cam.envelope import LimitesLeva, autointerseca, evaluar, radio_de_curvatura, recortar
 from core.cam.synth import PerfilLeva, Seguidor, sintetizar
 from core.escritura import (
     CANAL_X,
@@ -46,7 +46,7 @@ from core.escritura import (
     suavizar,
 )
 from core.program import Programa
-from core.units import Longitud, Metros, Radianes, a_mm, grados, mm
+from core.units import TAU, Longitud, Metros, Radianes, a_mm, grados, mm
 from core.verdict import Incidencia, Veredicto
 from emit.pieza import Pieza, Polilinea, Taladro, Veta
 
@@ -74,6 +74,47 @@ huecos en la tinta. De ahí salían los 0,144 mm de error de «hola», que son
 
 ERROR_DE_TRAZO_MAXIMO = 0.0005
 """Medio milímetro. Por encima de eso, la letra deja de parecerse."""
+
+SOCAVADO_TOLERABLE = 0.00025
+"""Un cuarto de milímetro en el papel. Una leva en la que el rodillo no
+entra en algún tramo se corta igual —su envolvente, `core.cam.envelope.
+recortar`— y en ese tramo redondea la letra. Si lo que redondea no pasa de
+esto, la leva vale: es la mitad del trazo de un portaminas de 0,5, y queda
+por debajo de lo que se ve. Por encima, la letra pierde las puntas."""
+
+PASO_POR_MUESTRA = 0.0005
+"""Metros de trazo, como mucho, entre una muestra de la leva y la siguiente.
+Con 720 muestras y una frase densa la punta avanzaba más de medio milímetro
+por muestra: más que los detalles de la letra, que la leva no veía. El
+veredicto salía aprobado sobre una versión filtrada de la frase sin decir
+cuánto (docs/propuesta_dimensionado.md, fase 2)."""
+
+MUESTRAS_POSIBLES = (720, 1440, 2880)
+"""Las resoluciones entre las que elige `muestras_para`. Múltiplos de 720
+para que medio grado siga siendo una muestra exacta."""
+
+
+def muestras_para(escritura: Escritura, capacidad: Capacidad) -> int:
+    """Las muestras por vuelta que pide esta frase: las menos de
+    `MUESTRAS_POSIBLES` con las que la punta no avanza más de
+    `PASO_POR_MUESTRA` entre muestra y muestra mientras escribe."""
+    tramos, _ = repartir(escritura, capacidad)
+    arco = sum(float(t.arco) for t in tramos if t.clase == "trazo")
+    tinta = 0.0
+    for t in escritura.trazos:
+        puntos = np.asarray(t.puntos, dtype=np.float64)
+        tinta += float(np.sum(np.linalg.norm(np.diff(puntos, axis=0), axis=1)))
+    if arco <= 0.0:
+        return MUESTRAS_POSIBLES[0]
+    for muestras in MUESTRAS_POSIBLES:
+        if tinta / (muestras * arco / TAU) <= PASO_POR_MUESTRA:
+            return muestras
+    return MUESTRAS_POSIBLES[-1]
+
+
+NO_ENTRA_EL_RODILLO = frozenset({"perfil_autointersecado", "curvatura_menor_que_rodillo"})
+"""Las incidencias de C3 que dicen que el rodillo no entra en algún tramo.
+No se rechazan solas: decide el error en el papel de la leva recortada."""
 
 MUESTRAS_DE_CONTACTO = 24
 """Ángulos repartidos por el ciclo en los que se apoya el rodillo. Son pocos
@@ -428,17 +469,30 @@ def simular(
     maquina: Escribiente,
     escritura: Escritura,
     muestras: int,
+    por_contacto: frozenset[str] = frozenset(),
 ) -> Simulacion:
     """Recorre las levas y mira qué escribe la máquina.
 
     Se evalúa en más ángulos de los que tiene la leva a propósito: si el
     reparto de grados fuera demasiado grueso, el spline se inventaría la forma
     entre muestras y el error saldría aquí.
+
+    Las levas de `por_contacto` se recorren apoyando el rodillo en el
+    polígono que se corta en vez de deshacer la curva de paso: son las
+    recortadas, en las que la curva de paso ya no es lo que el rodillo sigue.
     """
+    from core.cam.contacto import psi_por_contacto
+
     thetas = np.linspace(0.0, 2.0 * np.pi, muestras, endpoint=False)
     psi = {
-        nombre: _psi_desde_la_leva(
-            perfiles[nombre], thetas, calajes[nombre], maquina.relacion_de(nombre)
+        nombre: (
+            psi_por_contacto(perfiles[nombre].perfil, perfiles[nombre].seguidor, thetas)
+            * maquina.relacion_de(nombre)
+            + calajes[nombre]
+            if nombre in por_contacto
+            else _psi_desde_la_leva(
+                perfiles[nombre], thetas, calajes[nombre], maquina.relacion_de(nombre)
+            )
         )
         for nombre in SEGUIDORES
     }
@@ -655,8 +709,13 @@ def compilar(
     capacidad: Capacidad | None = None,
     limites: LimitesLeva | None = None,
 ) -> Compilacion:
-    """De una frase a tres levas, con un solo veredicto al final."""
+    """De una frase a tres levas, con un solo veredicto al final.
+
+    Sin `capacidad`, las muestras por vuelta las elige la frase
+    (`muestras_para`); con ella, se respeta tal cual.
+    """
     maquina = maquina or Escribiente()
+    elegir_muestras = capacidad is None
     capacidad = capacidad or Capacidad()
     limites = limites or LimitesLeva()
 
@@ -666,6 +725,8 @@ def compilar(
     # redondea es lo que se fabrica: `Compilacion.escritura` es la de verdad.
     capturada = encajar_en_la_caja(escritura, maquina)
     encajada = suavizar(capturada, capacidad.radio_de_esquina)
+    if elegir_muestras:
+        capacidad = capacidad.model_copy(update={"muestras": muestras_para(encajada, capacidad)})
     desviacion = desviacion_de_lo_capturado(encajada, capturada)
     prog, veredicto = programa(encajada, capacidad)
     tramos, _ = repartir(encajada, capacidad)
@@ -734,11 +795,24 @@ def compilar(
     }
 
     perfiles: dict[str, PerfilLeva] = {}
+    recortadas: set[str] = set()
     for indice, nombre in enumerate(SEGUIDORES):
         funcion = desde_muestras(thetas, crudos[nombre], n=capacidad.muestras)
         perfil = sintetizar(funcion, maquina.seguidor(indice))
-        perfiles[nombre] = perfil
         parcial = evaluar(perfil, limites)
+        if {i.codigo for i in parcial.incidencias} & NO_ENTRA_EL_RODILLO:
+            recortado = recortar(perfil)
+            if not autointerseca(recortado):
+                # Se corta la envolvente; si vale o no lo dice el papel, más abajo.
+                perfil = recortado
+                recortadas.add(nombre)
+                parcial = Veredicto(
+                    incidencias=tuple(
+                        i for i in parcial.incidencias if i.codigo not in NO_ENTRA_EL_RODILLO
+                    ),
+                    metricas=parcial.metricas,
+                )
+        perfiles[nombre] = perfil
         for incidencia in parcial.incidencias:
             veredicto = veredicto.con(
                 incidencia.model_copy(update={"mensaje": f"leva {nombre}: {incidencia.mensaje}"})
@@ -805,11 +879,51 @@ def compilar(
             metricas={**veredicto.metricas, "holgura_eje_rodillo_min": min(holguras.values())},
         )
 
-    contacto, contacto_en_la_punta, incidencias_contacto = verificar_por_contacto(perfiles, maquina)
+    # Las recortadas no se comparan con la curva de paso: se apartan de ella a
+    # propósito. Lo que vale para ellas es lo que escriben, y eso lo mide la
+    # simulación por contacto de abajo.
+    contacto, contacto_en_la_punta, incidencias_contacto = verificar_por_contacto(
+        {n: p for n, p in perfiles.items() if n not in recortadas}, maquina
+    )
     for incidencia in incidencias_contacto:
         veredicto = veredicto.con(incidencia)
 
-    simulacion = simular(perfiles, calajes, maquina, encajada, muestras=capacidad.muestras * 2)
+    simulacion = simular(
+        perfiles,
+        calajes,
+        maquina,
+        encajada,
+        muestras=capacidad.muestras * 2,
+        por_contacto=frozenset(recortadas),
+    )
+    if recortadas:
+        lista = ", ".join(sorted(recortadas))
+        if simulacion.error_maximo <= SOCAVADO_TOLERABLE:
+            veredicto = veredicto.con(
+                Incidencia(
+                    gravedad="aviso",
+                    codigo="socavado_tolerable",
+                    mensaje=(
+                        f"el rodillo no entra en algún tramo de la leva {lista}: se corta su "
+                        f"envolvente, que redondea la letra hasta "
+                        f"{simulacion.error_maximo * 1000:.2f} mm en el papel"
+                    ),
+                    sugerencia="nada que hacer: queda por debajo de lo que se ve",
+                )
+            )
+        else:
+            veredicto = veredicto.con(
+                Incidencia(
+                    gravedad="error",
+                    codigo="perfil_autointersecado",
+                    mensaje=(
+                        f"el rodillo no entra en la leva {lista}, y la leva que sí se puede "
+                        f"cortar se aparta {simulacion.error_maximo * 1000:.2f} mm de la letra "
+                        f"(se admiten {SOCAVADO_TOLERABLE * 1000:.2f})"
+                    ),
+                    sugerencia="parte la frase en renglones, cada uno en su vuelta",
+                )
+            )
     if simulacion.error_maximo > ERROR_DE_TRAZO_MAXIMO:
         veredicto = veredicto.con(
             Incidencia(
@@ -828,10 +942,12 @@ def compilar(
             **veredicto.metricas,
             "error_trazo_maximo": simulacion.error_maximo,
             "error_trazo_medio": simulacion.error_medio,
+            "levas_recortadas": float(len(recortadas)),
             "error_contacto_rad": contacto,
             "error_contacto_en_la_punta": contacto_en_la_punta,
             "desviacion_de_lo_capturado": desviacion,
             "radio_de_esquina": float(capacidad.radio_de_esquina),
+            "muestras": float(capacidad.muestras),
         },
     )
 

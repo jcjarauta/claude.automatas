@@ -15,8 +15,10 @@ from core.cam.curves import derivada_ciclica, desde_muestras, orientacion, rejil
 from core.cam.envelope import (
     angulo_de_presion,
     autointerseca,
+    envolvente,
     evaluar,
     radio_de_curvatura,
+    recortar,
 )
 from core.cam.synth import Seguidor, sintetizar
 from core.units import TAU, grados, mm
@@ -350,3 +352,64 @@ def test_hacia_dentro_es_el_giro_que_acerca_el_rodillo_al_arbol(sentido: int):
     assert (
         d == sentido
     )  # el rodillo cae al lado del sentido, y hacia dentro es seguir girando hacia él
+
+
+# ---------------------------------------------------------------------------
+# La envolvente: lo que de verdad se corta cuando el perfil se cruza
+# ---------------------------------------------------------------------------
+
+
+def socavado():
+    """Una oscilación suave con un pico estrecho: el perfil se cruza en un
+    lazo pequeño alrededor del pico y es sano en el resto de la vuelta."""
+    thetas = rejilla(720)
+    psi = grados(3.0) * np.sin(thetas) + grados(1.2) * np.exp(-(((thetas - np.pi) / 0.04) ** 2))
+    return sintetizar(desde_muestras(thetas, psi, n=720), seguidor())
+
+
+def test_el_caso_socavado_se_cruza_de_verdad():
+    assert autointerseca(socavado())
+
+
+def test_la_envolvente_de_un_perfil_sano_es_el_mismo_perfil():
+    sano = perfil(8.0)
+    assert np.array_equal(envolvente(sano), sano.perfil)
+
+
+def test_la_envolvente_no_se_cruza_y_conserva_la_rejilla():
+    """Mismos puntos y mismo orden que el perfil: todo `PerfilLeva` vive en la
+    misma rejilla de θ, y quien lo use después no tiene por qué saber que se
+    recortó."""
+    p = socavado()
+    recortado = recortar(p)
+    assert recortado.perfil.shape == p.perfil.shape
+    assert not autointerseca(recortado)
+    assert np.array_equal(recortado.thetas, p.thetas)
+    assert np.array_equal(recortado.psi, p.psi)
+
+
+def test_la_envolvente_solo_toca_el_lazo():
+    """Lejos del pico el perfil no se mueve ni un nanómetro; los puntos que se
+    mueven son pocos y están junto al pico."""
+    p = socavado()
+    e = envolvente(p)
+    movidos = np.flatnonzero(np.linalg.norm(e - p.perfil, axis=1) > 1e-12)
+    assert 0 < movidos.size < 0.05 * len(p)
+    assert np.all(np.abs(p.thetas[movidos] - np.pi) < 0.3)
+
+
+def test_la_envolvente_va_por_el_contorno_que_se_corta():
+    """Ningún punto de la envolvente queda más cerca de la curva de paso que
+    el radio del rodillo: es la pieza que el rodillo deja, no otra."""
+    from shapely.geometry import LinearRing, Point
+
+    p = socavado()
+    paso = LinearRing(p.paso)
+    radio = float(p.seguidor.radio_rodillo)
+    for x, y in envolvente(p):
+        assert paso.distance(Point(x, y)) > radio - 2e-5
+
+
+def test_la_envolvente_es_determinista():
+    p = socavado()
+    assert np.array_equal(envolvente(p), envolvente(p))

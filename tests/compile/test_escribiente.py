@@ -390,25 +390,32 @@ def test_mas_muestras_por_vuelta_bajan_el_error_de_contacto():
     assert contacto(1440) < contacto(360)
 
 
-def test_del_socavado_se_ocupa_la_envolvente_y_el_contacto_solo_lo_nota():
-    """Reparto de papeles, y conviene tenerlo escrito. El socavado es local:
-    pasa en unos pocos grados, y cazarlo por contacto exigiría muestrear todo
-    el ciclo. La envolvente lo calcula exacto y gratis, así que es ella quien
-    rechaza. El contacto solo enseña que el número sube."""
-    # Relación 3 y rodillo de Ø16. Hacía falta subirlo: con Ø12 el caso
-    # **dejó de socavar** al empezar a redondear las esquinas del trazo, que
-    # es justo la medida de lo que valía el redondeo. Ahora el socavado que
-    # se prueba es el de verdad —un rodillo que no cabe en el valle— y no el
-    # que fabricaba una esquina de la polilínea.
-    sana = compilar(hola())
-    socavada = compilar(hola(), Escribiente(relacion=3.0, radio_rodillo=mm(8.0)))
+def test_del_socavado_decide_lo_que_escribe_la_leva_recortada():
+    """Reparto de papeles, y conviene tenerlo escrito. Cuando el rodillo no
+    entra, la envolvente da la leva que sí se puede cortar, y la decide lo que
+    esa leva escribe, medido por contacto en el papel: hasta
+    `SOCAVADO_TOLERABLE` es un aviso, por encima un error con el número.
 
-    assert "perfil_autointersecado" in [i.codigo for i in socavada.veredicto.errores]
-    assert not socavada.veredicto.apto
+    Relación 3 y rodillos grandes, que no caben en las vueltas de «hola».
+    Antes se rechazaba en cuanto el perfil se cruzaba, y eso tiraba levas que
+    escriben con una décima de error."""
+    from compile.escribiente import SOCAVADO_TOLERABLE
+
+    sana = compilar(hola())
+    tolerable = compilar(hola(), Escribiente(relacion=3.0, radio_rodillo=mm(8.0))).veredicto
+    excesivo = compilar(hola(), Escribiente(relacion=3.0, radio_rodillo=mm(14.0))).veredicto
+
+    assert sana.veredicto.metricas["levas_recortadas"] == 0
+    assert tolerable.metricas["levas_recortadas"] >= 1
+    assert "socavado_tolerable" in {i.codigo for i in tolerable.avisos}
+    assert "perfil_autointersecado" not in {i.codigo for i in tolerable.errores}
     assert (
-        socavada.veredicto.metricas["error_contacto_rad"]
-        > 2.0 * sana.veredicto.metricas["error_contacto_rad"]
+        sana.veredicto.metricas["error_trazo_maximo"]
+        < tolerable.metricas["error_trazo_maximo"]
+        <= SOCAVADO_TOLERABLE
     )
+    assert "perfil_autointersecado" in {i.codigo for i in excesivo.errores}
+    assert excesivo.metricas["error_trazo_maximo"] > SOCAVADO_TOLERABLE
 
 
 def test_un_desplazamiento_del_reves_si_lo_caza_el_contacto():
@@ -581,3 +588,24 @@ def test_una_frase_que_empieza_arriba_a_la_izquierda_no_salta_una_vuelta():
     assert compilacion.veredicto.apto, [i.codigo for i in compilacion.veredicto.errores]
     for nombre, perfil in compilacion.perfiles.items():
         assert float(np.max(np.abs(perfil.psi))) < float(grados(5.0)), nombre
+
+
+def test_las_muestras_las_elige_la_frase():
+    """Una frase corta se queda en 720 muestras; una densa sube hasta que la
+    punta no avanza más de `PASO_POR_MUESTRA` entre muestra y muestra. Con
+    720, «Hola Mundo» avanzaba más de medio milímetro por muestra y la leva
+    aprobada era una versión filtrada de la frase."""
+    from pathlib import Path
+
+    from scripts.exportar_para_cad import leer
+
+    demo = Path(__file__).resolve().parents[2] / "demo"
+    corta = compilar(leer(demo / "hola.json")).veredicto
+    densa = compilar(leer(demo / "hola_mundo_sin_rubrica.json")).veredicto
+    assert corta.metricas["muestras"] == 720
+    assert densa.metricas["muestras"] == 1440
+
+
+def test_una_capacidad_explicita_se_respeta():
+    v = compilar(hola(), capacidad=Capacidad(muestras=360)).veredicto
+    assert v.metricas["muestras"] == 360

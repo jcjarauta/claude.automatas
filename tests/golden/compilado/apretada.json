@@ -1,8 +1,8 @@
 {
   "apto": false,
   "avisos": [
-    "contacto_justo",
-    "curvatura_justa"
+    "curvatura_justa",
+    "socavado_tolerable"
   ],
   "calajes_grados": {
     "derecho": -176.251166,
@@ -11,10 +11,9 @@
   },
   "caso": "apretada",
   "desviacion_de_lo_capturado_mm": 0.0,
-  "error_trazo_mm": 0.007991,
+  "error_trazo_mm": 0.100687,
   "errores": [
     "capacidad_superada",
-    "perfil_autointersecado",
     "perfil_autointersecado"
   ],
   "levas": [
@@ -44,9 +43,9 @@
       "numero": "L-003",
       "presion_maxima_grados": 23.423607,
       "puntos_del_contorno": 720,
-      "radio_maximo_mm": 52.328728,
+      "radio_maximo_mm": 52.288981,
       "radio_minimo_mm": 51.718289,
-      "sha256": "47e54695ccc45c5565dbcf98d55855bf37089929390091dacaf0b4e94bd4bf01"
+      "sha256": "c3958f61d19444ac46e50ad4bca3aebada4d2bda61c1b967a29c2a6b9ad8c38e"
     }
   ],
   "tramos": [
