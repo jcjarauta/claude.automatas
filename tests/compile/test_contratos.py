@@ -741,6 +741,9 @@ def test_el_angulo_de_la_placa_de_tope_es_el_que_para_el_seguidor_en_su_giro():
 
     assert hueco(c["tope_giro"]) == pytest.approx(0.0, abs=0.01)
     assert hueco(0.0) > 1.0
+    # Y la galga con que se orienta el collar es ese hueco, a la lámina más
+    # cercana de un juego de galgas.
+    assert hueco(0.0) == pytest.approx(c["tope_galga"], abs=0.025)
 
 
 def test_el_casquillo_del_rodillo_llena_el_descuelgue(contratos: Contratos):
