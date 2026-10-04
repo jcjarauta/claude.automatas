@@ -1211,10 +1211,12 @@ LISTADO: dict[str, Ficha] = {
         "presupuesto de error de 2,79— sino porque deja el mecanismo a la vista, que "
         "es el argumento del producto.",
         montaje=(
-            "Los tres son la misma pieza y van a tres alturas: el 1 sobre los separadores de la "
-            "base, el 2 a 58 por encima y el 3 a 20 más. Los tres postes los atraviesan y son "
-            "lo que los separa y los alinea. El Ø19 del centro y el de 28 llevan los "
-            "rodamientos del árbol y del eje de la manivela."
+            "Los tres son la misma pieza y van a tres alturas: el 1 a base_al_plato de la base, "
+            "el 2 a 58 por encima y el 3 a 20 más, cada uno apretado entre dos collares con "
+            "prisionero; el 3, por arriba, con un M3 avellanado en la punta de cada poste. Los "
+            "tres postes los atraviesan y los alinean. El Ø19 del centro lleva el rodamiento "
+            "del muñón (plato 1) o del eje motriz (platos 2 y 3), y el de 28 el del eje de la "
+            "manivela."
         ),
         material="contrachapado de abedul de 9",
         proceso="corte láser o CNC",

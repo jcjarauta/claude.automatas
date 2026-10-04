@@ -1,8 +1,9 @@
 # Procedimientos de taller
 
-Lo que se hace a mano al montar la plataforma y al cambiar de cartucho. Es
-la base del dossier de montaje (`emit/dossier.py`, pendiente: auditoría D4).
-Cada número viene del contrato, y entre paréntesis va el nombre de la cota.
+Lo que se hace a mano al montar la plataforma y al cambiar de cartucho. El
+dossier de montaje (`uv run --group cad python scripts/dossier.py`) lo lee
+de aquí tal cual: este archivo es su única fuente. Cada número viene del
+contrato, y entre paréntesis va el nombre de la cota.
 
 ## Herramientas
 
