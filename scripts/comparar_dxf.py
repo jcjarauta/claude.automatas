@@ -412,15 +412,12 @@ FICHAS: dict[str, Ficha] = {
         {"tirante_diametro_radio": 1},
         datum="tirante_diametro_radio",
     ),
-    "eje_cartucho": Ficha(
-        "sección del eje del cartucho", {"eje_diametro_radio": 1}, datum="eje_diametro_radio"
-    ),
     "munon": Ficha("sección del muñón", {"eje_diametro_radio": 1}, datum="eje_diametro_radio"),
     "eje_motriz": Ficha(
         "sección del eje motriz", {"eje_diametro_radio": 1}, datum="eje_diametro_radio"
     ),
-    "cubo": Ficha(
-        "disco con el eje y el pasador de índice sobre +X",
+    "eje_cartucho": Ficha(
+        "planta del eje con su valona: el eje, la valona y el pasador sobre +X",
         {"cubo_diametro_radio": 1, "eje_diametro_radio": 1, "pasador_diametro_radio": 1},
         desde_datum=("pasador_radio",),
         datum="eje_diametro_radio",

@@ -358,7 +358,7 @@ el error de trazo deje de ser repetible.
 `docs/contratos.md` congela un pasador Ø3 m6. Pero **m6 está pensado para
 apretar en acero**, y el POM fluye en frío: el apriete se relaja en semanas y
 el calaje se pierde **después de la venta**, en silencio. El pasador debe ser
-**deslizante en las tres levas y apretado solo en el cubo de latón del
+**deslizante en las tres levas y apretado solo en la valona de latón del eje del
 cartucho**. El argumento del contrato se mantiene —el error de fase sigue
 siendo imposible, no improbable— y deja de depender de una interferencia sobre
 plástico.

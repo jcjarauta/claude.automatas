@@ -32,15 +32,13 @@ def test_la_lista_lleva_cada_pieza_una_vez_y_con_su_cantidad():
     assert vistas == {n: f.cantidad for n, f in LISTADO.items()}
 
 
-def test_la_barra_w10_es_una_sola_compra_con_sus_cinco_ejes():
+def test_la_barra_w10_es_una_sola_compra_con_sus_cuatro_ejes():
+    """Eran cinco hasta que el eje del cartucho pasó a llevar su valona y a
+    tornearse de la barra de Ø25 (docs/niveles.md, C1)."""
     w10 = next(x for x in compra() if x.material == "barra W10 h6 rectificada")
-    assert {n for n, _ in w10.piezas} == {
-        "eje_pivote",
-        "eje_manivela",
-        "eje_cartucho",
-        "munon",
-        "eje_motriz",
-    }
+    assert {n for n, _ in w10.piezas} == {"eje_pivote", "eje_manivela", "munon", "eje_motriz"}
+    ø25 = next(x for x in compra() if x.material == "latón, barra de Ø25")
+    assert {n for n, _ in ø25.piezas} == {"eje_cartucho"}
 
 
 def test_el_documento_esta_al_dia():

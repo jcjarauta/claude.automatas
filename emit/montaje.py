@@ -308,7 +308,7 @@ GRUPOS: tuple[Grupo, ...] = (
         "El metal que enhebra las levas y viaja con ellas: igual en todos los pedidos",
         "#c9a227",
         1.0,
-        ("eje_cartucho", "cubo", "separador_", "pasador_indice"),
+        ("eje_cartucho", "separador_", "pasador_indice"),
     ),
     Grupo(
         "entre_puntos",
@@ -572,9 +572,15 @@ def _detalles_del_cartucho(c: dict[str, float], piezas: dict[str, Any]) -> dict[
     r_eje = c["eje_diametro"] / 2.0
     fuera = c["garra_ranura_desplazamiento"]
 
-    # El eje del cartucho: tetón abajo y ranura descentrada arriba, pasante a
-    # lo largo de la salida.
+    # El eje del cartucho, con su valona en una pieza: la valona con el
+    # taladro del pasador abajo, el eje encima, el tetón debajo y la ranura
+    # descentrada arriba, pasante a lo largo de la salida. El perfil del
+    # listado es su planta; el sólido se hace aquí.
     largo = c["cartucho_eje_largo"]
+    valona = Cylinder(c["cubo_diametro"] / 2.0, c["cubo_espesor"], align=abajo) - Pos(
+        c["pasador_radio"], 0, 0
+    ) * Cylinder(c["pasador_diametro"] / 2.0, c["cubo_espesor"], align=abajo)
+    cuerpo = valona + Cylinder(r_eje, largo, align=abajo)
     teton = Pos(0, 0, -c["cartucho_teton_largo"]) * Cylinder(
         c["cartucho_teton_diametro"] / 2.0, c["cartucho_teton_largo"], align=abajo
     )
@@ -586,7 +592,7 @@ def _detalles_del_cartucho(c: dict[str, float], piezas: dict[str, Any]) -> dict[
         c["garra_ranura_ancho"],
         fondo,
     )
-    eje_cartucho = piezas["eje_cartucho"] + teton - ranura
+    eje_cartucho = cuerpo + teton - ranura
 
     # El muñón: la U, de boca `munon_horquilla_ancho`, desde el eje hacia la
     # salida, en lo alto.
@@ -1127,7 +1133,6 @@ def _entre_puntos(
         Colocada("munon", _poner(hecho["munon"], t, z=pie_cartucho - c["munon_largo"]), True)
     )
     piezas.append(Colocada("eje_cartucho", _poner(hecho["eje_cartucho"], t, z=pie_cartucho), True))
-    piezas.append(Colocada("cubo", _poner(hecho["cubo"], t, z=pie_cartucho), True))
     # Los separadores, encima de las dos levas de abajo.
     seg_medio = z["seguidores"][0] + c["seguidor_espesor"] / 2.0
     pies = sorted(

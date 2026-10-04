@@ -159,7 +159,7 @@ enhebradas quedan caladas entre sí. **El error de fase deja de ser posible en
 vez de ser improbable.** Un cartucho montado desfasado escribe basura y no se
 nota hasta que se gira la manivela.
 
-El pasador va **deslizante en el POM y apretado solo en el cubo de latón del
+El pasador va **deslizante en el POM y apretado solo en la valona de latón del eje del
 cartucho**: el m6 de la norma aprieta en acero, pero el POM fluye en frío y
 la interferencia se relajaría en semanas, perdiendo el calaje después de la
 venta y en silencio.

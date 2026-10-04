@@ -49,7 +49,7 @@
           "valor": 0.003,
           "unidad": "m",
           "descripcion": "Pasador de índice: orienta la leva",
-          "tolerancia": "m6 en el cubo del cartucho (latón), deslizante en el POM"
+          "tolerancia": "m6 en la valona del eje del cartucho (latón), deslizante en el POM"
         },
         {
           "nombre": "pasador_radio",
@@ -161,14 +161,14 @@
           "nombre": "cubo_diametro",
           "valor": 0.024,
           "unidad": "m",
-          "descripcion": "El cubo de latón del cartucho, el antiguo «plato de arrastre». Lleva el pasador de índice a 18, así que su borde queda a 4,5 del pasador",
+          "descripcion": "La valona del eje del cartucho, el antiguo «plato de arrastre» y luego «cubo»: desde el 2026-10-04 es parte del eje (docs/niveles.md, C1). Lleva el pasador de índice a 18, así que su borde queda a 4,5 del pasador",
           "tolerancia": ""
         },
         {
           "nombre": "cubo_espesor",
           "valor": 0.005,
           "unidad": "m",
-          "descripcion": "Lo que el pasador entra en el cubo: los 24 del pasador menos la pila de 19",
+          "descripcion": "Alto de la valona: lo que entra el pasador, sus 24 menos la pila de 19",
           "tolerancia": ""
         },
         {

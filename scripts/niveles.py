@@ -29,7 +29,7 @@ COMERCIAL_DEL_CARTUCHO = ("pasador_indice",)
 
 AJUSTES: dict[str, tuple[str, ...]] = {
     "levas": (),
-    "cartucho": ("fase entre el pasador del cubo y la ranura del eje, al prensar el cubo",),
+    "cartucho": (),
     "maquina": (
         "orientar 3 collares de seguidor con la galga de 1,20",
         "calar 2 brazos con la mordaza de la cinta",

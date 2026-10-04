@@ -263,7 +263,7 @@ def test_la_maquina_entera_no_choca_en_todo_el_ciclo():
     )
 
 
-CARTUCHO = ("leva_", "eje_cartucho", "cubo", "separador_", "pasador_indice")
+CARTUCHO = ("leva_", "eje_cartucho", "separador_", "pasador_indice")
 """Lo que sale con el cartucho: las levas y el metal que las enhebra."""
 
 

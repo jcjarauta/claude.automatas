@@ -345,7 +345,6 @@ def despiece() -> list[tuple[int, str, int, str, str]]:
         "base",
         "platina_levas",
         "munon",
-        "cubo",
         "separador",
         "eje_cartucho",
         "eje_motriz",

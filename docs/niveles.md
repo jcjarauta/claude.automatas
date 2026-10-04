@@ -23,7 +23,7 @@ levas, y la máquina no lleva ninguna de las dos.
 | Nivel | Quién y cuándo | Piezas fabricadas | Unidades | Materiales | Procesos | Comerciales (ud.) | Fijaciones | Ajustes a mano |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | **levas** | por pedido, fuera: fresado en un solo amarre | 3 | 3 | 1 | 1 | 0 (0) | 0 | ninguno |
-| **cartucho** | metal a stock; se monta por pedido con las levas | 3 | 4 | 3 | 3 | 1 (1) | 0 | fase entre el pasador del cubo y la ranura del eje, al prensar el cubo |
+| **cartucho** | metal a stock; se monta por pedido con las levas | 2 | 3 | 2 | 2 | 1 (1) | 0 | ninguno |
 | **maquina** | a stock, igual en todos los pedidos | 39 | 84 | 21 | 28 | 14 (108) | 79 | orientar 3 collares de seguidor con la galga de 1,20; calar 2 brazos con la mordaza de la cinta; apretar 15 collares de plato a su altura |
 
 <!-- niveles:fin -->
