@@ -15,6 +15,7 @@ from pathlib import Path
 
 from core.escritura import Escritura
 from core.tipografia import ENLACE, Composicion, Fuente, componer
+from core.tipografia import huecos as _huecos
 from core.units import Longitud, mm
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -60,6 +61,16 @@ def composicion_de(
     return componer(texto, cargar_fuente(fuente), altura_de_x=altura_de_x, enlace=enlace)
 
 
+def huecos_de(
+    texto: str,
+    fuente: str = "cursiva",
+    altura_de_x: Longitud = ALTURA_DE_X,
+) -> tuple[tuple[float, ...], ...]:
+    """Qué separa cada trazo del siguiente, en alturas de x, por renglón.
+    Es lo que el enlace decide unir o no."""
+    return _huecos(texto, cargar_fuente(fuente), altura_de_x=altura_de_x)
+
+
 def escritura_de(
     texto: str,
     fuente: str = "cursiva",
@@ -70,4 +81,11 @@ def escritura_de(
     return composicion_de(texto, fuente, altura_de_x, enlace).escritura
 
 
-__all__ = ["ALTURA_DE_X", "cargar_fuente", "composicion_de", "escritura_de", "fuentes"]
+__all__ = [
+    "ALTURA_DE_X",
+    "cargar_fuente",
+    "composicion_de",
+    "escritura_de",
+    "fuentes",
+    "huecos_de",
+]

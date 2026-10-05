@@ -217,3 +217,46 @@ def test_el_trazo_simulado_llega_partido_y_sin_rayas_inventadas():
 
     saltos = [math.dist(a, b) for tramo in tinta for a, b in itertools.pairwise(tramo)]
     assert max(saltos) < 2.0, f"dentro de un tramo la punta da un salto de {max(saltos):.1f} mm"
+
+
+# ---------------------------------------------------------------------------
+# Las marcas del enlace
+# ---------------------------------------------------------------------------
+
+
+def test_los_huecos_no_se_mueven_al_arrastrar_el_enlace():
+    """Es lo que permite marcarlos en el deslizante. Si cambiaran, las
+    marcas dirían dónde estaba cada hueco y no dónde está."""
+    sueltos = cliente.post("/api/trazos", json={"texto": "Montserrat", "enlace": 0.0}).json()
+    unidos = cliente.post("/api/trazos", json={"texto": "Montserrat", "enlace": 1.2}).json()
+    assert sueltos["huecos"] == unidos["huecos"]
+    assert len(sueltos["trazos"]) > len(unidos["trazos"])
+
+
+def test_los_huecos_dicen_cuantos_trazos_van_a_salir():
+    """El cruce que sostiene el medidor: el deslizante promete «uniendo
+    tantos» y el motor tiene que hacer esa misma cuenta. Un hueco por
+    encima del enlace queda sin unir y parte el trazo."""
+    for enlace in (0.0, 0.5, 1.0, 1.2):
+        datos = cliente.post("/api/trazos", json={"texto": "Montserrat", "enlace": enlace}).json()
+        quedan = sum(1 for h in datos["huecos"] if h > enlace)
+        assert len(datos["trazos"]) == quedan + 1, f"con enlace {enlace}"
+
+
+def test_el_valle_que_publica_la_interfaz_es_el_del_nucleo():
+    """La página marca el valle en el deslizante y el motor lo usa por
+    defecto. Dos números iguales en dos sitios se separan: la página lee
+    el del núcleo en vez de llevar su propio 0,5."""
+    from core.tipografia import ENLACE
+
+    assert cliente.get("/api/fuentes").json()["enlace"] == ENLACE
+
+
+def test_la_tinta_deja_poner_en_porcentaje_lo_que_el_enlace_inventa():
+    """«7 huecos forzados» suena a poco; «64 mm, el 12 % de la tinta»
+    no. Sin la longitud trazada no se puede decir la segunda."""
+    datos = cliente.post("/api/trazos", json={"texto": "Montserrat"}).json()
+    assert datos["tinta_mm"] > 0
+    # Y es una longitud de verdad, no la caja: una cursiva recorre mucho
+    # más de lo que mide de ancho.
+    assert datos["tinta_mm"] > datos["ancho_mm"]

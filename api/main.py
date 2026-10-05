@@ -21,7 +21,9 @@ los dos deterministas.
 
 from __future__ import annotations
 
+import itertools
 import json
+import math
 import re
 from datetime import UTC, datetime
 from pathlib import Path
@@ -33,7 +35,7 @@ from pydantic import BaseModel, Field
 
 from compile.escribiente import Compilacion, Escribiente, compilar
 from compile.renglones import compilar_por_renglones
-from compile.texto import ALTURA_DE_X, composicion_de, fuentes
+from compile.texto import ALTURA_DE_X, composicion_de, fuentes, huecos_de
 from core.errors import ErrorDeDominio
 from core.escritura import Escritura
 from core.tipografia import ENLACE, Composicion
@@ -103,9 +105,25 @@ def ver_trazos(peticion: Peticion) -> dict[str, Any]:
     """
     compuesta = _componer(peticion)
     escritura = compuesta.escritura
+    # Los huecos van aquí y no en `/api/capacidad` porque el deslizante los
+    # necesita en cada tecla y esto cuesta milisegundos: son los trazos de
+    # la fuente puestos en fila, sin leva ninguna.
+    separaciones = huecos_de(
+        peticion.texto, fuente=peticion.fuente, altura_de_x=mm(peticion.altura_de_x_mm)
+    )
+    # La tinta que deja la frase. Con ella, lo que el enlace añade al unir
+    # un hueco deja de ser un número suelto y pasa a ser un porcentaje:
+    # 64 mm de raya suenan a poco hasta que son el 12 % de la letra.
+    tinta = sum(
+        math.dist(a, b)
+        for t in escritura.trazos
+        for a, b in itertools.pairwise([(float(x), float(y)) for x, y in t.puntos])
+    )
     return {
         "trazos": _trazos_mm(escritura),
         "renglones": [list(r) for r in compuesta.renglones],
+        "huecos": sorted(round(h, 3) for r in separaciones for h in r),
+        "tinta_mm": round(a_mm(Metros(tinta)), 1),
         "ancho_mm": round(a_mm(escritura.ancho), 2),
         "alto_mm": round(a_mm(escritura.alto), 2),
     }

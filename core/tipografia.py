@@ -139,10 +139,14 @@ def _enlazar(
 ) -> list[list[tuple[float, float]]]:
     """Une los trazos seguidos cuyo hueco no llega a `hasta`, en metros.
 
-    Con `hasta` a cero no se une nada: es lo que se pide para ver la
-    fuente tal cual, sin los enlaces de la letra inglesa.
+    Con `hasta` a cero se ve la fuente sin sus enlaces, pero **un hueco de
+    longitud cero se une igual**: no es un enlace que la letra inglesa
+    traiga dibujado, es el mismo recorrido de pluma guardado en dos trazos,
+    que es como la fuente almacena una «n». Dejarlos sueltos hace levantar
+    el lápiz y bajarlo en el mismo punto: 16° de la vuelta —el doble del
+    arco de levantamiento— para dibujar exactamente lo mismo.
     """
-    if hasta <= 0.0 or not trazos:
+    if not trazos:
         return trazos
     salida = [list(trazos[0])]
     for trazo in trazos[1:]:
@@ -161,6 +165,19 @@ def _vale(trazo: list[tuple[float, float]]) -> bool:
     if len(trazo) < 2:
         return False
     return any(a != b for a, b in itertools.pairwise(trazo))
+
+
+def _comprobar(texto: str, fuente: Fuente) -> None:
+    """Que haya algo que escribir y que la fuente sepa escribirlo."""
+    if not texto.strip():
+        raise ValueError("el texto está vacío: no hay nada que escribir")
+    # El salto de línea no es un carácter de la fuente: es maquetación.
+    if faltan := fuente.faltan(texto.replace("\n", "")):
+        raise LetraDesconocida(
+            f"la fuente «{fuente.nombre}» no tiene "
+            + ", ".join(f"«{c}»" for c in faltan)
+            + ". Escríbelo con los caracteres que sí tiene, o añádelos a la fuente."
+        )
 
 
 def componer(
@@ -188,15 +205,7 @@ def componer(
     «cumpleaños». Por eso la agrupación sale de aquí y no de compilar tres
     veces por separado.
     """
-    if not texto.strip():
-        raise ValueError("el texto está vacío: no hay nada que escribir")
-    # El salto de línea no es un carácter de la fuente: es maquetación.
-    if faltan := fuente.faltan(texto.replace("\n", "")):
-        raise LetraDesconocida(
-            f"la fuente «{fuente.nombre}» no tiene "
-            + ", ".join(f"«{c}»" for c in faltan)
-            + ". Escríbelo con los caracteres que sí tiene, o añádelos a la fuente."
-        )
+    _comprobar(texto, fuente)
 
     escala = float(altura_de_x) / fuente.altura_de_x
     # Enlazar **por renglón**: en la lista plana, el último trazo de uno y
@@ -231,6 +240,40 @@ def componer(
         renglones=tuple(renglones),
         interlineado=Metros(salto if len(lineas) > 1 else 0.0),
     )
+
+
+def huecos(
+    texto: str,
+    fuente: Fuente,
+    altura_de_x: Longitud,
+) -> tuple[tuple[float, ...], ...]:
+    """Qué separa cada trazo del siguiente, en alturas de x, por renglón.
+
+    Es lo que el enlace decide: un hueco por debajo se une y uno por
+    encima se queda como levantada. Sirve para **enseñar la decisión** en
+    vez de pedir que se adivine arrastrando un deslizante.
+
+    **No dependen del enlace**, y eso no es casualidad: `_enlazar` mide
+    siempre contra el final del trazo crudo anterior —unir dos trazos deja
+    como final el del segundo—, así que unir uno no mueve el hueco
+    siguiente. Por eso las marcas del deslizante se quedan quietas
+    mientras se arrastra.
+
+    En alturas de x, como el propio enlace, para que una frase grande y
+    una pequeña se midan igual. Y por renglón: entre dos renglones no hay
+    nada que enlazar, son cartuchos distintos.
+    """
+    escala = float(altura_de_x) / fuente.altura_de_x
+    _comprobar(texto, fuente)
+    salida: list[tuple[float, ...]] = []
+    for linea in texto.split("\n"):
+        trazos = [t for t in _trazos_colocados(linea, fuente, escala) if _vale(t)]
+        salida.append(
+            tuple(
+                math.dist(a[-1], b[0]) / float(altura_de_x) for a, b in itertools.pairwise(trazos)
+            )
+        )
+    return tuple(salida)
 
 
 def _interlineado(lineas: list[list[list[tuple[float, float]]]], hueco: float) -> float:

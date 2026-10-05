@@ -21,7 +21,17 @@
   input[type=text],select,textarea{width:100%;padding:8px;border:1px solid var(--borde);
        border-radius:4px;font:inherit}
   textarea{resize:vertical;line-height:1.35}
-  input[type=range]{width:100%}
+  input[type=range]{width:100%;display:block}
+  /* Las marcas de los huecos de ESTA frase, bajo el deslizante del enlace.
+     Van alineadas con la pista, que en un range deja medio pulgar libre a
+     cada lado: sin ese margen la marca de 0 cae fuera del recorrido. */
+  .huecos{position:relative;height:16px;margin:-2px 8px 0}
+  .huecos i{position:absolute;top:0;width:1px;height:7px;background:#bbb}
+  .huecos i.une{background:var(--tinta);height:10px}
+  .huecos i.rompe{background:var(--aviso);height:10px}
+  .huecos b{position:absolute;top:0;width:1px;height:14px;background:var(--ok);opacity:.55}
+  .huecos span{position:absolute;top:9px;font-size:9px;color:var(--ok);
+       transform:translateX(-50%);white-space:nowrap}
   .par{display:flex;gap:10px}
   .par>div{flex:1}
   button{margin-top:16px;width:100%;padding:10px;border:0;border-radius:4px;
@@ -100,10 +110,11 @@
       <div>
         <label for="enlace">Enlace · <span id="ve">0,5</span></label>
         <input type="range" id="enlace" min="0" max="1.2" step="0.05" value="0.5">
+        <div class="huecos" id="hh"></div>
       </div>
     </div>
-    <p class="leyenda">El enlace une los trazos que casi se tocan, como hace la letra
-      inglesa. Cada vuelo del lápiz se come grados de la vuelta, así que enlazar
+    <p class="leyenda" id="lh">El enlace une los trazos que casi se tocan, como hace la
+      letra inglesa. Cada vuelo del lápiz se come grados de la vuelta, así que enlazar
       más suele ser lo que hace que una frase quepa.</p>
 
     <button id="b">Hacer el cartucho</button>
@@ -153,6 +164,53 @@ const pide = () => ({
   enlace: +$('#enlace').value,
 })
 
+// --- Las marcas del enlace ----------------------------------------------
+// El deslizante decidía a ciegas: se arrastraba y el recuento de trazos
+// bajaba sin decir qué se estaba uniendo. Cada marca es un hueco REAL de la
+// frase escrita, y no se mueven al arrastrar porque el hueco se mide entre
+// los trazos crudos de la fuente.
+//
+// VALLE es el reparto medido sobre la fuente: por debajo están los enlaces
+// que la letra inglesa ya trae dibujados, por encima las levantadas de
+// verdad. Pasado ahí se gana capacidad a cambio de dibujar rayas que la
+// letra no tiene, y eso tiene que verse antes de arrastrar, no después.
+let VALLE = 0.5
+const TOPE = 1.2
+
+const marcas = (huecos, tinta) => {
+  const en = +$('#enlace').value
+  const dentro = huecos.filter(h => h <= TOPE)
+  const pc = h => (100 * h / TOPE).toFixed(2) + '%'
+  $('#hh').innerHTML =
+    `<b style="left:${pc(VALLE)}" title="el valle medido de la fuente"></b>
+     <span style="left:${pc(VALLE)}">valle</span>` +
+    dentro.map(h => {
+      // Unido y por encima del valle: es una levantada que la fuente
+      // declara, así que al unirla se dibuja una raya que no existe.
+      const clase = h > en ? '' : (h > VALLE ? 'rompe' : 'une')
+      return `<i class="${clase}" style="left:${pc(h)}" title="${h.toFixed(2)} alturas de x"></i>`
+    }).join('')
+
+  const unidos = huecos.filter(h => h <= en).length
+  const forzados = huecos.filter(h => h <= en && h > VALLE)
+  // Lo que cuesta de verdad, en milímetros de raya que la letra no tiene:
+  // «7 huecos forzados» suena a poco hasta que son 64 mm, el 12 % de la
+  // tinta, y repartidos por donde el ojo espera que la cursiva enlace.
+  const raya = forzados.reduce((a, h) => a + h, 0) * (+$('#altura').value)
+  const parte = tinta ? ` —un ${(100 * raya / tinta).toFixed(0)} % más de tinta—` : ''
+  $('#lh').innerHTML = !huecos.length
+    ? 'El enlace une los trazos que casi se tocan, como hace la letra inglesa.'
+    : `Une <b>${unidos} de ${huecos.length} huecos</b> de esta frase. `
+      + (forzados.length
+        ? `<b class="mal">${forzados.length} pasan del valle</b>: la fuente los declara
+           levantadas, y unirlos añade <b class="mal">${raya.toFixed(0)} mm de raya</b>
+           que la letra no tiene${parte}. Caen por donde el ojo espera que la cursiva
+           enlace, así que en el dibujo no se notan.`
+        : 'Todos por debajo del valle, que son los enlaces que la letra inglesa ya trae '
+          + 'dibujados. Cada hueco que queda es un vuelo, y cada vuelo se come grados '
+          + 'de la vuelta.')
+}
+
 const previa = async () => {
   $('#va').textContent = $('#altura').value
   $('#ve').textContent = (+$('#enlace').value).toFixed(2).replace('.', ',')
@@ -164,6 +222,7 @@ const previa = async () => {
   if (!res.ok) { $('#d').innerHTML = `<span class="mal">${j.detail}</span>`; return }
   ultimo = j.trazos
   dibujar(j.trazos, null)
+  marcas(j.huecos || [], j.tinta_mm || 0)
   const nr = (j.renglones || [[]]).length
   $('#d').textContent = `${j.trazos.length} trazos`
     + (nr > 1 ? ` en ${nr} renglones` : '')
@@ -289,6 +348,10 @@ $('#b').addEventListener('click', pedir)
 
 fetch('/api/fuentes').then(r => r.json()).then(j => {
   $('#fuente').innerHTML = j.fuentes.map(f => `<option>${f}</option>`).join('')
+  // El valle lo mide el núcleo y es el `ENLACE` por defecto: repetir aquí
+  // el 0,5 sería un segundo sitio donde vive el mismo número.
+  VALLE = j.enlace
+  $('#enlace').value = j.enlace
   previa(); mide()
 })
 </script>

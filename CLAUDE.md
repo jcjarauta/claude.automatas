@@ -1073,11 +1073,32 @@ falla si el esquema versionado se queda atrás.
   «Montserrat» (10) y «Feliz cumpleanos» (10) no. Que no escriba
   «Montserrat» no es un caso raro de laboratorio, es el pedido probable.
 
-  Y el deslizante de enlace **funciona demasiado bien**: a 1,5 «Montserrat»
-  sale en un solo trazo y cabe, porque está dibujando todos los huecos,
-  incluidos los que la fuente declara levantadas. La frase cabe porque ha
-  dejado de ser la frase. Por encima del valle, el enlace cambia capacidad
-  por fidelidad y eso tiene que verse en la interfaz.
+  Y el deslizante de enlace **funciona demasiado bien**: a 1,1
+  «Montserrat» pasa de diez trazos a tres y el vuelo baja de 187° a 90°,
+  porque está uniendo siete huecos que la fuente declara levantadas.
+
+  **Lo caro es que eso no se ve.** Medido: a 1,1 añade **64 mm de raya**
+  que la letra no tiene, un 12 % más de tinta, y las dos capturas —a 0,5 y
+  a 1,1— son indistinguibles a simple vista, porque los huecos forzados
+  caen justo por donde el ojo espera que una cursiva enlace. Yo mismo había
+  escrito aquí «la frase cabe porque ha dejado de ser la frase» y, al ir a
+  enseñarlo, las dos imágenes salieron iguales: la afirmación era cierta y
+  la comprobación, mirar, no la veía. Lo que la ve es medir la longitud
+  añadida.
+
+  Por eso el deslizante lleva una marca por cada hueco **de la frase
+  escrita** —no del juego de caracteres— y la cuenta en milímetros de lo
+  que se está inventando. Los huecos se miden entre los trazos crudos, así
+  que **no se mueven al arrastrar**: `_enlazar` compara siempre contra el
+  final del trazo crudo anterior, porque unir dos deja como final el del
+  segundo.
+
+  Y un hueco de **longitud cero se une siempre**, aunque el enlace sea 0.
+  No es un enlace que la letra inglesa traiga: es el mismo recorrido de
+  pluma guardado en dos trazos, que es como la fuente almacena una «n».
+  Dejarlos sueltos hace levantar el lápiz y bajarlo en el mismo punto, 16°
+  de la vuelta para dibujar lo mismo. Antes con enlace 0 salían separados,
+  y «Arrels» pedía siete trazos donde cuatro dan la misma letra.
 
 - **Un renglón es un cartucho, no una línea de texto.** Una vuelta del
   árbol escribe un renglón, así que partir una frase en dos cuesta **tres

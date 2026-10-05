@@ -13,7 +13,7 @@ from __future__ import annotations
 import pytest
 
 from core.errors import LetraDesconocida
-from core.tipografia import Fuente, Glifo, componer, escribir
+from core.tipografia import Fuente, Glifo, componer, escribir, huecos
 from core.units import mm
 
 pytestmark = pytest.mark.core
@@ -91,8 +91,23 @@ def test_el_espacio_separa_y_no_dibuja():
 # ---------------------------------------------------------------------------
 
 
-def test_sin_enlace_cada_trazo_de_la_fuente_es_un_trazo():
+def test_un_hueco_de_longitud_cero_se_une_aunque_el_enlace_sea_cero():
+    """Un hueco de cero no es un enlace de la letra inglesa: es **el mismo
+    recorrido de pluma guardado en dos trazos**, que es como la fuente
+    almacena una «n». Dejarlos sueltos hace que la máquina levante el
+    lápiz y lo vuelva a bajar en el mismo punto: 16° de la vuelta —el doble
+    del arco de levantamiento— para dibujar exactamente lo mismo.
+
+    Con enlace 0 se ve la fuente sin sus enlaces, que es para lo que está;
+    partir un trazo continuo no entra en eso.
+    """
     escritura = escribir("n", fuente_de_prueba(), altura_de_x=mm(10.0), enlace=0.0)
+    assert len(escritura.trazos) == 1
+
+
+def test_sin_enlace_no_se_salta_ningun_hueco_de_verdad():
+    """Lo que enlace 0 sí hace: no unir nada que tenga separación."""
+    escritura = escribir("oo", fuente_de_prueba(), altura_de_x=mm(10.0), enlace=0.0)
     assert len(escritura.trazos) == 2
 
 
@@ -237,3 +252,62 @@ def test_una_linea_en_blanco_no_crea_un_renglon_vacio():
 def test_un_texto_que_no_deja_ni_un_trazo_se_queja():
     with pytest.raises(ValueError, match="no hay nada que escribir"):
         componer("   \n  ", fuente_de_prueba(), altura_de_x=mm(10.0))
+
+
+# ---------------------------------------------------------------------------
+# Los huecos: qué se está uniendo y qué no
+# ---------------------------------------------------------------------------
+
+
+def test_hay_un_hueco_menos_que_trazos_en_cada_renglon():
+    """Entre n trazos hay n-1 huecos. El del final de la frase al
+    principio no cuenta: ese no lo decide el enlace, es el vuelo de
+    regreso y lo paga la vuelta siempre."""
+    f = fuente_de_prueba()
+    assert [len(h) for h in huecos("ono", f, altura_de_x=mm(10.0))] == [3]
+    assert [len(h) for h in huecos("on\no", f, altura_de_x=mm(10.0))] == [2, 0]
+
+
+def test_los_huecos_no_cambian_con_el_enlace():
+    """Es lo que permite marcarlos en el deslizante: si se movieran al
+    arrastrarlo, las marcas no dirían dónde está cada hueco sino dónde
+    estaba. El hueco se mide entre los trazos **crudos** de la fuente, y
+    el enlace solo decide cuáles de ellos se unen.
+    """
+    f = fuente_de_prueba()
+    assert huecos("ono", f, altura_de_x=mm(10.0)) == huecos("ono", f, altura_de_x=mm(10.0))
+    # Y el mismo texto a otro tamaño da los mismos huecos, porque van en
+    # alturas de x: una frase grande y una pequeña se enlazan igual.
+    pequena = [h for r in huecos("ono", f, altura_de_x=mm(4.0)) for h in r]
+    grande = [h for r in huecos("ono", f, altura_de_x=mm(25.0)) for h in r]
+    assert pequena == pytest.approx(grande)
+
+
+@pytest.mark.parametrize("enlace", [0.0, 0.2, 0.5, 1.0, 1.2, 2.0])
+def test_los_huecos_predicen_cuantos_trazos_saldran(enlace):
+    """**El cruce que importa.** El medidor dice «subiendo a 1,0 unes dos
+    huecos más»; si esa cuenta no es la que hace el motor, el deslizante
+    miente justo donde se usa para decidir.
+
+    Un hueco por encima del enlace queda como levantada y parte el trazo;
+    uno por debajo se une. Así que por renglón salen tantos trazos como
+    huecos queden sin unir, más uno.
+    """
+    f = fuente_de_prueba()
+    texto = "ono\nnoo"
+    compuesta = componer(texto, f, altura_de_x=mm(10.0), enlace=enlace)
+    for huecos_del_renglon, indices in zip(
+        huecos(texto, f, altura_de_x=mm(10.0)), compuesta.renglones, strict=True
+    ):
+        quedan = sum(1 for h in huecos_del_renglon if h > enlace)
+        assert len(indices) == quedan + 1
+
+
+def test_no_hay_hueco_entre_un_renglon_y_el_siguiente():
+    """Son cartuchos distintos: entre ellos no hay nada que enlazar, y un
+    hueco ahí invitaría a subir el enlace para «ahorrar» un vuelo que no
+    existe."""
+    f = fuente_de_prueba()
+    de_una = huecos("ononoo", f, altura_de_x=mm(10.0))
+    partido = huecos("ono\nnoo", f, altura_de_x=mm(10.0))
+    assert len(de_una[0]) == sum(len(h) for h in partido) + 1
