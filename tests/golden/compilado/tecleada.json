@@ -1,0 +1,54 @@
+{
+  "apto": true,
+  "avisos": [
+    "curvatura_justa",
+    "curvatura_justa"
+  ],
+  "calajes_grados": {
+    "derecho": -176.251166,
+    "elevador": 2.149096,
+    "izquierdo": -3.748834
+  },
+  "caso": "tecleada",
+  "desviacion_de_lo_capturado_mm": 0.639972,
+  "error_trazo_mm": 0.045528,
+  "errores": [],
+  "levas": [
+    {
+      "canal": "izquierdo",
+      "curvatura_minima_mm": 4.975231,
+      "numero": "L-001",
+      "presion_maxima_grados": 6.668127,
+      "puntos_del_contorno": 720,
+      "radio_maximo_mm": 43.425035,
+      "radio_minimo_mm": 40.819146,
+      "sha256": "75bd7238c18bcc507ccf4ea69478acad2eba24a2b9f5070d8fdd48227648d418"
+    },
+    {
+      "canal": "derecho",
+      "curvatura_minima_mm": 6.446383,
+      "numero": "L-002",
+      "presion_maxima_grados": 6.022414,
+      "puntos_del_contorno": 720,
+      "radio_maximo_mm": 48.996162,
+      "radio_minimo_mm": 46.375522,
+      "sha256": "7fe38728ebb92cb7426f88bf45eb469430e2c8eb1c8c90e5aad18495e80bf80c"
+    },
+    {
+      "canal": "elevador",
+      "curvatura_minima_mm": 13.493039,
+      "numero": "L-003",
+      "presion_maxima_grados": 8.344732,
+      "puntos_del_contorno": 720,
+      "radio_maximo_mm": 52.281314,
+      "radio_minimo_mm": 51.718289,
+      "sha256": "e3db49a28798d1a0ebd5fe9f530212d276a48cd50eba9c3c7c12271b3a716c26"
+    }
+  ],
+  "tramos": [
+    "trazo0",
+    "vuelo0",
+    "trazo1",
+    "vuelo1"
+  ]
+}

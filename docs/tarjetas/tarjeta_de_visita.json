@@ -1,0 +1,9 @@
+{
+  "nombre": "tarjeta_de_visita",
+  "descripcion": "Mas pequena que el A7 en los dos ejes, asi que cabe fisicamente donde ya cabe la de hoy. La caja de 65 x 20 es la que mas frases escribe limpias de las probadas: «Gracies» y «Juan Carlos» pasan aqui y en el A7 no",
+  "papel_ancho": 0.085,
+  "papel_alto": 0.055,
+  "margen_lados": 0.010,
+  "margen_fondo": 0.0175,
+  "procedencia": "Uso comercial europeo, 85 x 55 mm. No es una norma ISO: es la medida de hecho, la misma de una tarjeta bancaria ISO/IEC 7810 ID-1 redondeada"
+}

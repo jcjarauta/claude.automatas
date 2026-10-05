@@ -108,6 +108,7 @@ core/                 # PURO. Geometría, cinemática, energía.
   tolerance.py        #   C4 · cadena de tolerancias
   solido.py           #   Masa y momento polar de un prisma, desde su polígono
   comercial.py        #   Ficha de pieza de catálogo: cotas de interfaz y fuente
+  tarjeta.py          #   El papel donde escribe, y la caja que queda dentro
 compile/              # Orquesta: intención -> piezas + informe. I/O permitido.
   escribiente.py      #   La máquina concreta: compilar y simular
   conjunto.py         #   El cartucho montado: interferencias, pila, masa
@@ -118,6 +119,7 @@ compile/              # Orquesta: intención -> piezas + informe. I/O permitido.
   informe.py          #   El informe del pedido, en markdown
   cli.py              #   Un pedido, un comando
   texto.py            #   Carga la fuente y compone el texto. El disco de C0
+  tarjetas.py         #   El catálogo de formatos, y la máquina para cada uno
 emit/
   pieza.py            #   Pieza y sus siete metadatos, compartida por los tres
   layout.py           #   Maquetación 1:1 en mm: cabecera, colocación, troceado
@@ -138,6 +140,7 @@ bench/                # Datos del banco de ensayo y calibraciones medidas
   precios.json        #   Precios de catálogo, con fecha y enlace por línea
 docs/
   fuentes/            #   Una fuente monotrazo por archivo. Dato, no dependencia
+  tarjetas/           #   Un formato de papel por archivo, con su caja derivada
 web/                  #   index.html: la interfaz local de pedidos
 tests/
 ```
@@ -435,9 +438,15 @@ falla si el esquema versionado se queda atrás.
 - `tests/golden/` — comparación byte a byte contra referencias guardadas.
   `test_dxf.py` vigila el **escritor** con una leva sintética;
   `test_compilado.py` vigila la **geometría que sale del compilador**, con los
-  cuatro casos de referencia de `tests/casos.py` —uno de ellos una frase que
-  no cabe—. Hacen falta los dos: el primero no habría cazado ningún cambio
-  del front-end de escritura.
+  **seis** casos de referencia de `tests/casos.py` —uno de ellos una frase
+  que no cabe—. Hacen falta los dos: el primero no habría cazado ningún
+  cambio del front-end de escritura.
+
+  Los cuatro primeros son escrituras hechas a mano y **son anteriores a la
+  fuente**: aguantan una caja de 90 mm donde «Arrels» tecleada rompe a 88,
+  así que no representan el camino del que salen hoy los pedidos. Por eso
+  hay dos tecleados: `tecleada` («Arrels») y `alta` («hola», que es la que
+  tiene la curvatura más justa y la que juzga un formato).
 - `tests/bench/` — contrasta la predicción del núcleo con las medidas reales del
   banco de ensayo. Si esto falla, el modelo miente.
 
@@ -1099,6 +1108,52 @@ falla si el esquema versionado se queda atrás.
   Dejarlos sueltos hace levantar el lápiz y bajarlo en el mismo punto, 16°
   de la vuelta para dibujar lo mismo. Antes con enlace 0 salían separados,
   y «Arrels» pedía siete trazos donde cuatro dan la misma letra.
+
+- **Un barrido que mueve dos cosas a la vez lee un patrón que no está.**
+  Buscando hasta dónde puede crecer la caja de escritura, barrí ancho y
+  alto juntos y salió limpísimo: 80 × 30 falla, 60 × 22 no, luego «el
+  techo son unos 24 mm de alto escrito». Lo escribí con seguridad y es
+  **falso**. Moviendo un eje cada vez, con «hola» tecleada una caja de
+  75,7 × 30 falla y una de 85 × 33,7 —más grande en los dos lados— pasa.
+  No hay umbral de tamaño.
+
+  Lo que sí es monótono es la **relación de curvatura** de la leva: 2,34 a
+  22 mm de alto, 2,13 a 24, 1,96 a 26, 1,07 a 30, 1,00 de 31 en adelante.
+  Por debajo de 1 el rodillo no entra. Entre 28 y 30 el recorte de la
+  envolvente **falla** y sale error; de 31 para arriba vuelve a funcionar y
+  el veredicto dice «apto» con el rodillo justo sin entrar y la leva
+  cortada. Ese «apto» es un filo, no un formato entregable.
+
+  De ahí que el listón del catálogo no sea `apto` sino **que no haya que
+  recortar ninguna leva**: una leva recortada escribe la letra redondeada y
+  cuánto solo sale de recorrerla, así que ofrecer un formato que dependa de
+  eso es ofrecerlo sin saber qué entrega.
+
+- **La tarjeta no es la caja de escritura, y hasta ahora no había dónde
+  decirlo.** La tarjeta es lo que el cliente se lleva; la caja es el
+  rectángulo que la punta recorre dentro. El contrato ya lo tenía así para
+  el único formato que había —A7 apaisado de 105 × 74, 12,5 de margen a los
+  lados y 22 al fondo, que dan 80 × 30— pero los tres números vivían
+  sueltos y nada decía que el tercero saliera de los dos primeros.
+
+  `docs/tarjetas/` lo pone como dato, con el **margen** declarado y la caja
+  **derivada**: declarar las dos cosas deja que se contradigan. Añadir un
+  formato no es programar, igual que añadir una fuente o una pieza
+  comercial.
+
+  Y es la palanca de capacidad más grande de las cuatro, por encima del
+  enlace y de los renglones: con 80 × 24 «Montserrat» hay que medirla y con
+  40 × 14 sale limpia. Una decisión así se toma por pedido, así que no
+  puede vivir en una constante.
+
+  **Pendiente:** la caja del contrato son 80 × 30 y con ellos «hola»
+  tecleada no se puede fabricar —`perfil_autointersecado` en la leva
+  derecha, error y no aviso—. El catálogo declara el mismo papel con 25 de
+  margen al fondo, que da 80 × 24 y escribe los cinco casos limpios. Bajar
+  `caja_alto` es la corrección, toca un contrato congelado y está
+  **propuesta y sin hacer**; lo fija
+  `test_el_catalogo_y_el_contrato_no_dicen_todavia_lo_mismo`, que falla el
+  día que se haga y entonces se borra.
 
 - **Un renglón es un cartucho, no una línea de texto.** Una vuelta del
   árbol escribe un renglón, así que partir una frase en dos cuesta **tres

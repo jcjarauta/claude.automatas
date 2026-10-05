@@ -55,10 +55,17 @@ def composicion_de(
     fuente: str = "cursiva",
     altura_de_x: Longitud = ALTURA_DE_X,
     enlace: float = ENLACE,
+    nombre: str = "",
 ) -> Composicion:
     """El texto con esa fuente, repartido en renglones por sus saltos de
-    línea. Un renglón es un cartucho."""
-    return componer(texto, cargar_fuente(fuente), altura_de_x=altura_de_x, enlace=enlace)
+    línea. Un renglón es un cartucho.
+
+    `nombre` es el del pedido —va grabado en cada leva—; sin él se usa el
+    propio texto, que es lo que quiere un cliente.
+    """
+    return componer(
+        texto, cargar_fuente(fuente), altura_de_x=altura_de_x, enlace=enlace, nombre=nombre
+    )
 
 
 def huecos_de(
@@ -76,9 +83,10 @@ def escritura_de(
     fuente: str = "cursiva",
     altura_de_x: Longitud = ALTURA_DE_X,
     enlace: float = ENLACE,
+    nombre: str = "",
 ) -> Escritura:
     """El texto escrito con esa fuente, listo para compilar de una tirada."""
-    return composicion_de(texto, fuente, altura_de_x, enlace).escritura
+    return composicion_de(texto, fuente, altura_de_x, enlace, nombre).escritura
 
 
 __all__ = [

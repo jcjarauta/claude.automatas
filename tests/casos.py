@@ -15,6 +15,16 @@ caso vigila un solo camino:
 - **`puntos`** — muchos trazos cortos: el reparto de θ contra los mínimos.
 - **`apretada`** — una frase que **no cabe**. Fija también el camino del
   veredicto negativo, que si no no lo vigila nadie.
+- **`tecleada`** — «Arrels» con la fuente monotrazo: el camino de la
+  tipografía, que es de donde salen los pedidos desde que se puede teclear
+  y que los cuatro de arriba **no tocan** —son anteriores a la fuente—.
+- **`alta`** — «hola» tecleada, que es alta y corta. Tensa el **alto
+  escrito**, el límite que decide el tamaño de la tarjeta.
+
+Los dos últimos no son un capricho: los cuatro primeros son escrituras
+hechas a mano, más planas, y aguantan una caja de 90 mm donde «Arrels»
+tecleada rompe a 88. Una cota que depende del pedido se dimensiona contra
+todos los casos, y hasta ahora ninguno representaba el texto tecleado.
 """
 
 from __future__ import annotations
@@ -88,17 +98,45 @@ def apretada() -> Escritura:
     return Escritura(nombre="apretada", trazos=trazos)
 
 
-CASOS = {c.__name__: c for c in (hola, firma, puntos, apretada)}
+def tecleada() -> Escritura:
+    """«Arrels» con la fuente monotrazo, por el camino de la tipografía.
+
+    Vigila lo que los cuatro de arriba no pueden: que un cambio en la
+    fuente, en el enlace o en la composición mueva la geometría que sale.
+    Es además el nombre que más veces se va a pedir.
+    """
+    from compile.texto import escritura_de
+
+    return escritura_de("Arrels", nombre="tecleada")
+
+
+def alta() -> Escritura:
+    """«hola» tecleada: hache y ele, y ninguna letra con cola.
+
+    Sale **alta y corta** —proporción 1,2 contra los 3,6 de «Arrels»— así
+    que al encajarla manda el alto y no el ancho. Es el caso que mide hasta
+    dónde puede crecer la caja de escritura, y hoy **no se puede fabricar**:
+    con el alto de 30 que trae el contrato, la leva derecha se autointerseca
+    y el perfil no se deja recortar.
+    """
+    from compile.texto import escritura_de
+
+    return escritura_de("hola", nombre="alta")
+
+
+CASOS = {c.__name__: c for c in (hola, firma, puntos, apretada, tecleada, alta)}
 
 __all__ = [
     "CASOS",
     "GOLDEN",
+    "alta",
     "apretada",
     "escribir_manifiestos",
     "firma",
     "hola",
     "manifiesto",
     "puntos",
+    "tecleada",
 ]
 
 
