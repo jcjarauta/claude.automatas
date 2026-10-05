@@ -1879,16 +1879,22 @@ def _numero(x: float) -> str:
     return f"{round(x, 3):g}".replace(".", ",")
 
 
-def _valor(c: dict[str, float], v: Variable) -> str:
+def valor(c: dict[str, float], v: Variable) -> float:
+    """El número de una variable en la unidad de su hoja: mm, o grados si es
+    un ángulo. Los gemelos `_radio` y `_diametro` los fabrica el exportador,
+    no el contrato, así que se resuelven aquí: la mitad o el doble."""
     if v.mapa == "angulo":
-        return _numero(math.degrees(c[v.nombre]))
+        return math.degrees(c[v.nombre])
     if v.nombre in c:
-        return _numero(c[v.nombre])
-    # Los gemelos los fabrica el exportador, no el contrato.
+        return c[v.nombre]
     for sufijo, factor in (("_radio", 0.5), ("_diametro", 2.0)):
         if v.nombre.endswith(sufijo) and v.nombre.removesuffix(sufijo) in c:
-            return _numero(c[v.nombre.removesuffix(sufijo)] * factor)
+            return c[v.nombre.removesuffix(sufijo)] * factor
     raise KeyError(v.nombre)
+
+
+def _valor(c: dict[str, float], v: Variable) -> str:
+    return _numero(valor(c, v))
 
 
 def tabla_markdown(c: dict[str, float] | None = None) -> str:
