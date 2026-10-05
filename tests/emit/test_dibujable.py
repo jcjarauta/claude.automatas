@@ -72,8 +72,8 @@ def test_toda_pieza_se_puede_dibujar_con_su_ficha(grupo):
 def test_lo_que_la_ficha_dice_acotar_esta_escrito_en_la_hoja(grupo):
     """No las variables que la generan: lo que se ha dibujado."""
     fichas, hojas = grupo
-    assert len(hojas) == 1 + len(fichas.piezas)
-    for p, hoja in zip(fichas.piezas, hojas[1:], strict=True):
+    assert len(hojas) == 2 + len(fichas.piezas)
+    for p, hoja in zip(fichas.piezas, hojas[2:], strict=True):
         texto = " ".join(hoja.split())
         for cota in p.acotacion.cotas:
             buscado = " ".join(cota.texto.split())

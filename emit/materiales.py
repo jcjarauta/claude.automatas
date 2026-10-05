@@ -179,8 +179,7 @@ def tornilleria() -> list[Fijacion]:
             union,
             "sector, calzo y seguidor",
             "amplificador",
-            en_3d="tornillos_sector_",
-            por_pieza=2,
+            en_3d="tornillo_sector_",
         ),
         Fijacion(
             "DIN 912 M3 × 16",
@@ -208,15 +207,14 @@ def tornilleria() -> list[Fijacion]:
             union,
             "unión del sector",
             "amplificador",
-            en_3d="tornillos_sector_",
-            por_pieza=2,
+            en_3d="tuerca_sector_",
         ),
         Fijacion(
             "DIN 439 M3 (tuerca fina)",
             rodillos,
             "ejes de rodillo",
             "seguidores",
-            en_3d="eje_rodillo_",
+            en_3d="tuerca_rodillo_",
         ),
         Fijacion(
             "DIN 912 M4 × 16",
@@ -230,7 +228,7 @@ def tornilleria() -> list[Fijacion]:
             n["mordaza"],
             "bajo el sector",
             "amplificador",
-            en_3d="tornillo_mordaza_",
+            en_3d="tuerca_mordaza_",
         ),
         Fijacion(
             "DIN 913 M3 × 6, punta plana",

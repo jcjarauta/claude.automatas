@@ -143,11 +143,14 @@ def _miembros(nombre: str) -> str:
             f"seguidor_{i}",
             f"rodillo_{i}",
             f"eje_rodillo_{i}",
+            f"tuerca_rodillo_{i}",
+            f"casquillo_rodillo_{i}",
             f"sector_{i}",
             f"calzo_sector_{i}",
-            f"tornillos_sector_{i}",
+            *(f"{p}_{i}_{k}" for p in ("tornillo_sector", "tuerca_sector") for k in (1, 2)),
             f"mordaza_{i}",
             f"tornillo_mordaza_{i}",
+            f"tuerca_mordaza_{i}",
             f"prisionero_mordaza_{i}",
         } or (i == 3 and nombre == "casquillo_bieleta"):
             return f"seguidor_{i}"

@@ -115,6 +115,12 @@ def preparar(nombre: str):
     despiece = tuple(
         explosionar_grupo([(p.nombre, p.solido) for p in del_grupo], g.nombre, marca_de, base_de)
     )
+    # El despiece explosionado pieza a pieza, la hoja 2.
+    from emit.despiece import despiece as explosionado
+
+    explosion = explosionado(
+        tuple((p.nombre, p.solido) for p in colocadas), g.nombre, todas, COMERCIALES_COLOCADOS
+    )
     return FichasDeGrupo(
         grupo=g,
         piezas=piezas,
@@ -123,7 +129,35 @@ def preparar(nombre: str):
         contexto=tuple((p.nombre, p.solido) for p in colocadas),
         despiece=despiece,
         contrato=c,
+        explosion=explosion,
+        leyenda=leyenda_de(explosion, todas),
     )
+
+
+def leyenda_de(explosion, marcas) -> tuple[tuple[str, str, int], ...]:
+    """(número, qué es, cuántas) de cada número del despiece explosionado:
+    lo fabricado y lo comprado por su nombre; la tornillería, por su
+    designación."""
+    from collections import Counter
+
+    from emit.despiece import marcas_de
+    from scripts.numeracion import COMERCIALES_COLOCADOS
+
+    cuantas = Counter(e.texto for e in explosion.etiquetas)
+    que: dict[str, str] = {}
+    for e in explosion.etiquetas:
+        nombres = [
+            m.nombre.split(" · ")[0] if m.serie == "tornilleria" else m.nombre
+            for m in marcas_de(e.nombre, marcas, COMERCIALES_COLOCADOS)
+        ]
+        que.setdefault(e.texto, " + ".join(nombres))
+
+    def orden(texto: str) -> tuple[int, int, str]:
+        serie = {"C": 1, "T": 2}.get(texto[0], 0 if texto[0].isdigit() else 3)
+        cifras = "".join(ch for ch in texto.split(",")[0] if ch.isdigit())
+        return (serie, int(cifras or 0), texto)
+
+    return tuple((t, que[t], cuantas[t]) for t in sorted(cuantas, key=orden))
 
 
 def main(argv: list[str] | None = None) -> int:

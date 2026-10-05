@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 RAIZ = Path(__file__).resolve().parent.parent
 
-ALIAS = {"platina_levas": "plato1", "casquillo_rodillo": "eje_rodillo_1"}  # el resto, por prefijo
+ALIAS = {"platina_levas": "plato1"}  # el resto, por prefijo
 """Piezas del listado que en el montaje se llaman de otra forma: la platina
 es cada uno de los tres platos, y el casquillo va dentro del eje del rodillo."""
 

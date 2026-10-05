@@ -135,7 +135,8 @@ def main(argv: list[str] | None = None) -> int:
         "## Dónde está cada pieza",
         "",
         "En el orden de montaje. La hoja 1 de cada documento de fichas es la de",
-        "grupo: comerciales, tornillería y despiece.",
+        "grupo: comerciales, tornillería y despiece. La 2, el despiece explosionado",
+        "pieza a pieza, con el número de cada una. Las fichas de pieza, desde la 3.",
         "",
     ]
     for paso, (nombre, ruta, sin_ficha) in enumerate(fichas, start=1):

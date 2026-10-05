@@ -372,6 +372,8 @@ GRUPOS: tuple[Grupo, ...] = (
             "seguidor_",
             "rodillo_",
             "eje_rodillo_",
+            "tuerca_rodillo_",
+            "casquillo_rodillo_",
             "collar_seguidor_",
             "placa_tope_",
             "pasador_tope_",
@@ -391,8 +393,10 @@ GRUPOS: tuple[Grupo, ...] = (
             "mordaza_",
             "tornillo_tambor_",
             "calzo_sector_",
-            "tornillos_sector_",
+            "tornillo_sector_",
+            "tuerca_sector_",
             "tornillo_mordaza_",
+            "tuerca_mordaza_",
         ),
     ),
     Grupo(
@@ -855,11 +859,8 @@ def colocar(
                 True,
             )
         )
-        piezas.append(
-            Colocada(
-                f"eje_rodillo_{i + 1}", _eje_del_rodillo(c, z, rodillo_en, centro_z, ancho), True
-            )
-        )
+        for nombre, solido in _eje_del_rodillo(c, z, rodillo_en, centro_z, ancho).items():
+            piezas.append(Colocada(f"{nombre}_{i + 1}", solido, True))
         piezas += _tope_y_muelle(c, z, hecho, i + 1, pivote, seg.psi_cero, seg.hacia_dentro, angulo)
         pie_collar = z["seguidores"][0] - 1.0 - c["tope_placa_espesor"] - c["collar_seguidor_largo"]
         # M2 y no M3: el muelle de torsión ocupa el collar salvo sus 2 mm de abajo.
@@ -1122,19 +1123,22 @@ def _union_del_sector(
             True,
         )
     ]
-    tornillos = None
-    for cota in ("union_sector_seguidor_cerca", "union_sector_seguidor_lejos"):
+    # Cada tornillo y su tuerca, por separado: en el despiece salen por lados
+    # opuestos, y son dos líneas de compra.
+    for k, cota in enumerate(("union_sector_seguidor_cerca", "union_sector_seguidor_lejos"), 1):
         px, py = x + c[cota] * math.cos(angulo), y + c[cota] * math.sin(angulo)
         bajo = z["seguidores"][0] - TUERCA_DEL_EJE[1]
-        uno = _cilindro(1.5 - JUEGO_GIRATORIO / 2.0, (px, py, bajo), (px, py, z["sector"][1]))
-        uno += _cilindro(
+        tornillo = _cilindro(1.5 - JUEGO_GIRATORIO / 2.0, (px, py, bajo), (px, py, z["sector"][1]))
+        tornillo += _cilindro(
             CABEZA_DIN_912_M3[0] / 2.0,
             (px, py, z["sector"][1]),
             (px, py, z["sector"][1] + CABEZA_DIN_912_M3[1]),
         )
-        uno += _cilindro(TUERCA_DEL_EJE[0] / 2.0, (px, py, bajo), (px, py, z["seguidores"][0]))
-        tornillos = uno if tornillos is None else tornillos + uno
-    piezas.append(Colocada(f"tornillos_sector_{n}", tornillos, True))
+        tuerca = _cilindro(
+            TUERCA_DEL_EJE[0] / 2.0, (px, py, bajo), (px, py, z["seguidores"][0])
+        ) - _cilindro(1.5, (px, py, bajo - 1.0), (px, py, z["seguidores"][0] + 1.0))
+        piezas.append(Colocada(f"tornillo_sector_{n}_{k}", tornillo, True))
+        piezas.append(Colocada(f"tuerca_sector_{n}_{k}", tuerca, True))
     return piezas
 
 
@@ -1253,8 +1257,11 @@ def _cinta(
     arriba = plano[1] + c["mordaza_espesor"]
     m4 = _cilindro(2.0 - JUEGO_GIRATORIO / 2.0, (mx, my, plano[0] - 2.2), (mx, my, arriba))
     m4 += _cilindro(3.5, (mx, my, arriba), (mx, my, arriba + 4.0))
-    m4 += _cilindro(3.6, (mx, my, plano[0] - 2.2), (mx, my, plano[0]))
+    tuerca = _cilindro(3.6, (mx, my, plano[0] - 2.2), (mx, my, plano[0])) - _cilindro(
+        2.0, (mx, my, plano[0] - 3.2), (mx, my, plano[0] + 1.0)
+    )
     piezas.append(Colocada(f"tornillo_mordaza_{n}", m4, True))
+    piezas.append(Colocada(f"tuerca_mordaza_{n}", tuerca, True))
 
     # El M2 del tambor, radial, en el lado lejano: cabeza de Ø3,8 × 1,3
     # sobre los dos extremos solapados de la cinta.
@@ -1349,7 +1356,7 @@ def _eje_del_rodillo(
     centro: Punto,
     centro_z: float,
     ancho: float,
-) -> Any:
+) -> dict[str, Any]:
     """El eje del rodillo descolgado: un M3 avellanado (DIN 7991) que entra
     por arriba con la cabeza enrasada en el seguidor, baja por el casquillo,
     atraviesa el rodillo y se cierra debajo con una tuerca fina.
@@ -1364,13 +1371,17 @@ def _eje_del_rodillo(
     techo = z["seguidores"][1]
     radio = 1.5 - JUEGO_GIRATORIO / 2.0
     eje = _cilindro(radio, (x, y, pie - TUERCA_DEL_EJE[1]), (x, y, techo))
-    eje += _cilindro(TUERCA_DEL_EJE[0] / 2.0, (x, y, pie - TUERCA_DEL_EJE[1]), (x, y, pie))
-    eje += _cilindro(
+    tuerca = _cilindro(
+        TUERCA_DEL_EJE[0] / 2.0, (x, y, pie - TUERCA_DEL_EJE[1]), (x, y, pie)
+    ) - _cilindro(1.5, (x, y, pie - TUERCA_DEL_EJE[1] - 1.0), (x, y, pie + 1.0))
+    casquillo = _cilindro(
         c["casquillo_rodillo_diametro"] / 2.0,
         (x, y, centro_z + ancho / 2.0),
         (x, y, z["seguidores"][0]),
-    )
-    return eje
+    ) - _cilindro(1.5, (x, y, centro_z + ancho / 2.0 - 1.0), (x, y, z["seguidores"][0] + 1.0))
+    # Tres piezas y no una: el tornillo, su tuerca y el casquillo del rodillo,
+    # que es pieza fabricada con su propia marca.
+    return {"eje_rodillo": eje, "tuerca_rodillo": tuerca, "casquillo_rodillo": casquillo}
 
 
 def _entre_puntos(

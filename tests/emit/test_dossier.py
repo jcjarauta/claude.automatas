@@ -129,7 +129,7 @@ def test_el_indice_lleva_toda_marca_con_su_documento_y_hoja():
     assert {f[0] for f in filas} == {codigo for codigo, _ in d.marcas.values()}
     tambor = next(f for f in filas if f[1] == "tambor")
     assert tambor[0] == "P-AMP-03"
-    assert tambor[5:] == ["fichas_amplificador.pdf", "4"]
+    assert tambor[5:] == ["fichas_amplificador.pdf", "5"]
     # En el orden de montaje: el bastidor, lo primero; las levas, lo último.
     assert filas[0][4].endswith("bastidor")
     assert filas[-1][4].endswith("levas")

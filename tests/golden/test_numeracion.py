@@ -84,9 +84,10 @@ def test_cada_marca_tiene_documento_y_hoja():
     donde = paginas(registro)
     assert set(donde) == set(marcas(registro))
     assert donde[("piezas", "tambor")].documento == "fichas_amplificador.pdf"
-    # Hoja 1, la de grupo; después una por pieza, en el orden de su marca.
-    assert donde[("piezas", "eje_pivote")].hoja == 2
-    assert donde[("piezas", "tambor")].hoja == 4
+    # Hoja 1, la de grupo; la 2, el despiece explosionado; después una por
+    # pieza, en el orden de su marca.
+    assert donde[("piezas", "eje_pivote")].hoja == 3
+    assert donde[("piezas", "tambor")].hoja == 5
     assert donde[("comerciales", "cinta_amplificador")].hoja == 1
 
 
@@ -102,6 +103,6 @@ def test_un_numero_dado_de_baja_no_deja_hoja_vacia():
         }
     }
     donde = paginas(registro)
-    assert [donde[("piezas", n)].hoja for n in ("a", "c")] == [2, 3]
+    assert [donde[("piezas", n)].hoja for n in ("a", "c")] == [3, 4]
     assert donde[("comerciales", "k")].hoja == 1
     assert donde[("piezas", "a")].documento == "fichas_g.pdf"

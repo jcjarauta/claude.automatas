@@ -222,6 +222,14 @@ anillos concéntricos: lo que acota la ficha basta.)
 > está en 3D (`emit/fijaciones.py`, `emit.montaje`); cada línea dice qué
 > pieza la dibuja y un test lo cuenta. Lo que no cabe espera decisión en
 > `propuesta_tornilleria.md`.
+>
+> **Despiece explosionado pieza a pieza (2026-10-05).** Pedido con un
+> despiece de motor como referencia: cada grupo tiene una hoja 2 con su
+> despiece pieza a pieza (`emit/despiece.py`). Las pilas salen de la
+> geometría: un eje enhebra lo que es coaxial con él. Cada pieza sale por
+> su eje, los tornillos hacia su cabeza y las tuercas al otro lado. Lleva
+> líneas de montaje de trazo y punto, el número de cada pieza (su marca de
+> la hoja 1) y una leyenda. Las fichas de pieza empiezan en la hoja 3.
 
 Cada fase acaba con lint, mypy, `uv run --group cad pytest`, commit y push, y
 los PDF idénticos byte a byte con la misma entrada.

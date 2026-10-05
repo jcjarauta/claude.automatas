@@ -1190,6 +1190,11 @@ class FichasDeGrupo:
     """(marca, nombre, sólido ya explosionado) de un canal del grupo."""
     contrato: dict[str, float]
     """El contrato en mm con que se dibujan las fichas."""
+    explosion: Any = None
+    """El despiece explosionado pieza a pieza (`emit.despiece.Despiece`), en
+    mm de la proyección: la hoja 2."""
+    leyenda: tuple[tuple[str, str, int], ...] = ()
+    """(número, qué es, cuántas) de cada número del despiece explosionado."""
 
 
 def _vista_en(
@@ -1364,11 +1369,100 @@ def _ficha_de_grupo(cv: Any, g: FichasDeGrupo, hoja: str, version: str) -> None:
     )
 
 
+DIBUJO_DEL_DESPIECE = (MARGEN + 4.0, MARGEN + 4.0, 171.0, ALTO - 2 * MARGEN - 30.0)
+"""x, y, ancho, alto en mm de la hoja 2 donde va el despiece explosionado: a
+la izquierda; a la derecha, la leyenda sobre el cajetín."""
+
+LETRA_DEL_DESPIECE = 3.0
+"""mm de alto de los números del despiece explosionado."""
+
+
+def _hoja_de_despiece(cv: Any, g: FichasDeGrupo, hoja: str, version: str) -> None:
+    """El despiece explosionado del grupo, pieza a pieza, como un despiece de
+    motor: cada pieza fuera por el eje en que se monta, su línea de montaje
+    en trazo y punto, y su número, que es su marca en la hoja 1."""
+    from reportlab.lib.colors import HexColor
+
+    from emit.despiece import encajar
+
+    _marco(cv)
+    cv.setFillColor(HexColor(g.grupo.color))
+    cv.rect((MARGEN + 4) * MM, (ALTO - MARGEN - 13) * MM, 4 * MM, 9 * MM, stroke=0, fill=1)
+    cv.setFillColor(HexColor(TINTA))
+    cv.setFont("Helvetica-Bold", 15)
+    cv.drawString(
+        (MARGEN + 11) * MM,
+        (ALTO - MARGEN - 9) * MM,
+        _texto(f"Despiece explosionado · {g.grupo.nombre}"),
+    )
+    cv.setFont("Helvetica", 8)
+    cv.drawString(
+        (MARGEN + 11) * MM,
+        (ALTO - MARGEN - 13) * MM,
+        _texto(
+            "Cada pieza sale por el eje en que se monta; la línea de trazo y punto la "
+            "devuelve a su sitio. El número es su marca en la hoja 1."
+        ),
+    )
+    if g.explosion is not None and g.explosion.lineas:
+        d = encajar(g.explosion, *DIBUJO_DEL_DESPIECE, letra=LETRA_DEL_DESPIECE)
+        # Las líneas de montaje, debajo de todo.
+        cv.setStrokeColor(HexColor("#6b7078"))
+        cv.setLineWidth(0.18 * MM)
+        cv.setDash([3.0 * MM, 0.8 * MM, 0.5 * MM, 0.8 * MM])
+        for _, a, b in d.montaje:
+            cv.line(a[0] * MM, a[1] * MM, b[0] * MM, b[1] * MM)
+        cv.setDash([])
+        cv.setStrokeColor(HexColor(TINTA))
+        cv.setLineWidth(0.3 * MM)
+        cv.setLineJoin(1)
+        for puntos in d.lineas:
+            camino = cv.beginPath()
+            camino.moveTo(puntos[0][0] * MM, puntos[0][1] * MM)
+            for px, py in puntos[1:]:
+                camino.lineTo(px * MM, py * MM)
+            cv.drawPath(camino, stroke=1, fill=0)
+        # Los números: el ancho de una cifra de Helvetica negrita es 0,556 del
+        # cuerpo, y `emit.despiece` reserva 0,62 de la altura de letra por cifra.
+        cuerpo = d.letra * 0.62 / 0.556
+        cv.setFont("Helvetica-Bold", cuerpo * MM)
+        cv.setLineWidth(0.15 * MM)
+        for e in d.etiquetas:
+            cv.line(e.ancla[0] * MM, e.ancla[1] * MM, e.extremo[0] * MM, e.extremo[1] * MM)
+            cv.circle(e.ancla[0] * MM, e.ancla[1] * MM, 0.35 * MM, stroke=0, fill=1)
+            cv.drawCentredString(
+                e.posicion[0] * MM, (e.posicion[1] - 0.36 * cuerpo) * MM, _texto(e.texto)
+            )
+    else:
+        _parrafo(cv, SIN_DESPIECE.get(g.grupo.nombre, SIN_DESPIECE[""]), MARGEN + 4, 170, 160, 8)
+
+    # La leyenda: qué es cada número.
+    x, y = 187.0, ALTO - MARGEN - 22
+    cv.setFillColor(HexColor(TINTA))
+    cv.setFont("Helvetica-Bold", 8)
+    cv.drawString(x * MM, y * MM, "LEYENDA")
+    filas = [("N.º", "Qué es", "Cant.")]
+    filas += [(t, q, str(k)) for t, q, k in g.leyenda]
+    _tabla(cv, x, y - 2, (14, 76, 12), filas, cuerpo=6.4)
+
+    _cajetin(
+        cv,
+        f"Despiece: {g.grupo.nombre}",
+        f"G-{g.grupo.sigla}",
+        hoja,
+        estilo.ESCALA_VARIAS,
+        g.grupo,
+        version,
+    )
+
+
 def hojas_de(g: FichasDeGrupo) -> dict[str, int]:
     """Pieza → hoja en que `escribir_fichas` pone su ficha. La hoja 1 es la
-    del grupo. El índice del dossier lo saca del registro
-    (`emit.numeracion.paginas`) y un test lo cruza con esto."""
-    return {p.nombre: i for i, p in enumerate(g.piezas, start=2)}
+    del grupo y la 2 su despiece explosionado. El índice del dossier lo saca
+    del registro (`emit.numeracion.paginas`) y un test lo cruza con esto."""
+    from emit.numeracion import PRIMERA_HOJA_DE_PIEZA
+
+    return {p.nombre: i for i, p in enumerate(g.piezas, start=PRIMERA_HOJA_DE_PIEZA)}
 
 
 def escribir_fichas(
@@ -1391,8 +1485,10 @@ def escribir_fichas(
     )
     cv.setTitle(_texto(f"Fichas del grupo {g.grupo.nombre}"))
     cv.setAuthor("claude.automatas")
-    total = 1 + len(g.piezas)
+    total = 2 + len(g.piezas)
     _ficha_de_grupo(cv, g, f"1/{total}", version)
+    cv.showPage()
+    _hoja_de_despiece(cv, g, f"2/{total}", version)
     cv.showPage()
     hojas = hojas_de(g)
     for p in g.piezas:

@@ -91,7 +91,7 @@ def test_a2_un_contorno_exterior_no_entra_en_la_tabla_de_taladros(amplificador):
 
 
 def test_a4_cada_hoja_lleva_el_commit(paginas, amplificador):
-    assert len(paginas) == 1 + len(amplificador.piezas)
+    assert len(paginas) == 2 + len(amplificador.piezas)
     for hoja in paginas:
         assert any("commit prueba" in s for _, _, s in hoja)
 
@@ -102,7 +102,7 @@ def test_a6_cada_taladro_de_la_tabla_tiene_su_letra_en_la_planta(paginas, amplif
     from emit.fichas import CELDAS
 
     px, py, pw, ph = CELDAS["planta"]
-    for hoja, pieza in zip(paginas[1:], amplificador.piezas, strict=True):
+    for hoja, pieza in zip(paginas[2:], amplificador.piezas, strict=True):
         cabecera = [y for x, y, s in hoja if s == "Taladro" and x > 180]
         if not cabecera:
             continue
@@ -182,7 +182,7 @@ def test_b5_cada_cota_lleva_la_fila_de_su_variable_y_no_su_nombre(paginas, ampli
     from emit.fichas import CELDAS
 
     px, py, pw, ph = CELDAS["planta"]
-    tambor = paginas[1 + [p.nombre for p in amplificador.piezas].index("tambor")]
+    tambor = paginas[2 + [p.nombre for p in amplificador.piezas].index("tambor")]
     en_planta = [
         s for x, y, s in tambor if px <= x <= px + pw and py <= y <= py + ph and "#cota" in s
     ]
@@ -203,6 +203,7 @@ def test_un_grupo_sin_piezas_fabricadas_tiene_su_hoja_de_grupo(tmp_path):
     assert not levas.sin_ficha
     assert not despiece_en_hoja(levas).lineas
     pdf = escribir_fichas(levas, tmp_path / "l.pdf", "commit x", comprimir=False).read_bytes()
-    assert pdf.count(b"/Type /Page") - pdf.count(b"/Type /Pages") == 1
+    # La hoja de grupo y la del despiece explosionado: las levas, sin número.
+    assert pdf.count(b"/Type /Page") - pdf.count(b"/Type /Pages") == 2
     assert b"C-LEV-01" in pdf
     assert SIN_DESPIECE["levas"].split()[0].encode() in pdf
