@@ -83,8 +83,24 @@ def _dibujar_texto(lienzo: Canvas, texto: Texto) -> None:
         lienzo.drawString(_pt(texto.x), _pt(texto.y), texto.texto)
 
 
-def escribir_pdf(laminas: list[Lamina], destino: Path | str) -> Path:
-    """Vuelca las láminas a un PDF, una página por lámina."""
+def escribir_pdf(laminas: list[Lamina], destino: Path | str, version: str | None = None) -> Path:
+    """Vuelca las láminas a un PDF, una página por lámina.
+
+    Con `version`, cada lámina la lleva al pie: se imprimen sueltas y se
+    pegan sobre el tablero, y sin versión no hay forma de saber de qué
+    diseño salió la que tiene uno delante."""
+    if version:
+        from dataclasses import replace
+
+        from emit.layout import Texto as _Rotulo
+
+        laminas = [
+            replace(
+                lamina,
+                textos=(*lamina.textos, _Rotulo(lamina.ancho - 10.0, 4.0, version, 2.5)),
+            )
+            for lamina in laminas
+        ]
     if not laminas:
         raise ValueError("no hay nada que escribir: la lista de láminas está vacía")
     escalas = {lamina.escala for lamina in laminas}

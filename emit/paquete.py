@@ -65,6 +65,7 @@ def escribir_paquete(
     *,
     formato: Formato | None = None,
     perfil: PerfilImpresora | None = None,
+    version: str | None = None,
 ) -> Paquete:
     """Escribe `plantillas.pdf` en `destino` y dice qué ha escrito.
 
@@ -81,7 +82,7 @@ def escribir_paquete(
         laminas = [aplicar(lamina, perfil) for lamina in laminas]
 
     carpeta = Path(destino)
-    ruta = escribir_pdf(laminas, carpeta / "plantillas.pdf")
+    ruta = escribir_pdf(laminas, carpeta / "plantillas.pdf", version)
 
     return Paquete(
         plantillas=ruta,

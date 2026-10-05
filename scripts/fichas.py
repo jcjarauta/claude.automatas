@@ -77,8 +77,9 @@ def preparar(nombre: str):
         if any(palabra in f.para for palabra in palabras)
     )
 
-    # El despiece: un canal, cada pieza fabricada subida sobre la anterior.
-    canal = [p for p in del_grupo if p.nombre.endswith("_1") and base_de(p.nombre) in marca_de]
+    # El despiece: el grupo entero, cada pieza fabricada subida sobre la
+    # anterior.
+    canal = [p for p in del_grupo if base_de(p.nombre) in marca_de]
     canal.sort(key=lambda p: (p.solido.bounding_box().min.Z, p.nombre))
     despiece = tuple(
         (marca_de[base_de(p.nombre)], p.nombre, Pos(0, 0, k * EXPLOSION) * p.solido)
@@ -107,7 +108,9 @@ def main(argv: list[str] | None = None) -> int:
     op = p.parse_args(argv)
     destino = op.out or RAIZ / "build" / f"fichas_{op.grupo}.pdf"
     fichas = preparar(op.grupo)
-    escribir_fichas(fichas, destino)
+    from scripts.dossier import _version
+
+    escribir_fichas(fichas, destino, _version())
     print(
         f"{destino}: ficha del grupo {op.grupo} y {len(fichas.piezas)} de pieza; "
         f"{len(fichas.comerciales)} comerciales; sin ficha: {', '.join(fichas.sin_ficha) or 'nada'}"

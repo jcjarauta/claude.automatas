@@ -86,6 +86,61 @@ def contrato_mm() -> dict[str, float]:
     return salida
 
 
+class Texto(str):
+    """Un texto de ficha —la forma de una pieza, el objetivo de un grupo— con
+    sus números sacados del contrato.
+
+    Guarda la plantilla de la que salió para que un test compruebe que no
+    lleva ningún número escrito a mano: un número en la prosa envejece en
+    silencio el día que cambia el contrato. Pasó con «el cabestrante 6:1»,
+    que siguió impreso después de que el contrato dijera 8:1."""
+
+    plantilla: str
+
+
+def _derivadas(c: dict[str, float]) -> dict[str, float]:
+    """Magnitudes que no están en el contrato pero salen de él sin más."""
+    return {
+        "relacion_cabestrante": c["amplificador_sector_radio"] / c["amplificador_tambor_radio"],
+    }
+
+
+def numero_de(c: dict[str, float], nombre: str) -> float:
+    """El valor de un nombre en el contrato en mm, con los gemelos `_radio` y
+    `_diametro` y las magnitudes derivadas."""
+    if nombre in c:
+        return c[nombre]
+    derivadas = _derivadas(c)
+    if nombre in derivadas:
+        return derivadas[nombre]
+    for sufijo, factor in (("_radio", 0.5), ("_diametro", 2.0)):
+        if nombre.endswith(sufijo) and nombre.removesuffix(sufijo) in c:
+            return c[nombre.removesuffix(sufijo)] * factor
+    raise KeyError(nombre)
+
+
+_CONTRATO_DE_TEXTOS: list[dict[str, float]] = []
+
+
+def texto(plantilla: str, c: dict[str, float] | None = None) -> Texto:
+    """Resuelve `{nombre}` contra el contrato: «eje Ø{brazo_eje_diametro} h6»
+    es «eje Ø10 h6». Lo que no lleva llaves se queda tal cual."""
+    import re
+
+    if c is None:
+        if not _CONTRATO_DE_TEXTOS:
+            _CONTRATO_DE_TEXTOS.append(contrato_mm())
+        c = _CONTRATO_DE_TEXTOS[0]
+    resuelto = re.sub(
+        r"\{([a-z0-9_]+)\}",
+        lambda m: f"{round(numero_de(c, m.group(1)), 3):g}".replace(".", ","),
+        plantilla,
+    )
+    salida = Texto(resuelto)
+    salida.plantilla = plantilla
+    return salida
+
+
 def barra(largo: float, r0: float, r1: float) -> Perfil:
     """Contorno de una barra de dos cubos: dos arcos y sus tangentes.
 
@@ -842,7 +897,7 @@ def _barra_calada(
     su lista de variables se escribe una vez. Repetirla era la forma segura
     de que una de las dos se quedara atrás."""
     return Ficha(
-        "barra de dos cubos **desiguales** en pletina de latón",
+        texto("barra de dos cubos **desiguales**"),
         2 if calaje == "calaje_izquierdo" else 1,
         (
             Variable("cota", entre_centros, etiqueta),
@@ -882,7 +937,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte + taladro",
     ),
     "brazo_distal": Ficha(
-        "barra CURVA de pletina de latón: codo y punta",
+        texto("barra CURVA: codo y punta"),
         2,
         (
             Variable("cota", "brazo_distal", "entre centros"),
@@ -960,7 +1015,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="fresado",
     ),
     "eje_pivote": Ficha(
-        "barra Ø10 h6 con una cara plana, cortada a medida",
+        texto("eje Ø{brazo_eje_diametro} h6 con una cara plana, cortado a medida"),
         2,
         (
             Variable("cota", "brazo_eje_diametro", "Ø", "h6"),
@@ -983,7 +1038,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte a medida + fresado de la cara plana",
     ),
     "sector": Ficha(
-        "disco de POM sin muesca, con los dos tornillos que lo calan al seguidor",
+        texto("disco sin muesca, con los dos tornillos que lo calan al seguidor"),
         2,
         (
             Variable("cota", "amplificador_sector_radio_mecanizado_diametro", "Ø del canto"),
@@ -1044,7 +1099,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="torneado",
     ),
     "manivela": Ficha(
-        "barra de dos cubos en pletina de latón, como los brazos",
+        texto("barra de dos cubos, como los brazos"),
         1,
         (
             Variable("cota", "manivela_entre_centros", "entre centros"),
@@ -1073,7 +1128,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte + taladro",
     ),
     "volante": Ficha(
-        "disco de latón aligerado, en el eje de la manivela",
+        texto("disco aligerado, en el eje de la manivela"),
         1,
         (
             Variable("cota", "volante_diametro", "Ø del disco"),
@@ -1107,7 +1162,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte + taladro",
     ),
     "base": Ficha(
-        "tabla de nogal con los tres agujeros de los postes",
+        texto("tabla con los tres agujeros de los postes"),
         1,
         (
             Variable("cota", "base_ancho", "ancho"),
@@ -1143,7 +1198,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte + taladro ciego",
     ),
     "balancin": Ficha(
-        "barra de dos cubos diminuta, en la misma pletina de latón de 3",
+        texto("barra de dos cubos diminuta, de la misma chapa que los brazos"),
         1,
         (
             Variable("cota", "balancin_entrada", "entre centros"),
@@ -1172,7 +1227,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte + taladro",
     ),
     "platina_levas": Ficha(
-        "disco de contrachapado con los siete agujeros del mecanismo",
+        texto("disco con los siete agujeros del mecanismo"),
         3,
         (
             Variable("cota", "platina_diametro", "Ø del disco"),
@@ -1227,7 +1282,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte láser o CNC",
     ),
     "seguidor": Ficha(
-        "barra de dos cubos con seis agujeros en línea, en POM-C de 5",
+        texto("barra de dos cubos con seis agujeros en línea"),
         3,
         (
             Variable("cota", "brazo_seguidor", "al rodillo del elevador"),
@@ -1268,7 +1323,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="fresado CNC",
     ),
     "eje_manivela": Ficha(
-        "barra Ø10 h6 con una cara plana, como los de pivote",
+        texto("eje Ø{brazo_eje_diametro} h6 con una cara plana, como los de pivote"),
         1,
         (
             Variable("cota", "brazo_eje_diametro", "Ø", "h6"),
@@ -1290,7 +1345,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte a medida + fresado de la cara plana",
     ),
     "casquillo_rueda": Ficha(
-        "casquillo de latón: la rueda Z60 en el árbol",
+        texto("casquillo: la rueda Z60 en el árbol"),
         1,
         (
             Variable("cota", "casquillo_rueda_diametro", "Ø exterior", "p6"),
@@ -1309,7 +1364,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="torneado + taladro roscado M3",
     ),
     "eje_balancin": Ficha(
-        "barra Ø4 h6 con UNA cara plana",
+        texto("eje Ø{balancin_eje_diametro} h6 con UNA cara plana"),
         1,
         (
             Variable("cota", "balancin_eje_diametro", "Ø", "h6"),
@@ -1331,7 +1386,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte a medida + fresado de la cara plana",
     ),
     "apoyo_balancin": Ficha(
-        "bloque de latón colgado del plato 2, con el agujero del eje del balancín",
+        texto("bloque colgado del plato 2, con el agujero del eje del balancín"),
         2,
         (
             Variable("cota", "apoyo_balancin_alto", "alto (sobre X)"),
@@ -1352,7 +1407,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte + taladro; rosca M3 en la cara alta",
     ),
     "bieleta": Ficha(
-        "varilla de acero de Ø2 doblada en sus dos extremos",
+        texto("varilla de Ø{bieleta_diametro} doblada en sus dos extremos"),
         1,
         (
             Variable("cota", "bieleta_diametro", "Ø", "h8"),
@@ -1376,7 +1431,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte + doblado a 90° en dos planos",
     ),
     "casquillo_bieleta": Ficha(
-        "casquillo de latón en el agujero de 3,2 del seguidor 3",
+        texto("casquillo en el agujero de Ø{casquillo_bieleta_diametro} del seguidor 3"),
         1,
         (
             Variable("cota", "casquillo_bieleta_diametro", "Ø exterior", "p6"),
@@ -1392,7 +1447,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte a medida",
     ),
     "tirante": Ficha(
-        "varilla de latón de Ø4 con un taladro transversal abajo",
+        texto("varilla de Ø{tirante_diametro} con un taladro transversal abajo"),
         1,
         (
             Variable("cota", "tirante_diametro", "Ø"),
@@ -1411,7 +1466,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte + taladro transversal Ø1,8 a 2 de la punta",
     ),
     "bulon_tirante": Ficha(
-        "bulón de acero Ø6 con un taladro transversal de 4",
+        texto("bulón Ø{brazo_perno_diametro} con un taladro transversal"),
         1,
         (
             Variable("cota", "brazo_perno_diametro", "Ø", "h7"),
@@ -1427,7 +1482,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="torneado + taladro transversal Ø4",
     ),
     "mesa": Ficha(
-        "chapa de aluminio de 4 donde va la tarjeta",
+        texto("placa donde va la tarjeta"),
         1,
         (
             Variable("cota", "mesa_fondo", "fondo (sobre X)"),
@@ -1449,7 +1504,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte + taladro + avellanado de los M2",
     ),
     "biela_mesa": Ficha(
-        "barra de dos cubos iguales, en pletina de latón de 3",
+        texto("barra de dos cubos iguales"),
         4,
         (
             Variable("cota", "mesa_biela", "entre centros"),
@@ -1469,7 +1524,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte + taladro",
     ),
     "eje_mesa_movil": Ficha(
-        "varilla de acero de Ø1,5 que cruza bajo la mesa",
+        texto("varilla de Ø{mesa_eje_diametro} que cruza bajo la mesa"),
         2,
         (
             Variable("cota", "mesa_eje_diametro", "Ø", "h8"),
@@ -1485,7 +1540,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte a medida + ranuras de circlip",
     ),
     "eje_mesa_fijo": Ficha(
-        "varilla de acero de Ø1,5, corta",
+        texto("varilla de Ø{mesa_eje_diametro}, corta"),
         4,
         (
             Variable("cota", "mesa_eje_diametro", "Ø", "h8"),
@@ -1498,7 +1553,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte a medida",
     ),
     "soporte_mesa": Ficha(
-        "bloque de latón sobre la base con el agujero de un eje fijo",
+        texto("bloque sobre la base con el agujero de un eje fijo"),
         4,
         (
             Variable("cota", "soporte_mesa_alto", "alto (sobre X)"),
@@ -1515,7 +1570,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte + taladro; rosca M2 en el pie",
     ),
     "orejeta_mesa": Ficha(
-        "bloque de latón de 40 bajo la mesa, con el agujero de un eje móvil",
+        texto("bloque bajo la mesa, con el agujero de un eje móvil"),
         2,
         (
             Variable("cota", "orejeta_mesa_alto", "alto (sobre X)"),
@@ -1532,7 +1587,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte + taladro a lo largo + rosca M2",
     ),
     "tubo_punta": Ficha(
-        "tubo de latón: el perno hueco de la punta del cinco barras",
+        texto("tubo: el perno hueco de la punta del cinco barras"),
         1,
         (
             Variable("cota", "punta_tubo_diametro", "Ø exterior", "h7"),
@@ -1551,7 +1606,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte a medida",
     ),
     "brazo_horquilla": Ficha(
-        "brazo de latón del portalápiz: del tubo de la punta al poste",
+        texto("brazo del portalápiz: del tubo de la punta al poste"),
         1,
         (
             Variable("cota", "horquilla_largo", "entre centros"),
@@ -1567,7 +1622,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte + taladro + soldadura blanda",
     ),
     "poste_horquilla": Ficha(
-        "poste de latón donde se aprietan las láminas",
+        texto("poste donde se aprietan las láminas"),
         1,
         (
             Variable("cota", "poste_horquilla_alto", "alto (sobre X)"),
@@ -1588,7 +1643,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte + taladro + rosca M2",
     ),
     "pinza": Ficha(
-        "bloque cuadrado de latón apretado al portaminas",
+        texto("bloque cuadrado apretado al portaminas"),
         1,
         (
             Variable("cota", "pinza_ancho", "lado"),
@@ -1606,7 +1661,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte + taladro + roscas M3 y M2",
     ),
     "lamina_flexura": Ficha(
-        "lámina de fleje de 0,15 con una pestaña doblada en cada punta",
+        texto("lámina de {flexura_espesor} con una pestaña doblada en cada punta"),
         2,
         (
             Variable("cota", "lamina_desarrollo", "largo antes de doblar"),
@@ -1628,7 +1683,7 @@ LISTADO: dict[str, Ficha] = {
     ),
     # --- el cartucho entre puntos (contrato de cartucho) ----------------------
     "eje_cartucho": Ficha(
-        "eje de latón con su valona: tetón abajo, pasador en la valona, ranura arriba",
+        texto("eje con su valona: tetón abajo, pasador en la valona, ranura arriba"),
         1,
         (
             Variable("cota", "cubo_diametro", "Ø de la valona"),
@@ -1669,7 +1724,7 @@ LISTADO: dict[str, Ficha] = {
         conjunto="cartucho",
     ),
     "separador": Ficha(
-        "disco de latón de 2 con el agujero del eje y el del pasador",
+        texto("disco de {separador_espesor} con el agujero del eje y el del pasador"),
         2,
         (
             Variable("cota", "separador_diametro", "Ø exterior"),
@@ -1688,7 +1743,7 @@ LISTADO: dict[str, Ficha] = {
         conjunto="cartucho",
     ),
     "munon": Ficha(
-        "barra Ø10 h6 con una horquilla en U arriba",
+        texto("eje Ø{eje_diametro} h6 con una horquilla en U arriba"),
         1,
         (
             Variable("cota", "eje_diametro", "Ø", "h6"),
@@ -1707,7 +1762,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte + fresado de la U",
     ),
     "eje_motriz": Ficha(
-        "barra Ø10 h6 con un taladro transversal de 2 abajo",
+        texto("eje Ø{eje_diametro} h6 con el taladro transversal del pasador abajo"),
         1,
         (
             Variable("cota", "eje_diametro", "Ø", "h6"),
@@ -1727,7 +1782,7 @@ LISTADO: dict[str, Ficha] = {
     ),
     # --- lo que sostiene y empuja cada seguidor ---------------------------------
     "collar": Ficha(
-        "collar de latón con un prisionero M3 radial",
+        texto("collar con un prisionero M3 radial"),
         9,
         (
             Variable("cota", "collar_seguidor_diametro", "Ø exterior"),
@@ -1749,7 +1804,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="torneado de la barra de Ø16, la del tambor y la garra, + roscado M3 radial",
     ),
     "placa_tope": Ficha(
-        "brazo corto de latón con el poste, la pata del muelle y el pasador de tope en línea",
+        texto("brazo corto con el poste, la pata del muelle y el pasador de tope en línea"),
         3,
         (
             Variable("cota", "tope_brazo", "del poste al pasador"),
@@ -1775,7 +1830,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte láser, en la chapa del latón",
     ),
     "calzo_sector": Ficha(
-        "barra de latón con el paso de la valona y los dos tornillos al sector",
+        texto("barra con el paso de la valona y los dos tornillos al sector"),
         2,
         (
             Variable("cota", "union_sector_seguidor_lejos", "al tornillo lejano"),
@@ -1795,7 +1850,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte láser, en la chapa de los brazos",
     ),
     "tubo_separador": Ficha(
-        "tubo de latón 12 × 1,5 cortado a dos largos",
+        texto("tubo cortado a dos largos"),
         6,
         (
             Variable("cota", "tubo_separador_diametro", "Ø exterior"),
@@ -1817,7 +1872,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte a largo",
     ),
     "casquillo_rodillo": Ficha(
-        "tubo de latón Ø4 cortado a tres largos",
+        texto("tubo de Ø{casquillo_rodillo_diametro} cortado a tres largos"),
         3,
         (
             Variable("cota", "casquillo_rodillo_diametro", "Ø exterior"),
@@ -1840,7 +1895,7 @@ LISTADO: dict[str, Ficha] = {
         proceso="corte a largo",
     ),
     "garra": Ficha(
-        "manguito de latón con una lengüeta descentrada y dos ranuras verticales",
+        texto("manguito con una lengüeta descentrada y dos ranuras verticales"),
         1,
         (
             Variable("cota", "garra_diametro", "Ø exterior"),

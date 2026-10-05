@@ -336,8 +336,13 @@ def _marco(cv: Any) -> None:
     cv.rect(MARGEN * MM, MARGEN * MM, (ANCHO - 2 * MARGEN) * MM, (ALTO - 2 * MARGEN) * MM)
 
 
-def _cajetin(cv: Any, titulo: str, plano: str, hoja: str, escala: str, grupo: Grupo) -> None:
-    """El cajetín, abajo a la derecha: qué es, de qué máquina y a qué escala."""
+def _cajetin(
+    cv: Any, titulo: str, plano: str, hoja: str, escala: str, grupo: Grupo, version: str
+) -> None:
+    """El cajetín, abajo a la derecha: qué es, de qué máquina, a qué escala
+    y **de qué versión**. Una hoja que circula suelta y fotocopiada por el
+    taller sin versión sobrevive al diseño que la generó, y no hay forma de
+    saber si es más vieja que la de al lado."""
     from reportlab.lib.colors import HexColor
 
     x, y, w, h = CAJETIN
@@ -354,7 +359,7 @@ def _cajetin(cv: Any, titulo: str, plano: str, hoja: str, escala: str, grupo: Gr
     cv.drawString((x + 8) * MM, (y + h - 7.5) * MM, _texto(titulo))
     cv.setFont("Helvetica", 7)
     cv.drawString((x + 3) * MM, (y + 17) * MM, _texto("Escribiente · claude.automatas"))
-    cv.drawString((x + 3) * MM, (y + 13.5) * MM, _texto(f"Grupo: {grupo.nombre}"))
+    cv.drawString((x + 3) * MM, (y + 13.5) * MM, _texto(f"Grupo: {grupo.nombre} · {version}"))
     cv.drawString((x + 3) * MM, (y + 7) * MM, _texto(f"Plano {plano}"))
     cv.drawString((x + 3) * MM, (y + 3) * MM, _texto("Cotas en mm · sistema europeo"))
     cv.drawString((x + w * 0.62 + 3) * MM, (y + 7) * MM, _texto(f"Escala {escala}"))
@@ -413,17 +418,197 @@ def con_sufijo(texto: str, variable: str, ficha: Ficha) -> str:
     return f"{texto} {sufijo}".strip()
 
 
-def variable_de(medida: float, ficha: Ficha, c: dict[str, float], diametro: bool = False) -> str:
-    """El nombre de la variable de la ficha que vale `medida`, si hay una.
-    Un diámetro también casa con un radio del contrato, al doble."""
+def es_diametro(v: Any) -> bool:
+    """Si una variable es un diámetro: lo dice su rótulo («Ø de paso») o su
+    nombre (`…_diametro`). Es la clase de la cota, no su valor."""
+    return str(v.etiqueta).lstrip().startswith("Ø") or v.nombre.endswith("_diametro")
+
+
+CLASES = ("diametro", "radio", "distancia")
+
+
+def variable_de(medida: float, ficha: Ficha, c: dict[str, float], clase: str) -> str:
+    """La variable de la ficha que da esta cota, mirando **su clase** además
+    de su valor.
+
+    Casar solo por valor es la trampa que ya se pagó en `comparar_dxf.py`:
+    con unas cuantas cotas, cualquier número redondo encuentra una que lo
+    explique. El calzo tiene un cubo de Ø22 y un tornillo a 22 del centro, y
+    el diámetro salía con el nombre de la distancia. Un diámetro casa con
+    diámetros, un radio con la mitad de un diámetro, una distancia con lo que
+    no es diámetro. Si aun así casan dos, se dice: «ambigua: a | b».
+    """
+    if clase not in CLASES:
+        raise ValueError(f"clase de cota «{clase}»: {CLASES}")
+    candidatas: list[str] = []
     for v, x in _variables(ficha, c):
         if v.mapa != "cota":
             continue
-        if abs(x - medida) < 0.011:
-            return v.nombre
-        if diametro and "radio" in v.nombre and abs(2 * x - medida) < 0.011:
-            return v.nombre
-    return ""
+        diametro = es_diametro(v)
+        if clase == "diametro" and diametro:
+            casa = abs(x - medida) < 0.011
+        elif clase == "radio" and diametro:
+            casa = abs(x / 2 - medida) < 0.011
+        elif clase == "distancia" and not diametro:
+            casa = abs(x - medida) < 0.011
+        else:
+            casa = False
+        if casa and v.nombre not in candidatas:
+            candidatas.append(v.nombre)
+    if len(candidatas) > 1:
+        return "ambigua: " + " | ".join(candidatas)
+    return candidatas[0] if candidatas else ""
+
+
+# ---------------------------------------------------------------------------
+# Lo que se lee en la planta: contorno y taladros, de la geometría
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class Arco:
+    """Un arco del contorno exterior: se acota en la vista, no en la tabla."""
+
+    cx: float
+    cy: float
+    r: float
+    entero: bool
+    """Un círculo cerrado o más de media vuelta: se acota por su diámetro."""
+
+
+@dataclass(frozen=True)
+class Taladro:
+    """Un hueco que atraviesa la pieza: un contorno interior de su cara de
+    arriba. Lo de fuera —un cubo, un extremo redondeado— no es un taladro
+    aunque sea un círculo, y en la tabla de taladros haría un agujero donde
+    va material."""
+
+    letra: str
+    tipo: str
+    """«taladro», «en D», «ranura» o «contorno»."""
+    cx: float
+    cy: float
+    diametro: float
+    recorrido: float = 0.0
+    """En una ranura, la distancia entre los centros de sus dos arcos."""
+
+
+@dataclass(frozen=True)
+class Rasgos:
+    contorno: tuple[Arco, ...]
+    taladros: tuple[Taladro, ...]
+
+
+def rasgos(solido: Any) -> Rasgos:
+    """El contorno y los taladros de la cara de arriba de la pieza, leídos de
+    la geometría y no de su dibujo."""
+    from build123d import GeomType
+
+    zmax = solido.bounding_box(optimal=True).max.Z
+    caras = [
+        f
+        for f in solido.faces()
+        if f.geom_type == GeomType.PLANE and abs(f.center().Z - zmax) < 1e-6
+    ]
+    if not caras:
+        return Rasgos((), ())
+    cara = max(caras, key=lambda f: f.area)
+
+    def arcos(alambre: Any) -> list[Any]:
+        return [e for e in alambre.edges() if e.geom_type == GeomType.CIRCLE]
+
+    contorno = []
+    for e in arcos(cara.outer_wire()):
+        entero = (
+            e.position_at(0) - e.position_at(1)
+        ).length < 1e-6 or e.length > math.pi * e.radius
+        contorno.append(
+            Arco(round(e.arc_center.X, 3), round(e.arc_center.Y, 3), round(e.radius, 3), entero)
+        )
+
+    huecos = []
+    for alambre in cara.inner_wires():
+        circulos = arcos(alambre)
+        lineas = len(alambre.edges()) - len(circulos)
+        if len(circulos) == 1 and lineas == 0:
+            e = circulos[0]
+            huecos.append(("taladro", e.arc_center.X, e.arc_center.Y, 2 * e.radius, 0.0))
+        elif len(circulos) == 1:
+            e = circulos[0]
+            huecos.append(("en D", e.arc_center.X, e.arc_center.Y, 2 * e.radius, 0.0))
+        elif len(circulos) == 2 and abs(circulos[0].radius - circulos[1].radius) < 1e-6:
+            a, b = circulos[0].arc_center, circulos[1].arc_center
+            huecos.append(
+                ("ranura", (a.X + b.X) / 2, (a.Y + b.Y) / 2, 2 * circulos[0].radius, (a - b).length)
+            )
+        else:
+            centro = alambre.center()
+            huecos.append(("contorno", centro.X, centro.Y, 0.0, 0.0))
+    huecos.sort(key=lambda h: (round(h[1], 3), round(h[2], 3), h[0]))
+    taladros = tuple(
+        Taladro(chr(ord("A") + i), t, round(x, 3), round(y, 3), round(d, 3), round(r, 3))
+        for i, (t, x, y, d, r) in enumerate(huecos)
+    )
+    return Rasgos(tuple(sorted(set(contorno), key=lambda a: (a.r, a.cx, a.cy))), taladros)
+
+
+# ---------------------------------------------------------------------------
+# La sección
+# ---------------------------------------------------------------------------
+
+
+def cortar(solido: Any) -> Any:
+    """La pieza cortada por el plano XZ que pasa por el datum, quedándose con
+    la mitad de atrás: vista desde delante, es la sección A-A."""
+    from build123d import Box, Pos
+
+    b = solido.bounding_box(optimal=True)
+    lado = 4.0 * max(b.size.X, b.size.Y, b.size.Z) + 10.0
+    detras = Pos(b.center().X, lado / 2.0, b.center().Z) * Box(lado, lado, lado)
+    return solido & detras
+
+
+def caras_cortadas(cortado: Any) -> list[Any]:
+    """Las caras del corte —planas, en y = 0, mirando hacia delante— como
+    polígonos de shapely en (X, Z): lo que se raya."""
+    from build123d import GeomType
+    from shapely.geometry import Polygon
+
+    def puntos(alambre: Any) -> list[tuple[float, float]]:
+        salida = []
+        for e in alambre.edges():
+            pasos = 1 if e.geom_type == GeomType.LINE else max(8, int(e.length / 0.2))
+            for i in range(pasos):
+                p = e.position_at(i / pasos)
+                salida.append((p.X, p.Z))
+        return salida
+
+    poligonos = []
+    for f in cortado.faces():
+        if f.geom_type != GeomType.PLANE or abs(f.center().Y) > 1e-6:
+            continue
+        if abs(abs(f.normal_at().Y) - 1.0) > 1e-6:
+            continue
+        exterior = puntos(f.outer_wire())
+        if len(exterior) >= 3:
+            poligonos.append(Polygon(exterior, [puntos(w) for w in f.inner_wires()]).buffer(0))
+    return poligonos
+
+
+def _rayado(lienzo: Any, poligono: Any, paso_papel: float = 1.3) -> None:
+    """Rayado a 45° de una cara cortada, recortado a la cara."""
+    from shapely.geometry import LineString
+
+    paso = paso_papel / lienzo.escala
+    x0, y0, x1, y1 = poligono.bounds
+    k = x0 - (y1 - y0)
+    while k < x1:
+        raya = LineString([(k, y0), (k + (y1 - y0), y1)]).intersection(poligono)
+        partes = getattr(raya, "geoms", [raya])
+        for parte in partes:
+            if parte.geom_type == "LineString" and not parte.is_empty:
+                lienzo.polilinea(list(parte.coords), 0.12, TINTA, False)
+        k += paso * math.sqrt(2.0)
 
 
 # ---------------------------------------------------------------------------
@@ -444,54 +629,119 @@ class Pieza:
     vistas: dict[str, VistaPieza] = field(default_factory=dict)
 
 
-def _ficha_de_pieza(cv: Any, pieza: Pieza, grupo: Grupo, c: dict[str, float], hoja: str) -> None:
+def _clase_de_extension(medida: float, contorno: Sequence[Arco]) -> str:
+    """Una cota de conjunto es un diámetro si la da un arco entero del
+    contorno —el calzo mide 22 de alto porque su cubo es de Ø22—; si no, una
+    distancia."""
+    if any(a.entero and abs(2 * a.r - medida) < 0.011 for a in contorno):
+        return "diametro"
+    return "distancia"
+
+
+def _globo(cv: Any, x: float, y: float, letra: str) -> None:
+    """La letra de un taladro, en su globo, en puntos de la hoja."""
+    from reportlab.lib.colors import HexColor
+
+    cv.setStrokeColor(HexColor(COTA))
+    cv.setFillColor(HexColor("#ffffff"))
+    cv.setLineWidth(0.18 * MM)
+    cv.circle(x, y, 1.9 * MM, stroke=1, fill=1)
+    cv.setFillColor(HexColor(COTA))
+    cv.setFont("Helvetica-Bold", 6)
+    cv.drawCentredString(x, y - 0.75 * MM, letra)
+
+
+def _ficha_de_pieza(
+    cv: Any, pieza: Pieza, grupo: Grupo, c: dict[str, float], hoja: str, version: str
+) -> None:
     from reportlab.lib.colors import HexColor
 
     ficha = LISTADO[pieza.nombre]
-    vistas = {n: vista_de_pieza(pieza.solido, n) for n in VISTAS_PIEZA}
+    rasgo = rasgos(pieza.solido)
+    cortado = cortar(pieza.solido)
+    hay_seccion = cortado.volume > 1e-6
+
+    def proyectar_todo(escala: float) -> dict[str, VistaPieza]:
+        vistas = {n: vista_de_pieza(pieza.solido, n, escala) for n in VISTAS_PIEZA}
+        if hay_seccion:
+            # La sección se mira como el alzado, pero de la pieza cortada.
+            seccion = vista_de_pieza(cortado, "alzado", escala)
+            vistas["perfil izquierdo"] = seccion
+        return vistas
+
+    vistas = proyectar_todo(1.0)
     escala = escala_comun(vistas)
     # Otra vez, con los arcos partidos para la escala a la que se dibujan.
-    vistas = {n: vista_de_pieza(pieza.solido, n, escala * 2.5) for n in VISTAS_PIEZA}
+    vistas = proyectar_todo(escala * 2.5)
     pieza.vistas = vistas
     _marco(cv)
 
-    taladros: list[tuple[str, float, float, float]] = []
+    rotulos = {
+        "alzado": "alzado",
+        "perfil izquierdo": (
+            (
+                "sección A-A, por el eje"
+                if ficha.solido[0] == "barra"
+                else "sección A-A, por el datum"
+            )
+            if hay_seccion
+            else "perfil izquierdo"
+        ),
+        "planta": "planta",
+        "isométrica": "isométrica (sin escala)",
+    }
     for nombre, (x, y, w, h) in CELDAS.items():
         v = vistas[nombre]
         x0, y0, x1, y1 = v.caja()
         e = min((w - 10) / (x1 - x0), (h - 14) / (y1 - y0)) if nombre == "isométrica" else escala
         ox = x + w / 2 - (x0 + x1) / 2 * e
         oy = y + h / 2 - (y0 + y1) / 2 * e
+        if nombre == "planta":
+            # Sitio debajo y a la izquierda para las cotas por coordenadas.
+            ox += 3.0
+            oy += 3.0
         lienzo = _Lienzo(cv, e, ox, oy)
+        if nombre == "perfil izquierdo" and hay_seccion:
+            for poligono in caras_cortadas(cortado):
+                _rayado(lienzo, poligono)
         for p in v.ocultas:
             lienzo.polilinea(p, 0.13, GRIS, True)
         for p in v.visibles:
             lienzo.polilinea(p, 0.35, TINTA, False)
         cv.setFillColor(HexColor("#41464d"))
         cv.setFont("Helvetica-Bold", 7)
-        rotulo = nombre if nombre != "isométrica" else "isométrica (sin escala)"
-        cv.drawString((x + 2) * MM, (y + h - 4) * MM, _texto(rotulo.upper()))
-        if nombre == "isométrica":
+        cv.drawString((x + 2) * MM, (y + h - 4) * MM, _texto(rotulos[nombre].upper()))
+        if nombre in ("isométrica", "perfil izquierdo") and (nombre == "isométrica" or hay_seccion):
             continue
 
         # Cotas de conjunto: ancho debajo y alto a la izquierda.
         ancho, alto = x1 - x0, y1 - y0
-        var = variable_de(ancho, ficha, c, diametro=True)
+        clase_ancho = _clase_de_extension(ancho, rasgo.contorno)
+        clase_alto = (
+            _clase_de_extension(alto, rasgo.contorno) if nombre == "planta" else "distancia"
+        )
+        var = variable_de(ancho, ficha, c, clase_ancho)
         _cota(
             cv,
             lienzo.p(x0, y0),
             lienzo.p(x1, y0),
-            (0, -7 * MM),
+            (0, -6 * MM),
             con_sufijo(_numero(ancho), var, ficha),
             var,
         )
         if alto > 0.05:
-            var = variable_de(alto, ficha, c, diametro=True)
+            var = variable_de(alto, ficha, c, clase_alto)
+            # En alzado, la vertical es la dirección de extrusión, y su
+            # variable la dice la ficha sin adivinar: el tambor mide 6 de
+            # ancho y 6 de cuerda de chaveta, y por valor sería ambigua.
+            extrusion = ficha.solido[1]
+            if nombre == "alzado" and extrusion in c and abs(c[extrusion] - alto) < 0.011:
+                var = extrusion
             _cota(
                 cv,
                 lienzo.p(x0, y0),
                 lienzo.p(x0, y1),
-                (-7 * MM, 0),
+                (-6 * MM, 0),
                 con_sufijo(_numero(alto), var, ficha),
                 var,
             )
@@ -504,42 +754,75 @@ def _ficha_de_pieza(cv: Any, pieza: Pieza, grupo: Grupo, c: dict[str, float], ho
         cv.setLineWidth(0.2 * MM)
         cv.line(dx - 3 * MM, dy, dx + 3 * MM, dy)
         cv.line(dx, dy - 3 * MM, dx, dy + 3 * MM)
-        # Los círculos: el mayor centrado es el contorno; el resto, taladros.
-        circulos = v.circulos
-        exterior = max((ci for ci in circulos if ci[3]), key=lambda ci: ci[2], default=None)
-        vistos_r: set[float] = set()
+
+        # El plano de corte de la sección A-A, por el datum.
+        if hay_seccion:
+            ax0, ay = lienzo.p(x0 - 3.0 / e, 0.0)
+            ax1, _ = lienzo.p(x1 + 3.0 / e, 0.0)
+            cv.setStrokeColor(HexColor(TINTA))
+            cv.setLineWidth(0.18 * MM)
+            cv.setDash([3 * MM, 0.8 * MM, 0.5 * MM, 0.8 * MM])
+            cv.line(ax0, ay, ax1, ay)
+            cv.setDash([])
+            cv.setFillColor(HexColor(TINTA))
+            for ax in (ax0, ax1):
+                cv.setLineWidth(0.5 * MM)
+                cv.line(ax, ay, ax, ay + 2.5 * MM)
+                _flecha(cv, ax, ay + 4.5 * MM, 0, 1)
+                cv.setFont("Helvetica-Bold", 7)
+                cv.drawCentredString(ax + 2.2 * MM, ay + 3.0 * MM, "A")
+
+        # El contorno: Ø o R en la vista, una vez por radio.
         angulos = iter((35.0, 145.0, 215.0, 325.0, 60.0, 120.0, 240.0, 300.0) * 4)
-        for cx, cy, r, entero in circulos:
-            if (cx, cy, r, entero) == exterior and abs(r - max(ancho, alto) / 2) < 0.6:
-                var = variable_de(2 * r, ficha, c, True)
-                _rotulo_circulo(
-                    lienzo,
-                    cx,
-                    cy,
-                    r,
-                    con_sufijo(f"Ø{_numero(2 * r)}", var, ficha),
-                    var,
-                    next(angulos),
-                )
+        vistos: set[float] = set()
+        for arco in sorted(rasgo.contorno, key=lambda a: -a.r):
+            if round(arco.r, 2) in vistos:
                 continue
-            if entero:
-                letra = chr(ord("A") + len(taladros))
-                taladros.append((letra, cx, cy, 2 * r))
-                px, py = lienzo.p(cx, cy)
-                cv.setFillColor(HexColor(COTA))
-                cv.setFont("Helvetica-Bold", 6)
-                cv.drawCentredString(px + r * escala * MM * 0.0, py - 1.0 * MM, letra)
-            elif round(r, 2) not in vistos_r:
-                vistos_r.add(round(r, 2))
-                _rotulo_circulo(
-                    lienzo,
-                    cx,
-                    cy,
-                    r,
-                    f"R{_numero(r)}",
-                    variable_de(r, ficha, c) or variable_de(2 * r, ficha, c, True),
-                    next(angulos),
-                )
+            vistos.add(round(arco.r, 2))
+            if arco.entero:
+                var = variable_de(2 * arco.r, ficha, c, "diametro")
+                rotulo = con_sufijo(f"Ø{_numero(2 * arco.r)}", var, ficha)
+            else:
+                var = variable_de(arco.r, ficha, c, "radio")
+                rotulo = f"R{_numero(arco.r)}"
+            _rotulo_circulo(lienzo, arco.cx, arco.cy, arco.r, rotulo, var, next(angulos))
+
+        # Los taladros: cada uno con su letra en la vista —si está en la
+        # tabla, está en el dibujo—, fuera de su centro para no pisar el datum.
+        for t in rasgo.taladros:
+            r = max(t.diametro / 2, 0.5)
+            angulo = math.radians(135.0 if abs(t.cx) < 1e-6 and abs(t.cy) < 1e-6 else 45.0)
+            bx, by = lienzo.p(t.cx + r * math.cos(angulo), t.cy + r * math.sin(angulo))
+            gx, gy = bx + 4.2 * MM * math.cos(angulo), by + 4.2 * MM * math.sin(angulo)
+            cv.setStrokeColor(HexColor(COTA))
+            cv.setLineWidth(0.15 * MM)
+            cv.line(bx, by, gx - 1.9 * MM * math.cos(angulo), gy - 1.9 * MM * math.sin(angulo))
+            _globo(cv, gx, gy, t.letra)
+
+        # Y sus posiciones, acotadas por coordenadas desde el datum.
+        abajo = lienzo.p(0.0, y0)[1] - 13 * MM
+        izquierda = lienzo.p(x0, 0.0)[0] - 13 * MM
+        cv.setFont("Helvetica", 5.6)
+        xs = sorted({round(t.cx, 2) for t in rasgo.taladros} | {0.0})
+        ys = sorted({round(t.cy, 2) for t in rasgo.taladros} | {0.0})
+        for xv in xs:
+            px, _ = lienzo.p(xv, 0.0)
+            cv.setStrokeColor(HexColor(GRIS))
+            cv.setLineWidth(0.1 * MM)
+            cv.line(px, abajo + 1.0 * MM, px, lienzo.p(0.0, y0)[1] - 1.0 * MM)
+            cv.saveState()
+            cv.translate(px + 0.7 * MM, abajo - 0.6 * MM)
+            cv.rotate(90)
+            cv.setFillColor(HexColor(COTA))
+            cv.drawRightString(0, 0, _numero(xv))
+            cv.restoreState()
+        for yv in ys:
+            _, py = lienzo.p(0.0, yv)
+            cv.setStrokeColor(HexColor(GRIS))
+            cv.setLineWidth(0.1 * MM)
+            cv.line(izquierda + 1.0 * MM, py, lienzo.p(x0, 0.0)[0] - 1.0 * MM, py)
+            cv.setFillColor(HexColor(COTA))
+            cv.drawRightString(izquierda + 0.4 * MM, py - 0.7 * MM, _numero(yv))
 
     # --- la columna de la derecha -------------------------------------------
     x, y = 187.0, ALTO - MARGEN - 6
@@ -572,22 +855,23 @@ def _ficha_de_pieza(cv: Any, pieza: Pieza, grupo: Grupo, c: dict[str, float], ho
         )
     y = _tabla(cv, x, y, (50, 30, 12, 10), filas, cuerpo=5.4)
 
-    if taladros:
-        filas = [("Taladro", "X", "Y", "Ø", "Ø de", "Al datum", "Posición de")]
-        for letra, tx, ty, d in taladros:
-            distancia = math.hypot(tx, ty)
+    if rasgo.taladros:
+        filas = [("Taladro", "Tipo", "X", "Y", "Ø", "Ø de", "Al datum", "Posición de")]
+        for t in rasgo.taladros:
+            distancia = math.hypot(t.cx, t.cy)
             filas.append(
                 (
-                    letra,
-                    _numero(tx),
-                    _numero(ty),
-                    _numero(d),
-                    variable_de(d, ficha, c, True),
+                    t.letra,
+                    t.tipo,
+                    _numero(t.cx),
+                    _numero(t.cy),
+                    _numero(t.diametro),
+                    variable_de(t.diametro, ficha, c, "diametro"),
                     _numero(distancia),
-                    variable_de(distancia, ficha, c) if distancia > 0.01 else "datum",
+                    variable_de(distancia, ficha, c, "distancia") if distancia > 0.01 else "datum",
                 )
             )
-        y = _tabla(cv, x, y, (9, 9, 9, 7, 30, 9, 29), filas, cuerpo=5.0)
+        y = _tabla(cv, x, y, (9, 10, 8, 8, 6, 26, 9, 26), filas, cuerpo=5.0)
 
     cv.setFont("Helvetica-Bold", 6.5)
     cv.setFillColor(HexColor(TINTA))
@@ -600,7 +884,13 @@ def _ficha_de_pieza(cv: Any, pieza: Pieza, grupo: Grupo, c: dict[str, float], ho
         _parrafo(cv, ficha.montaje, x, y - 3, 100, 5.6)
 
     _cajetin(
-        cv, f"Pieza {pieza.marca}: {pieza.nombre}", pieza.plano, hoja, _rotulo_escala(escala), grupo
+        cv,
+        f"Pieza {pieza.marca}: {pieza.nombre}",
+        pieza.plano,
+        hoja,
+        _rotulo_escala(escala),
+        grupo,
+        version,
     )
 
 
@@ -655,7 +945,7 @@ def _vista_en(
     return e, ox, oy
 
 
-def _ficha_de_grupo(cv: Any, g: FichasDeGrupo, hoja: str) -> None:
+def _ficha_de_grupo(cv: Any, g: FichasDeGrupo, hoja: str, version: str) -> None:
     from reportlab.lib.colors import HexColor
 
     _marco(cv)
@@ -677,7 +967,7 @@ def _ficha_de_grupo(cv: Any, g: FichasDeGrupo, hoja: str) -> None:
     # El despiece: un canal del grupo, explosionado, con un globo por marca.
     cv.setFont("Helvetica-Bold", 7)
     cv.setFillColor(HexColor("#41464d"))
-    cv.drawString((MARGEN + 94) * MM, 182 * MM, "DESPIECE (un canal, explosionado)")
+    cv.drawString((MARGEN + 94) * MM, 182 * MM, "DESPIECE (el grupo entero, explosionado)")
     from emit.dossier import Vista
 
     lineas = []
@@ -753,11 +1043,25 @@ def _ficha_de_grupo(cv: Any, g: FichasDeGrupo, hoja: str) -> None:
         cv.drawString(x * MM, y * MM, _texto(f"{paso}. {p.nombre} (marca {p.marca})"))
         y = _parrafo(cv, f.montaje, x + 3, y - 3, 97, 5.5) - 1.2
 
-    _cajetin(cv, f"Grupo: {g.grupo.nombre}", f"G-{g.grupo.nombre[:3].upper()}", hoja, "-", g.grupo)
+    _cajetin(
+        cv,
+        f"Grupo: {g.grupo.nombre}",
+        f"G-{g.grupo.nombre[:3].upper()}",
+        hoja,
+        "-",
+        g.grupo,
+        version,
+    )
 
 
-def escribir_fichas(g: FichasDeGrupo, destino: Path | str) -> Path:
-    """El PDF con la ficha de grupo y una ficha por pieza fabricada."""
+def escribir_fichas(
+    g: FichasDeGrupo, destino: Path | str, version: str, comprimir: bool = True
+) -> Path:
+    """El PDF con la ficha de grupo y una ficha por pieza fabricada.
+
+    `version` va al cajetín de cada hoja (el commit). `comprimir=False` deja
+    el texto legible en el PDF, que es como los tests leen lo que de verdad
+    se ha dibujado."""
     from reportlab import rl_config
 
     rl_config.invariant = 1
@@ -765,14 +1069,16 @@ def escribir_fichas(g: FichasDeGrupo, destino: Path | str) -> Path:
 
     destino = Path(destino)
     destino.parent.mkdir(parents=True, exist_ok=True)
-    cv = canvas.Canvas(str(destino), pagesize=(ANCHO * MM, ALTO * MM), pageCompression=1)
+    cv = canvas.Canvas(
+        str(destino), pagesize=(ANCHO * MM, ALTO * MM), pageCompression=int(comprimir)
+    )
     cv.setTitle(_texto(f"Fichas del grupo {g.grupo.nombre}"))
     cv.setAuthor("claude.automatas")
     total = 1 + len(g.piezas)
-    _ficha_de_grupo(cv, g, f"1/{total}")
+    _ficha_de_grupo(cv, g, f"1/{total}", version)
     cv.showPage()
     for i, p in enumerate(g.piezas, start=2):
-        _ficha_de_pieza(cv, p, g.grupo, g.contrato, f"{i}/{total}")
+        _ficha_de_pieza(cv, p, g.grupo, g.contrato, f"{i}/{total}", version)
         cv.showPage()
     cv.save()
     return destino

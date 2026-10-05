@@ -10,7 +10,6 @@ tornillería y `docs/procedimientos.md`. El emisor no compila nada.
 from __future__ import annotations
 
 import argparse
-import subprocess
 import sys
 from pathlib import Path
 
@@ -24,17 +23,9 @@ es cada uno de los tres platos, y el casquillo va dentro del eje del rodillo."""
 
 
 def _version() -> str:
-    try:
-        salida = subprocess.run(
-            ["git", "rev-parse", "--short", "HEAD"],
-            cwd=RAIZ,
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        return f"commit {salida.stdout.strip()}"
-    except (OSError, subprocess.CalledProcessError):
-        return "sin control de versiones"
+    from compile.version import version_del_repositorio
+
+    return version_del_repositorio(RAIZ)
 
 
 def grupo_de_pieza(pieza: str, nombres: list[str] | None = None) -> str:

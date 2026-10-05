@@ -47,6 +47,7 @@ from emit.plataforma import (
     Segmento,
     brazo,
     contrato_mm,
+    texto,
 )
 
 _FALTA = "hace falta el kernel OCCT: uv sync --group cad"
@@ -328,7 +329,7 @@ GRUPOS: tuple[Grupo, ...] = (
     ),
     Grupo(
         "accionamiento",
-        "La manivela, el volante y el reductor 3:1",
+        texto("La manivela, el volante y el reductor {reductor_relacion}:1"),
         "#8e44ad",
         1.0,
         ("rueda", "casquillo_rueda", "pinon", "eje_manivela", "volante", "manivela"),
@@ -350,7 +351,7 @@ GRUPOS: tuple[Grupo, ...] = (
     ),
     Grupo(
         "amplificador",
-        "El cabestrante 8:1: sectores, tambores y ejes de pivote",
+        texto("El cabestrante {relacion_cabestrante}:1: sectores, tambores y ejes de pivote"),
         "#f1c40f",
         1.0,
         (

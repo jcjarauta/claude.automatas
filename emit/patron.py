@@ -270,11 +270,12 @@ def escribir_patron(
     destino: Path | str,
     formato: Formato = Formato.A4,
     peor_caso: float | None = None,
+    version: str | None = None,
 ) -> Path:
     """Escribe `patron.pdf` en la carpeta del pedido."""
     from emit.template import escribir_pdf
 
-    return escribir_pdf([lamina_de_patron(patron, formato, peor_caso)], destino)
+    return escribir_pdf([lamina_de_patron(patron, formato, peor_caso)], destino, version)
 
 
 __all__ = [

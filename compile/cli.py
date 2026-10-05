@@ -25,6 +25,7 @@ from compile.escribiente import Compilacion, Escribiente, compilar
 from compile.informe import escribir_informe, resumen
 from compile.renglones import compilar_por_renglones, leer_pedido
 from compile.tolerancias import presupuesto_de_error
+from compile.version import version_del_repositorio
 from core.energy.humano import Transmision
 from core.escritura import Capacidad, Escritura, Trazo
 from core.units import mm
@@ -180,10 +181,11 @@ def _cartucho(
             ),
             destino / "patron.pdf",
             peor_caso=None if presupuesto is None else presupuesto.peor_caso * 1000.0,
+            version=version_del_repositorio(),
         )
 
     if compilacion.piezas:
-        escribir_paquete(compilacion.piezas, destino)
+        escribir_paquete(compilacion.piezas, destino, version=version_del_repositorio())
         if not opciones.sin_dxf:
             kerf = Kerf.desde(KERF) if KERF.exists() else Kerf()
             escribir_dxfs(compilacion.piezas, destino, kerf, rotulo=not opciones.dxf_para_cad)
