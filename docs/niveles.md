@@ -24,7 +24,7 @@ levas, y la máquina no lleva ninguna de las dos.
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | **levas** | por pedido, fuera: fresado en un solo amarre | 3 | 3 | 1 | 1 | 0 (0) | 0 | ninguno |
 | **cartucho** | metal a stock; se monta por pedido con las levas | 2 | 3 | 2 | 2 | 1 (1) | 0 | ninguno |
-| **maquina** | a stock, igual en todos los pedidos | 42 | 84 | 23 | 29 | 14 (101) | 72 | orientar 3 collares de seguidor con la galga de 1,20; calar 2 brazos con la mordaza de la cinta; apretar 6 collares de plato a su altura |
+| **maquina** | a stock, igual en todos los pedidos | 43 | 86 | 23 | 30 | 14 (101) | 72 | orientar 3 collares de seguidor con la galga de 1,20; calar 2 brazos con la mordaza de la cinta; apretar 6 collares de plato a su altura |
 
 <!-- niveles:fin -->
 

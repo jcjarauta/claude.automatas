@@ -1158,6 +1158,34 @@
           "unidad": "m",
           "descripcion": "Casquillo entre los dos distales en el tubo de la punta: el plano vacío del proximal 2 y las dos holguras de 0,5. Derivado, con test",
           "tolerancia": ""
+        },
+        {
+          "nombre": "anillo_proximal_diametro",
+          "valor": 0.016,
+          "unidad": "m",
+          "descripcion": "Collar bajo cada proximal, en el eje de pivote: barra de 16, con 3 de pared para el prisionero M3 (sustituye al DIN 705, que es de 10 de ancho)",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "anillo_proximal_largo",
+          "valor": 0.003,
+          "unidad": "m",
+          "descripcion": "El hueco que deja el eje de pivote bajo cada proximal",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "rebaje_circlip_diametro",
+          "valor": 0.017,
+          "unidad": "m",
+          "descripcion": "Rebaje en la cara baja del plato 1, centrado en el arbol, que aloja el circlip del munon: bajo el plato pasa el proximal 1 a 1 mm",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "rebaje_circlip_profundo",
+          "valor": 0.0012,
+          "unidad": "m",
+          "descripcion": "Profundidad del rebaje: el circlip de 1,0 y 0,1 por cada lado",
+          "tolerancia": ""
         }
       ]
     },
@@ -1505,9 +1533,9 @@
         },
         {
           "nombre": "mesa_altura",
-          "valor": 0.012,
+          "valor": 0.014,
           "unidad": "m",
-          "descripcion": "De la cara alta de la base a la cara alta de la mesa. Debajo viven las dos bielas y sus bisagras",
+          "descripcion": "Cara alta de la mesa sobre la base. 14: la mesa sube 2 para que la orejeta tenga 4 sobre su eje y el M2 de la mesa rosque sin llegar a el (propuesta_tornilleria 2)",
           "tolerancia": ""
         },
         {
@@ -1617,9 +1645,9 @@
         },
         {
           "nombre": "bieleta_pata_balancin",
-          "valor": 0.004,
+          "valor": 0.005,
           "unidad": "m",
-          "descripcion": "Pata horizontal, hacia popa, que hace de pasador del balancin: sus 3 y 1 para la arandela de retencion",
+          "descripcion": "Pata horizontal, hacia popa, que hace de pasador del balancin: 1 de holgura, sus 3 y 1 para la arandela de retencion",
           "tolerancia": ""
         },
         {
@@ -1687,16 +1715,16 @@
         },
         {
           "nombre": "mesa_eje_movil_largo",
-          "valor": 0.142,
+          "valor": 0.144,
           "unidad": "m",
-          "descripcion": "Ejes moviles, de biela a biela por debajo de la mesa: 2 x (68 + 3)",
+          "descripcion": "Ejes moviles, de biela a biela por debajo de la mesa: 2 x (68 + 3) y 1 por punta para su circlip",
           "tolerancia": ""
         },
         {
           "nombre": "mesa_eje_fijo_largo",
-          "valor": 0.007,
+          "valor": 0.008,
           "unidad": "m",
-          "descripcion": "Ejes fijos, cortos: los 3 de la biela y los 4 del soporte. No cruzan: por el medio pasa el poste 3",
+          "descripcion": "Ejes fijos, cortos: los 3 de la biela, los 4 del soporte y 1 para el circlip. No cruzan: por el medio pasa el poste 3",
           "tolerancia": ""
         },
         {
@@ -1778,7 +1806,7 @@
         },
         {
           "nombre": "bieleta_largo_desarrollado",
-          "valor": 0.083575,
+          "valor": 0.084575,
           "unidad": "m",
           "descripcion": "Largo de varilla antes de doblar: bieleta_entre_centros + las dos patas. Derivado; los radios de doblado de 2 lo acortan menos de 1 mm y se ajusta al doblar la segunda pata",
           "tolerancia": ""
@@ -1841,9 +1869,9 @@
         },
         {
           "nombre": "orejeta_mesa_alto",
-          "valor": 0.0045,
+          "valor": 0.0065,
           "unidad": "m",
-          "descripcion": "De 2,5 por debajo del eje movil a la cara baja de la mesa, que esta 2 por encima del eje",
+          "descripcion": "Alto de la orejeta: 2,5 bajo el eje y 4 sobre el, hasta la cara baja de la mesa",
           "tolerancia": ""
         },
         {

@@ -241,10 +241,24 @@ def tornilleria() -> list[Fijacion]:
         ),
         Fijacion(
             "DIN 913 M3 × 4, punta plana",
-            n["collar"],
+            n["collar"] - n["placa_tope"],
             "collares",
             "bastidor",
-            en_3d="prisionero_collar_",
+            en_3d="prisionero_collar_plato_",
+        ),
+        Fijacion(
+            "DIN 913 M2 × 3, punta plana",
+            n["placa_tope"],
+            "collares de los seguidores, bajo el muelle",
+            "seguidores",
+            en_3d="prisionero_collar_seguidor_",
+        ),
+        Fijacion(
+            "DIN 913 M3 × 3, punta plana",
+            n["anillo_proximal"],
+            "anillos bajo los proximales",
+            "cinco_barras",
+            en_3d="prisionero_anillo_proximal_",
         ),
         Fijacion(
             "DIN 913 M3 × 4, punta plana",
@@ -275,7 +289,7 @@ def tornilleria() -> list[Fijacion]:
             en_3d="tornillo_lamina_",
         ),
         Fijacion(
-            "DIN 912 M2 × 8",
+            "DIN 912 M2 × 6",
             n["orejeta_mesa"],
             "mesa a sus orejetas",
             "levantamiento",
@@ -287,13 +301,6 @@ def tornilleria() -> list[Fijacion]:
             "soportes de la mesa, desde bajo la base",
             "levantamiento",
             en_3d="tornillo_soporte_",
-        ),
-        Fijacion(
-            "DIN 705 Ø10, anillo de ajuste",
-            n["eje_pivote"],
-            "bajo cada brazo proximal",
-            "cinco_barras",
-            en_3d="anillo_proximal_",
         ),
         Fijacion(
             "DIN 6799 para eje Ø10",

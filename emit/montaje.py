@@ -400,7 +400,14 @@ GRUPOS: tuple[Grupo, ...] = (
         "El brazo que lleva la punta por el papel",
         "#e74c3c",
         1.0,
-        ("proximal_", "distal_", "perno_codo_", "arandela_codo_", "casquillo_punta"),
+        (
+            "proximal_",
+            "distal_",
+            "perno_codo_",
+            "arandela_codo_",
+            "casquillo_punta",
+            "anillo_proximal_",
+        ),
     ),
     Grupo(
         "levantamiento",
@@ -855,9 +862,17 @@ def colocar(
         )
         piezas += _tope_y_muelle(c, z, hecho, i + 1, pivote, seg.psi_cero, seg.hacia_dentro, angulo)
         pie_collar = z["seguidores"][0] - 1.0 - c["tope_placa_espesor"] - c["collar_seguidor_largo"]
+        # M2 y no M3: el muelle de torsión ocupa el collar salvo sus 2 mm de abajo.
         piezas.append(
             _prisionero_del_collar(
-                c, f"collar_seguidor_{i + 1}", pivote, pie_collar + 1.5, cortes, False
+                c,
+                f"collar_seguidor_{i + 1}",
+                pivote,
+                pie_collar + 1.0,
+                cortes,
+                False,
+                metrica=2.0,
+                largo=3.0,
             )
         )
         if i < 2:  # el canal del elevador no lleva cabestrante
@@ -901,14 +916,25 @@ def colocar(
                 True,
             )
         )
-        # El anillo de ajuste bajo el proximal: lo que no deja bajar al eje.
-        bajo = z[f"proximal_{n}"][0]
+        # El anillo bajo el proximal: lo que no deja bajar al eje. Su
+        # prisionero, por el lado contrario al brazo.
+        pie_anillo = z[f"proximal_{n}"][0] - c["anillo_proximal_largo"] - 0.05
+        anillo = f"anillo_proximal_{n}"
         piezas.append(
-            Colocada(
-                f"anillo_proximal_{n}",
-                Pos(*pivote, bajo - ANILLO_DE_AJUSTE[1] - 0.05)
-                * fj.arandela(c["brazo_eje_diametro"], *ANILLO_DE_AJUSTE),
+            Colocada(anillo, _poner(hecho["anillo_proximal"], giro, pivote, pie_anillo), True)
+        )
+        piezas.append(
+            _prisionero_radial(
+                "prisionero_" + anillo,
+                (*pivote, pie_anillo + c["anillo_proximal_largo"] / 2),
+                (math.cos(giro + math.pi), math.sin(giro + math.pi), 0.0),
+                c["brazo_eje_diametro"] / 2,
+                c["anillo_proximal_diametro"] / 2,
+                (anillo,),
+                cortes,
                 True,
+                metrica=3.0,
+                largo=3.0,
             )
         )
         # Y el circlip sobre el tambor: lo que no lo deja subir.
@@ -993,14 +1019,14 @@ def _cortar(piezas: list[Colocada], cortes: list[tuple[str, Any]]) -> list[Coloc
     return salida
 
 
-ANILLO_DE_AJUSTE = (20.0, 2.95)
-"""Ø exterior y ancho del anillo bajo cada proximal: el hueco que deja el eje
-de pivote es de 3 (`test_el_eje_de_pivote_llega_del_collar_al_circlip`)."""
-
 LARGO_SOPORTE = 25.0
 """El M2 de cada soporte de la mesa, desde bajo la base con la cabeza
 embutida: 25 de base y 2 en el soporte. Con 30 llegaba al eje fijo, que
 está a 6 de la base."""
+
+LARGO_OREJETA = 6.0
+"""El M2 de la mesa a cada orejeta: 4 de mesa y 2 en la orejeta, que deja 1,25
+hasta el agujero del eje móvil."""
 
 LARGO_LAMINA = 4.0
 """El M2 de cada pestaña de lámina: en la pinza, con 5 llegaba al
@@ -1019,10 +1045,12 @@ def _prisionero_radial(
     anfitriones: tuple[str, ...],
     cortes: list[tuple[str, Any]],
     movil: bool,
+    metrica: float = PRISIONERO[0],
+    largo: float = PRISIONERO[1],
 ) -> Colocada:
     """Un prisionero que entra radial: la punta a `desde` del eje, contra lo
     que aprieta, y su agujero roscado en cada anfitrión hasta `pared`."""
-    d, largo = PRISIONERO
+    d = metrica
     ux, uy, uz = direccion
 
     def a(r: float) -> tuple[float, float, float]:
@@ -1042,9 +1070,11 @@ def _prisionero_del_collar(
     altura: float,
     cortes: list[tuple[str, Any]],
     movil: bool,
+    metrica: float = PRISIONERO[0],
+    largo: float = PRISIONERO[1],
 ) -> Colocada:
-    """El M3 radial de un collar, hacia fuera del árbol: es por donde se le
-    llega con la llave."""
+    """El prisionero radial de un collar, hacia fuera del árbol: es por donde
+    se le llega con la llave."""
     n = math.hypot(*pivote)
     fuera = (pivote[0] / n, pivote[1] / n, 0.0)
     return _prisionero_radial(
@@ -1056,6 +1086,8 @@ def _prisionero_del_collar(
         (collar,),
         cortes,
         movil,
+        metrica,
+        largo,
     )
 
 
@@ -1342,7 +1374,11 @@ def _eje_del_rodillo(
 
 
 def _entre_puntos(
-    c: dict[str, float], hecho: dict[str, Any], estado: Estado, z: dict[str, tuple[float, float]]
+    c: dict[str, float],
+    hecho: dict[str, Any],
+    estado: Estado,
+    z: dict[str, tuple[float, float]],
+    cortes: list[tuple[str, Any]] | None = None,
 ) -> list[Colocada]:
     """El cartucho entre puntos y lo que lo sujeta: el muñón abajo, el eje del
     cartucho con su cubo, sus separadores y su pasador, y arriba la garra en
@@ -1404,8 +1440,22 @@ def _entre_puntos(
     circlip = fj.circlip(c["eje_diametro"])
     piezas.append(Colocada("circlip_garra_1", Pos(0, 0, anillo_z) * circlip, True))
     _, espesor = fj.DIN_6799[c["eje_diametro"]]
-    bajo_plato = z["plato1"][0] - 0.05 - espesor
-    piezas.append(Colocada("circlip_garra_2", Pos(0, 0, bajo_plato) * circlip, True))
+    # Embutido en un rebaje de la cara baja del plato: por debajo pasa el
+    # proximal 1 a 1 mm, y el circlip mide 1.
+    rebaje = c["rebaje_circlip_profundo"]
+    en_rebaje = z["plato1"][0] + (rebaje - espesor) / 2
+    piezas.append(Colocada("circlip_garra_2", Pos(0, 0, en_rebaje) * circlip, True))
+    if cortes is not None:
+        cortes.append(
+            (
+                "plato1",
+                _cilindro(
+                    c["rebaje_circlip_diametro"] / 2,
+                    (0.0, 0.0, z["plato1"][0] - 0.01),
+                    (0.0, 0.0, z["plato1"][0] + rebaje),
+                ),
+            )
+        )
     return piezas
 
 
@@ -1442,7 +1492,7 @@ def _transmision(
     cortes = [] if cortes is None else cortes
     from build123d import Align, Cylinder
 
-    piezas = _entre_puntos(c, hecho, estado, z)
+    piezas = _entre_puntos(c, hecho, estado, z, cortes)
     rodamiento = hecho["rodamiento_arbol"]
     t = c["platina_manivela_angulo"]
     manivela_en = (c["reductor_entre_ejes"] * math.cos(t), c["reductor_entre_ejes"] * math.sin(t))
@@ -1651,7 +1701,12 @@ def _levantamiento(
             )
         poner(
             f"eje_mesa_movil_{lado}",
-            _en_plano(hecho["eje_mesa_movil"], (-fuera, y_movil, z_movil), (0, 1, 0), (1, 0, 0)),
+            _en_plano(
+                hecho["eje_mesa_movil"],
+                (-c["mesa_eje_movil_largo"] / 2, y_movil, z_movil),
+                (0, 1, 0),
+                (1, 0, 0),
+            ),
             True,
         )
         poner(
@@ -1759,8 +1814,8 @@ def _levantamiento(
             raise ValueError(f"la orejeta {lado} tiene {len(sobre)} agujeros de la mesa encima")
         (px, py, _), _ = sobre[0]
         en = Pos(px, py, mesa.bounding_box().max.Z)
-        poner(f"tornillo_orejeta_{lado}", en * fj.allen(2.0, 8.0), True)
-        cortar(f"orejeta_mesa_{lado}", en * fj.taladro(2.0, 8.0))
+        poner(f"tornillo_orejeta_{lado}", en * fj.allen(2.0, LARGO_OREJETA), True)
+        cortar(f"orejeta_mesa_{lado}", en * fj.taladro(2.0, LARGO_OREJETA))
     # La arandela de presión que retiene la pata de la bieleta en el balancín.
     poner(
         "arandela_bieleta",

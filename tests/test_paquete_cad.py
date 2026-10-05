@@ -450,7 +450,9 @@ def test_cada_cota_circular_tiene_sus_dos_formas(paquete: Path):
     # Y 71 con el calzo del sector —cubo y extremo— y el M2 del tambor; 72 con
     # el M4 de la mordaza en el sector.
     # Y 74 con el tubo separador, por fuera y por dentro.
-    assert gemelos == 74, f"esperaba 74 cotas circulares con gemelo, hay {gemelos}"
+    # Y 76 con la tornillería dibujada: el anillo bajo cada proximal y el
+    # rebaje del circlip del muñón en el plato 1.
+    assert gemelos == 76, f"esperaba 76 cotas circulares con gemelo, hay {gemelos}"
 
 
 def test_el_gemelo_dice_que_es_derivado(paquete: Path):

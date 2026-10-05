@@ -98,6 +98,7 @@ PERFIL_DE = {
     "placa_tope": PERFILES["placa_tope"],
     "calzo_sector": PERFILES["calzo_sector"],
     "collar": PERFILES["collar"],
+    "anillo_proximal": PERFILES["anillo_proximal"],
     "casquillo_rodillo": PERFILES["casquillo_rodillo"],
     "tubo_separador": PERFILES["tubo_separador"],
 }

@@ -728,6 +728,7 @@ PERFILES = {
     "placa_tope": lambda c: placa_tope(c),
     "calzo_sector": lambda c: calzo_sector(c),
     "collar": lambda c: anillo("collar_seguidor_diametro", "poste_eje_diametro")(c),
+    "anillo_proximal": lambda c: anillo("anillo_proximal_diametro", "brazo_eje_diametro")(c),
     "tubo_separador": lambda c: anillo(
         "tubo_separador_diametro", "tubo_separador_interior_diametro"
     )(c),
@@ -1820,7 +1821,7 @@ LISTADO: dict[str, Ficha] = {
     ),
     # --- lo que sostiene y empuja cada seguidor ---------------------------------
     "collar": Ficha(
-        texto("collar con un prisionero M3 radial"),
+        texto("collar con un prisionero radial"),
         9,
         (
             Variable("cota", "collar_seguidor_diametro", "Ø exterior"),
@@ -1836,10 +1837,33 @@ LISTADO: dict[str, Ficha] = {
             "En cada poste, tres: uno sobre el plato 1, uno bajo el plato 2 —el resto de la "
             "altura la dan los tubos separadores— y uno bajo el seguidor, con la cara alta 1 "
             "por debajo de él, donde va la valona del casquillo igus; encima de este, soldada, "
-            "la placa de tope, y alrededor el muelle de torsión."
+            "la placa de tope, y alrededor el muelle de torsión. El de los seguidores se "
+            "aprieta con un M2 en los 2 mm de abajo, que el muelle deja libres."
         ),
         material="latón, barra de Ø16",
-        proceso="torneado de la barra de Ø16, la del tambor y la garra, + roscado M3 radial",
+        proceso=(
+            "torneado de la barra de Ø16, la del tambor y la garra, + roscado radial: M3 en "
+            "los seis de los platos y M2 en los tres de los seguidores"
+        ),
+    ),
+    "anillo_proximal": Ficha(
+        texto("collar bajo el proximal, con un prisionero M3 radial"),
+        2,
+        (
+            Variable("cota", "anillo_proximal_diametro", "Ø exterior"),
+            Variable("cota", "brazo_eje_diametro", "Ø interior", "F7"),
+            Variable("cota", "anillo_proximal_largo", "largo", en_el_perfil=False),
+        ),
+        ("barra", "anillo_proximal_largo"),
+        "Es lo que no deja bajar el eje de pivote. El de catálogo, DIN 705 de Ø10, mide 10 "
+        "de ancho y el hueco bajo el proximal es de 3: se hace como los collares, con la "
+        "pared justa para un M3 enrasado.",
+        montaje=(
+            "En el eje de pivote, contra la cara baja del proximal, y apretado con su "
+            "prisionero M3 × 3 por el lado contrario al brazo."
+        ),
+        material="latón, barra de Ø16",
+        proceso="torneado de la barra de Ø16 + roscado M3 radial",
     ),
     "placa_tope": Ficha(
         texto("brazo corto con el poste, la pata del muelle y el pasador de tope en línea"),

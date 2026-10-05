@@ -18,12 +18,12 @@ Barra, tubo y alambre se piden por largo: el de cada pieza más 2 mm de corte. L
 | chapa de latón de 6 | chapa | chapa CuZn39Pb3 de 6 | 13 860 mm² | mordaza ×2, volante ×1, apoyo_balancin ×2 |
 | fleje 1.4310 de 0,15 | fleje | fleje inoxidable de muelle, 0,15 | 1 476 mm² | lamina_flexura ×2 |
 | barra W10 h6 rectificada | barra | eje de precisión Ø10 h6 CF53, cortado a medida | 277 mm | eje_pivote ×2, eje_manivela ×1, munon ×1, eje_motriz ×1 |
-| acero plata Ø1,5 | barra | acero plata Ø1,5 h9 | 324 mm | eje_mesa_movil ×2, eje_mesa_fijo ×4 |
+| acero plata Ø1,5 | barra | acero plata Ø1,5 h9 | 332 mm | eje_mesa_movil ×2, eje_mesa_fijo ×4 |
 | acero plata Ø4 h6 | barra | acero plata Ø4 h6 | 99 mm | eje_balancin ×1 |
 | acero plata Ø6 | barra | acero plata Ø6 h9 | 28 mm | bulon_tirante ×1, perno_codo ×2 |
-| cuerda de piano Ø2 | alambre | cuerda de piano Ø2, recta | 86 mm | bieleta ×1 |
+| cuerda de piano Ø2 | alambre | cuerda de piano Ø2, recta | 87 mm | bieleta ×1 |
 | latón, barra de Ø4 | barra | barra de latón Ø4 | 116 mm | tirante ×1 |
-| latón, barra de Ø16 | barra | barra de latón CuZn39Pb3 Ø16 | 113 mm | tambor ×2, casquillo_rueda ×1, collar ×9, garra ×1 |
+| latón, barra de Ø16 | barra | barra de latón CuZn39Pb3 Ø16 | 123 mm | tambor ×2, casquillo_rueda ×1, collar ×9, anillo_proximal ×2, garra ×1 |
 | latón, barra de Ø25 | barra | barra de latón CuZn39Pb3 Ø25 | 35 mm | casquillo_punta ×1, eje_cartucho ×1 |
 | latón, barra cuadrada de 16 | barra | barra cuadrada de latón de 16 | 30 mm | pinza ×1 |
 | latón, barra de 6 × 5 | barra | pletina de latón 6 × 5 | 84 mm | orejeta_mesa ×2 |
@@ -47,14 +47,15 @@ Las cantidades salen de las piezas del listado: si cambia cuántos sectores o co
 | DIN 912 M4 × 16 | 2 | mordaza al sector, por su ranura |
 | DIN 439 M4 (tuerca fina) | 2 | bajo el sector |
 | DIN 913 M3 × 6, punta plana | 2 | aprieta la cinta en la mordaza |
-| DIN 913 M3 × 4, punta plana | 9 | collares |
+| DIN 913 M3 × 4, punta plana | 6 | collares |
+| DIN 913 M2 × 3, punta plana | 3 | collares de los seguidores, bajo el muelle |
+| DIN 913 M3 × 3, punta plana | 2 | anillos bajo los proximales |
 | DIN 913 M3 × 4, punta plana | 1 | casquillo de la rueda |
 | DIN 913 M3 × 4, punta plana | 1 | pinza del portaminas |
 | DIN 912 M2 × 3 | 2 | extremos de la cinta en el tambor |
 | DIN 912 M2 × 4 | 4 | pestañas de las láminas |
-| DIN 912 M2 × 8 | 2 | mesa a sus orejetas |
+| DIN 912 M2 × 6 | 2 | mesa a sus orejetas |
 | DIN 912 M2 × 25 | 4 | soportes de la mesa, desde bajo la base |
-| DIN 705 Ø10, anillo de ajuste | 2 | bajo cada brazo proximal |
 | DIN 6799 para eje Ø10 | 2 | sobre cada tambor |
 | DIN 6799 para eje Ø10 | 2 | bajo el muñón y sobre el muelle de la garra |
 | DIN 6799 para eje Ø6 | 1 | bulón del tirante |

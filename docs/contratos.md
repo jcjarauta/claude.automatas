@@ -508,6 +508,7 @@ La primera propuesta era bajar el canal 3 a 1:1, con el argumento de que el
 
 | arco \ relación | 1 | 2 | 3 | 6 |
 | --- | --- | --- | --- | --- |
+| 2026-10-05 | Bastidor, levantamiento | **La tornillería dibujada cabe**: nuevos `anillo_proximal_diametro` (16) y `anillo_proximal_largo` (3), `rebaje_circlip_diametro` (17) y `rebaje_circlip_profundo` (1,2); `mesa_altura` de 12 a **14** y `orejeta_mesa_alto` de 4,5 a **6,5**; `mesa_eje_fijo_largo` de 7 a **8** y `mesa_eje_movil_largo` de 142 a **144**; `bieleta_pata_balancin` de 4 a **5** (desarrollo 84,575) | Al dibujar en 3D toda la tornillería que se compra salieron seis choques o retenciones sin eje; el usuario aprobó las seis propuestas de docs/propuesta_tornilleria.md. Ninguno es contrato congelado |
 | **8°** | 41,4 ✗ | 23,8 ✓ | 16,4 ✓ | **8,3 ✓** |
 | 16° | 23,9 ✓ | 12,4 ✓ | 8,4 ✓ | 4,2 ✓ |
 

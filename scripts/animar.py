@@ -158,6 +158,7 @@ def _miembros(nombre: str) -> str:
             f"tambor_{n}",
             f"tornillo_tambor_{n}",
             f"anillo_proximal_{n}",
+            f"prisionero_anillo_proximal_{n}",
             f"circlip_tambor_{n}",
         }:
             return f"brazo_{n}"

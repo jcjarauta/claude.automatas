@@ -213,18 +213,10 @@ CONTACTOS_A_PROPOSITO = {
 discos al diámetro exterior del catálogo se meten dos módulos— y la mina
 sobre el papel al escribir, que absorbe la precarga de la flexura."""
 
-PENDIENTES_DE_DECISION = {
-    frozenset({"circlip_garra_2", "proximal_1"}): "§1 circlip bajo el muñón",
-    frozenset({"tornillo_orejeta_trasera", "eje_mesa_movil_trasera"}): "§2 M2 de las orejetas",
-    frozenset({"tornillo_orejeta_delantera", "eje_mesa_movil_delantera"}): "§2 M2 de las orejetas",
-    frozenset({"prisionero_collar_seguidor_1", "muelle_seguidor_1"}): "§3 prisionero y muelle",
-    frozenset({"prisionero_collar_seguidor_2", "muelle_seguidor_2"}): "§3 prisionero y muelle",
-    frozenset({"prisionero_collar_seguidor_3", "muelle_seguidor_3"}): "§3 prisionero y muelle",
-}
-"""Choques que encontró la tornillería al dibujarse (fase 6) y que no se
-arreglan sin cambiar el contrato o el diseño: están en
-`docs/propuesta_tornilleria.md`, esperando decisión. No se toleran en
-silencio: cada uno tiene su sección, y cualquier otro choque falla."""
+PENDIENTES_DE_DECISION: dict[frozenset[str], str] = {}
+"""Choques conocidos que esperan una decisión de diseño, cada uno con su
+sección en una propuesta. Vacío desde 2026-10-05: los seis que encontró la
+tornillería al dibujarse se resolvieron (`docs/propuesta_tornilleria.md`)."""
 
 
 @pytest.mark.slow
@@ -570,12 +562,10 @@ def test_las_piezas_quietas_no_se_atraviesan():
 RETENCIONES = ("circlip_", "arandela_", "anillo_proximal_")
 """Lo que retiene algo sobre un eje: tiene que haber eje dentro."""
 
-SIN_EJE_PENDIENTES = {
-    **{f"circlip_mesa_{k}": "§4 ejes de la mesa enrasados" for k in range(1, 9)},
-    "arandela_bieleta": "§5 pata de la bieleta enrasada",
-}
-"""Retenciones que hoy quedarían en el aire: el eje acaba antes. Esperan
-decisión en `docs/propuesta_tornilleria.md`."""
+SIN_EJE_PENDIENTES: dict[str, str] = {}
+"""Retenciones que quedarían en el aire porque el eje acaba antes, a la
+espera de decisión. Vacío: los ejes de la mesa y la pata de la bieleta se
+alargaron 1 mm (`docs/propuesta_tornilleria.md`, §4 y §5)."""
 
 
 def test_cada_circlip_y_cada_arandela_esta_sobre_su_eje():

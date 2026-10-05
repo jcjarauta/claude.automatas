@@ -72,12 +72,14 @@
         "1": "brazo_distal",
         "2": "perno_codo",
         "3": "casquillo_punta",
-        "4": "brazo_proximal"
+        "4": "brazo_proximal",
+        "5": "anillo_proximal"
       },
       "comerciales": {},
       "tornilleria": {
-        "1": "DIN 705 Ø10, anillo de ajuste · bajo cada brazo proximal",
-        "2": "DIN 988 6 × 12 × 0,5 · arandela de cada codo del cinco barras"
+        "1": null,
+        "2": "DIN 988 6 × 12 × 0,5 · arandela de cada codo del cinco barras",
+        "3": "DIN 913 M3 × 3, punta plana · anillos bajo los proximales"
       }
     },
     "entre_puntos": {
@@ -117,13 +119,14 @@
       "comerciales": {},
       "tornilleria": {
         "1": "DIN 912 M3 × 16 · apoyos del balancín, del plato 2",
-        "2": "DIN 912 M2 × 8 · mesa a sus orejetas",
+        "2": null,
         "3": null,
         "4": "DIN 6799 para eje Ø6 · bulón del tirante",
         "5": "DIN 6799 para eje Ø4 · eje del balancín, por fuera",
         "6": "DIN 6799 para eje Ø1,5 · ejes de la mesa",
         "7": "arandela de presión Ø2 · bieleta en el balancín",
-        "8": "DIN 912 M2 × 25 · soportes de la mesa, desde bajo la base"
+        "8": "DIN 912 M2 × 25 · soportes de la mesa, desde bajo la base",
+        "9": "DIN 912 M2 × 6 · mesa a sus orejetas"
       }
     },
     "levas": {
@@ -168,7 +171,8 @@
       "tornilleria": {
         "1": "DIN 7991 M3 × 30, cortado a 12,5 / 19,5 / 26,5 · ejes de rodillo",
         "2": "DIN 439 M3 (tuerca fina) · ejes de rodillo",
-        "3": "DIN 7 Ø3 × 6 · pasadores de tope, de pie en la placa"
+        "3": "DIN 7 Ø3 × 6 · pasadores de tope, de pie en la placa",
+        "4": "DIN 913 M2 × 3, punta plana · collares de los seguidores, bajo el muelle"
       }
     }
   }

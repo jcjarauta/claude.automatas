@@ -1,6 +1,26 @@
 # Propuesta · lo que encontró la tornillería al dibujarse
 
-2026-10-05 · estado: **pendiente de decisión** (fase 6 de `propuesta_dossier.md`)
+2026-10-05 · estado: **aprobada y aplicada** (fase 6 de `propuesta_dossier.md`)
+
+> **Cómo se aplicó.** Las seis, con la opción recomendada:
+>
+> 1. Rebaje Ø17 × 1,2 en la cara baja del plato 1 (`rebaje_circlip_*`); el
+>    circlip del muñón va embutido, a 0,1 de cada cara.
+> 2. La mesa sube 2 (`mesa_altura` 12 → 14) y la orejeta crece hacia arriba
+>    (`orejeta_mesa_alto` 4,5 → 6,5). **Corrección:** medida en 3D, la
+>    orejeta tenía 2,0 sobre el eje y no 2,5; con la mesa 2 más alta tiene
+>    4,0, y un M2 × 8 (4 de mesa y 4 de orejeta) seguía llegando al eje. Va
+>    **M2 × 6** (T-ELV-09): rosca 2 y queda a 1,25 del agujero del eje.
+> 3. **DIN 913 M2 × 3** en los tres collares del seguidor (T-SEG-04); los
+>    otros seis siguen con M3 × 4.
+> 4. Ejes de la mesa: fijo 7 → 8 y móvil 142 → 144, centrado.
+> 5. Pata de la bieleta 4 → 5; desarrollo 83,575 → 84,575.
+> 6. `anillo_proximal`: collar fabricado Ø16 × 3 en barra de latón (P-CBR-05),
+>    con su prisionero **DIN 913 M3 × 3** (T-CBR-03). El DIN 705 (T-CBR-01)
+>    queda de baja.
+>
+> Barrido y piezas quietas: ningún choque. `PENDIENTES_DE_DECISION` y
+> `SIN_EJE_PENDIENTES` quedan vacíos.
 
 La fase 6 dibuja en 3D toda la tornillería que se compra: las 26 líneas de
 `emit.materiales.tornilleria()`, 72 piezas, cada una en su sitio y con su
