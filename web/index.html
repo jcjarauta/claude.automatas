@@ -1,0 +1,165 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Escribiente · pedidos</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root{--tinta:#1b1b1b;--papel:#fff;--fondo:#f4f2ee;--borde:#d8d4cc;
+        --ok:#1a7f4b;--aviso:#9a6b00;--mal:#b03030;--guia:#bbb}
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.5 "DejaVu Sans",system-ui,sans-serif;color:var(--tinta);
+       background:var(--fondo)}
+  header{padding:18px 24px 10px}
+  h1{margin:0;font-size:19px}
+  header p{margin:4px 0 0;color:#666;font-size:13px}
+  main{display:grid;grid-template-columns:320px 1fr;gap:18px;padding:12px 24px 32px;
+       align-items:start}
+  @media(max-width:860px){main{grid-template-columns:1fr}}
+  .caja{background:var(--papel);border:1px solid var(--borde);border-radius:6px;padding:16px}
+  label{display:block;margin:12px 0 4px;font-size:12px;font-weight:700;color:#555}
+  label:first-child{margin-top:0}
+  input[type=text],select{width:100%;padding:8px;border:1px solid var(--borde);
+       border-radius:4px;font:inherit}
+  input[type=range]{width:100%}
+  .par{display:flex;gap:10px}
+  .par>div{flex:1}
+  button{margin-top:16px;width:100%;padding:10px;border:0;border-radius:4px;
+       background:var(--tinta);color:#fff;font:inherit;font-weight:700;cursor:pointer}
+  button:disabled{background:#999;cursor:progress}
+  .dato{font-size:12px;color:#666;margin-top:10px}
+  svg{width:100%;height:auto;background:var(--papel);border-radius:4px}
+  .trazo{fill:none;stroke:var(--tinta);stroke-width:1.1;stroke-linecap:round;
+       stroke-linejoin:round}
+  .sim{fill:none;stroke:var(--mal);stroke-width:.8;opacity:.85}
+  .caja-escritura{fill:none;stroke:var(--guia);stroke-dasharray:3 2;stroke-width:.5}
+  .veredicto{margin-top:14px;padding:12px;border-radius:6px;border-left:4px solid}
+  .veredicto.si{background:#eef7f1;border-color:var(--ok)}
+  .veredicto.no{background:#fbeeee;border-color:var(--mal)}
+  .veredicto h2{margin:0 0 6px;font-size:15px}
+  .inc{margin-top:8px;font-size:13px}
+  .inc b{display:block}
+  .inc.aviso b{color:var(--aviso)} .inc.error b{color:var(--mal)}
+  .inc span{color:#555}
+  .fila{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .fila a{font-size:12px;padding:5px 9px;border:1px solid var(--borde);border-radius:4px;
+       background:var(--papel);color:var(--tinta);text-decoration:none}
+  .fila a:hover{border-color:var(--tinta)}
+  .mal{color:var(--mal)}
+  .leyenda{font-size:11px;color:#777;margin-top:8px}
+</style>
+
+<header>
+  <h1>Escribiente · personalización de levas</h1>
+  <p>Teclea una frase y sal con el cartucho: tres levas, su dossier y sus plantillas.</p>
+</header>
+
+<main>
+  <form class="caja" id="f" onsubmit="return false">
+    <label for="texto">Qué tiene que escribir</label>
+    <input type="text" id="texto" value="Arrels" maxlength="120" autocomplete="off">
+
+    <label for="fuente">Letra</label>
+    <select id="fuente"></select>
+
+    <div class="par">
+      <div>
+        <label for="altura">Altura de x · <span id="va">10</span> mm</label>
+        <input type="range" id="altura" min="4" max="30" step="1" value="10">
+      </div>
+      <div>
+        <label for="enlace">Enlace · <span id="ve">0,5</span></label>
+        <input type="range" id="enlace" min="0" max="1.2" step="0.05" value="0.5">
+      </div>
+    </div>
+    <p class="leyenda">El enlace une los trazos que casi se tocan, como hace la letra
+      inglesa. Cada vuelo del lápiz se come grados de la vuelta, así que enlazar
+      más suele ser lo que hace que una frase quepa.</p>
+
+    <button id="b">Hacer el cartucho</button>
+    <p class="dato" id="d">—</p>
+  </form>
+
+  <div class="caja">
+    <svg id="v" viewBox="0 0 200 70" preserveAspectRatio="xMidYMid meet"></svg>
+    <p class="leyenda">En negro, lo que has pedido. En rojo, <b>lo que escribirán las
+      levas</b>: sale de recorrerlas, no de repetir el dibujo.</p>
+    <div id="r"></div>
+  </div>
+</main>
+
+<script>
+const $ = s => document.querySelector(s)
+let ultimo = null
+
+const dibujar = (trazos, simulado) => {
+  const todos = trazos.flat().concat(simulado || [])
+  if (!todos.length) { $('#v').innerHTML = ''; return }
+  const xs = todos.map(p => p[0]), ys = todos.map(p => p[1])
+  const m = 6
+  const x0 = Math.min(...xs) - m, x1 = Math.max(...xs) + m
+  const y0 = Math.min(...ys) - m, y1 = Math.max(...ys) + m
+  const camino = t => 'M' + t.map(p => `${p[0].toFixed(2)},${(y1 + y0 - p[1]).toFixed(2)}`).join('L')
+  $('#v').setAttribute('viewBox', `${x0} ${y0} ${x1 - x0} ${y1 - y0}`)
+  $('#v').innerHTML =
+    trazos.map(t => `<path class="trazo" d="${camino(t)}"/>`).join('') +
+    (simulado && simulado.length ? `<path class="sim" d="${camino(simulado)}"/>` : '')
+}
+
+const pide = () => ({
+  texto: $('#texto').value,
+  fuente: $('#fuente').value,
+  altura_de_x_mm: +$('#altura').value,
+  enlace: +$('#enlace').value,
+})
+
+const previa = async () => {
+  $('#va').textContent = $('#altura').value
+  $('#ve').textContent = (+$('#enlace').value).toFixed(2).replace('.', ',')
+  if (!$('#texto').value.trim()) return
+  const res = await fetch('/api/trazos', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(pide())})
+  const j = await res.json()
+  if (!res.ok) { $('#d').innerHTML = `<span class="mal">${j.detail}</span>`; return }
+  ultimo = j.trazos
+  dibujar(j.trazos, null)
+  $('#d').textContent =
+    `${j.trazos.length} trazos · ${j.ancho_mm} × ${j.alto_mm} mm antes de encajar`
+}
+
+const pedir = async () => {
+  $('#b').disabled = true; $('#b').textContent = 'Compilando las levas…'; $('#r').innerHTML = ''
+  try {
+    const res = await fetch('/api/pedido', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(pide())})
+    const j = await res.json()
+    if (!res.ok) { $('#r').innerHTML = `<div class="veredicto no"><h2>No se puede</h2>${j.detail}</div>`; return }
+    dibujar(j.trazos, j.simulado)
+    const inc = j.incidencias.map(i => `<p class="inc ${i.gravedad}">
+        <b>${i.mensaje}</b><span>${i.sugerencia || ''}</span></p>`).join('')
+    const enlaces = j.archivos.map(a =>
+      `<a href="/api/pedido/${j.pedido}/${a}" download>${a}</a>`).join('')
+    // Las métricas vienen en metros, como todo lo que sale del núcleo.
+    const err = j.metricas.error_trazo_maximo
+    $('#r').innerHTML = `<div class="veredicto ${j.apto ? 'si' : 'no'}">
+        <h2>${j.apto ? 'Se puede fabricar' : 'Así no se puede fabricar'}</h2>
+        ${err !== undefined ? `<p class="inc"><span>Error de trazo simulado:
+          ${(err * 1000).toFixed(3)} mm en el peor punto. Es el error del MODELO;
+          el de la máquina lo da la cadena de tolerancias.</span></p>` : ''}
+        ${inc}</div><div class="fila">${enlaces}</div>`
+  } finally {
+    $('#b').disabled = false; $('#b').textContent = 'Hacer el cartucho'
+  }
+}
+
+let t
+const luego = () => { clearTimeout(t); t = setTimeout(previa, 180) }
+;['texto', 'altura', 'enlace'].forEach(k => $('#' + k).addEventListener('input', luego))
+$('#fuente').addEventListener('change', previa)
+$('#b').addEventListener('click', pedir)
+
+fetch('/api/fuentes').then(r => r.json()).then(j => {
+  $('#fuente').innerHTML = j.fuentes.map(f => `<option>${f}</option>`).join('')
+  previa()
+})
+</script>

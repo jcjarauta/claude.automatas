@@ -34,6 +34,16 @@ class FichaIncompleta(ErrorDeDominio):
     """
 
 
+class LetraDesconocida(ErrorDeDominio):
+    """La fuente no tiene uno de los caracteres que se le piden.
+
+    Se queja en vez de sustituirlo por su letra sin tilde: un pedido es el
+    nombre de alguien, y «Begoña» con ene no es un fallo menor, es otro
+    nombre. El mensaje dice **todos** los que faltan, no el primero, para
+    no descubrirlos de uno en uno.
+    """
+
+
 class FueraDeAlcance(ErrorDeDominio):
     """Se pide al actuador un punto al que no llega.
 

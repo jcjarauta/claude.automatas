@@ -42,6 +42,7 @@ documentación para fabricarla.
 ```bash
 uv sync                      # instalar dependencias
 uv sync --group cad          # + el kernel OCCT, solo si vas a exportar STEP
+uv sync --group web          # + la interfaz local de pedidos
 uv run pytest                # tests
 uv run pytest -m core        # solo el núcleo (rápido)
 uv run --group cad pytest    # + los tests del kernel OCCT, que si no SE SALTAN
@@ -73,11 +74,12 @@ uv run python scripts/dibujar_pieza.py mordaza --out build/mordaza.svg  # el boc
 
 uv run python -m compile.cli demo/hola.json --out build/   # compilar un pedido
 uv run python -m compile.cli demo/hola.json --corte 28      # con un presupuesto real del taller
-uv run uvicorn api.main:app --reload                       # API en local
+uv run --group web uvicorn api.main:app --reload           # la interfaz de pedidos, en http://127.0.0.1:8000
+uv run python scripts/extraer_fuente.py cursiva            # SOLO al añadir una fuente
 npm --prefix web run dev                                   # frontend en local
 ```
 
-Antes de dar por terminado un cambio: `uv run ruff check . && uv run mypy core compile emit && uv run pytest`.
+Antes de dar por terminado un cambio: `uv run ruff check . && uv run mypy core compile emit api && uv run pytest`.
 
 ---
 
@@ -91,6 +93,7 @@ core/                 # PURO. Geometría, cinemática, energía.
   errors.py           #   Excepciones de dominio
   units.py            #   Constructores con unidad. Nada de floats desnudos.
   escritura.py        #   Front-end: frase -> tres pistas θ (arco, reparto, capacidad)
+  tipografia.py       #   C0 · un texto tecleado -> trazos, con una fuente monotrazo
   cam/
     synth.py          #   C2 · curva de paso y perfil
     offset.py         #   C2 · offset por radio de rodillo
@@ -114,6 +117,7 @@ compile/              # Orquesta: intención -> piezas + informe. I/O permitido.
   contratos.py        #   Los contratos congelados, como dato
   informe.py          #   El informe del pedido, en markdown
   cli.py              #   Un pedido, un comando
+  texto.py            #   Carga la fuente y compone el texto. El disco de C0
 emit/
   pieza.py            #   Pieza y sus siete metadatos, compartida por los tres
   layout.py           #   Maquetación 1:1 en mm: cabecera, colocación, troceado
@@ -133,6 +137,8 @@ bench/                # Datos del banco de ensayo y calibraciones medidas
   impresoras/         #   Un perfil por impresora, con fecha, papel e instrumento
   precios.json        #   Precios de catálogo, con fecha y enlace por línea
 docs/
+  fuentes/            #   Una fuente monotrazo por archivo. Dato, no dependencia
+web/                  #   index.html: la interfaz local de pedidos
 tests/
 ```
 
@@ -1039,6 +1045,28 @@ falla si el esquema versionado se queda atrás.
   muestras» y no la máquina en ese ángulo. `compile.conjunto.estados`
   toma la rejilla entera de golpe, y `piezas_en` redondea a grado para
   poder enseñar una posición suelta.
+
+- **Una imagen no es un trazo, y una fuente normal tampoco.** El
+  compilador quiere `Escritura`: trazos en orden, con el lápiz apoyado.
+  Un canvas lo da; una imagen da píxeles y una fuente normal da
+  **contornos** —la «o» son dos círculos cerrados y el trazo de la pluma
+  es el anillo de en medio—. Pasar de ahí a una línea central pide
+  esqueletizar, y en una escritura a mano además **ordenar los trazos**,
+  que no tiene solución única: un lazo se recorre en los dos sentidos y
+  en un cruce hay varias continuaciones plausibles.
+
+  Por eso el camino barato no es el obvio: una **fuente monotrazo** ya
+  trae las líneas centrales, dibujadas en 1967 para trazarlas con una
+  pluma. De texto a leva no hace falta ni una línea de visión por
+  computador.
+
+- **Cada vuelo del lápiz se come grados de la vuelta, así que enlazar
+  decide si una frase cabe.** En la Hershey cursiva los huecos entre
+  trazos consecutivos de una palabra caen en dos grupos separados: de 0 a
+  0,46 alturas de x —los enlaces que la letra inglesa ya trae— y de 0,8
+  en adelante, que son levantadas de verdad. Medio es el valle, y es el
+  `ENLACE` por defecto. Con enlace 0, «Arrels» sale en seis trazos y no
+  cabe; con 0,5 sale en dos.
 
 - **Fase.** Un cartucho montado desfasado escribe basura. La marca física y la
   verificación van en el dossier, no solo en el código.

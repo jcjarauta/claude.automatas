@@ -22,6 +22,16 @@ dev = [
     "ruff>=0.6",
     "pypdf>=5.0",
 ]
+web = [
+    # La interfaz local de pedidos. Opcional a propósito, como el kernel:
+    # el motor no depende de ella y todo lo demás funciona sin instalarla.
+    "fastapi>=0.115",
+    "uvicorn>=0.32",
+    "python-multipart>=0.0.12",
+    # El cliente de prueba de FastAPI lo necesita. Va aquí y no en `dev`
+    # porque sin la interfaz no hay nada que probar con él.
+    "httpx>=0.28",
+]
 cad = [
     # Kernel OCCT. Opcional a propósito: son unos 800 MB y solo hace falta
     # para exportar STEP y, a partir de E6, para las vistas del dossier.
