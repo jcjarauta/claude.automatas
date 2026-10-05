@@ -295,11 +295,53 @@ def pedido_sin_rubrica() -> dict[str, object]:
     }
 
 
+EXCLAMACION = RAIZ / "demo" / "hola_mundo_exclamacion.json"
+
+ABRE = (
+    [(-0.85, 1.02), (-0.86, 0.94), (-0.87, 0.86)],
+    [(-0.86, 0.62), (-0.9, 0.0), (-0.95, -0.6)],
+)
+"""«¡»: el punto arriba, a la altura de x, y el palo que baja por debajo de
+la línea. Primero el punto, como se escribe."""
+
+CIERRA = (
+    [(9.98, 2.0), (9.94, 1.2), (9.9, 0.42)],
+    [(9.89, 0.16), (9.88, 0.08), (9.87, 0.0)],
+)
+"""«!»: el palo desde la altura de la l y el punto sobre la línea."""
+
+
+def pedido_exclamacion() -> dict[str, object]:
+    """«¡Hola Mundo!»: las dos palabras sin la rúbrica, que no cabe, y los
+    dos signos como trazos sueltos —palo y punto—, que es como se escriben.
+    Los puntos son trazos de un milímetro: la máquina no sabe tocar y
+    levantar sin moverse, sabe escribir un trazo corto.
+
+    En una vuelta no cabe: seis trazos son cinco vuelos de 16°, la tinta se
+    aprieta en lo que queda y dos levas salen socavadas. Va en dos renglones
+    en la misma línea del papel —«¡Hola» y «Mundo!»—, un cartucho por
+    vuelta, que es lo que propone la propia envolvente."""
+    return {
+        "nombre": "hola_mundo_exclamacion",
+        "trazos": [
+            *(trazo(t, suavizado=0.0) for t in ABRE),
+            trazo(HOLA),
+            trazo(MUNDO[:FIN_DE_LA_O]),
+            *(trazo(t, suavizado=0.0) for t in CIERRA),
+        ],
+        "renglones": [[0, 1, 2], [3, 4, 5]],
+    }
+
+
 def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
-    for destino, datos in ((DESTINO, pedido()), (SIN_RUBRICA, pedido_sin_rubrica())):
+    for destino, datos in (
+        (DESTINO, pedido()),
+        (SIN_RUBRICA, pedido_sin_rubrica()),
+        (EXCLAMACION, pedido_exclamacion()),
+    ):
         destino.write_text(json.dumps(datos, indent=1) + "\n", encoding="utf-8", newline="\n")
-        print(f"{destino.relative_to(RAIZ)}: 2 trazos")
+        print(f"{destino.relative_to(RAIZ)}: {len(datos['trazos'])} trazos")  # type: ignore[arg-type]
     return 0
 
 
