@@ -1,6 +1,6 @@
 # Dossier del escribiente
 
-Generado por `uv run --group cad python scripts/dossier_completo.py` · versión **commit 50fc0a0**.
+Generado por `uv run --group cad python scripts/dossier_completo.py` · versión **commit ce8066b**.
 
 Todo lo que hay en esta carpeta sale de los comandos de abajo; nada se
 edita a mano. Las hojas dicen «No medir sobre esta hoja»: lo que se corta
@@ -12,7 +12,7 @@ a escala 1:1 son las plantillas (`python -m compile.cli`), que van aparte.
 | --- | --- | --- |
 | `uv run --group cad python scripts/dossier.py` | [dossier.pdf](dossier.pdf) (17 págs.) | Dossier de montaje: portada, índice, explosión de conjunto, vistas, despiece, secuencia, procedimientos, comprobación final |
 | `uv run --group cad python scripts/fichas.py bastidor` | [fichas_bastidor.pdf](fichas_bastidor.pdf) (5 hojas) | Lo que no se mueve: base, postes, platos y rodamientos |
-| `uv run --group cad python scripts/fichas.py cinco_barras` | [fichas_cinco_barras.pdf](fichas_cinco_barras.pdf) (5 hojas) | El brazo que lleva la punta por el papel |
+| `uv run --group cad python scripts/fichas.py cinco_barras` | [fichas_cinco_barras.pdf](fichas_cinco_barras.pdf) (6 hojas) | El brazo que lleva la punta por el papel |
 | `uv run --group cad python scripts/fichas.py entre_puntos` | [fichas_entre_puntos.pdf](fichas_entre_puntos.pdf) (4 hojas) | Lo que sujeta, arrastra y pone en fase el cartucho |
 | `uv run --group cad python scripts/fichas.py seguidores` | [fichas_seguidores.pdf](fichas_seguidores.pdf) (4 hojas) | Lo que lee las levas: seguidores, rodillos, sus ejes, topes y muelles |
 | `uv run --group cad python scripts/fichas.py amplificador` | [fichas_amplificador.pdf](fichas_amplificador.pdf) (6 hojas) | El cabestrante 8:1: sectores, tambores y ejes de pivote |
@@ -53,8 +53,9 @@ grupo: comerciales, tornillería y despiece.
 | P-CBR-02 | perno_codo | 3 |
 | P-CBR-03 | casquillo_punta | 4 |
 | P-CBR-04 | brazo_proximal | 5 |
-| T-CBR-01 | DIN 705 Ø10, anillo de ajuste · bajo cada brazo proximal | 1 |
+| P-CBR-05 | anillo_proximal | 6 |
 | T-CBR-02 | DIN 988 6 × 12 × 0,5 · arandela de cada codo del cinco barras | 1 |
+| T-CBR-03 | DIN 913 M3 × 3, punta plana · anillos bajo los proximales | 1 |
 
 ### 3. entre_puntos · G-ENT · [fichas_entre_puntos.pdf](fichas_entre_puntos.pdf)
 
@@ -81,6 +82,7 @@ grupo: comerciales, tornillería y despiece.
 | T-SEG-01 | DIN 7991 M3 × 30, cortado a 12,5 / 19,5 / 26,5 · ejes de rodillo | 1 |
 | T-SEG-02 | DIN 439 M3 (tuerca fina) · ejes de rodillo | 1 |
 | T-SEG-03 | DIN 7 Ø3 × 6 · pasadores de tope, de pie en la placa | 1 |
+| T-SEG-04 | DIN 913 M2 × 3, punta plana · collares de los seguidores, bajo el muelle | 1 |
 
 ### 5. amplificador · G-AMP · [fichas_amplificador.pdf](fichas_amplificador.pdf)
 
@@ -131,12 +133,12 @@ grupo: comerciales, tornillería y despiece.
 | P-ELV-13 | eje_balancin | 14 |
 | P-ELV-14 | bulon_tirante | 15 |
 | T-ELV-01 | DIN 912 M3 × 16 · apoyos del balancín, del plato 2 | 1 |
-| T-ELV-02 | DIN 912 M2 × 8 · mesa a sus orejetas | 1 |
 | T-ELV-04 | DIN 6799 para eje Ø6 · bulón del tirante | 1 |
 | T-ELV-05 | DIN 6799 para eje Ø4 · eje del balancín, por fuera | 1 |
 | T-ELV-06 | DIN 6799 para eje Ø1,5 · ejes de la mesa | 1 |
 | T-ELV-07 | arandela de presión Ø2 · bieleta en el balancín | 1 |
 | T-ELV-08 | DIN 912 M2 × 25 · soportes de la mesa, desde bajo la base | 1 |
+| T-ELV-09 | DIN 912 M2 × 6 · mesa a sus orejetas | 1 |
 
 ### 8. portalapiz · G-POR · [fichas_portalapiz.pdf](fichas_portalapiz.pdf)
 
