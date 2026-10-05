@@ -86,11 +86,15 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{ruta.name}: {_cuantas(_hojas(ruta), 'hoja')}")
     total = sum(1 for linea in pendientes if linea.startswith("   "))
     pendientes.append(f"TOTAL {total}")
-    (destino / "dibujable.txt").write_text("\n".join(pendientes) + "\n", encoding="utf-8")
+    (destino / "dibujable.txt").write_text(
+        "\n".join(pendientes) + "\n", encoding="utf-8", newline="\n"
+    )
 
     diferentes = diferencias(registro, inventario())
     (destino / "numeracion.txt").write_text(
-        "\n".join(diferentes or ["el registro está al día"]) + "\n", encoding="utf-8"
+        "\n".join(diferentes or ["el registro está al día"]) + "\n",
+        encoding="utf-8",
+        newline="\n",
     )
 
     # --- INDICE.md -----------------------------------------------------------
