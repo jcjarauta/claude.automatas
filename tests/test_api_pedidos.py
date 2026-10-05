@@ -43,10 +43,17 @@ def test_un_texto_devuelve_sus_trazos_y_su_tamano():
 
 def test_una_letra_que_la_fuente_no_tiene_es_una_respuesta_y_no_una_caida():
     """422 y el motivo en claro. Con un 500 el cliente vería «error del
-    servidor» donde lo que pasa es que su nombre lleva eñe."""
-    respuesta = cliente.post("/api/trazos", json={"texto": "Begoña"})
+    servidor» donde lo que pasa es que su nombre no es de esta máquina.
+
+    **Este test decía «Begoña» hasta que la fuente aprendió a escribirlo.**
+    No se recalibró el mensaje: se buscó un caso que siga siendo verdad, y
+    el que queda no es un carácter raro de laboratorio sino medio listín de
+    la casa. Una fuente latina monotrazo no escribe en árabe, y eso no se
+    arregla componiendo marcas.
+    """
+    respuesta = cliente.post("/api/trazos", json={"texto": "محمد"})
     assert respuesta.status_code == 422
-    assert "ñ" in respuesta.json()["detail"]
+    assert "م" in respuesta.json()["detail"]
 
 
 def test_el_enlace_cambia_cuantos_trazos_salen():

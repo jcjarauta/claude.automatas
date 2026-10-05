@@ -59,4 +59,5 @@ __all__ = [
     "ErrorDeDominio",
     "FichaIncompleta",
     "FueraDeAlcance",
+    "LetraDesconocida",
 ]

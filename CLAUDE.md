@@ -75,7 +75,7 @@ uv run python scripts/dibujar_pieza.py mordaza --out build/mordaza.svg  # el boc
 uv run python -m compile.cli demo/hola.json --out build/   # compilar un pedido
 uv run python -m compile.cli demo/hola.json --corte 28      # con un presupuesto real del taller
 uv run --group web uvicorn api.main:app --reload           # la interfaz de pedidos, en http://127.0.0.1:8000
-uv run python scripts/extraer_fuente.py cursiva            # SOLO al añadir una fuente
+uv run python scripts/extraer_fuente.py cursiva            # SOLO al añadir una fuente (compone los acentos)
 npm --prefix web run dev                                   # frontend en local
 ```
 
@@ -93,7 +93,7 @@ core/                 # PURO. Geometría, cinemática, energía.
   errors.py           #   Excepciones de dominio
   units.py            #   Constructores con unidad. Nada de floats desnudos.
   escritura.py        #   Front-end: frase -> tres pistas θ (arco, reparto, capacidad)
-  tipografia.py       #   C0 · un texto tecleado -> trazos y renglones, en monotrazo
+  tipografia.py       #   C0 · texto tecleado -> trazos, renglones y acentos
   cam/
     synth.py          #   C2 · curva de paso y perfil
     offset.py         #   C2 · offset por radio de rodillo
@@ -1068,6 +1068,65 @@ falla si el esquema versionado se queda atrás.
   trae las líneas centrales, dibujadas en 1967 para trazarlas con una
   pluma. De texto a leva no hace falta ni una línea de visión por
   computador.
+
+- **«Cada acento es un trazo más» es verdad en el glifo y mentira en la
+  palabra.** La Hershey trae 96 caracteres, los del ASCII, y **ninguna de
+  sus 32 variantes tiene una letra acentuada**: sin componerlas la máquina
+  no escribe «Begoña», ni «Sebastià», ni «Anaïs», que es medio listín de
+  nombres de aquí. Compuestas, el coste no es uno:
+
+  - La **diéresis son dos trazos**. Es el único acento caro.
+  - La marca va delante de la letra, así que se mete entre esta y la
+    anterior y **parte el enlace** que la cursiva traía dibujado. En la
+    palabra un acento cuesta una levantada o dos según dónde caiga:
+    «Begoña» pide 8 trazos y «Begona» 6.
+  - Y **«í» sale gratis**: el acento ocupa el sitio del punto de la i en
+    vez de sumarse a él. Dejarle el punto pondría dos marcas encima.
+
+  Con el techo medido entre cinco y siete trazos, dos de más es la
+  diferencia entre un nombre que cabe y uno que no.
+
+  Lo que sigue sin poder escribirse: el **punt volat** del catalán
+  («Marcel·lí»), que no es un acento sino un carácter y no sale de esta
+  máquina de componer; y cualquier alfabeto que no sea el latino, que en
+  esta casa es la mitad del listín. Lo segundo no se arregla componiendo
+  marcas.
+
+- **La fuente no dibuja las marcas donde uno las busca.** Regla 4: la
+  geometría no la inventa un modelo, así que cada marca es tinta que la
+  fuente ya tiene. Pero la puntuación ASCII no es un juego de acentos:
+
+  - El `~` **no es monotrazo**: son dos pasadas de la misma onda —mismo
+    largo, mismo centro—, que es como se engorda un trazo con pluma. El
+    acento se queda con una; con las dos, la «ñ» costaría dos levantadas
+    y dibujaría la onda dos veces.
+  - Las comillas miden **siete unidades de alto**: sobre una «u» se leen
+    como un doble prima. El punto de la diéresis sale de la **i**; de las
+    comillas, solo la separación.
+  - El `'` de esta cursiva es un palito **vertical** y el `` ` `` es una
+    coma vuelta que a tamaño de lápiz se lee como un **seis**. El agudo y
+    el grave son las **dos ramas del `^`**, que la fuente dibuja
+    simétricas, recortadas a lo que mide el `'`. El circunflejo es el `^`
+    entero y, como las dos ramas salen del mismo vértice, **un solo
+    trazo**.
+
+  Las dos cotas de colocación están **medidas sobre el punto de la i**,
+  que es la única marca que una fuente monotrazo pone ya sobre una
+  minúscula: centrado sobre la tinta de la letra —exactamente centrado,
+  1,5 contra 1,5— y cuatro unidades por encima del alto de la x. Ni un
+  número elegido. Se componen al extraer la fuente y se congelan en
+  `docs/fuentes/`; un test las recompone desde los 96 glifos del mismo
+  archivo y exige que salga lo mismo, así que un retoque a mano o una
+  regeneración que falta se ven.
+
+- **Mi primera vista previa dibujaba con una línea cuatro veces más fina
+  que la mina.** A esa escala el acento de arriba se veía como un seis con
+  todo detalle y los puntos de la diéresis, como cuadrados. A tamaño real
+  —punta de 0,5 mm sobre una altura de x de 5 mm— los puntos son puntos.
+  Lo que se juzga en pantalla hay que dibujarlo con la punta que de verdad
+  escribe, o se está mirando un dibujo que la máquina no hace. Es la
+  familia del `text-anchor`: una comprobación que modela el render tiene
+  que mirar lo que el render mira.
 
 - **Cada vuelo del lápiz se come grados de la vuelta, así que enlazar
   decide si una frase cabe.** En la Hershey cursiva los huecos entre

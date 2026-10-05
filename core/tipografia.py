@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import itertools
 import math
+import unicodedata
 from dataclasses import dataclass
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -32,7 +33,10 @@ from core.errors import LetraDesconocida
 from core.escritura import Escritura, Trazo
 from core.units import Longitud, Metros
 
-PuntoDeFuente = tuple[int, int]
+PuntoDeFuente = tuple[float, float]
+"""La fuente de 1967 es entera —venía en tarjetas perforadas—, pero un
+acento compuesto se escala y no lo es. Redondear a entero movería la marca
+un noveno de altura de x, que se ve."""
 
 ENLACE = 0.5
 """Hasta dónde se enlazan dos trazos seguidos, en alturas de x.
@@ -114,8 +118,208 @@ class Fuente(BaseModel):
     glifos: dict[str, Glifo]
 
     def faltan(self, texto: str) -> list[str]:
-        """Los caracteres distintos que esta fuente no sabe dibujar."""
-        return sorted({c for c in texto if c not in self.glifos})
+        """Los caracteres distintos que esta fuente no sabe dibujar.
+
+        Normaliza antes de mirar: «á» se teclea de dos maneras y un
+        portapapeles de macOS manda la que no es un solo carácter.
+        """
+        return sorted({c for c in unicodedata.normalize("NFC", texto) if c not in self.glifos})
+
+
+_LETRAS: dict[str, tuple[str, str]] = {
+    # Marca: las letras sin acento y las mismas con él, emparejadas
+    # posición a posición. Dos cadenas en vez de un diccionario para que un
+    # hueco se vea de un vistazo, y `strict=True` al emparejarlas para que
+    # añadir una sola de las dos no cuele.
+    "agudo": ("aeiouyAEIOUY", "áéíóúýÁÉÍÓÚÝ"),
+    "grave": ("aeiouAEIOU", "àèìòùÀÈÌÒÙ"),
+    "circunflejo": ("aeiouAEIOU", "âêîôûÂÊÎÔÛ"),
+    "dieresis": ("aeiouyAEIOU", "äëïöüÿÄËÏÖÜ"),
+    "tilde": ("anoANO", "ãñõÃÑÕ"),
+    "cedilla": ("cC", "çÇ"),
+}
+
+ACENTOS: dict[str, tuple[str, str]] = {
+    acentuada: (base, marca)
+    for marca, (bases, acentuadas) in _LETRAS.items()
+    for base, acentuada in zip(bases, acentuadas, strict=True)
+}
+"""Letra acentuada -> de qué letra y qué marca se compone.
+
+**Por qué hay que componerlas.** La Hershey se distribuye con los 96
+caracteres del ASCII y ninguna de sus 32 variantes trae una sola letra
+acentuada. Sin esto la máquina no escribe «Begoña», ni «Sebastià», ni
+«Anaïs» —medio listín de nombres de aquí— y la fuente se queja de una
+letra que el cliente ha escrito bien.
+
+**Y por qué se componen y no se dibujan.** Regla 4: la geometría de
+producción no sale de un modelo de lenguaje. Cada marca es un trazo que
+la fuente **ya tiene** y cada cota de colocación está medida sobre la
+propia fuente; aquí solo se dice qué lleva cada letra encima, que es
+ortografía y no geometría.
+
+No hay circunflejo en castellano ni en catalán; va porque la marca sale
+de la misma fuente que el agudo y el grave y porque un «Benoît» no tiene
+por qué romper un pedido.
+"""
+
+MARCAS_DE_LA_FUENTE = "'^\"~,i"
+"""Los glifos de los que sale toda la tinta de los acentos.
+
+El `'` da el **largo** de una marca; el `^`, la **inclinación** del agudo y
+del grave —son sus dos ramas, que la fuente dibuja simétricas—; las
+comillas, la **separación** de la diéresis; el `~`, la onda; la `,`, la
+cedilla; y la `i`, el **punto**, que es la única marca que una fuente
+monotrazo dibuja ya sobre una minúscula y de la que salen por eso las dos
+cotas de colocación.
+"""
+
+DECIMALES = 3
+"""A cuántos decimales de unidad de fuente se redondea un acento compuesto.
+
+La fuente de 1967 es entera porque venía en tarjetas perforadas; una marca
+escalada no lo es. Se redondea para que el archivo se pueda leer y para que
+el glifo que compone el núcleo y el que hay en el disco sean **el mismo**,
+comparables con un igual y no con una tolerancia. A tamaño de tarjeta una
+milésima de unidad es media micra.
+"""
+
+
+def _caja(trazos: list[list[PuntoDeFuente]]) -> tuple[float, float, float, float]:
+    """x mínima, x máxima, y mínima, y máxima de la tinta."""
+    xs = [x for t in trazos for x, _ in t]
+    ys = [y for t in trazos for _, y in t]
+    return min(xs), max(xs), min(ys), max(ys)
+
+
+def _largo(trazo: list[PuntoDeFuente]) -> float:
+    return sum(math.dist(a, b) for a, b in itertools.pairwise(trazo))
+
+
+def _mover(trazos: list[list[PuntoDeFuente]], dx: float, dy: float) -> list[list[PuntoDeFuente]]:
+    return [[(x + dx, y + dy) for x, y in t] for t in trazos]
+
+
+def _pendiente(trazo: list[PuntoDeFuente]) -> float:
+    """Cuánto sube el trazo por cada unidad que avanza, con la y hacia
+    arriba. Positiva en un acento agudo y negativa en uno grave."""
+    return -(trazo[-1][1] - trazo[0][1]) / (trazo[-1][0] - trazo[0][0])
+
+
+def _escalar(trazo: list[PuntoDeFuente], factor: float) -> list[PuntoDeFuente]:
+    """Encoge el trazo hacia su primer punto, que en el `^` es el vértice."""
+    x0, y0 = trazo[0]
+    return [(x0 + (x - x0) * factor, y0 + (y - y0) * factor) for x, y in trazo]
+
+
+def _sobre_el_alto_de_x(glifo: Glifo, fuente: Fuente) -> list[list[PuntoDeFuente]]:
+    """Los trazos del glifo que quedan **enteros** por encima del alto de la x.
+
+    Es el punto de la i y el de la j, y nada más: el resto de lo que sube
+    —la barra de la t, el asta de la b— cruza la línea. Se busca así y no
+    por el número de trazo porque un índice es justo lo que se equivoca en
+    silencio al cambiar de fuente.
+    """
+    tope = fuente.linea_base - fuente.altura_de_x
+    return [list(t) for t in glifo.trazos if all(y < tope for _, y in t)]
+
+
+def _marcas(fuente: Fuente) -> dict[str, list[list[PuntoDeFuente]]]:
+    """Las cinco marcas, en tinta de la propia fuente y sin colocar."""
+    if faltan := sorted({c for c in MARCAS_DE_LA_FUENTE if c not in fuente.glifos}):
+        raise LetraDesconocida(
+            f"la fuente «{fuente.nombre}» no puede dar acentos: le faltan "
+            + ", ".join(f"«{c}»" for c in faltan)
+            + ". De esos glifos sale toda la tinta de las marcas."
+        )
+
+    puntos = _sobre_el_alto_de_x(fuente.glifos["i"], fuente)
+    if len(puntos) != 1:
+        raise LetraDesconocida(
+            f"en la fuente «{fuente.nombre}» la «i» tiene {len(puntos)} trazos "
+            "sobre el alto de la x y hace falta exactamente uno: el punto."
+        )
+    punto = puntos[0]
+
+    ramas = [list(t) for t in fuente.glifos["^"].trazos]
+    if len(ramas) != 2 or ramas[0][0] != ramas[1][0]:
+        raise LetraDesconocida(
+            f"en la fuente «{fuente.nombre}» el «^» no son dos ramas que salgan "
+            "del mismo vértice, que es de donde se sacan el agudo y el grave."
+        )
+    # El agudo sube hacia la derecha y el grave baja. Se eligen por la
+    # inclinación y no por el orden en que la fuente las guarda, que es lo
+    # que convertiría un acento en el otro sin que nada protestara. La y de
+    # la fuente va hacia abajo, de ahí el signo.
+    largo_de_marca = sum(_largo(list(t)) for t in fuente.glifos["'"].trazos)
+    ramas = [_escalar(r, largo_de_marca / _largo(r)) for r in ramas]
+    agudo, grave = sorted(ramas, key=_pendiente, reverse=True)
+
+    comillas = [_caja([list(t)]) for t in fuente.glifos['"'].trazos]
+    separacion = abs(comillas[1][0] - comillas[0][0])
+
+    return {
+        "agudo": [agudo],
+        "grave": [grave],
+        # Las dos ramas salen del vértice, así que son un solo recorrido de
+        # pluma: subir por una y bajar por la otra. Dejarlas sueltas haría
+        # levantar el lápiz en lo alto del acento para nada.
+        "circunflejo": [list(reversed(agudo)) + grave[1:]],
+        # Dos puntos de la i, no las comillas: en esta fuente miden siete
+        # unidades de alto y sobre una «u» se leerían como un doble prima.
+        # De las comillas se toma solo la separación.
+        "dieresis": _mover([punto], -separacion / 2, 0.0) + _mover([punto], separacion / 2, 0.0),
+        # El `~` son dos pasadas de la misma onda —mismo largo, mismo
+        # centro—, que es como se engorda un trazo con pluma. La segunda
+        # dibujaría lo mismo otra vez y costaría una levantada.
+        "tilde": [list(fuente.glifos["~"].trazos[0])],
+        "cedilla": [list(t) for t in fuente.glifos[","].trazos],
+    }
+
+
+def acentuar(fuente: Fuente) -> dict[str, Glifo]:
+    """Los glifos acentuados que esta fuente puede componer, por su cuenta.
+
+    Se compone **una vez**, al extraer la fuente, y el resultado se congela
+    en `docs/fuentes/`: la fuente sigue siendo dato y un pedido de dentro de
+    cinco años sale igual aunque esta función cambie. Un test cruza las dos
+    cosas.
+
+    La regla entera son dos cotas, y las dos están **medidas sobre el punto
+    de la i**, que es la única marca que la fuente dibuja ya sobre una
+    minúscula: va centrada sobre la tinta de la letra, y su parte de abajo
+    queda tan por encima de la letra como el punto lo está del alto de la x.
+    La cedilla es la excepción y cuelga de la línea base, sin hueco: separada
+    se lee como una coma suelta detrás.
+    """
+    marcas = _marcas(fuente)
+    tope = fuente.linea_base - fuente.altura_de_x
+    hueco = tope - _caja(marcas["dieresis"])[3]
+
+    compuestos: dict[str, Glifo] = {}
+    for acentuada, (letra, marca) in ACENTOS.items():
+        if (base := fuente.glifos.get(letra)) is None:
+            continue
+        # El punto de la i se va: lo sustituye el acento, y por eso «í»
+        # cuesta exactamente lo mismo que «i».
+        sobran = _sobre_el_alto_de_x(base, fuente)
+        trazos = [list(t) for t in base.trazos if list(t) not in sobran]
+        bx0, bx1, by0, _ = _caja(trazos)
+        mx0, mx1, my0, my1 = _caja(marcas[marca])
+        dx = (bx0 + bx1) / 2 - (mx0 + mx1) / 2
+        dy = (fuente.linea_base - my0) if marca == "cedilla" else (by0 - hueco) - my1
+        puestos = _mover(marcas[marca], dx, dy)
+        compuestos[acentuada] = Glifo(
+            lado_izquierdo=base.lado_izquierdo,
+            avance=base.avance,
+            # La marca va **delante**, que es donde la fuente pone el punto
+            # de la i. Así «í» es la «i» con el punto cambiado por el acento
+            # en el mismo sitio del recorrido, y cuesta exactamente igual.
+            trazos=[
+                [(round(x, DECIMALES), round(y, DECIMALES)) for x, y in t] for t in puestos + trazos
+            ],
+        )
+    return compuestos
 
 
 def _trazos_colocados(texto: str, fuente: Fuente, escala: float) -> list[list[tuple[float, float]]]:
@@ -205,6 +409,7 @@ def componer(
     «cumpleaños». Por eso la agrupación sale de aquí y no de compilar tres
     veces por separado.
     """
+    texto = unicodedata.normalize("NFC", texto)
     _comprobar(texto, fuente)
 
     escala = float(altura_de_x) / fuente.altura_de_x
@@ -263,6 +468,7 @@ def huecos(
     una pequeña se midan igual. Y por renglón: entre dos renglones no hay
     nada que enlazar, son cartuchos distintos.
     """
+    texto = unicodedata.normalize("NFC", texto)
     escala = float(altura_de_x) / fuente.altura_de_x
     _comprobar(texto, fuente)
     salida: list[tuple[float, ...]] = []
@@ -307,11 +513,16 @@ def escribir(
 
 
 __all__ = [
+    "ACENTOS",
+    "DECIMALES",
     "ENLACE",
     "HUECO_ENTRE_RENGLONES",
+    "MARCAS_DE_LA_FUENTE",
     "Composicion",
     "Fuente",
     "Glifo",
+    "acentuar",
     "componer",
     "escribir",
+    "huecos",
 ]
