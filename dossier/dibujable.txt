@@ -1,0 +1,11 @@
+== bastidor: 0 faltas en 4 piezas
+== cinco_barras: 0 faltas en 4 piezas
+== entre_puntos: 0 faltas en 3 piezas
+== seguidores: 0 faltas en 3 piezas
+== amplificador: 0 faltas en 5 piezas
+== accionamiento: 0 faltas en 4 piezas
+== levantamiento: 0 faltas en 14 piezas
+== portalapiz: 0 faltas en 5 piezas
+== cartucho: 0 faltas en 2 piezas
+== levas: 0 faltas en 0 piezas
+TOTAL 0
