@@ -131,7 +131,7 @@ textos en mm de la hoja), y dos salidas, SVG y PDF.
 
 `scripts/dibujable.py` cruza el perfil de cada pieza (la lista de `Arco` y
 `Segmento` que va al DXF) con lo que su ficha acota hoy. **68 faltas** en las
-41 piezas con perfil:
+44 piezas con perfil (las dos nuevas del codo, el perno y el casquillo, salen sin faltas):
 
 | Grupo | Faltas | Piezas con faltas |
 | --- | ---: | --- |
