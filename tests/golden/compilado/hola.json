@@ -7,39 +7,39 @@
     "izquierdo": -3.748834
   },
   "caso": "hola",
-  "desviacion_de_lo_capturado_mm": 0.289789,
-  "error_trazo_mm": 0.002835,
+  "desviacion_de_lo_capturado_mm": 0.291501,
+  "error_trazo_mm": 0.002151,
   "errores": [],
   "levas": [
     {
       "canal": "izquierdo",
-      "curvatura_minima_mm": 14.642751,
+      "curvatura_minima_mm": 19.135422,
       "numero": "L-001",
-      "presion_maxima_grados": 6.133411,
+      "presion_maxima_grados": 5.008535,
       "puntos_del_contorno": 720,
-      "radio_maximo_mm": 43.753974,
-      "radio_minimo_mm": 40.356151,
-      "sha256": "7c23c2b4ffdf3432c43d49a0971267ef73c8f25006aaf0feb65758d2268979d4"
+      "radio_maximo_mm": 43.392936,
+      "radio_minimo_mm": 40.67237,
+      "sha256": "cc0f691a12b13aa1d69e5f9a8812b19c79a65be1cf8cdb0d58f5e561793f75d7"
     },
     {
       "canal": "derecho",
-      "curvatura_minima_mm": 18.487046,
+      "curvatura_minima_mm": 23.435716,
       "numero": "L-002",
-      "presion_maxima_grados": 6.946782,
+      "presion_maxima_grados": 5.571254,
       "puntos_del_contorno": 720,
-      "radio_maximo_mm": 49.096003,
-      "radio_minimo_mm": 46.063821,
-      "sha256": "b53a703c57da595f3726bb35338d8bec5ab0fde591bd53c0578822d3a204dd20"
+      "radio_maximo_mm": 48.768789,
+      "radio_minimo_mm": 46.331346,
+      "sha256": "6fed76b8d2d4a03f842c56c67522c6b900ca5790bc7d2479fa30f58a1d94c685"
     },
     {
       "canal": "elevador",
-      "curvatura_minima_mm": 13.493039,
+      "curvatura_minima_mm": 13.492661,
       "numero": "L-003",
-      "presion_maxima_grados": 8.347498,
+      "presion_maxima_grados": 8.343496,
       "puntos_del_contorno": 720,
       "radio_maximo_mm": 52.281314,
       "radio_minimo_mm": 51.718289,
-      "sha256": "93cd904fb8b3a3832dcfc4ab3656d049da0206bcb98075cdbe690564fb2c6fab"
+      "sha256": "f92a862d14312611ef41f6bda81d277d9076da12d0a24842f577b52c237a9bcc"
     }
   ],
   "tramos": [

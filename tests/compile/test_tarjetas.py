@@ -32,7 +32,6 @@ import pytest
 from compile.escribiente import compilar
 from compile.tarjetas import cargar_tarjeta, maquina_para, tarjetas
 from core.tarjeta import Tarjeta
-from core.units import Metros, a_mm
 from tests.casos import CASOS
 
 pytestmark = pytest.mark.core
@@ -92,32 +91,3 @@ def test_todo_formato_del_catalogo_escribe_los_casos_de_referencia(nombre, caso)
         f"la tarjeta «{nombre}» escribe «{caso}» recortando {recortadas} leva(s): la letra "
         f"sale redondeada y cuánto no se sabe sin simular. Achica la caja"
     )
-
-
-def test_el_catalogo_y_el_contrato_no_dicen_todavia_lo_mismo():
-    """**Esto no es una comprobación, es un aviso con fecha de caducidad.**
-
-    La tarjeta `a7_apaisado` del catálogo es el mismo papel del contrato
-    con 3 mm más de margen delante y detrás: caja de 80 × 24 en vez de
-    80 × 30. El contrato —`caja_alto` en `docs/contratos.json`— sigue
-    diciendo 30, y con 30 el caso `alta` no se puede fabricar.
-
-    La regla 9 dice que un contrato congelado no se toca sin decirlo, así
-    que el cambio está **propuesto y sin hacer**. Este test fija la
-    discrepancia para que no se olvide: el día que `caja_alto` baje, falla,
-    y lo que hay que hacer entonces es borrarlo.
-    """
-    from compile.escribiente import Escribiente
-
-    contrato = Escribiente()
-    catalogo = cargar_tarjeta("a7_apaisado")
-
-    assert a_mm(contrato.caja_alto) == pytest.approx(30.0), (
-        "el contrato ha cambiado: si `caja_alto` ya no es 30, borra este test"
-    )
-    assert a_mm(Metros(catalogo.caja_alto)) == pytest.approx(24.0)
-
-    # Y la razón de que no sean iguales, medida y no afirmada.
-    veredicto = compilar(CASOS["alta"](), maquina=contrato, simular_el_trazo=False).veredicto
-    assert not veredicto.apto
-    assert "perfil_autointersecado" in {i.codigo for i in veredicto.errores}

@@ -1146,14 +1146,26 @@ falla si el esquema versionado se queda atrás.
   40 × 14 sale limpia. Una decisión así se toma por pedido, así que no
   puede vivir en una constante.
 
-  **Pendiente:** la caja del contrato son 80 × 30 y con ellos «hola»
-  tecleada no se puede fabricar —`perfil_autointersecado` en la leva
-  derecha, error y no aviso—. El catálogo declara el mismo papel con 25 de
-  margen al fondo, que da 80 × 24 y escribe los cinco casos limpios. Bajar
-  `caja_alto` es la corrección, toca un contrato congelado y está
-  **propuesta y sin hacer**; lo fija
-  `test_el_catalogo_y_el_contrato_no_dicen_todavia_lo_mismo`, que falla el
-  día que se haga y entonces se borra.
+  **Hecho el 2026-10-05: `caja_alto` baja de 30 a 24**, y el margen al
+  fondo del A7 pasa de 22 a 25. El papel no se mueve, ni la base, ni nada
+  más. Con 30, «hola» tecleada **no se podía fabricar**: la relación de
+  curvatura de la leva derecha caía a 1,07 y el perfil se autointersecaba
+  sin dejarse recortar; con 24 queda en 2,13 y el error de trazo se parte
+  por la mitad, de 0,087 a 0,043 mm.
+
+  Lo tranquilizador fue el golden: de los seis casos **solo se movieron
+  dos**, `alta` y `hola`, que son los limitados por el alto. Los otros
+  cuatro los limita el ancho y salieron byte a byte iguales, sha256 de los
+  DXF incluidos. Una cota se puede bajar sin arrastrar lo que no la toca, y
+  el golden es lo que lo demuestra en vez de prometerlo.
+
+  Y se llevó por delante un test, por la razón buena:
+  `test_del_socavado_decide_lo_que_escribe_la_leva_recortada` construía un
+  escenario —un rodillo de 8 que no cabe en los lazos de «hola»— y con la
+  curvatura mejorada **ese rodillo ya cabía**. No se ajustó el test al
+  número nuevo: se reconstruyó el escenario con rodillos de 11 y 18. Un
+  test que deja de fallar porque el mundo mejoró hay que releerlo, no
+  recalibrarlo.
 
 - **Un renglón es un cartucho, no una línea de texto.** Una vuelta del
   árbol escribe un renglón, así que partir una frase en dos cuesta **tres

@@ -153,7 +153,15 @@ class Escribiente(BaseModel):
 
     # -- dónde se escribe ----------------------------------------------------
     caja_ancho: Longitud = mm(80.0)
-    caja_alto: Longitud = mm(30.0)
+    caja_alto: Longitud = mm(24.0)
+    """Eran 30 hasta el 2026-10-05, y con 30 «hola» tecleada no se podía
+    fabricar: la relación de curvatura de la leva derecha caía a **1,07** y
+    el perfil se autointersecaba sin dejarse recortar. Con 24 queda en 2,13.
+
+    No es un techo —el veredicto no es monótono con el tamaño: 85 × 33,7
+    pasa donde 75,7 × 30 falla— sino el punto donde la curvatura deja de ir
+    justa. El papel no se mueve: el A7 sigue siendo 105 × 74 y lo único que
+    cambia es el margen, de 22 a 25 delante y detrás."""
     caja_centro_y: Longitud = mm(100.0)
     """Altura del centro del papel sobre la línea de los dos pivotes."""
 

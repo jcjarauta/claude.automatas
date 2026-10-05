@@ -398,7 +398,7 @@ Visto desde el cinco barras, entonces, todo sale simétrico:
 | pivotes del cinco barras | ±60 | 0 |
 | postes de seguidor | ±61,543 y 0 | −35,532 y +71,063 |
 | plato Ø170 | ±85 | −117,45 … +52,55 |
-| caja de escritura | ±40 | 85 … 115 |
+| caja de escritura | ±40 | 88 … 112 |
 
 Es lo que convierte la base en un rectángulo centrado en vez de una tabla con
 la máquina de medio lado. **No hace falta cota para ello**: la base se sitúa
@@ -419,10 +419,14 @@ saber dónde cae el papel y el fondo se queda **115 mm corto**. Eso mueve la
 línea del nogal, que se presupuestaba a 13 bases por tabla de 2 m.
 
 El papel es un **A7 apaisado**, 105 × 74, centrado en la caja de escritura y
-no en la tabla. Deja 12,5 a los lados de los 80 de la caja, 22 delante y
-detrás de los 30, y su borde cercano queda a 10,45 del canto del plato: si
+no en la tabla. Deja 12,5 a los lados de los 80 de la caja, **25** delante y
+detrás de los 24, y su borde cercano queda a 10,45 del canto del plato: si
 entrara por debajo, la tarjeta no se podría poner ni quitar sin mover la
 máquina.
+
+El margen al fondo era 22 —caja de 30— hasta el 2026-10-05. El papel no se
+ha movido: lo único que cambia es cuánto de él se escribe. El catálogo de
+formatos vive en `docs/tarjetas/`, y añadir uno es escribir un JSON.
 
 ### Los postes bajan hasta la base y hacen de pata
 
@@ -605,6 +609,7 @@ absorbe el alabeo es la flexura, y 0,5 es todo su recorrido.
 
 | Fecha | Contrato | Cambio | Motivo |
 | --- | --- | --- | --- |
+| 2026-10-05 | Bastidor | `caja_alto` de 30 a **24**; el margen al fondo del A7 pasa de 22 a 25. El papel, la base y el resto no se mueven | Con 30, **«hola» tecleada no se podía fabricar**: la relación de curvatura de la leva derecha caía a 1,07 —por debajo del 1 el rodillo no entra— y el perfil se autointersecaba sin dejarse recortar. Con 24 queda en 2,13. No es un techo de tamaño: el veredicto no es monótono, 85 × 33,7 pasa donde 75,7 × 30 falla. Lo que mejora es la curvatura. Cuesta 6 mm de alto escrito |
 | 2026-10-04 | Bastidor, base | **Más capacidad por vuelta**: brazos de seguidor 45 / **50 / 55** (radios base 55 / 50,0 / 45,8), `relacion_varillaje` de 6 a **8** con un cabestrante de sector **R 56** y tambor **R 7**; base de 240 a **256**; derivados recalculados (tangencia, vano, abrazados, mordaza, `tope_angulo`) | Escribir varias palabras por vuelta: de unos 190 mm de tinta a 314, a cambio de 1,78 mm de peor caso en la punta en vez de 1,30. R 64 con tambor R 8 no cabía en los 68 entre ejes. No toca contratos congelados: el calaje no depende de la relación |
 | 2026-09-29 | Fase | Congelado. Pasador de índice Ø3 a 18 mm sobre +X, igual en las tres levas | El cartucho de una pieza deja el error de fase fuera de lo posible, en vez de fuera de lo probable |
 | 2026-09-29 | Eje | Congelado Ø10 h7, pila de 19 mm, giro horario | Medidas corrientes de catálogo; la pila sale de la geometría y está comprobada |

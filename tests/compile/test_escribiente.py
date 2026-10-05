@@ -398,12 +398,21 @@ def test_del_socavado_decide_lo_que_escribe_la_leva_recortada():
 
     Relación 3 y rodillos grandes, que no caben en las vueltas de «hola».
     Antes se rechazaba en cuanto el perfil se cruzaba, y eso tiraba levas que
-    escriben con una décima de error."""
+    escriben con una décima de error.
+
+    Los dos radios eran 8 y 14 hasta el 2026-10-05. Al bajar `caja_alto` de
+    30 a 24 la curvatura mejoró tanto que **el de 8 ya cabía** y no recortaba
+    nada: el escenario había dejado de existir. No se ha ajustado el test al
+    número nuevo, se ha reconstruido el escenario —un rodillo que no entra— y
+    para eso hacen falta 11 y 18. El de 18 da 0,44 mm contra los 0,25 del
+    umbral; con 16 salían 0,266, un 6 % por encima, que para un test es estar
+    en el filo.
+    """
     from compile.escribiente import SOCAVADO_TOLERABLE
 
     sana = compilar(hola())
-    tolerable = compilar(hola(), Escribiente(relacion=3.0, radio_rodillo=mm(8.0))).veredicto
-    excesivo = compilar(hola(), Escribiente(relacion=3.0, radio_rodillo=mm(14.0))).veredicto
+    tolerable = compilar(hola(), Escribiente(relacion=3.0, radio_rodillo=mm(11.0))).veredicto
+    excesivo = compilar(hola(), Escribiente(relacion=3.0, radio_rodillo=mm(18.0))).veredicto
 
     assert sana.veredicto.metricas["levas_recortadas"] == 0
     assert tolerable.metricas["levas_recortadas"] >= 1

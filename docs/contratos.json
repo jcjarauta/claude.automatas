@@ -363,9 +363,9 @@
         },
         {
           "nombre": "caja_alto",
-          "valor": 0.03,
+          "valor": 0.024,
           "unidad": "m",
-          "descripcion": "Caja de escritura",
+          "descripcion": "Caja de escritura. Eran 30 hasta el 2026-10-05: con 30 la relacion de curvatura de la leva derecha cae a 1,07 con una frase alta y el perfil se autointerseca sin dejarse recortar. Con 24 queda en 2,13. El papel no se mueve; cambia el margen al fondo, de 22 a 25",
           "tolerancia": ""
         },
         {

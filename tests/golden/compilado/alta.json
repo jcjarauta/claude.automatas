@@ -1,7 +1,8 @@
 {
-  "apto": false,
+  "apto": true,
   "avisos": [
-    "socavado_tolerable"
+    "curvatura_justa",
+    "curvatura_justa"
   ],
   "calajes_grados": {
     "derecho": -176.251166,
@@ -9,41 +10,39 @@
     "izquierdo": -3.748834
   },
   "caso": "alta",
-  "desviacion_de_lo_capturado_mm": 0.197258,
-  "error_trazo_mm": 0.087189,
-  "errores": [
-    "perfil_autointersecado"
-  ],
+  "desviacion_de_lo_capturado_mm": 0.182021,
+  "error_trazo_mm": 0.043132,
+  "errores": [],
   "levas": [
     {
       "canal": "izquierdo",
-      "curvatura_minima_mm": 2.345141,
+      "curvatura_minima_mm": 5.513575,
       "numero": "L-001",
-      "presion_maxima_grados": 7.420328,
-      "puntos_del_contorno": 1440,
-      "radio_maximo_mm": 44.076215,
-      "radio_minimo_mm": 40.518742,
-      "sha256": "7ff787cdf1ba7621ec4c260233e5143f353974fcdea77c062fbb47c5dcfe0d81"
+      "presion_maxima_grados": 5.887196,
+      "puntos_del_contorno": 720,
+      "radio_maximo_mm": 43.619003,
+      "radio_minimo_mm": 40.755337,
+      "sha256": "54c337866e67130fc0f953f79d028a753d4903d990cade2fa4a9786b8a1542ad"
     },
     {
       "canal": "derecho",
-      "curvatura_minima_mm": 3.209186,
+      "curvatura_minima_mm": 6.39323,
       "numero": "L-002",
-      "presion_maxima_grados": 6.875585,
-      "puntos_del_contorno": 1440,
-      "radio_maximo_mm": 48.798188,
-      "radio_minimo_mm": 46.148615,
-      "sha256": "7ff7739cf65b27df469d6c0a37c52b9ab3a8aee2742bcb879f557d2db85f1b2a"
+      "presion_maxima_grados": 5.782591,
+      "puntos_del_contorno": 720,
+      "radio_maximo_mm": 48.533693,
+      "radio_minimo_mm": 46.383105,
+      "sha256": "fe547c665bdf57c96954862bd5198d7d659c647b747a4a71b6a9f86cb6548c43"
     },
     {
       "canal": "elevador",
-      "curvatura_minima_mm": 13.090597,
+      "curvatura_minima_mm": 13.493039,
       "numero": "L-003",
-      "presion_maxima_grados": 8.348076,
-      "puntos_del_contorno": 1440,
+      "presion_maxima_grados": 8.33949,
+      "puntos_del_contorno": 720,
       "radio_maximo_mm": 52.281314,
       "radio_minimo_mm": 51.718289,
-      "sha256": "e50a4cf359fe3c33b5edff90bf6d65e111ab09f555c9ca3a05af9f7ef4c0d04e"
+      "sha256": "eb19f9b83ed1a906f08f9263e1af6dfefb8231325f3a5fd28f20a43fed9877ae"
     }
   ],
   "tramos": [
