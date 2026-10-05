@@ -2,6 +2,7 @@
 <meta charset="utf-8">
 <title>Escribiente · pedidos</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:,">
 <style>
   :root{--tinta:#1b1b1b;--papel:#fff;--fondo:#f4f2ee;--borde:#d8d4cc;
         --ok:#1a7f4b;--aviso:#9a6b00;--mal:#b03030;--guia:#bbb}
@@ -45,6 +46,22 @@
   .fila a:hover{border-color:var(--tinta)}
   .mal{color:var(--mal)}
   .leyenda{font-size:11px;color:#777;margin-top:8px}
+
+  /* El medidor de capacidad: los 360 grados de una vuelta, reales. */
+  .medidor{margin-top:14px;border-top:1px solid var(--borde);padding-top:12px}
+  .barra{display:flex;height:22px;border-radius:3px;overflow:hidden;
+       border:1px solid var(--borde);background:#eee}
+  .barra div{display:flex;align-items:center;justify-content:center;font-size:10px;
+       color:#fff;white-space:nowrap;overflow:hidden}
+  .tinta{background:var(--tinta)}
+  /* El vuelo va rayado: es tiempo de vuelta que no deja nada en el papel. */
+  .barra .vuelo{color:#4a4a4a;
+       background:repeating-linear-gradient(45deg,#c9c4ba,#c9c4ba 4px,#ddd9d1 4px,#ddd9d1 8px)}
+  .barra .pasada{width:100%;background:var(--mal);color:#fff}
+  .estado{margin-top:10px;font-size:14px;font-weight:700}
+  .estado.si{color:var(--ok)} .estado.falta{color:var(--aviso)} .estado.no{color:var(--mal)}
+  .estado small{display:block;font-weight:400;color:#666;font-size:12px;margin-top:2px}
+  .midiendo{color:#999;font-size:12px;margin-top:10px}
 </style>
 
 <header>
@@ -82,6 +99,7 @@
     <svg id="v" viewBox="0 0 200 70" preserveAspectRatio="xMidYMid meet"></svg>
     <p class="leyenda">En negro, lo que has pedido. En rojo, <b>lo que escribirán las
       levas</b>: sale de recorrerlas, no de repetir el dibujo.</p>
+    <div class="medidor" id="c"></div>
     <div id="r"></div>
   </div>
 </main>
@@ -152,14 +170,67 @@ const pedir = async () => {
   }
 }
 
-let t
-const luego = () => { clearTimeout(t); t = setTimeout(previa, 180) }
+// --- El medidor de capacidad --------------------------------------------
+// Dos velocidades, porque son dos cosas: ver la frase cuesta milisegundos y
+// se hace en cada tecla; saber si cabe cuesta medio segundo y espera a que
+// pares de escribir. Si las dos fueran al mismo ritmo, teclear iría a tirones.
+
+const TEXTOS = {
+  si:    ['Cabe en una vuelta', 'Nada que recortar: las tres levas salen enteras.'],
+  falta: ['Cabe, pero hay que medirla', ''],
+  no:    ['No cabe en una vuelta', 'Enlaza más, acorta la frase o repártela en renglones.'],
+}
+
+let serie = 0
+const mide = async () => {
+  if (!$('#texto').value.trim()) { $('#c').innerHTML = ''; return }
+  const mio = ++serie
+  $('#c').innerHTML = '<p class="midiendo">Midiendo la vuelta…</p>'
+  let j, res
+  try {
+    res = await fetch('/api/capacidad', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(pide())})
+    j = await res.json()
+  } catch (e) { if (mio === serie) $('#c').innerHTML = ''; return }
+  // Una respuesta que llega tarde no puede pisar a la de la última tecla.
+  if (mio !== serie) return
+  if (!res.ok) { $('#c').innerHTML = `<p class="midiendo mal">${j.detail}</p>`; return }
+
+  const r = j.reparto, total = r.tinta_grados + r.vuelo_grados
+  const pc = g => (100 * g / total).toFixed(1) + '%'
+  // Con los mínimos desbordados el reparto es un apaño para poder enseñar
+  // algo, no un presupuesto: pintarlo partido en tinta y vuelo daría una
+  // barra tranquilizadora debajo de un «no cabe».
+  const barra = r.cabe_por_minimos
+    ? `<div class="tinta" style="width:${pc(r.tinta_grados)}">${r.tinta_grados}° escribiendo</div>
+       <div class="vuelo" style="width:${pc(r.vuelo_grados)}">${r.vuelo_grados}° en el aire</div>`
+    : `<div class="pasada">los mínimos piden ${r.necesario_grados}° y la vuelta son 360°</div>`
+  const clase = {si: 'si', falta: 'falta', no: 'no'}[j.estado] || 'falta'
+  const [titulo, pie] = TEXTOS[{si: 'si', falta_medir: 'falta', no: 'no'}[j.estado]]
+  const inc = j.incidencias.map(i => `<p class="inc ${i.gravedad}">
+      <b>${i.mensaje}</b><span>${i.sugerencia || ''}</span></p>`).join('')
+  $('#c').innerHTML = `
+    <div class="barra">${barra}</div>
+    <p class="leyenda">${r.cabe_por_minimos
+      ? 'Una vuelta de manivela son 360°. Cada vez que el lápiz se levanta se come su parte, '
+        + 'y lo rayado no deja nada en el papel.'
+      : 'Cada trazo pide unos grados mínimos y cada levantada el doble del arco de subida. '
+        + 'Sumados pasan de la vuelta, así que no hay reparto posible.'}</p>
+    <p class="estado ${clase}">${titulo}${pie ? `<small>${pie}</small>` : ''}</p>${inc}`
+}
+
+let t, tc
+const luego = () => {
+  clearTimeout(t); t = setTimeout(previa, 180)
+  clearTimeout(tc); tc = setTimeout(mide, 450)
+}
 ;['texto', 'altura', 'enlace'].forEach(k => $('#' + k).addEventListener('input', luego))
-$('#fuente').addEventListener('change', previa)
+$('#fuente').addEventListener('change', () => { previa(); mide() })
 $('#b').addEventListener('click', pedir)
 
 fetch('/api/fuentes').then(r => r.json()).then(j => {
   $('#fuente').innerHTML = j.fuentes.map(f => `<option>${f}</option>`).join('')
-  previa()
+  previa(); mide()
 })
 </script>

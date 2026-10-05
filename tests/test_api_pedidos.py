@@ -66,3 +66,65 @@ def test_no_se_puede_descargar_nada_de_fuera_de_la_carpeta_del_pedido():
 def test_un_texto_vacio_no_pasa_de_la_puerta():
     assert cliente.post("/api/trazos", json={"texto": "   "}).status_code == 422
     assert cliente.post("/api/trazos", json={"texto": ""}).status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# El medidor de capacidad
+# ---------------------------------------------------------------------------
+
+
+def test_el_reparto_de_la_vuelta_suma_360_grados():
+    """La barra del medidor se dibuja con estos dos números: si no suman la
+    vuelta, enseña una proporción que no existe."""
+    datos = cliente.post("/api/capacidad", json={"texto": "Arrels"}).json()
+    reparto = datos["reparto"]
+    assert reparto["tinta_grados"] + reparto["vuelo_grados"] == pytest.approx(360.0, abs=0.2)
+    assert reparto["trazos"] >= 1
+
+
+def test_el_estado_tiene_tres_valores_y_no_dos():
+    """`Veredicto.apto` es un booleano honesto —no se ha encontrado ningún
+    error— pero en la vista previa «no he encontrado» no es «cabe»: faltan
+    por recorrer las levas recortadas. Un sí/no aquí prometería el número
+    que justamente no se ha calculado."""
+    assert cliente.post("/api/capacidad", json={"texto": "Arrels"}).json()["estado"] == "si"
+    assert cliente.post("/api/capacidad", json={"texto": "Gracias"}).json()["estado"] == (
+        "falta_medir"
+    )
+
+
+def test_cada_vuelo_del_lapiz_se_come_grados_de_la_vuelta():
+    """Es la razón de ser del medidor: lo que decide que una frase quepa no
+    es su longitud sino cuántas veces levanta el lápiz. Sin enlazar,
+    «Arrels» son seis trazos; enlazado, dos."""
+    sueltos = cliente.post("/api/capacidad", json={"texto": "Arrels", "enlace": 0.0}).json()
+    unidos = cliente.post("/api/capacidad", json={"texto": "Arrels", "enlace": 0.5}).json()
+    assert sueltos["reparto"]["vuelo_grados"] > unidos["reparto"]["vuelo_grados"]
+    assert sueltos["reparto"]["tinta_grados"] < unidos["reparto"]["tinta_grados"]
+
+
+def test_medir_la_capacidad_no_escribe_nada_en_disco():
+    """Se llama en cada pausa al teclear. Si dejara carpetas, una tarde de
+    pruebas llenaría `build/pedidos` de basura."""
+    from api.main import PEDIDOS
+
+    antes = sorted(p.name for p in PEDIDOS.iterdir()) if PEDIDOS.exists() else []
+    cliente.post("/api/capacidad", json={"texto": "Montserrat"})
+    despues = sorted(p.name for p in PEDIDOS.iterdir()) if PEDIDOS.exists() else []
+    assert antes == despues
+
+
+def test_una_frase_desbordada_no_pinta_una_barra_tranquilizadora():
+    """Cuando los mínimos pasan de la vuelta, `repartir` ya no reparte:
+    devuelve un corte proporcional para poder enseñar algo. Pintado como
+    presupuesto sale una barra con más tinta que la de una frase que casi
+    cabe, justo debajo de un «no cabe». El número que manda es cuánto piden
+    los mínimos."""
+    datos = cliente.post("/api/capacidad", json={"texto": "Feliz aniversari Montserrat"}).json()
+    assert datos["estado"] == "no"
+    assert datos["reparto"]["cabe_por_minimos"] == 0.0
+    assert datos["reparto"]["necesario_grados"] > 360.0
+
+    cabe = cliente.post("/api/capacidad", json={"texto": "Arrels"}).json()
+    assert cabe["reparto"]["cabe_por_minimos"] == 1.0
+    assert cabe["reparto"]["necesario_grados"] < 360.0

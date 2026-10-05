@@ -709,6 +709,7 @@ def compilar(
     capacidad: Capacidad | None = None,
     limites: LimitesLeva | None = None,
     en_la_caja: bool = False,
+    simular_el_trazo: bool = True,
 ) -> Compilacion:
     """De una frase a tres levas, con un solo veredicto al final.
 
@@ -718,6 +719,13 @@ def compilar(
     Con `en_la_caja` la escritura ya viene colocada en el papel, en el marco
     de la máquina, y no se vuelve a encajar: es lo que hace un renglón, que
     tiene que caer donde lo puso la composición entera (`compile.renglones`).
+
+    Sin `simular_el_trazo` se para antes de recorrer las levas y devuelve el
+    veredicto hasta ahí, con `simulacion` a `None` y sin piezas. Es la vista
+    previa: con «Gracias», lo que va delante tarda medio segundo y la
+    simulación cuarenta y cinco. **No es el mismo camino con menos cosas: es
+    el mismo camino parado**, para que la vista previa no pueda discrepar del
+    pedido.
     """
     maquina = maquina or Escribiente()
     elegir_muestras = capacidad is None
@@ -892,6 +900,51 @@ def compilar(
     )
     for incidencia in incidencias_contacto:
         veredicto = veredicto.con(incidencia)
+
+    if not simular_el_trazo:
+        # El camino corto de la vista previa. Con «Gracias», recorrer las
+        # levas tarda 45 s y todo lo de arriba junto medio segundo: parar
+        # aquí es lo que deja que saber si cabe cueste lo mismo que teclearlo.
+        #
+        # Y lo que falta no se calla. Una leva recortada escribe la letra
+        # redondeada, y CUÁNTO solo lo dice la simulación; decir que cabe sin
+        # ese número sería prometer lo que no se ha medido. De ahí que lo que
+        # hace lenta la compilación y lo que hace incierto el veredicto sean
+        # la misma cosa: sin recortes esto ya es la respuesta final.
+        if recortadas:
+            veredicto = veredicto.con(
+                Incidencia(
+                    gravedad="aviso",
+                    codigo="falta_medir_el_trazo",
+                    mensaje=(
+                        f"el rodillo no entra en algún tramo de la leva "
+                        f"{', '.join(sorted(recortadas))}: se corta su envolvente y la "
+                        f"letra sale redondeada"
+                    ),
+                    sugerencia="haz el cartucho para medir cuánto se aparta; es lo que tarda",
+                )
+            )
+        return Compilacion(
+            escritura=encajada,
+            programa=prog,
+            tramos=tramos,
+            perfiles=perfiles,
+            calajes=calajes,
+            piezas=[],
+            simulacion=None,
+            veredicto=Veredicto(
+                incidencias=veredicto.incidencias,
+                metricas={
+                    **veredicto.metricas,
+                    "levas_recortadas": float(len(recortadas)),
+                    "error_contacto_rad": contacto,
+                    "error_contacto_en_la_punta": contacto_en_la_punta,
+                    "desviacion_de_lo_capturado": desviacion,
+                    "radio_de_esquina": float(capacidad.radio_de_esquina),
+                    "muestras": float(capacidad.muestras),
+                },
+            ),
+        )
 
     simulacion = simular(
         perfiles,

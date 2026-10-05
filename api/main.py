@@ -31,12 +31,12 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-from compile.escribiente import compilar
+from compile.escribiente import Compilacion, compilar
 from compile.texto import ALTURA_DE_X, escritura_de, fuentes
 from core.errors import ErrorDeDominio
 from core.escritura import Escritura
 from core.tipografia import ENLACE
-from core.units import Metros, a_mm, mm
+from core.units import TAU, Metros, a_mm, mm
 
 RAIZ = Path(__file__).resolve().parent.parent
 PAGINA = RAIZ / "web" / "index.html"
@@ -101,6 +101,73 @@ def ver_trazos(peticion: Peticion) -> dict[str, Any]:
         "trazos": _trazos_mm(escritura),
         "ancho_mm": round(a_mm(escritura.ancho), 2),
         "alto_mm": round(a_mm(escritura.alto), 2),
+    }
+
+
+FALTA_MEDIR = "falta_medir_el_trazo"
+"""La incidencia que solo existe en el camino corto: hay levas recortadas y
+nadie ha recorrido todavía las levas para ver cuánto redondean la letra."""
+
+
+def _estado(compilacion: Compilacion) -> str:
+    """Tres estados, no dos.
+
+    `Veredicto.apto` es un booleano honesto —no se ha encontrado ningún
+    error— pero en la vista previa eso no es lo mismo que «cabe»: faltan por
+    medir las levas recortadas. Decir «sí» aquí sería prometer un número que
+    nadie ha calculado, y es justo el número por el que «Gracias» no pasa.
+    """
+    if not compilacion.veredicto.apto:
+        return "no"
+    if any(i.codigo == FALTA_MEDIR for i in compilacion.veredicto.incidencias):
+        return "falta_medir"
+    return "si"
+
+
+def _reparto(compilacion: Compilacion) -> dict[str, float]:
+    """Cómo se han repartido los 360°: lo que queda en el papel y lo que se
+    come el lápiz en el aire. Es el presupuesto de la máquina, y la frase o
+    cabe dentro de él o no cabe.
+
+    **`necesario_grados` no es decorativo.** Cuando los mínimos pasan de una
+    vuelta, `repartir` ya no reparte: devuelve un corte proporcional «para
+    poder enseñar cómo quedaría». Dibujar esos dos números como si fueran el
+    presupuesto pinta una barra sanísima —281° de tinta— justo al lado de un
+    «no cabe», y más sana que la de una frase que casi cabe. El número que
+    manda ahí es cuánto piden los mínimos, y lo publica el núcleo.
+    """
+    tinta = sum(float(t.arco) for t in compilacion.tramos if t.clase == "trazo")
+    vuelo = sum(float(t.arco) for t in compilacion.tramos if t.clase == "vuelo")
+    necesario = compilacion.veredicto.metricas.get("arco_minimo_necesario", 0.0)
+    return {
+        "tinta_grados": round(tinta * 360.0 / TAU, 1),
+        "vuelo_grados": round(vuelo * 360.0 / TAU, 1),
+        "necesario_grados": round(necesario * 360.0 / TAU, 1),
+        "cabe_por_minimos": float(necesario < TAU),
+        "trazos": float(sum(1 for t in compilacion.tramos if t.clase == "trazo")),
+    }
+
+
+@app.post("/api/capacidad")
+def medir_capacidad(peticion: Peticion) -> dict[str, Any]:
+    """¿Cabe la frase? El mismo camino del pedido, parado antes de simular.
+
+    Saber que no cabe tiene que costar lo que cuesta teclearlo. Recorrer las
+    levas tarda cuarenta y cinco segundos con dos recortadas; todo lo de
+    antes —reparto de θ, cinemática inversa, las tres levas y la envolvente
+    de C3— tarda medio segundo y es casi todo el veredicto.
+
+    No es un atajo ni una estimación: es `compilar` con una parada. Un
+    predictor aparte diría que cabe algo que luego no cabe, y esa es la
+    manera más rápida de que nadie se fíe de la vista previa.
+    """
+    compilacion = compilar(_componer(peticion), simular_el_trazo=False)
+    veredicto = compilacion.veredicto
+    return {
+        "estado": _estado(compilacion),
+        "reparto": _reparto(compilacion),
+        "incidencias": [i.model_dump(mode="json") for i in veredicto.incidencias],
+        "metricas": {k: round(v, 5) for k, v in veredicto.metricas.items()},
     }
 
 

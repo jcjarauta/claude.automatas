@@ -1068,6 +1068,59 @@ falla si el esquema versionado se queda atrás.
   `ENLACE` por defecto. Con enlace 0, «Arrels» sale en seis trazos y no
   cabe; con 0,5 sale en dos.
 
+  **El techo medido está entre cinco y siete trazos**, y es más bajo de lo
+  que parecía: «Arrels» (2) y «Juan Carlos» (5) caben; «Gracias» (7),
+  «Montserrat» (10) y «Feliz cumpleanos» (10) no. Que no escriba
+  «Montserrat» no es un caso raro de laboratorio, es el pedido probable.
+
+  Y el deslizante de enlace **funciona demasiado bien**: a 1,5 «Montserrat»
+  sale en un solo trazo y cabe, porque está dibujando todos los huecos,
+  incluidos los que la fuente declara levantadas. La frase cabe porque ha
+  dejado de ser la frase. Por encima del valle, el enlace cambia capacidad
+  por fidelidad y eso tiene que verse en la interfaz.
+
+- **Lo que hace lenta la compilación es exactamente lo que hace incierto el
+  veredicto.** Medido con «Gracias» (siete trazos): el reparto de θ, la
+  cinemática inversa, sintetizar las tres levas y la envolvente de C3 tardan
+  **5 ms** entre todas; recortar 0,18 s; verificar por contacto 0,30 s; y
+  **recorrer las levas, 45 s**. Casi todo el veredicto es instantáneo.
+
+  Y la simulación no sobra: es la que decide el `perfil_autointersecado` de
+  una leva recortada, que **no es geometría imposible sino fidelidad** —la
+  leva se puede cortar, y lo que falta por saber es cuánto redondea la
+  letra—. Así que las dos cosas coinciden: sin recortes la respuesta ya está
+  antes de simular, y con recortes hay que simular justo porque no está.
+
+  De ahí `compilar(..., simular_el_trazo=False)`, que es la vista previa.
+  **No es un predictor aparte**: es el mismo camino parado. Uno aparte diría
+  que cabe algo que luego no cabe, y a la segunda vez nadie lo mira. Lo
+  cruzan dos tests contra los cuatro casos de referencia: cada incidencia
+  del camino corto tiene que estar en el largo, y `falta_medir_el_trazo`
+  tiene que aparecer exactamente cuando el largo resuelve con
+  `socavado_tolerable` o `perfil_autointersecado`.
+
+- **«No he encontrado ningún error» no es «cabe», y un booleano no sabe
+  decir la diferencia.** `Veredicto.apto` es honesto —no hay errores en la
+  lista— pero en la vista previa faltan por medir las levas recortadas, que
+  es justo por lo que «Gracias» no pasa. La interfaz tiene **tres** estados
+  —`no`, `falta_medir`, `si`— y el del medio no se puede fabricar sin pedir
+  el cartucho. Reducirlo a sí/no prometería el número que no se ha
+  calculado.
+
+- **Una barra de reparto que se dibuja cuando no hay reparto tranquiliza.**
+  Con los mínimos desbordados, `repartir` deja de repartir y devuelve un
+  corte proporcional «para poder enseñar cómo quedaría». Pintado como
+  presupuesto, «Feliz aniversari Montserrat» salía con **281° de tinta y 78
+  de vuelo** —más sana que la de «Montserrat», que casi cabe— justo encima
+  de un «no cabe». El número que manda ahí es `arco_minimo_necesario`, que
+  el núcleo ya publica: 484° contra los 360 que hay.
+
+- **La hoja de estilo le volvió a ganar a la clase que yo creía poner.**
+  `.barra div{color:#fff}` es más específico que `.vuelo{color:#555}`, así
+  que el rótulo del vuelo salía blanco sobre el rayado claro e ilegible. Es
+  la familia del `text-anchor`, y las dos veces se ha visto **mirando la
+  página**, no leyendo el CSS. Un visor en el bucle, otra vez.
+
 - **Fase.** Un cartucho montado desfasado escribe basura. La marca física y la
   verificación van en el dossier, no solo en el código.
 

@@ -35,3 +35,7 @@ htmlcov/
 # Frontend (llega en E7)
 web/node_modules/
 web/dist/
+
+# npm suelto en la raíz: aquí no hay proyecto de node, solo el web/index.html.
+node_modules/
+package-lock.json
