@@ -728,7 +728,9 @@ def main(argv: list[str] | None = None) -> int:
     animacion.animate(op.velocidad)
     if op.gif:
         op.gif.parent.mkdir(parents=True, exist_ok=True)
-        guardar_gif(animacion, op.gif, len(tiempos), op.pausa, max(tiempos))
+        # El visor reproduce a `velocidad`: el GIF, igual. Con los tiempos de
+        # las pistas a secas salía cuatro veces más rápido que lo que se ve.
+        guardar_gif(animacion, op.gif, len(tiempos), op.pausa, max(tiempos) / op.velocidad)
         print(f"GIF en {op.gif}")
     return 0
 
