@@ -91,13 +91,34 @@ def _miembros(nombre: str) -> str:
                 "rueda",
                 "casquillo_rueda",
                 "muelle_garra",
-                "anillo_garra",
+                "circlip_garra_",
+                "prisionero_rueda",
             ),
             "arbol",
         ),
         (("pinon", "eje_manivela", "volante", "manivela"), "manivela"),
-        (("eje_balancin", "balancin", "palanca_lapiz", "bulon_tirante"), "balancin"),
-        (("mesa", "orejeta_mesa_", "eje_mesa_movil_"), "mesa"),
+        (
+            (
+                "eje_balancin",
+                "balancin",
+                "palanca_lapiz",
+                "bulon_tirante",
+                "circlip_bulon",
+                "circlip_balancin_",
+            ),
+            "balancin",
+        ),
+        # Los circlips 3, 4, 7 y 8 de la mesa son los de los ejes móviles.
+        (
+            (
+                "mesa",
+                "orejeta_mesa_",
+                "eje_mesa_movil_",
+                "tornillo_orejeta_",
+                *(f"circlip_mesa_{k}" for k in (3, 4, 7, 8)),
+            ),
+            "mesa",
+        ),
         (("tirante",), "tirante"),
         (
             (
@@ -108,6 +129,8 @@ def _miembros(nombre: str) -> str:
                 "lamina_flexura_",
                 "portaminas",
                 "casquillo_punta",
+                "prisionero_pinza",
+                "tornillo_lamina_",
             ),
             "punta",
         ),
@@ -125,10 +148,18 @@ def _miembros(nombre: str) -> str:
             f"tornillos_sector_{i}",
             f"mordaza_{i}",
             f"tornillo_mordaza_{i}",
+            f"prisionero_mordaza_{i}",
         } or (i == 3 and nombre == "casquillo_bieleta"):
             return f"seguidor_{i}"
     for n in (1, 2):
-        if nombre in {f"proximal_{n}", f"eje_pivote_{n}", f"tambor_{n}", f"tornillo_tambor_{n}"}:
+        if nombre in {
+            f"proximal_{n}",
+            f"eje_pivote_{n}",
+            f"tambor_{n}",
+            f"tornillo_tambor_{n}",
+            f"anillo_proximal_{n}",
+            f"circlip_tambor_{n}",
+        }:
             return f"brazo_{n}"
         if nombre in {f"distal_{n}", f"perno_codo_{n}", f"arandela_codo_{n}"}:
             return f"distal_{n}"

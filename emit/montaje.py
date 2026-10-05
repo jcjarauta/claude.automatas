@@ -35,6 +35,7 @@ from __future__ import annotations
 import math
 from collections.abc import Callable
 from dataclasses import dataclass
+from functools import cache
 from typing import Any
 
 from emit.plataforma import (
@@ -353,7 +354,7 @@ GRUPOS: tuple[Grupo, ...] = (
         "Lo que sujeta, arrastra y pone en fase el cartucho",
         "#2f6fdb",
         1.0,
-        ("munon", "eje_motriz", "garra", "pasador_garra", "muelle_garra", "anillo_garra"),
+        ("munon", "eje_motriz", "garra", "pasador_garra", "muelle_garra", "circlip_garra_"),
     ),
     Grupo(
         "accionamiento",
@@ -476,10 +477,25 @@ def nivel_de(grupo: str) -> str:
     raise ValueError(f"el grupo «{grupo}» no está en ningún nivel")
 
 
+@cache
+def _prefijos_de_la_tornilleria() -> tuple[tuple[str, str], ...]:
+    from emit.materiales import tornilleria
+
+    return tuple(sorted({(f.en_3d, f.grupo) for f in tornilleria() if f.en_3d}))
+
+
+def _grupo_de_la_tornilleria(nombre: str) -> set[str]:
+    return {g for prefijo, g in _prefijos_de_la_tornilleria() if nombre.startswith(prefijo)}
+
+
 def grupo_de(nombre: str) -> Grupo:
     """El grupo de una pieza colocada. Exactamente uno: dos sería ambiguo, y
     ninguno, una pieza que nadie audita."""
     suyos = [g for g in GRUPOS if nombre.startswith(g.prefijos)]
+    # La tornillería cae en el grupo que declara su línea de compra
+    # (`emit.materiales.Fijacion.grupo`), que es el que le da su marca.
+    suyos += [g for g in GRUPOS if g.nombre in _grupo_de_la_tornilleria(nombre)]
+    suyos = list(dict.fromkeys(suyos))
     if len(suyos) != 1:
         raise ValueError(f"«{nombre}» cae en {len(suyos)} grupos: {[g.nombre for g in suyos]}")
     return suyos[0]
@@ -730,11 +746,17 @@ def colocar(
     Lo que no entra: la cinta del cabestrante y sus cuatro mordazas, cuya
     posición sobre el sector dice su ficha, y la tornillería.
     """
+    from build123d import Pos
+
+    from emit import fijaciones as fj
     from emit.step import solido_de_pieza
 
     c = contrato_mm() if c is None else c
     hecho = taller(c) if piezas_base is None else piezas_base
     z, piezas = alturas(c), []
+    cortes: list[tuple[str, Any]] = []
+    """(pieza, sólido que se le resta): el agujero de cada tornillo en la pieza
+    que lo recibe. Se aplica al final, cuando ya está todo colocado."""
     al_marco = _del_cinco_barras(c)
     mm = 1000.0
 
@@ -753,6 +775,12 @@ def colocar(
     poste = hecho["poste"]
     for i, pivote in enumerate(pivotes):
         piezas.append(Colocada(f"poste{i + 1}", _poner(poste, 0.0, pivote, z["poste"][0]), False))
+        # El M3 avellanado, enrasado en la punta del poste sobre el plato 3.
+        punta_poste = Pos(*pivote, z["poste"][1])
+        piezas.append(
+            Colocada(f"tornillo_poste_{i + 1}", punta_poste * fj.avellanado(3.0, 10.0), False)
+        )
+        cortes.append((f"poste{i + 1}", punta_poste * fj.taladro_avellanado(3.0, 10.0)))
         # La altura de los platos la dan dos tubos donde no gira nada —de la
         # base al plato 1 y del 2 al 3— y dos collares donde sí: sobre el 1 y
         # bajo el 2, que es el vano de los seguidores. El M3 avellanado de la
@@ -776,11 +804,11 @@ def colocar(
             ("plato1", "sobre", z["plato1"][1]),
             ("plato2", "bajo", z["plato2"][0] - c["collar_seguidor_largo"]),
         ):
+            nombre = f"collar_plato_{plato[-1]}{lado}_{i + 1}"
+            piezas.append(Colocada(nombre, _poner(hecho["collar"], 0.0, pivote, pie), False))
             piezas.append(
-                Colocada(
-                    f"collar_plato_{plato[-1]}{lado}_{i + 1}",
-                    _poner(hecho["collar"], 0.0, pivote, pie),
-                    False,
+                _prisionero_del_collar(
+                    c, nombre, pivote, pie + c["collar_seguidor_largo"] / 2, cortes, False
                 )
             )
 
@@ -826,6 +854,12 @@ def colocar(
             )
         )
         piezas += _tope_y_muelle(c, z, hecho, i + 1, pivote, seg.psi_cero, seg.hacia_dentro, angulo)
+        pie_collar = z["seguidores"][0] - 1.0 - c["tope_placa_espesor"] - c["collar_seguidor_largo"]
+        piezas.append(
+            _prisionero_del_collar(
+                c, f"collar_seguidor_{i + 1}", pivote, pie_collar + 1.5, cortes, False
+            )
+        )
         if i < 2:  # el canal del elevador no lleva cabestrante
             piezas += _union_del_sector(c, z, hecho, i + 1, pivote, angulo)
             piezas.append(
@@ -867,10 +901,26 @@ def colocar(
                 True,
             )
         )
+        # El anillo de ajuste bajo el proximal: lo que no deja bajar al eje.
+        bajo = z[f"proximal_{n}"][0]
+        piezas.append(
+            Colocada(
+                f"anillo_proximal_{n}",
+                Pos(*pivote, bajo - ANILLO_DE_AJUSTE[1] - 0.05)
+                * fj.arandela(c["brazo_eje_diametro"], *ANILLO_DE_AJUSTE),
+                True,
+            )
+        )
+        # Y el circlip sobre el tambor: lo que no lo deja subir.
+        piezas.append(
+            Colocada(
+                f"circlip_tambor_{n}",
+                Pos(*pivote, z["tambor"][1] + 0.05) * fj.circlip(c["brazo_eje_diametro"]),
+                True,
+            )
+        )
         # El codo: un pasador enrasado calado en el distal, que gira en el
         # proximal, con una arandela de 0,5 entre los dos cubos.
-        from build123d import Pos
-
         cx, cy = al_marco(codo_plano)
         piezas.append(
             Colocada(
@@ -920,10 +970,93 @@ def colocar(
             - (c[("calaje_izquierdo", "calaje_derecho")[lado]] + c["brazo_origen_giro"]),
         )
 
-    piezas += _transmision(c, hecho, estado, z)
-    piezas += _levantamiento(c, hecho, estado, seguidores, z)
-    piezas += _portalapiz(c, hecho, z, al_marco(punta))
-    return piezas
+    piezas += _transmision(c, hecho, estado, z, cortes)
+    piezas += _levantamiento(c, hecho, estado, seguidores, z, cortes)
+    piezas += _portalapiz(c, hecho, z, al_marco(punta), cortes)
+    return _cortar(piezas, cortes)
+
+
+def _cortar(piezas: list[Colocada], cortes: list[tuple[str, Any]]) -> list[Colocada]:
+    """Resta a cada pieza los agujeros de la tornillería que recibe."""
+    por_pieza: dict[str, list[Any]] = {}
+    for nombre, corte in cortes:
+        por_pieza.setdefault(nombre, []).append(corte)
+    sin_dueno = set(por_pieza) - {p.nombre for p in piezas}
+    if sin_dueno:
+        raise ValueError(f"cortes para piezas que no están: {sorted(sin_dueno)}")
+    salida = []
+    for p in piezas:
+        solido = p.solido
+        for corte in por_pieza.get(p.nombre, []):
+            solido = solido - corte
+        salida.append(Colocada(p.nombre, solido, p.movil))
+    return salida
+
+
+ANILLO_DE_AJUSTE = (20.0, 2.95)
+"""Ø exterior y ancho del anillo bajo cada proximal: el hueco que deja el eje
+de pivote es de 3 (`test_el_eje_de_pivote_llega_del_collar_al_circlip`)."""
+
+LARGO_SOPORTE = 25.0
+"""El M2 de cada soporte de la mesa, desde bajo la base con la cabeza
+embutida: 25 de base y 2 en el soporte. Con 30 llegaba al eje fijo, que
+está a 6 de la base."""
+
+LARGO_LAMINA = 4.0
+"""El M2 de cada pestaña de lámina: en la pinza, con 5 llegaba al
+portaminas; 4 deja 0,1 de pared hasta su agujero."""
+
+PRISIONERO = (3.0, 4.0)
+"""Métrica y largo de los prisioneros DIN 913 de collares, casquillo y pinza."""
+
+
+def _prisionero_radial(
+    nombre: str,
+    centro: tuple[float, float, float],
+    direccion: tuple[float, float, float],
+    desde: float,
+    pared: float,
+    anfitriones: tuple[str, ...],
+    cortes: list[tuple[str, Any]],
+    movil: bool,
+) -> Colocada:
+    """Un prisionero que entra radial: la punta a `desde` del eje, contra lo
+    que aprieta, y su agujero roscado en cada anfitrión hasta `pared`."""
+    d, largo = PRISIONERO
+    ux, uy, uz = direccion
+
+    def a(r: float) -> tuple[float, float, float]:
+        return (centro[0] + r * ux, centro[1] + r * uy, centro[2] + r * uz)
+
+    tornillo = _cilindro((d - JUEGO_GIRATORIO) / 2, a(desde + 0.01), a(desde + 0.01 + largo))
+    agujero = _cilindro(d / 2, a(desde - 0.5), a(max(pared, desde + largo) + 0.5))
+    for anfitrion in anfitriones:
+        cortes.append((anfitrion, agujero))
+    return Colocada(nombre, tornillo, movil)
+
+
+def _prisionero_del_collar(
+    c: dict[str, float],
+    collar: str,
+    pivote: Punto,
+    altura: float,
+    cortes: list[tuple[str, Any]],
+    movil: bool,
+) -> Colocada:
+    """El M3 radial de un collar, hacia fuera del árbol: es por donde se le
+    llega con la llave."""
+    n = math.hypot(*pivote)
+    fuera = (pivote[0] / n, pivote[1] / n, 0.0)
+    return _prisionero_radial(
+        "prisionero_" + collar,
+        (*pivote, altura),
+        fuera,
+        c["poste_eje_diametro"] / 2,
+        c["collar_seguidor_diametro"] / 2,
+        (collar,),
+        cortes,
+        movil,
+    )
 
 
 ESPESOR_DE_LEVA = 5.0
@@ -1068,6 +1201,19 @@ def _cinta(
         * hecho["mordaza"]
     )
     piezas.append(Colocada(f"mordaza_{n}", mordaza, True))
+    # El prisionero que aprieta la cinta, en el agujero de M3 de la mordaza:
+    # la cabeza enrasada arriba y la punta sobre la cinta.
+    from emit import fijaciones as fj
+
+    ((ax, ay, _), _, _, _), *otros = fj.agujeros(mordaza, c["mordaza_tornillo_diametro"])
+    if otros:
+        raise ValueError("la mordaza tiene más de un agujero de M3")
+    techo = plano[1] + c["mordaza_espesor"]
+    piezas.append(
+        Colocada(
+            f"prisionero_mordaza_{n}", Pos(ax, ay, techo + 0.05) * fj.prisionero(3.0, 6.0), True
+        )
+    )
     # El centro de la ranura, con la mordaza a media carrera.
     hueco = c["mordaza_entre_tornillos"] + c["mordaza_voladizo"] - c["mordaza_largo"] / 2.0
     mx = sx + radial * math.cos(atras) + hueco * math.cos(atras + math.pi / 2.0)
@@ -1248,11 +1394,18 @@ def _entre_puntos(
         5.6, (0, 0, techo_garra - 1), (0, 0, techo_garra + c["garra_muelle_largo"] + 1)
     )
     piezas.append(Colocada("muelle_garra", muelle, True))
+    from build123d import Pos
+
+    from emit import fijaciones as fj
+
+    # Los dos circlips del eje de Ø10: sobre el muelle de la garra, y bajo el
+    # muñón, contra la cara baja del plato 1.
     anillo_z = techo_garra + c["garra_muelle_largo"]
-    anillo = _cilindro(8.0, (0, 0, anillo_z), (0, 0, anillo_z + 1.0)) - _cilindro(
-        c["eje_diametro"] / 2.0, (0, 0, anillo_z - 1), (0, 0, anillo_z + 2.0)
-    )
-    piezas.append(Colocada("anillo_garra", anillo, True))
+    circlip = fj.circlip(c["eje_diametro"])
+    piezas.append(Colocada("circlip_garra_1", Pos(0, 0, anillo_z) * circlip, True))
+    _, espesor = fj.DIN_6799[c["eje_diametro"]]
+    bajo_plato = z["plato1"][0] - 0.05 - espesor
+    piezas.append(Colocada("circlip_garra_2", Pos(0, 0, bajo_plato) * circlip, True))
     return piezas
 
 
@@ -1272,7 +1425,11 @@ def _punta(codo_1: Punto, codo_2: Punto, distal: float) -> Punto:
 
 
 def _transmision(
-    c: dict[str, float], hecho: dict[str, Any], estado: Estado, z: dict[str, tuple[float, float]]
+    c: dict[str, float],
+    hecho: dict[str, Any],
+    estado: Estado,
+    z: dict[str, tuple[float, float]],
+    cortes: list[tuple[str, Any]] | None = None,
 ) -> list[Colocada]:
     """El árbol, el reductor, el volante y la manivela.
 
@@ -1281,6 +1438,8 @@ def _transmision(
     encima del plato 3 y no en la bahía: centrado a 28 del árbol y con R52,
     lo atravesaban el árbol y la rueda.
     """
+    # Quien solo quiere dónde van las piezas no necesita sus agujeros.
+    cortes = [] if cortes is None else cortes
     from build123d import Align, Cylinder
 
     piezas = _entre_puntos(c, hecho, estado, z)
@@ -1309,6 +1468,20 @@ def _transmision(
         Colocada(
             "casquillo_rueda",
             _poner(hecho["casquillo_rueda"], estado.theta, z=z["engrane"][0]),
+            True,
+        )
+    )
+    # Su prisionero, radial a media altura: atraviesa la rueda y el casquillo
+    # y aprieta en el árbol.
+    piezas.append(
+        _prisionero_radial(
+            "prisionero_rueda",
+            (0.0, 0.0, z["engrane"][0] + c["casquillo_rueda_largo"] / 2),
+            (math.cos(estado.theta), math.sin(estado.theta), 0.0),
+            c["eje_diametro"] / 2,
+            c["casquillo_rueda_diametro"] / 2,
+            ("casquillo_rueda", "rueda"),
+            cortes,
             True,
         )
     )
@@ -1342,6 +1515,7 @@ def _levantamiento(
     estado: Estado,
     seguidores: list[Any],
     z: dict[str, tuple[float, float]],
+    cortes: list[tuple[str, Any]] | None = None,
 ) -> list[Colocada]:
     """La cadena del levantamiento, en el marco del cinco barras y llevada al
     de la leva: el seguidor 3 empuja la bieleta, la bieleta gira el eje del
@@ -1350,6 +1524,8 @@ def _levantamiento(
     El giro del eje y lo que baja la mesa vienen en el `Estado`: los calcula
     `compile.levantamiento`, que cierra el lazo de la bieleta.
     """
+    # Quien solo quiere dónde van las piezas no necesita sus agujeros.
+    cortes = [] if cortes is None else cortes
     from build123d import Pos, Rot
 
     g = c["brazo_origen_giro"]
@@ -1495,11 +1671,115 @@ def _levantamiento(
         * hecho["mesa"]
     )
     poner("mesa", mesa, True)
+
+    # --- la tornillería y la retención ---------------------------------------
+    from emit import fijaciones as fj
+
+    def cortar(nombre: str, solido: Any) -> None:
+        cortes.append((nombre, a_leva * solido))
+
+    def a_lo_largo(solido: Any, punto: tuple[float, float, float], eje: str) -> Any:
+        """El sólido de su marco (eje en +Z) con su eje a lo largo de X o Y."""
+        x, z_ = {"+X": ((0, 1, 0), (1, 0, 0)), "-X": ((0, 1, 0), (-1, 0, 0))}.get(
+            eje, ((1, 0, 0), (0, 1, 0) if eje == "+Y" else (0, -1, 0))
+        )
+        return _en_plano(solido, punto, x, z_)
+
+    # El circlip del bulón, por fuera del ojo del tirante.
+    fuera_tirante = c["tirante_y"] + c["tirante_diametro"] / 2 + 0.05
+    poner(
+        "circlip_bulon",
+        a_lo_largo(fj.circlip(6.0), (perno[0], fuera_tirante, perno[1]), "+Y"),
+        True,
+    )
+    # Los dos circlips del eje del balancín, por fuera de sus apoyos.
+    _, s4 = fj.DIN_6799[c["balancin_eje_diametro"]]
+    for k, (cual, signo) in enumerate((("trasero", -1), ("delantero", 1)), start=1):
+        cara = c[f"apoyo_balancin_{cual}_y"] + signo * (c["apoyo_balancin_fondo"] / 2 + 0.05)
+        y = cara if signo > 0 else cara - s4
+        poner(
+            f"circlip_balancin_{k}",
+            a_lo_largo(fj.circlip(c["balancin_eje_diametro"]), (x_eje, y, z_eje), "+Y"),
+            True,
+        )
+    # Los apoyos, al plato 2: un M3 que baja por el plato y rosca en el apoyo.
+    techo_plato = z["plato2"][1]
+    for cual in ("trasero", "delantero"):
+        en = (x_eje, c[f"apoyo_balancin_{cual}_y"], techo_plato)
+        poner(f"tornillo_apoyo_{cual}", Pos(*en) * fj.allen(3.0, 16.0), False)
+        cortar("plato2", Pos(*en) * fj.taladro(3.0, 16.0))
+        cortar(f"apoyo_balancin_{cual}", Pos(*en) * fj.taladro(3.0, 16.0))
+    # Los soportes de la mesa, desde bajo la base: la cabeza embutida.
+    pie_base = z["base"][0]
+    cabeza = fj.CABEZA_DIN_912[2.0]
+    for lado, y_fijo in (
+        ("trasera", c["mesa_bisagra_cerca"]),
+        ("delantera", c["mesa_bisagra_lejos"]),
+    ):
+        for signo in ("d", "i"):
+            x0 = dentro if signo == "d" else -fuera
+            x_sop = x0 + ancho if signo == "d" else x0 - c["soporte_mesa_ancho"]
+            en = Pos(x_sop + c["soporte_mesa_ancho"] / 2, y_fijo, pie_base + cabeza[1]) * Rot(X=180)
+            poner(f"tornillo_soporte_{lado}_{signo}", en * fj.allen(2.0, LARGO_SOPORTE), False)
+            cortar("base", en * fj.taladro(2.0, LARGO_SOPORTE, cabeza))
+            cortar(f"soporte_mesa_{lado}_{signo}", en * fj.taladro(2.0, LARGO_SOPORTE))
+    # Los circlips de los ejes de la mesa: uno por fuera de cada soporte en
+    # los fijos, y uno en cada punta del móvil.
+    _, s15 = fj.DIN_6799[c["mesa_eje_diametro"]]
+    k = 0
+    for _lado, y_fijo in (
+        ("trasera", c["mesa_bisagra_cerca"]),
+        ("delantera", c["mesa_bisagra_lejos"]),
+    ):
+        y_movil, z_movil = y_fijo + biela * math.cos(a), zb + biela * math.sin(a)
+        fuera_soporte = fuera + c["soporte_mesa_ancho"] + 0.05
+        for x, y_, z_, movil in (
+            (fuera_soporte, y_fijo, zb, False),
+            (-fuera_soporte - s15, y_fijo, zb, False),
+            (fuera + 0.05, y_movil, z_movil, True),
+            (-fuera - 0.05 - s15, y_movil, z_movil, True),
+        ):
+            k += 1
+            poner(
+                f"circlip_mesa_{k}",
+                a_lo_largo(fj.circlip(c["mesa_eje_diametro"]), (x, y_, z_), "+X"),
+                movil,
+            )
+    # La mesa a sus orejetas: un M2 por cada una, en el agujero de la mesa
+    # que cae sobre ella.
+    for lado in ("trasera", "delantera"):
+        orejeta = next(p for p in piezas if p.nombre == f"orejeta_mesa_{lado}")
+        caja = (a_leva.inverse() * orejeta.solido).bounding_box()
+        sobre = [
+            (punto, direccion)
+            for punto, direccion, _, _ in fj.agujeros(mesa, c["mesa_tornillo_diametro"])
+            if caja.min.X <= punto[0] <= caja.max.X and caja.min.Y <= punto[1] <= caja.max.Y
+        ]
+        if len(sobre) != 1:
+            raise ValueError(f"la orejeta {lado} tiene {len(sobre)} agujeros de la mesa encima")
+        (px, py, _), _ = sobre[0]
+        en = Pos(px, py, mesa.bounding_box().max.Z)
+        poner(f"tornillo_orejeta_{lado}", en * fj.allen(2.0, 8.0), True)
+        cortar(f"orejeta_mesa_{lado}", en * fj.taladro(2.0, 8.0))
+    # La arandela de presión que retiene la pata de la bieleta en el balancín.
+    poner(
+        "arandela_bieleta",
+        a_lo_largo(
+            fj.arandela(c["bieleta_diametro"], 4.4, 0.5),
+            (ojo[0], y_balancin - 0.05, ojo[2]),
+            "-Y",
+        ),
+        True,
+    )
     return piezas
 
 
 def _portalapiz(
-    c: dict[str, float], hecho: dict[str, Any], z: dict[str, tuple[float, float]], punta: Punto
+    c: dict[str, float],
+    hecho: dict[str, Any],
+    z: dict[str, tuple[float, float]],
+    punta: Punto,
+    cortes: list[tuple[str, Any]] | None = None,
 ) -> list[Colocada]:
     """El lápiz y lo que lo sujeta, en la punta del cinco barras.
 
@@ -1507,6 +1787,8 @@ def _portalapiz(
     sobre la punta no mueve la mina. El portaminas va rígido sobre las dos
     láminas, y es la mesa la que baja para levantar.
     """
+    # Quien solo quiere dónde van las piezas no necesita sus agujeros.
+    cortes = [] if cortes is None else cortes
     from build123d import Align, Box, Pos, Rot
 
     piezas: list[Colocada] = []
@@ -1556,4 +1838,50 @@ def _portalapiz(
             )
         poner(f"lamina_flexura_{n}", lamina)
     poner("portaminas", Pos(0, 0, c["mesa_altura"]) * hecho["portaminas"])
+
+    # --- la tornillería -----------------------------------------------------
+    from emit import fijaciones as fj
+
+    def cortar(nombre: str, solido: Any) -> None:
+        cortes.append((nombre, hacia * solido))
+
+    # El prisionero de la pinza, por su cara -X: la de proa lleva las láminas.
+    medio = tope - c["pinza_largo"] / 2
+    r_agujero = c["pinza_agujero_diametro"] / 2
+    d, largo = PRISIONERO
+    tornillo = _cilindro(
+        (d - JUEGO_GIRATORIO) / 2,
+        (-(r_agujero + 0.01 + largo), 0.0, medio),
+        (-(r_agujero + 0.01), 0.0, medio),
+    )
+    poner("prisionero_pinza", tornillo)
+    cortar(
+        "pinza", _cilindro(d / 2, (-cara_pinza - 0.5, 0.0, medio), (-r_agujero + 0.5, 0.0, medio))
+    )
+    # Un M2 por pestaña: dos en el poste y dos en la pinza, con la cabeza en
+    # el lado libre de la lámina.
+    e = c["flexura_espesor"]
+    k = 0
+    for n, zl in enumerate((tope - 22.0, tope - 2.0), start=1):
+        zt = zl - c["flexura_empotramiento"] / 2
+        for cara, hacia_pieza, anfitrion in (
+            (cara_pinza + e, (0.0, -1.0, 0.0), "pinza"),
+            (cara_poste - e, (0.0, 1.0, 0.0), "poste_horquilla"),
+        ):
+            k += 1
+            en = _en_plano(
+                fj.allen(2.0, LARGO_LAMINA),
+                (0.0, cara, zt),
+                (1.0, 0.0, 0.0),
+                (0.0, -hacia_pieza[1], 0.0),
+            )
+            poner(f"tornillo_lamina_{k}", en)
+            agujero = _en_plano(
+                fj.taladro(2.0, LARGO_LAMINA + e),
+                (0.0, cara, zt),
+                (1.0, 0.0, 0.0),
+                (0.0, -hacia_pieza[1], 0.0),
+            )
+            cortar(anfitrion, agujero)
+            cortar(f"lamina_flexura_{n}", agujero)
     return piezas

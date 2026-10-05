@@ -118,11 +118,12 @@
       "tornilleria": {
         "1": "DIN 912 M3 × 16 · apoyos del balancín, del plato 2",
         "2": "DIN 912 M2 × 8 · mesa a sus orejetas",
-        "3": "DIN 912 M2 × 30 · soportes de la mesa, desde bajo la base",
+        "3": null,
         "4": "DIN 6799 para eje Ø6 · bulón del tirante",
         "5": "DIN 6799 para eje Ø4 · eje del balancín, por fuera",
         "6": "DIN 6799 para eje Ø1,5 · ejes de la mesa",
-        "7": "arandela de presión Ø2 · bieleta en el balancín"
+        "7": "arandela de presión Ø2 · bieleta en el balancín",
+        "8": "DIN 912 M2 × 25 · soportes de la mesa, desde bajo la base"
       }
     },
     "levas": {
@@ -148,7 +149,8 @@
       },
       "tornilleria": {
         "1": "DIN 913 M3 × 4, punta plana · pinza del portaminas",
-        "2": "DIN 912 M2 × 5 · pestañas de las láminas"
+        "2": null,
+        "3": "DIN 912 M2 × 4 · pestañas de las láminas"
       }
     },
     "seguidores": {

@@ -92,7 +92,10 @@ def preparar(nombre: str):
     prefijos_comerciales = tuple(
         pre for nombre, pre in COMERCIALES_COLOCADOS.items() if ("comerciales", nombre) in todas
     )
-    dibujadas_sin_ficha = ("tornillo", "arandela_codo_")
+    # Lo que está dibujado y no lleva ficha a propósito: la tornillería va en
+    # su tabla (cada línea dice qué pieza la dibuja), y las levas son de cada
+    # pedido (plantillas.pdf).
+    dibujadas_sin_ficha = ("leva_", *{f.en_3d for f in tornilleria() if f.en_3d})
     sin_ficha = tuple(
         sorted(
             {

@@ -51,9 +51,9 @@ Las cantidades salen de las piezas del listado: si cambia cuántos sectores o co
 | DIN 913 M3 × 4, punta plana | 1 | casquillo de la rueda |
 | DIN 913 M3 × 4, punta plana | 1 | pinza del portaminas |
 | DIN 912 M2 × 3 | 2 | extremos de la cinta en el tambor |
-| DIN 912 M2 × 5 | 4 | pestañas de las láminas |
+| DIN 912 M2 × 4 | 4 | pestañas de las láminas |
 | DIN 912 M2 × 8 | 2 | mesa a sus orejetas |
-| DIN 912 M2 × 30 | 4 | soportes de la mesa, desde bajo la base |
+| DIN 912 M2 × 25 | 4 | soportes de la mesa, desde bajo la base |
 | DIN 705 Ø10, anillo de ajuste | 2 | bajo cada brazo proximal |
 | DIN 6799 para eje Ø10 | 2 | sobre cada tambor |
 | DIN 6799 para eje Ø10 | 2 | bajo el muñón y sobre el muelle de la garra |

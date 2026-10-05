@@ -1219,6 +1219,14 @@ DESPIECE = (MARGEN + 96.0, 100.0, 80.0, 78.0)
 
 RADIO_GLOBO = 3.0
 
+SIN_DESPIECE = {
+    "": "Este grupo no tiene piezas que fabricar: lo que lleva se compra entero.",
+    "levas": "Las levas no tienen marca ni ficha: son de cada pedido, la frase del cliente. "
+    "Se cortan de plantillas.pdf (o de los DXF L-001 a L-003) y se enhebran en el cartucho. "
+    "Esta hoja lleva lo que es igual en todos los pedidos.",
+}
+"""Lo que dice la hoja de un grupo sin piezas fabricadas, en lugar del despiece."""
+
 
 def despiece_en_hoja(g: FichasDeGrupo) -> Any:
     """El despiece de la hoja de grupo, ya en mm de la hoja: lo que se dibuja,
@@ -1232,6 +1240,8 @@ def despiece_en_hoja(g: FichasDeGrupo) -> Any:
     for marca, nombre, solido in g.despiece:
         visibles, _ = solido.project_to_viewport(origen, arriba, mira)
         propias.append((marca, nombre, [_polilinea(a) for a in visibles]))
+    if not propias:
+        return Esquema()
     x0, y0, x1, y1 = caja_de([q for _, _, polis in propias for q in polis])
     # Sitio para una columna de globos a cada lado.
     x, y, w, h = DESPIECE
@@ -1276,6 +1286,9 @@ def _ficha_de_grupo(cv: Any, g: FichasDeGrupo, hoja: str, version: str) -> None:
     cv.setFillColor(HexColor("#41464d"))
     cv.drawString((MARGEN + 94) * MM, 182 * MM, "DESPIECE (el grupo entero, explosionado)")
     esquema = despiece_en_hoja(g)
+    if not esquema.lineas:
+        cv.setFillColor(HexColor(TINTA))
+        _parrafo(cv, SIN_DESPIECE.get(g.grupo.nombre, SIN_DESPIECE[""]), MARGEN + 96, 170, 78, 8)
     cv.setStrokeColor(HexColor(g.grupo.color))
     for _color, grosor, puntos in esquema.lineas:
         cv.setLineWidth(grosor * 0.6 * MM)
@@ -1305,7 +1318,9 @@ def _ficha_de_grupo(cv: Any, g: FichasDeGrupo, hoja: str, version: str) -> None:
         filas.append(
             (str(p.marca), p.nombre, str(p.cantidad_en_el_grupo), f.material, f.proceso, p.plano)
         )
-    y = _tabla(cv, MARGEN + 4, 95, (11, 26, 10, 46, 60, 22), filas, cuerpo=6.4)
+    y = 95.0
+    if g.piezas:
+        y = _tabla(cv, MARGEN + 4, y, (11, 26, 10, 46, 60, 22), filas, cuerpo=6.4)
     filas = [("Marca", "Comercial y tornillería", "Cant.", "Para")]
     filas += [(k.codigo, k.designacion, str(k.cantidad), k.para) for k in g.comerciales]
     y = _tabla(cv, MARGEN + 4, y - 1, (16, 52, 10, 97), filas, cuerpo=6.4)
@@ -1324,6 +1339,12 @@ def _ficha_de_grupo(cv: Any, g: FichasDeGrupo, hoja: str, version: str) -> None:
     cv.setFont("Helvetica-Bold", 8)
     cv.drawString(x * MM, y * MM, "SECUENCIA DE MONTAJE")
     y -= 4.5
+    if not g.piezas:
+        from emit.dossier import ORDEN_DE_MONTAJE
+
+        paso = ORDEN_DE_MONTAJE.index(g.grupo.nombre) + 1
+        cv.setFont("Helvetica", 6.4)
+        cv.drawString(x * MM, y * MM, _texto(f"En el dossier, paso {paso} de la secuencia."))
     for paso, p in enumerate(g.piezas, start=1):
         f = LISTADO[p.nombre]
         if not f.montaje or y < CAJETIN[1] + CAJETIN[3] + 8:

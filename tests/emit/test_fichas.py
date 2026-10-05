@@ -188,3 +188,21 @@ def test_b5_cada_cota_lleva_la_fila_de_su_variable_y_no_su_nombre(paginas, ampli
     ]
     assert not en_planta
     assert any(s == "Ref." for _, _, s in tambor)
+
+
+@pytest.mark.slow
+def test_un_grupo_sin_piezas_fabricadas_tiene_su_hoja_de_grupo(tmp_path):
+    """Las levas: sin ficha a propósito (son de cada pedido), no una laguna.
+    El índice del dossier remite a esta hoja para la plancha de POM."""
+    pytest.importorskip("build123d", reason="hace falta el kernel: uv sync --group cad")
+    from emit.fichas import SIN_DESPIECE, despiece_en_hoja, escribir_fichas
+    from scripts.fichas import preparar
+
+    levas = preparar("levas")
+    assert not levas.piezas
+    assert not levas.sin_ficha
+    assert not despiece_en_hoja(levas).lineas
+    pdf = escribir_fichas(levas, tmp_path / "l.pdf", "commit x", comprimir=False).read_bytes()
+    assert pdf.count(b"/Type /Page") - pdf.count(b"/Type /Pages") == 1
+    assert b"C-LEV-01" in pdf
+    assert SIN_DESPIECE["levas"].split()[0].encode() in pdf

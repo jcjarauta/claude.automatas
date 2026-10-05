@@ -150,6 +150,11 @@ class Fijacion:
     """El grupo donde se monta, **declarado**: es el que le da su marca
     (`docs/numeracion.json`). Una línea que sirve a dos grupos se parte en
     dos, porque una marca vive en un grupo y nada más."""
+    en_3d: str = ""
+    """El prefijo de la pieza colocada que la dibuja (`emit.montaje.colocar`)."""
+    por_pieza: int = 1
+    """Cuántas de esta línea lleva cada pieza colocada: los dos M3 de un
+    sector van en un mismo sólido, con sus tuercas."""
 
     @property
     def clave(self) -> str:
@@ -169,92 +174,190 @@ def tornilleria() -> list[Fijacion]:
     union = 2 * n["sector"]  # dos M3 por sector, a través de calzo y seguidor
     rodillos = n["casquillo_rodillo"]
     return [
-        Fijacion("DIN 912 M3 × 16", union, "sector, calzo y seguidor", "amplificador"),
+        Fijacion(
+            "DIN 912 M3 × 16",
+            union,
+            "sector, calzo y seguidor",
+            "amplificador",
+            en_3d="tornillos_sector_",
+            por_pieza=2,
+        ),
         Fijacion(
             "DIN 912 M3 × 16",
             n["apoyo_balancin"],
             "apoyos del balancín, del plato 2",
             "levantamiento",
+            en_3d="tornillo_apoyo_",
         ),
         Fijacion(
             "DIN 7991 M3 × 30, cortado a 12,5 / 19,5 / 26,5",
             rodillos,
             "ejes de rodillo",
             "seguidores",
+            en_3d="eje_rodillo_",
         ),
         Fijacion(
-            "DIN 7991 M3 × 10", 3, "punta roscada de cada poste, sobre el plato 3", "bastidor"
+            "DIN 7991 M3 × 10",
+            3,
+            "punta roscada de cada poste, sobre el plato 3",
+            "bastidor",
+            en_3d="tornillo_poste_",
         ),
-        Fijacion("DIN 439 M3 (tuerca fina)", union, "unión del sector", "amplificador"),
-        Fijacion("DIN 439 M3 (tuerca fina)", rodillos, "ejes de rodillo", "seguidores"),
         Fijacion(
-            "DIN 912 M4 × 16", n["mordaza"], "mordaza al sector, por su ranura", "amplificador"
+            "DIN 439 M3 (tuerca fina)",
+            union,
+            "unión del sector",
+            "amplificador",
+            en_3d="tornillos_sector_",
+            por_pieza=2,
         ),
-        Fijacion("DIN 439 M4 (tuerca fina)", n["mordaza"], "bajo el sector", "amplificador"),
+        Fijacion(
+            "DIN 439 M3 (tuerca fina)",
+            rodillos,
+            "ejes de rodillo",
+            "seguidores",
+            en_3d="eje_rodillo_",
+        ),
+        Fijacion(
+            "DIN 912 M4 × 16",
+            n["mordaza"],
+            "mordaza al sector, por su ranura",
+            "amplificador",
+            en_3d="tornillo_mordaza_",
+        ),
+        Fijacion(
+            "DIN 439 M4 (tuerca fina)",
+            n["mordaza"],
+            "bajo el sector",
+            "amplificador",
+            en_3d="tornillo_mordaza_",
+        ),
         Fijacion(
             "DIN 913 M3 × 6, punta plana",
             n["mordaza"],
             "aprieta la cinta en la mordaza",
             "amplificador",
+            en_3d="prisionero_mordaza_",
         ),
-        Fijacion("DIN 913 M3 × 4, punta plana", n["collar"], "collares", "bastidor"),
+        Fijacion(
+            "DIN 913 M3 × 4, punta plana",
+            n["collar"],
+            "collares",
+            "bastidor",
+            en_3d="prisionero_collar_",
+        ),
         Fijacion(
             "DIN 913 M3 × 4, punta plana",
             n["casquillo_rueda"],
             "casquillo de la rueda",
             "accionamiento",
-        ),
-        Fijacion("DIN 913 M3 × 4, punta plana", n["pinza"], "pinza del portaminas", "portalapiz"),
-        Fijacion(
-            "DIN 912 M2 × 3", n["tambor"], "extremos de la cinta en el tambor", "amplificador"
+            en_3d="prisionero_rueda",
         ),
         Fijacion(
-            "DIN 912 M2 × 5", 2 * n["lamina_flexura"], "pestañas de las láminas", "portalapiz"
+            "DIN 913 M3 × 4, punta plana",
+            n["pinza"],
+            "pinza del portaminas",
+            "portalapiz",
+            en_3d="prisionero_pinza",
         ),
-        Fijacion("DIN 912 M2 × 8", n["orejeta_mesa"], "mesa a sus orejetas", "levantamiento"),
         Fijacion(
-            "DIN 912 M2 × 30",
+            "DIN 912 M2 × 3",
+            n["tambor"],
+            "extremos de la cinta en el tambor",
+            "amplificador",
+            en_3d="tornillo_tambor_",
+        ),
+        Fijacion(
+            "DIN 912 M2 × 4",
+            2 * n["lamina_flexura"],
+            "pestañas de las láminas",
+            "portalapiz",
+            en_3d="tornillo_lamina_",
+        ),
+        Fijacion(
+            "DIN 912 M2 × 8",
+            n["orejeta_mesa"],
+            "mesa a sus orejetas",
+            "levantamiento",
+            en_3d="tornillo_orejeta_",
+        ),
+        Fijacion(
+            "DIN 912 M2 × 25",
             n["soporte_mesa"],
             "soportes de la mesa, desde bajo la base",
             "levantamiento",
+            en_3d="tornillo_soporte_",
         ),
         Fijacion(
             "DIN 705 Ø10, anillo de ajuste",
             n["eje_pivote"],
             "bajo cada brazo proximal",
             "cinco_barras",
+            en_3d="anillo_proximal_",
         ),
-        Fijacion("DIN 6799 para eje Ø10", n["eje_pivote"], "sobre cada tambor", "amplificador"),
+        Fijacion(
+            "DIN 6799 para eje Ø10",
+            n["eje_pivote"],
+            "sobre cada tambor",
+            "amplificador",
+            en_3d="circlip_tambor_",
+        ),
         Fijacion(
             "DIN 6799 para eje Ø10",
             n["munon"] + n["garra"],
             "bajo el muñón y sobre el muelle de la garra",
             "entre_puntos",
+            en_3d="circlip_garra_",
         ),
-        Fijacion("DIN 6799 para eje Ø6", n["bulon_tirante"], "bulón del tirante", "levantamiento"),
+        Fijacion(
+            "DIN 6799 para eje Ø6",
+            n["bulon_tirante"],
+            "bulón del tirante",
+            "levantamiento",
+            en_3d="circlip_bulon",
+        ),
         Fijacion(
             "DIN 6799 para eje Ø4",
             2 * n["eje_balancin"],
             "eje del balancín, por fuera",
             "levantamiento",
+            en_3d="circlip_balancin_",
         ),
         Fijacion(
             "DIN 6799 para eje Ø1,5",
             2 * n["eje_mesa_movil"] + n["eje_mesa_fijo"],
             "ejes de la mesa",
             "levantamiento",
+            en_3d="circlip_mesa_",
         ),
-        Fijacion("DIN 7 Ø2 × 16", n["garra"], "pasador de la garra", "entre_puntos"),
+        Fijacion(
+            "DIN 7 Ø2 × 16",
+            n["garra"],
+            "pasador de la garra",
+            "entre_puntos",
+            en_3d="pasador_garra",
+        ),
         Fijacion(
             "DIN 988 6 × 12 × 0,5",
             n["perno_codo"],
             "arandela de cada codo del cinco barras",
             "cinco_barras",
+            en_3d="arandela_codo_",
         ),
         Fijacion(
-            "DIN 7 Ø3 × 6", n["placa_tope"], "pasadores de tope, de pie en la placa", "seguidores"
+            "DIN 7 Ø3 × 6",
+            n["placa_tope"],
+            "pasadores de tope, de pie en la placa",
+            "seguidores",
+            en_3d="pasador_tope_",
         ),
-        Fijacion("arandela de presión Ø2", n["bieleta"], "bieleta en el balancín", "levantamiento"),
+        Fijacion(
+            "arandela de presión Ø2",
+            n["bieleta"],
+            "bieleta en el balancín",
+            "levantamiento",
+            en_3d="arandela_bieleta",
+        ),
     ]
 
 

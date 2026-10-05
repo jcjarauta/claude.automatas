@@ -1,6 +1,6 @@
 # Propuesta · la documentación completa: numeración, explosión, índice, estilo y fichas dibujables
 
-2026-10-05 · estado: **aprobada; fases 1 a 5 hechas**, 6 pendiente
+2026-10-05 · estado: **aprobada; fases 1 a 6 hechas**; de la 6 quedan seis decisiones de diseño en `propuesta_tornilleria.md`
 
 Dos encargos que se juntan aquí: el bloque B del dossier (numeración única,
 explosión de conjunto, índice, escala y estilo) y que **cada ficha de pieza
@@ -213,6 +213,15 @@ anillos concéntricos: lo que acota la ficha basta.)
 | **4** | `Explosion` declarada por grupo + explosión de conjunto + test de globos y bloques | dossier, montaje |
 | **5** | Índice con documento y página | dossier |
 | **6** | Fichas de los diez grupos, y la tornillería dibujada que quedó del codo | todo |
+
+> **Hecho así (fase 6).** `scripts/dossier_completo.py` escribe en
+> `dossier/`, en la raíz, el dossier, las fichas de los diez grupos (las
+> levas, con su hoja de grupo sin despiece: son de cada pedido), los
+> informes de numeración y de fichas dibujables, y `INDICE.md` con cada
+> comando y lo que produce. La tornillería, las 26 líneas y 72 piezas,
+> está en 3D (`emit/fijaciones.py`, `emit.montaje`); cada línea dice qué
+> pieza la dibuja y un test lo cuenta. Lo que no cabe espera decisión en
+> `propuesta_tornilleria.md`.
 
 Cada fase acaba con lint, mypy, `uv run --group cad pytest`, commit y push, y
 los PDF idénticos byte a byte con la misma entrada.
