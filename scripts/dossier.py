@@ -49,6 +49,8 @@ def datos(version: str | None = None):
     from emit.catalogo import cargar
     from emit.dossier import Datos
     from emit.materiales import tornilleria
+    from emit.numeracion import cargar as cargar_registro
+    from emit.numeracion import marcas
     from emit.plataforma import LISTADO
     from scripts.ver import _piezas
 
@@ -59,7 +61,13 @@ def datos(version: str | None = None):
         (n, f.cantidad, f.material, f.proceso, grupo_de_pieza(n, nombres), f.montaje)
         for n, f in LISTADO.items()
     )
-    comerciales = tuple((p.nombre, p.cantidad, p.designacion) for p in cargar())
+    # La línea de catálogo de toda la tornillería no es una pieza: su detalle,
+    # numerado línea a línea, es la tabla de tornillería.
+    from scripts.numeracion import SIN_MARCA
+
+    comerciales = tuple(
+        (p.nombre, p.cantidad, p.designacion) for p in cargar() if p.nombre not in SIN_MARCA
+    )
     return Datos(
         titulo="Escribiente",
         piezas=tuple(colocadas),
@@ -68,6 +76,9 @@ def datos(version: str | None = None):
         tornilleria=tuple((f.designacion, f.cantidad, f.para) for f in tornilleria()),
         procedimientos=(RAIZ / "docs" / "procedimientos.md").read_text(encoding="utf-8"),
         pie=version or _version(),
+        marcas={
+            (m.serie, m.nombre): (m.codigo, m.hoja) for m in marcas(cargar_registro()).values()
+        },
     )
 
 

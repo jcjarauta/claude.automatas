@@ -46,35 +46,67 @@ def preparar(nombre: str):
     g = grupo(nombre)
     del_grupo = [p for p in colocadas if grupo_de(p.nombre) is g]
 
-    # Las piezas fabricadas, por orden de montaje: de abajo arriba.
-    claves: list[str] = []
-    for p in sorted(del_grupo, key=lambda p: (p.solido.bounding_box().min.Z, p.nombre)):
-        clave = base_de(p.nombre)
-        if clave and clave in hecho and clave not in claves:
-            claves.append(clave)
-    sigla = g.nombre[:3].upper()
+    # Las marcas salen del registro (`docs/numeracion.json`), no de aquí:
+    # el mismo número en la ficha, en el dossier y en el índice.
+    from emit.catalogo import cargar as catalogo
+    from emit.numeracion import cargar as registro_de
+    from emit.numeracion import marcas
+    from scripts.numeracion import COMERCIALES_COLOCADOS
+
+    todas = marcas(registro_de())
+    del_registro = sorted(
+        (m for m in todas.values() if m.grupo == g.nombre), key=lambda m: (m.serie, m.numero)
+    )
     piezas = tuple(
         Pieza(
-            nombre=clave,
-            marca=marca,
-            plano=f"P-{sigla}-{marca:02d}",
-            solido=hecho[clave],
-            cantidad_en_el_grupo=sum(1 for p in del_grupo if base_de(p.nombre) == clave),
+            nombre=m.nombre,
+            marca=m.numero,
+            plano=m.codigo,
+            solido=hecho[m.nombre],
+            cantidad_en_el_grupo=sum(1 for p in del_grupo if base_de(p.nombre) == m.nombre),
         )
-        for marca, clave in enumerate(claves, start=1)
+        for m in del_registro
+        if m.serie == "piezas" and m.nombre in hecho
     )
     marca_de = {p.nombre: p.marca for p in piezas}
-
-    # Lo que está en el 3D y no es pieza fabricada: comercial o laguna.
-    sueltas = sorted({p.nombre.rstrip("_0123456789") for p in del_grupo if not base_de(p.nombre)})
-    sin_ficha = tuple(n for n in sueltas if not n.startswith("tornillo"))
-    # La palabra que nombra cada pieza en la tornillería: la última de su
-    # clave (`calzo_sector` es un «sector», `eje_pivote` un «pivote»).
-    palabras = {k.rsplit("_", 1)[-1] for k in claves} | set(sin_ficha)
+    del_catalogo = {k.nombre: k for k in catalogo()}
+    por_clave = {f.clave: f for f in tornilleria()}
     comerciales = tuple(
-        Comercial(f.designacion, f.cantidad, f.para)
-        for f in tornilleria()
-        if any(palabra in f.para for palabra in palabras)
+        Comercial(
+            m.codigo,
+            del_catalogo[m.nombre].designacion,
+            del_catalogo[m.nombre].cantidad,
+            m.nombre.replace("_", " "),
+        )
+        for m in del_registro
+        if m.serie == "comerciales"
+    ) + tuple(
+        Comercial(
+            m.codigo,
+            por_clave[m.nombre].designacion,
+            por_clave[m.nombre].cantidad,
+            por_clave[m.nombre].para,
+        )
+        for m in del_registro
+        if m.serie == "tornilleria"
+    )
+
+    # Lo que está en el 3D y no es pieza, comercial ni tornillería del
+    # registro: una laguna del modelo.
+    prefijos_comerciales = tuple(
+        pre for nombre, pre in COMERCIALES_COLOCADOS.items() if ("comerciales", nombre) in todas
+    )
+    dibujadas_sin_ficha = ("tornillo", "arandela_codo_")
+    sin_ficha = tuple(
+        sorted(
+            {
+                p.nombre.rstrip("_0123456789")
+                for p in del_grupo
+                if not base_de(p.nombre)
+                and not p.nombre.startswith(prefijos_comerciales)
+                and not p.nombre.startswith(dibujadas_sin_ficha)
+            }
+        )
     )
 
     # El despiece: el grupo entero, cada pieza fabricada subida sobre la

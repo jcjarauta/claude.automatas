@@ -42,17 +42,21 @@ Las cantidades salen de las piezas del listado: si cambia cuántos sectores o co
 | DIN 912 M3 × 16 | 2 | apoyos del balancín, del plato 2 |
 | DIN 7991 M3 × 30, cortado a 12,5 / 19,5 / 26,5 | 3 | ejes de rodillo |
 | DIN 7991 M3 × 10 | 3 | punta roscada de cada poste, sobre el plato 3 |
-| DIN 439 M3 (tuerca fina) | 7 | unión del sector, ejes de rodillo |
+| DIN 439 M3 (tuerca fina) | 4 | unión del sector |
+| DIN 439 M3 (tuerca fina) | 3 | ejes de rodillo |
 | DIN 912 M4 × 16 | 2 | mordaza al sector, por su ranura |
 | DIN 439 M4 (tuerca fina) | 2 | bajo el sector |
 | DIN 913 M3 × 6, punta plana | 2 | aprieta la cinta en la mordaza |
-| DIN 913 M3 × 4, punta plana | 11 | collares, casquillo de la rueda y pinza del portaminas |
+| DIN 913 M3 × 4, punta plana | 9 | collares |
+| DIN 913 M3 × 4, punta plana | 1 | casquillo de la rueda |
+| DIN 913 M3 × 4, punta plana | 1 | pinza del portaminas |
 | DIN 912 M2 × 3 | 2 | extremos de la cinta en el tambor |
 | DIN 912 M2 × 5 | 4 | pestañas de las láminas |
 | DIN 912 M2 × 8 | 2 | mesa a sus orejetas |
 | DIN 912 M2 × 30 | 4 | soportes de la mesa, desde bajo la base |
 | DIN 705 Ø10, anillo de ajuste | 2 | bajo cada brazo proximal |
-| DIN 6799 para eje Ø10 | 4 | sobre cada tambor, bajo el muñón y sobre el muelle de la garra |
+| DIN 6799 para eje Ø10 | 2 | sobre cada tambor |
+| DIN 6799 para eje Ø10 | 2 | bajo el muñón y sobre el muelle de la garra |
 | DIN 6799 para eje Ø6 | 1 | bulón del tirante |
 | DIN 6799 para eje Ø4 | 2 | eje del balancín, por fuera |
 | DIN 6799 para eje Ø1,5 | 8 | ejes de la mesa |

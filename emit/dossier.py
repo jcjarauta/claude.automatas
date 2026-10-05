@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -239,6 +239,10 @@ class Datos:
     """El markdown de `docs/procedimientos.md`."""
     pie: str
     """Lo que va al pie de cada página: de qué versión sale."""
+    marcas: dict[tuple[str, str], tuple[str, str]] = field(default_factory=dict)
+    """(serie, nombre) → (marca, plano), del registro `docs/numeracion.json`.
+    Una pieza fabricada se busca por su nombre, una comercial por el suyo y
+    una línea de tornillería por «designación · para»."""
 
 
 def _vista_flowable(vista: Vista, ancho: float, alto: float, titulo: str = "") -> Any:
@@ -368,17 +372,39 @@ def escribir_dossier(datos: Datos, destino: Path | str) -> Path:
     flujo.append(PageBreak())
     flujo.append(Paragraph("Despiece", h1))
     flujo.append(Paragraph("Piezas fabricadas", h2))
-    filas = [["Pieza", "Ud.", "Material", "Proceso", "Va con"]]
-    filas += [[n, str(k), m, p, c] for n, k, m, p, c, _ in datos.fabricadas]
-    flujo.append(_tabla(filas, [ancho * f for f in (0.2, 0.06, 0.27, 0.32, 0.15)], celda))
+
+    def marca(serie: str, nombre: str) -> tuple[str, str]:
+        return datos.marcas.get((serie, nombre), ("-", "-"))
+
+    filas = [["Marca", "Pieza", "Ud.", "Material", "Proceso", "Plano"]]
+    filas += sorted(
+        [marca("piezas", n)[0], n, str(k), m, p, marca("piezas", n)[1]]
+        for n, k, m, p, _, _ in datos.fabricadas
+    )
+    anchos = (0.11, 0.18, 0.05, 0.25, 0.3, 0.11)
+    flujo.append(_tabla(filas, [ancho * f for f in anchos], celda))
     flujo.append(Paragraph("Comerciales", h2))
-    filas = [["Pieza", "Ud.", "Designación"]]
-    filas += [[n, str(k), d] for n, k, d in datos.comerciales]
-    flujo.append(_tabla(filas, [ancho * f for f in (0.25, 0.07, 0.68)], celda))
+    filas = [["Marca", "Pieza", "Ud.", "Designación", "Hoja"]]
+    filas += sorted(
+        [marca("comerciales", n)[0], n, str(k), d, marca("comerciales", n)[1]]
+        for n, k, d in datos.comerciales
+    )
+    anchos = (0.11, 0.2, 0.06, 0.52, 0.11)
+    flujo.append(_tabla(filas, [ancho * f for f in anchos], celda))
     flujo.append(Paragraph("Tornillería y retención", h2))
-    filas = [["Designación", "Ud.", "Para"]]
-    filas += [[d, str(k), p] for d, k, p in datos.tornilleria]
-    flujo.append(_tabla(filas, [ancho * f for f in (0.4, 0.07, 0.53)], celda))
+    filas = [["Marca", "Designación", "Ud.", "Para", "Hoja"]]
+    filas += sorted(
+        [
+            marca("tornilleria", f"{d} · {p}")[0],
+            d,
+            str(k),
+            p,
+            marca("tornilleria", f"{d} · {p}")[1],
+        ]
+        for d, k, p in datos.tornilleria
+    )
+    anchos = (0.11, 0.34, 0.06, 0.38, 0.11)
+    flujo.append(_tabla(filas, [ancho * f for f in anchos], celda))
 
     # --- secuencia de montaje -----------------------------------------------------
     flujo.append(PageBreak())

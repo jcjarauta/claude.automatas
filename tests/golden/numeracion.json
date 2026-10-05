@@ -1,0 +1,173 @@
+{
+  "grupos": {
+    "accionamiento": {
+      "sigla": "ACC",
+      "piezas": {
+        "1": "eje_manivela",
+        "2": "casquillo_rueda",
+        "3": "volante",
+        "4": "manivela"
+      },
+      "comerciales": {
+        "1": "pinon_reductor",
+        "2": "rueda_reductor"
+      },
+      "tornilleria": {
+        "1": "DIN 913 M3 × 4, punta plana · casquillo de la rueda"
+      }
+    },
+    "amplificador": {
+      "sigla": "AMP",
+      "piezas": {
+        "1": "eje_pivote",
+        "2": "calzo_sector",
+        "3": "tambor",
+        "4": "sector",
+        "5": "mordaza"
+      },
+      "comerciales": {
+        "1": "cinta_amplificador"
+      },
+      "tornilleria": {
+        "1": "DIN 912 M3 × 16 · sector, calzo y seguidor",
+        "2": "DIN 439 M3 (tuerca fina) · unión del sector",
+        "3": "DIN 912 M4 × 16 · mordaza al sector, por su ranura",
+        "4": "DIN 439 M4 (tuerca fina) · bajo el sector",
+        "5": "DIN 913 M3 × 6, punta plana · aprieta la cinta en la mordaza",
+        "6": "DIN 912 M2 × 3 · extremos de la cinta en el tambor",
+        "7": "DIN 6799 para eje Ø10 · sobre cada tambor"
+      }
+    },
+    "bastidor": {
+      "sigla": "BAS",
+      "piezas": {
+        "1": "base",
+        "2": "tubo_separador",
+        "3": "platina_levas",
+        "4": "collar"
+      },
+      "comerciales": {
+        "1": "poste_pivote",
+        "2": "rodamiento_arbol"
+      },
+      "tornilleria": {
+        "1": "DIN 7991 M3 × 10 · punta roscada de cada poste, sobre el plato 3",
+        "2": "DIN 913 M3 × 4, punta plana · collares"
+      }
+    },
+    "cartucho": {
+      "sigla": "CAR",
+      "piezas": {
+        "1": "eje_cartucho",
+        "2": "separador"
+      },
+      "comerciales": {
+        "1": "pasador_indice"
+      },
+      "tornilleria": {}
+    },
+    "cinco_barras": {
+      "sigla": "CBR",
+      "piezas": {
+        "1": "brazo_distal",
+        "2": "perno_codo",
+        "3": "casquillo_punta",
+        "4": "brazo_proximal"
+      },
+      "comerciales": {},
+      "tornilleria": {
+        "1": "DIN 705 Ø10, anillo de ajuste · bajo cada brazo proximal",
+        "2": "DIN 988 6 × 12 × 0,5 · arandela de cada codo del cinco barras"
+      }
+    },
+    "entre_puntos": {
+      "sigla": "ENT",
+      "piezas": {
+        "1": "munon",
+        "2": "garra",
+        "3": "eje_motriz"
+      },
+      "comerciales": {
+        "1": "arbol_de_levas",
+        "2": "muelle_garra"
+      },
+      "tornilleria": {
+        "1": "DIN 6799 para eje Ø10 · bajo el muñón y sobre el muelle de la garra",
+        "2": "DIN 7 Ø2 × 16 · pasador de la garra"
+      }
+    },
+    "levantamiento": {
+      "sigla": "ELV",
+      "piezas": {
+        "1": "soporte_mesa",
+        "2": "biela_mesa",
+        "3": "orejeta_mesa",
+        "4": "tirante",
+        "5": "eje_mesa_fijo",
+        "6": "eje_mesa_movil",
+        "7": "mesa",
+        "8": "bieleta",
+        "9": "casquillo_bieleta",
+        "10": "apoyo_balancin",
+        "11": "balancin",
+        "12": "palanca_lapiz",
+        "13": "eje_balancin",
+        "14": "bulon_tirante"
+      },
+      "comerciales": {},
+      "tornilleria": {
+        "1": "DIN 912 M3 × 16 · apoyos del balancín, del plato 2",
+        "2": "DIN 912 M2 × 8 · mesa a sus orejetas",
+        "3": "DIN 912 M2 × 30 · soportes de la mesa, desde bajo la base",
+        "4": "DIN 6799 para eje Ø6 · bulón del tirante",
+        "5": "DIN 6799 para eje Ø4 · eje del balancín, por fuera",
+        "6": "DIN 6799 para eje Ø1,5 · ejes de la mesa",
+        "7": "arandela de presión Ø2 · bieleta en el balancín"
+      }
+    },
+    "levas": {
+      "sigla": "LEV",
+      "piezas": {},
+      "comerciales": {
+        "1": "plancha_pom"
+      },
+      "tornilleria": {}
+    },
+    "portalapiz": {
+      "sigla": "POR",
+      "piezas": {
+        "1": "tubo_punta",
+        "2": "brazo_horquilla",
+        "3": "poste_horquilla",
+        "4": "pinza",
+        "5": "lamina_flexura"
+      },
+      "comerciales": {
+        "1": "anillo_lapiz",
+        "2": "portaminas"
+      },
+      "tornilleria": {
+        "1": "DIN 913 M3 × 4, punta plana · pinza del portaminas",
+        "2": "DIN 912 M2 × 5 · pestañas de las láminas"
+      }
+    },
+    "seguidores": {
+      "sigla": "SEG",
+      "piezas": {
+        "1": "casquillo_rodillo",
+        "2": "placa_tope",
+        "3": "seguidor"
+      },
+      "comerciales": {
+        "1": "casquillo_pivote",
+        "2": "muelle_seguidor",
+        "3": "rodillo_seguidor"
+      },
+      "tornilleria": {
+        "1": "DIN 7991 M3 × 30, cortado a 12,5 / 19,5 / 26,5 · ejes de rodillo",
+        "2": "DIN 439 M3 (tuerca fina) · ejes de rodillo",
+        "3": "DIN 7 Ø3 × 6 · pasadores de tope, de pie en la placa"
+      }
+    }
+  }
+}

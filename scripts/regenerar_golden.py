@@ -32,6 +32,14 @@ def main() -> int:
         print(f"regenerado {ruta.relative_to(GOLDEN.parent.parent)} ({ruta.stat().st_size} bytes)")
     for ruta in escribir_manifiestos():
         print(f"regenerado {ruta.relative_to(GOLDEN.parent.parent)}")
+    # La numeración: el golden es la copia congelada del registro. Solo se
+    # regenera con un alta querida (`scripts/numeracion.py --alta`).
+    import shutil
+
+    from emit.numeracion import REGISTRO
+
+    shutil.copyfile(REGISTRO, GOLDEN / "numeracion.json")
+    print("regenerado tests/golden/numeracion.json")
     return 0
 
 

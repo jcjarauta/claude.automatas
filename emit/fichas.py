@@ -901,6 +901,8 @@ def _ficha_de_pieza(
 
 @dataclass(frozen=True)
 class Comercial:
+    codigo: str
+    """C-AMP-01 o T-AMP-03: su marca del registro."""
     designacion: str
     cantidad: int
     para: str
@@ -1017,9 +1019,9 @@ def _ficha_de_grupo(cv: Any, g: FichasDeGrupo, hoja: str, version: str) -> None:
             (str(p.marca), p.nombre, str(p.cantidad_en_el_grupo), f.material, f.proceso, p.plano)
         )
     y = _tabla(cv, MARGEN + 4, 95, (11, 26, 10, 46, 60, 22), filas, cuerpo=6.4)
-    filas = [("Comercial", "Cant.", "Para")]
-    filas += [(k.designacion, str(k.cantidad), k.para) for k in g.comerciales]
-    y = _tabla(cv, MARGEN + 4, y - 1, (52, 10, 113), filas, cuerpo=6.4)
+    filas = [("Marca", "Comercial y tornillería", "Cant.", "Para")]
+    filas += [(k.codigo, k.designacion, str(k.cantidad), k.para) for k in g.comerciales]
+    y = _tabla(cv, MARGEN + 4, y - 1, (16, 52, 10, 97), filas, cuerpo=6.4)
     if g.sin_ficha:
         cv.setFillColor(HexColor(COTA))
         cv.setFont("Helvetica-Bold", 6.6)

@@ -295,6 +295,27 @@ class Grupo:
     opacidad: float
     prefijos: tuple[str, ...]
 
+    @property
+    def sigla(self) -> str:
+        """Tres letras para los códigos de plano: P-AMP-03, G-AMP."""
+        return SIGLAS[self.nombre]
+
+
+SIGLAS = {
+    "bastidor": "BAS",
+    "levas": "LEV",
+    "cartucho": "CAR",
+    "entre_puntos": "ENT",
+    "accionamiento": "ACC",
+    "seguidores": "SEG",
+    "amplificador": "AMP",
+    "cinco_barras": "CBR",
+    "levantamiento": "ELV",
+    "portalapiz": "POR",
+}
+"""La sigla de cada grupo, **declarada** y no sacada del nombre: las tres
+primeras letras de «levas» y de «levantamiento» son las mismas."""
+
 
 GRUPOS: tuple[Grupo, ...] = (
     Grupo(

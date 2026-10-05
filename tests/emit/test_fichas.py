@@ -48,7 +48,9 @@ def test_el_grupo_lleva_sus_piezas_su_tornilleria_y_sus_lagunas(amplificador):
     designaciones = {k.designacion for k in amplificador.comerciales}
     assert "DIN 912 M4 × 16" in designaciones
     assert not any("ejes de la mesa" in k.para for k in amplificador.comerciales)
-    assert amplificador.sin_ficha == ("cinta",)
+    # La cinta es un comercial del grupo (C-AMP-01), no una laguna.
+    assert amplificador.sin_ficha == ()
+    assert any(k.codigo == "C-AMP-01" for k in amplificador.comerciales)
     # El despiece es el grupo entero: los dos canales.
     assert {n for _, n, _ in amplificador.despiece} >= {"sector_1", "sector_2"}
 

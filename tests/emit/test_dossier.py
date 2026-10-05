@@ -68,3 +68,23 @@ def test_el_dossier_sale_igual_byte_a_byte(tmp_path):
     dos = escribir_dossier(d, tmp_path / "dos.pdf").read_bytes()
     assert uno[:5] == b"%PDF-"
     assert uno == dos
+
+
+def test_las_tres_tablas_del_despiece_llevan_marca_en_cada_fila():
+    """B1: la marca y el plano salen del registro único (`docs/numeracion.json`)
+    y no queda ninguna fila sin ellos: son piezas que alguien tiene que
+    encontrar encima de la mesa."""
+    pytest.importorskip("build123d", reason="hace falta el kernel: uv sync --group cad")
+    from scripts.dossier import datos
+
+    d = datos("commit prueba")
+    sin_marca = [n for n, *_ in d.fabricadas if ("piezas", n) not in d.marcas]
+    sin_marca += [n for n, *_ in d.comerciales if ("comerciales", n) not in d.marcas]
+    sin_marca += [
+        f"{dz} · {p}"
+        for dz, _, p in d.tornilleria
+        if ("tornilleria", f"{dz} · {p}") not in d.marcas
+    ]
+    assert not sin_marca, sin_marca
+    assert d.marcas[("piezas", "tambor")] == ("P-AMP-03", "P-AMP-03")
+    assert d.marcas[("comerciales", "cinta_amplificador")][1] == "G-AMP"
