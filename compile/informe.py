@@ -15,6 +15,7 @@ from compile.coste import Valoracion
 from compile.energia import Accionamiento, Energia
 from compile.escribiente import Compilacion, Escribiente
 from compile.tolerancias import Presupuesto, amplificacion_del_canto
+from core.tarjeta import Tarjeta
 from core.units import Radianes, a_grados, a_mm
 from core.verdict import Incidencia, Veredicto
 
@@ -32,6 +33,26 @@ def _incidencias(titulo: str, incidencias: tuple[Incidencia, ...]) -> list[str]:
     return lineas
 
 
+def _el_papel(maquina: Escribiente, tarjeta: Tarjeta | None) -> str:
+    """Qué papel hay que poner, no solo cuánto mide el trazo.
+
+    El informe decía «Tamaño en el papel: 65,0 × 18,5 mm» y con eso quien
+    monta sabe lo que mide la letra y **no qué tarjeta meter**. Son dos
+    cosas distintas: el trazo se encaja dentro de la caja conservando la
+    proporción, así que casi nunca la llena.
+
+    Sin tarjeta —un pedido anterior al catálogo, o del CLI a pelo— se dice
+    la caja y se dice que es la del contrato, que sigue siendo accionable:
+    cualquier papel que la contenga con margen sirve.
+    """
+    caja = f"{a_mm(maquina.caja_ancho):.0f} × {a_mm(maquina.caja_alto):.0f} mm"
+    if tarjeta is None:
+        return f"- Papel: cualquiera que admita una caja de escritura de {caja} (la del contrato)"
+    papel = f"{a_mm(tarjeta.papel_ancho):.0f} × {a_mm(tarjeta.papel_alto):.0f} mm"
+    nombre = tarjeta.nombre.replace("_", " ")
+    return f"- **Papel: {nombre}, {papel}**, con una caja de escritura de {caja}"
+
+
 def informe(
     compilacion: Compilacion,
     maquina: Escribiente,
@@ -42,6 +63,7 @@ def informe(
     accionamiento: Accionamiento | None = None,
     valoracion: Valoracion | None = None,
     presupuesto: Presupuesto | None = None,
+    tarjeta: Tarjeta | None = None,
 ) -> str:
     """El informe completo, en markdown."""
     v = compilacion.veredicto
@@ -54,7 +76,8 @@ def informe(
         "## La escritura",
         "",
         f"- Trazos: {len(escritura.trazos)}",
-        f"- Tamaño en el papel: {a_mm(escritura.ancho):.1f} × {a_mm(escritura.alto):.1f} mm",
+        f"- Tamaño del trazo: {a_mm(escritura.ancho):.1f} × {a_mm(escritura.alto):.1f} mm",
+        _el_papel(maquina, tarjeta),
         f"- Recorrido escrito: {v.metricas.get('longitud_trazada', 0.0) * 1000:.0f} mm",
         f"- Recorrido volado: {v.metricas.get('longitud_volada', 0.0) * 1000:.0f} mm",
         "",
@@ -303,6 +326,7 @@ def escribir_informe(
     accionamiento: Accionamiento | None = None,
     valoracion: Valoracion | None = None,
     presupuesto: Presupuesto | None = None,
+    tarjeta: Tarjeta | None = None,
 ) -> Path:
     ruta = Path(destino)
     ruta.parent.mkdir(parents=True, exist_ok=True)
@@ -317,6 +341,7 @@ def escribir_informe(
             accionamiento,
             valoracion,
             presupuesto,
+            tarjeta,
         ),
         encoding="utf-8",
     )

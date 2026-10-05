@@ -160,3 +160,34 @@ def test_cada_tarjeta_da_una_geometria_distinta(nombre):
         for k in base.perfiles
     )
     assert perfiles_iguales == igual_que_el_contrato
+
+
+def test_el_informe_dice_que_papel_hay_que_poner():
+    """«Tamaño en el papel: 65,0 × 18,5 mm» dice lo que mide la letra y
+    **no qué tarjeta meter**, que es lo que necesita quien monta. Son dos
+    cosas distintas: el trazo se encaja conservando la proporción, así que
+    casi nunca llena la caja.
+    """
+    from compile.informe import informe
+
+    tarjeta = cargar_tarjeta("tarjeta_de_visita")
+    compilacion = compilar(
+        CASOS["tecleada"](), maquina=maquina_para(tarjeta), simular_el_trazo=False
+    )
+    texto = informe(compilacion, maquina_para(tarjeta), tarjeta=tarjeta)
+    assert "tarjeta de visita" in texto
+    assert "85 × 55 mm" in texto, "el papel, que es lo que hay que ir a buscar"
+    assert "65 × 20 mm" in texto, "y la caja, que es donde cae la letra"
+
+
+def test_sin_tarjeta_el_informe_sigue_diciendo_algo_accionable():
+    """Un pedido anterior al catálogo, o el CLI a pelo. Decir solo el
+    tamaño del trazo dejaría a quien monta sin saber qué papel sirve; la
+    caja del contrato sí lo dice: cualquiera que la contenga con margen."""
+    from compile.escribiente import Escribiente
+    from compile.informe import informe
+
+    compilacion = compilar(CASOS["tecleada"](), simular_el_trazo=False)
+    texto = informe(compilacion, Escribiente())
+    assert "80 × 24 mm" in texto
+    assert "contrato" in texto

@@ -29,6 +29,7 @@ from compile.tolerancias import presupuesto_de_error
 from compile.version import version_del_repositorio
 from core.energy.humano import Transmision
 from core.escritura import Capacidad, Escritura, Trazo
+from core.tarjeta import Tarjeta
 from core.units import mm
 from emit.dxf import Kerf, escribir_dxfs
 from emit.paquete import escribir_paquete
@@ -109,9 +110,8 @@ def main(argv: list[str] | None = None) -> int:
     # La tarjeta la trae el pedido, no la línea de órdenes: es parte de lo
     # que se encarga. Y tiene que entrar AQUÍ, porque esta máquina es la que
     # usan la hoja patrón y el presupuesto además del compilador.
-    maquina = (
-        Escribiente() if pedido.tarjeta is None else maquina_para(cargar_tarjeta(pedido.tarjeta))
-    )
+    tarjeta = None if pedido.tarjeta is None else cargar_tarjeta(pedido.tarjeta)
+    maquina = Escribiente() if tarjeta is None else maquina_para(tarjeta)
     capacidad = None if opciones.muestras is None else Capacidad(muestras=opciones.muestras)
     if pedido.renglones is None:
         trabajos = [(compilar(pedido.escritura, maquina, capacidad), opciones.out)]
@@ -125,12 +125,16 @@ def main(argv: list[str] | None = None) -> int:
             (c, opciones.out / f"renglon_{numero}")
             for numero, c in enumerate(compilaciones, start=1)
         ]
-    aptos = [_cartucho(c, maquina, destino, opciones) for c, destino in trabajos]
+    aptos = [_cartucho(c, maquina, destino, opciones, tarjeta) for c, destino in trabajos]
     return 0 if all(aptos) else 1
 
 
 def _cartucho(
-    compilacion: Compilacion, maquina: Escribiente, destino: Path, opciones: argparse.Namespace
+    compilacion: Compilacion,
+    maquina: Escribiente,
+    destino: Path,
+    opciones: argparse.Namespace,
+    tarjeta: Tarjeta | None = None,
 ) -> bool:
     """Informe, programa, patrón y piezas de un cartucho. Devuelve si es apto."""
     accionamiento = Accionamiento(
@@ -167,6 +171,7 @@ def _cartucho(
         accionamiento,
         valoracion,
         presupuesto,
+        tarjeta,
     )
     escribir_programa(
         json.loads(compilacion.programa.model_dump_json()),

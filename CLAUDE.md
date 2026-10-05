@@ -1152,6 +1152,15 @@ falla si el esquema versionado se queda atrás.
   interfaz contra `Escribiente()`: es el gemelo positivo del test que se
   borró al bajar `caja_alto`.
 
+  **El informe dice qué papel poner, no solo cuánto mide la letra.** Decía
+  «Tamaño en el papel: 65,0 × 18,5 mm» y con eso quien monta sabe lo que
+  mide el trazo y **no qué tarjeta meter**: son dos cosas distintas, porque
+  el trazo se encaja conservando la proporción y casi nunca llena la caja.
+  Ahora dice «Papel: tarjeta de visita, 85 × 55 mm, con una caja de
+  escritura de 65 × 20». Sin tarjeta —un pedido anterior al catálogo, o el
+  CLI a pelo— dice la caja del contrato, que también es accionable:
+  cualquier papel que la contenga con margen sirve.
+
   Y la ficha la lee **quien elige el formato**, no quien programa. La
   primera versión llevaba en `descripcion` el porqué del margen y una nota
   sobre el contrato; al enseñarla en la página era prosa de desarrollo y,
