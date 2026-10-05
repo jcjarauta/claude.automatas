@@ -14,6 +14,9 @@ from __future__ import annotations
 import json
 import math
 from pathlib import Path
+from string import Template
+
+from emit import acotado, estilo
 
 RAIZ = Path(__file__).resolve().parent.parent
 CONTRATOS = RAIZ / "docs" / "contratos.json"
@@ -27,8 +30,8 @@ def contrato() -> dict[str, float]:
     return {v["nombre"]: float(v["valor"]) for g in datos["contratos"] for v in g["valores"]}
 
 
-ESTILO = """
-text{font-family:Helvetica,Arial,sans-serif;fill:#1b1b1b}
+ESTILO = Template("""
+text{font-family:Helvetica,Arial,sans-serif;fill:$tinta}
 .h1{font-size:12px;font-weight:bold}
 .sub{font-size:5.8px;fill:#555}
 .vista{font-size:7px;font-weight:bold;text-anchor:middle}
@@ -36,23 +39,31 @@ text{font-family:Helvetica,Arial,sans-serif;fill:#1b1b1b}
 .notal{font-size:5.2px;fill:#555}
 .aviso{font-size:5.2px;fill:#8a4a00}
 .marco{fill:none;stroke:#ddd;stroke-width:0.6}
-.corte{fill:#dde5ee;stroke:#1b1b1b;stroke-width:0.9}
-.contorno{fill:none;stroke:#1b1b1b;stroke-width:0.9}
-.oculta{fill:none;stroke:#1b1b1b;stroke-width:0.6;stroke-dasharray:2.5 1.8}
-.cinta{fill:none;stroke:#b03030;stroke-width:1.6;stroke-linecap:round}
-.eje{stroke:#1b5fb0;stroke-width:0.5;stroke-dasharray:7 2 1.2 2}
-.aux{stroke:#9aa7b4;stroke-width:0.4}
-.cotaln{stroke:#b03030;stroke-width:0.45}
-.cotatx{font-size:5.4px;fill:#b03030;text-anchor:middle}
-.cotatxi{font-size:5.4px;fill:#b03030}
-.var{font-size:4.8px;fill:#1b5fb0;font-family:monospace;text-anchor:middle}
-.varl{font-size:4.8px;fill:#1b5fb0;font-family:monospace}
-.cotavar{font-size:4.8px;fill:#1b5fb0;font-family:monospace}
-"""
+.corte{fill:#dde5ee;stroke:$tinta;stroke-width:0.9}
+.contorno{fill:none;stroke:$tinta;stroke-width:0.9}
+.oculta{fill:none;stroke:$tinta;stroke-width:0.6;stroke-dasharray:2.5 1.8}
+.cinta{fill:none;stroke:$cota;stroke-width:1.6;stroke-linecap:round}
+.eje{stroke:$referencia;stroke-width:0.5;stroke-dasharray:7 2 1.2 2}
+.aux{stroke:$auxiliar;stroke-width:0.4}
+.cotaln{stroke:$cota;stroke-width:0.45}
+.cotatx{font-size:5.4px;fill:$cota;text-anchor:middle}
+.cotatxi{font-size:5.4px;fill:$cota}
+.var{font-size:4.8px;fill:$referencia;font-family:monospace;text-anchor:middle}
+.varl{font-size:4.8px;fill:$referencia;font-family:monospace}
+.cotavar{font-size:4.8px;fill:$referencia;font-family:monospace}
+""").substitute(
+    tinta=estilo.TINTA,
+    cota=estilo.COTA,
+    auxiliar=estilo.AUXILIAR,
+    referencia=estilo.REFERENCIA,
+)
+"""Los colores salen de `emit.estilo`, el mismo que leen las fichas y el
+dossier: una cota de un color aquí y de otro en la ficha se lee como de otro
+documento."""
 
 FLECHA = (
     '<marker id="f" markerWidth="7" markerHeight="7" refX="6.4" refY="2.2" orient="auto">'
-    '<path d="M0,0 L6.6,2.2 L0,4.4 z" fill="#b03030"/></marker>'
+    f'<path d="M0,0 L6.6,2.2 L0,4.4 z" fill="{estilo.COTA}"/></marker>'
 )
 
 
@@ -142,6 +153,29 @@ def radial(
     return d
 
 
+def cota_angular(
+    cx: float,
+    cy: float,
+    desde: float,
+    hasta: float,
+    radio: float,
+    texto: str,
+    variable: str = "",
+) -> list[str]:
+    """Cota angular en una hoja SVG: la misma primitiva que las fichas
+    (`emit.acotado.angular`). `desde` y `hasta` en radianes **en el sentido
+    de la pantalla** (la y hacia abajo): quien tenga un ángulo antihorario de
+    la pieza lo pasa cambiado de signo. El nombre de la variable, como en las
+    demás cotas de estas hojas, debajo del número."""
+    d = acotado.a_svg(acotado.angular((cx, cy), desde, hasta, radio, texto))
+    if variable:
+        medio = desde + ((hasta - desde + math.pi) % (2 * math.pi) - math.pi) / 2
+        x = cx + (radio + 8.0) * math.cos(medio)
+        y = cy + (radio + 8.0) * math.sin(medio)
+        d.append(f'<text class="var" x="{x:.2f}" y="{y:.2f}">{variable}</text>')
+    return d
+
+
 def arco(cx: float, cy: float, r: float, a0: float, a1: float) -> str:
     x0, y0 = cx + r * math.cos(a0), cy + r * math.sin(a0)
     x1, y1 = cx + r * math.cos(a1), cy + r * math.sin(a1)
@@ -158,6 +192,7 @@ __all__ = [
     "arco",
     "auxiliar",
     "contrato",
+    "cota_angular",
     "cota_h",
     "cota_v",
     "radial",

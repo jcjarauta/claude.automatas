@@ -88,3 +88,19 @@ def test_las_tres_tablas_del_despiece_llevan_marca_en_cada_fila():
     assert not sin_marca, sin_marca
     assert d.marcas[("piezas", "tambor")] == ("P-AMP-03", "P-AMP-03")
     assert d.marcas[("comerciales", "cinta_amplificador")][1] == "G-AMP"
+
+
+def test_cada_pagina_dice_que_no_se_mide_sobre_ella(tmp_path, monkeypatch):
+    """B4: el dossier va a escala libre; la frontera con las plantillas 1:1
+    se dice en el pie de cada página."""
+    pytest.importorskip("build123d", reason="hace falta el kernel: uv sync --group cad")
+    from reportlab import rl_config
+
+    from emit.dossier import escribir_dossier
+    from emit.estilo import NO_MEDIR
+    from scripts.dossier import datos
+
+    monkeypatch.setattr(rl_config, "pageCompression", 0)
+    pdf = escribir_dossier(datos("commit prueba"), tmp_path / "d.pdf").read_bytes()
+    paginas = pdf.count(b"/Type /Page") - pdf.count(b"/Type /Pages")
+    assert pdf.count(f"({NO_MEDIR}) Tj".encode("latin-1")) == paginas

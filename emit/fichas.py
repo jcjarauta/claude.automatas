@@ -14,7 +14,8 @@ Dos hojas, las dos en A4 apaisado y con el mismo cajetín:
   tabla de **variables**: cada una con su nombre de contrato, que es lo que se
   teclea en el CAD, y su valor.
 
-**Cada cota dice de qué variable sale.** Debajo del número va `#cota.nombre`
+**Cada cota dice de qué variable sale.** Junto al número va, en un círculo, la
+fila de la tabla de variables donde está su `#cota.nombre`
 cuando el valor es el de una variable de la ficha. Una cota sin variable es
 una cota que nadie va a poder cambiar desde el contrato, y la hoja lo enseña.
 
@@ -41,7 +42,7 @@ MM = 72.0 / 25.4
 
 ANCHO, ALTO = 297.0, 210.0
 MARGEN = 8.0
-CAJETIN = (187.0, MARGEN, ANCHO - MARGEN - 187.0, 34.0)
+CAJETIN = (187.0, MARGEN, ANCHO - MARGEN - 187.0, 40.0)
 """x, y, ancho, alto del cajetín, en mm de la hoja."""
 
 ESCALAS = (10.0, 5.0, 2.0, 1.0, 0.5, 0.2, 0.1)
@@ -69,9 +70,8 @@ izquierdo a la derecha del alzado y la planta debajo."""
 HUECO_COTAS = 13.0
 """mm de cada celda que se reservan alrededor de la vista para las cotas."""
 
-TINTA = "#1b1b1b"
-COTA = "#b03030"
-GRIS = "#8a8f96"
+from emit import acotado, estilo  # noqa: E402
+from emit.estilo import COTA, GRIS, TINTA  # noqa: E402
 
 Polilinea = list[tuple[float, float]]
 
@@ -251,7 +251,7 @@ def _flecha(cv: Any, x: float, y: float, dx: float, dy: float) -> None:
     """Punta de flecha rellena en (x, y), en puntos, apuntando a (dx, dy)."""
     n = math.hypot(dx, dy) or 1.0
     ux, uy = dx / n, dy / n
-    largo, ancho = 2.2 * MM, 0.7 * MM
+    largo, ancho = estilo.FLECHA_LARGO * MM, estilo.FLECHA_ANCHO * MM
     camino = cv.beginPath()
     camino.moveTo(x, y)
     camino.lineTo(x - ux * largo - uy * ancho, y - uy * largo + ux * ancho)
@@ -266,66 +266,32 @@ def _cota(
     b: tuple[float, float],
     separacion: tuple[float, float],
     texto: str,
-    variable: str,
+    ref: str,
 ) -> None:
-    """Cota lineal entre dos puntos de la hoja (en puntos), desplazada
-    `separacion` (en puntos) con sus líneas auxiliares."""
-    from reportlab.lib.colors import HexColor
-
-    sx, sy = separacion
-    a2, b2 = (a[0] + sx, a[1] + sy), (b[0] + sx, b[1] + sy)
-    cv.setStrokeColor(HexColor(COTA))
-    cv.setFillColor(HexColor(COTA))
-    cv.setLineWidth(0.18 * MM)
-    n = math.hypot(sx, sy) or 1.0
-    ext = 1.2 * MM
-    cv.line(a[0], a[1], a2[0] + sx / n * ext, a2[1] + sy / n * ext)
-    cv.line(b[0], b[1], b2[0] + sx / n * ext, b2[1] + sy / n * ext)
-    cv.line(a2[0], a2[1], b2[0], b2[1])
-    _flecha(cv, a2[0], a2[1], a2[0] - b2[0], a2[1] - b2[1])
-    _flecha(cv, b2[0], b2[1], b2[0] - a2[0], b2[1] - a2[1])
-    mx, my = (a2[0] + b2[0]) / 2, (a2[1] + b2[1]) / 2
-    angulo = math.degrees(math.atan2(b2[1] - a2[1], b2[0] - a2[0]))
-    if angulo > 90 or angulo <= -90:
-        angulo -= 180
-    cv.saveState()
-    cv.translate(mx, my)
-    cv.rotate(angulo)
-    cv.setFont("Helvetica", 7)
-    cv.drawCentredString(0, 0.8 * MM, _texto(texto))
-    if variable:
-        cv.setFont("Helvetica", 4.6)
-        cv.setFillColor(HexColor(GRIS))
-        cv.drawCentredString(0, -2.2 * MM, _texto(f"#cota.{variable}"))
-    cv.restoreState()
+    """Cota lineal entre dos puntos de la hoja, desplazada `separacion`, con
+    sus extensiones; todo en puntos. `ref` es la fila de su variable."""
+    acotado.a_pdf(
+        cv,
+        acotado.lineal(
+            (a[0] / MM, a[1] / MM),
+            (b[0] / MM, b[1] / MM),
+            (separacion[0] / MM, separacion[1] / MM),
+            _texto(texto),
+            ref,
+        ),
+    )
 
 
 def _rotulo_circulo(
-    lienzo: _Lienzo, cx: float, cy: float, r: float, texto: str, variable: str, angulo: float
+    lienzo: _Lienzo, cx: float, cy: float, r: float, texto: str, ref: str, angulo: float
 ) -> None:
     """Línea de referencia desde el canto de un círculo hacia fuera, con su
     texto en el extremo."""
-    from reportlab.lib.colors import HexColor
-
-    cv = lienzo.cv
-    ux, uy = math.cos(math.radians(angulo)), math.sin(math.radians(angulo))
-    x0, y0 = lienzo.p(cx + r * ux, cy + r * uy)
-    x1, y1 = x0 + ux * 7 * MM, y0 + uy * 7 * MM
-    lado = 1 if ux >= 0 else -1
-    x2 = x1 + lado * 3 * MM
-    cv.setStrokeColor(HexColor(COTA))
-    cv.setFillColor(HexColor(COTA))
-    cv.setLineWidth(0.18 * MM)
-    cv.line(x0, y0, x1, y1)
-    cv.line(x1, y1, x2, y1)
-    _flecha(cv, x0, y0, -ux, -uy)
-    cv.setFont("Helvetica", 7)
-    dibujar = cv.drawString if lado > 0 else cv.drawRightString
-    dibujar(x2 + lado * 0.6 * MM, y1 - 0.8 * MM, _texto(texto))
-    if variable:
-        cv.setFont("Helvetica", 4.6)
-        cv.setFillColor(HexColor(GRIS))
-        dibujar(x2 + lado * 0.6 * MM, y1 - 3.2 * MM, _texto(f"#cota.{variable}"))
+    x, y = lienzo.p(cx, cy)
+    acotado.a_pdf(
+        lienzo.cv,
+        acotado.radial((x / MM, y / MM), r * lienzo.escala, angulo, _texto(texto), ref),
+    )
 
 
 def _marco(cv: Any) -> None:
@@ -357,7 +323,11 @@ def _cajetin(
     cv.setFillColor(HexColor(TINTA))
     cv.setFont("Helvetica-Bold", 11)
     cv.drawString((x + 8) * MM, (y + h - 7.5) * MM, _texto(titulo))
-    cv.setFont("Helvetica", 7)
+    cv.setFont(estilo.FUENTE_NEGRITA, 7)
+    cv.setFillColor(HexColor(COTA))
+    cv.drawString((x + 3) * MM, (y + 22.5) * MM, _texto(estilo.NO_MEDIR))
+    cv.setFillColor(HexColor(TINTA))
+    cv.setFont(estilo.FUENTE, 7)
     cv.drawString((x + 3) * MM, (y + 17) * MM, _texto("Escribiente · claude.automatas"))
     cv.drawString((x + 3) * MM, (y + 13.5) * MM, _texto(f"Grupo: {grupo.nombre} · {version}"))
     cv.drawString((x + 3) * MM, (y + 7) * MM, _texto(f"Plano {plano}"))
@@ -676,6 +646,15 @@ def _ficha_de_pieza(
     pieza.vistas = vistas
     _marco(cv)
 
+    # La referencia de cada cota: la fila de su variable en la tabla. El
+    # nombre largo a 4,6 pt no se leía impreso y cruzaba las líneas de cota.
+    filas_de = {v.nombre: str(i) for i, (v, _) in enumerate(_variables(ficha, c), start=1)}
+
+    def ref(variable: str) -> str:
+        if variable.startswith("ambigua"):
+            return "?"
+        return filas_de.get(variable, "")
+
     rotulos = {
         "alzado": "alzado",
         "perfil izquierdo": (
@@ -705,9 +684,9 @@ def _ficha_de_pieza(
             for poligono in caras_cortadas(cortado):
                 _rayado(lienzo, poligono)
         for p in v.ocultas:
-            lienzo.polilinea(p, 0.13, GRIS, True)
+            lienzo.polilinea(p, estilo.OCULTA, GRIS, True)
         for p in v.visibles:
-            lienzo.polilinea(p, 0.35, TINTA, False)
+            lienzo.polilinea(p, estilo.VISIBLE, TINTA, False)
         cv.setFillColor(HexColor("#41464d"))
         cv.setFont("Helvetica-Bold", 7)
         cv.drawString((x + 2) * MM, (y + h - 4) * MM, _texto(rotulos[nombre].upper()))
@@ -727,7 +706,7 @@ def _ficha_de_pieza(
             lienzo.p(x1, y0),
             (0, -6 * MM),
             con_sufijo(_numero(ancho), var, ficha),
-            var,
+            ref(var),
         )
         if alto > 0.05:
             var = variable_de(alto, ficha, c, clase_alto)
@@ -743,7 +722,7 @@ def _ficha_de_pieza(
                 lienzo.p(x0, y1),
                 (-6 * MM, 0),
                 con_sufijo(_numero(alto), var, ficha),
-                var,
+                ref(var),
             )
 
         if nombre != "planta":
@@ -785,7 +764,7 @@ def _ficha_de_pieza(
             else:
                 var = variable_de(arco.r, ficha, c, "radio")
                 rotulo = f"R{_numero(arco.r)}"
-            _rotulo_circulo(lienzo, arco.cx, arco.cy, arco.r, rotulo, var, next(angulos))
+            _rotulo_circulo(lienzo, arco.cx, arco.cy, arco.r, rotulo, ref(var), next(angulos))
 
         # Los taladros: cada uno con su letra en la vista —si está en la
         # tabla, está en el dibujo—, fuera de su centro para no pisar el datum.
@@ -842,18 +821,19 @@ def _ficha_de_pieza(
     ]
     y = _tabla(cv, x, y, (18, 84), [("Dato", ""), *datos])
 
-    filas = [("Variable (#mapa.nombre)", "Qué es", "Valor", "")]
-    for v, x_v in _variables(ficha, c):
+    filas = [("Ref.", "Variable (#mapa.nombre)", "Qué es", "Valor", "")]
+    for fila, (v, x_v) in enumerate(_variables(ficha, c), start=1):
         unidad = "°" if v.mapa == "angulo" else ""
         filas.append(
             (
+                str(fila),
                 f"#{v.mapa}.{v.nombre}",
                 v.etiqueta + ("" if v.en_el_perfil else " (se teclea)"),
                 _numero(x_v) + unidad,
                 v.sufijo,
             )
         )
-    y = _tabla(cv, x, y, (50, 30, 12, 10), filas, cuerpo=5.4)
+    y = _tabla(cv, x, y, (6, 47, 29, 11, 9), filas, cuerpo=estilo.CUERPO_TABLA)
 
     if rasgo.taladros:
         filas = [("Taladro", "Tipo", "X", "Y", "Ø", "Ø de", "Al datum", "Posición de")]
@@ -1050,7 +1030,7 @@ def _ficha_de_grupo(cv: Any, g: FichasDeGrupo, hoja: str, version: str) -> None:
         f"Grupo: {g.grupo.nombre}",
         f"G-{g.grupo.nombre[:3].upper()}",
         hoja,
-        "-",
+        estilo.ESCALA_VARIAS,
         g.grupo,
         version,
     )

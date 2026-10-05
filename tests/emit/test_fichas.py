@@ -155,3 +155,36 @@ def test_a4_las_plantillas_y_el_patron_tambien_llevan_la_version(tmp_path):
         except zlib.error:
             textos += flujo
     assert b"commit prueba" in textos
+
+
+def test_b4_cada_hoja_dice_que_no_se_mide_sobre_ella(paginas):
+    from emit.estilo import NO_MEDIR
+
+    for hoja in paginas:
+        assert any(s == NO_MEDIR for _, _, s in hoja)
+
+
+def test_b5_las_fichas_y_las_hojas_svg_comparten_estilo():
+    """Un solo estilo: los colores de las cotas de las fichas y de las hojas
+    SVG salen del mismo módulo."""
+    from emit import estilo, fichas
+    from scripts import acotar
+
+    assert fichas.COTA is estilo.COTA
+    assert estilo.COTA in acotar.ESTILO
+    assert estilo.COTA in acotar.FLECHA
+    assert "$" not in acotar.ESTILO
+
+
+def test_b5_cada_cota_lleva_la_fila_de_su_variable_y_no_su_nombre(paginas, amplificador):
+    """Los nombres de variable se quedan en la tabla, donde se leen para
+    teclear; en el dibujo va el número de su fila."""
+    from emit.fichas import CELDAS
+
+    px, py, pw, ph = CELDAS["planta"]
+    tambor = paginas[1 + [p.nombre for p in amplificador.piezas].index("tambor")]
+    en_planta = [
+        s for x, y, s in tambor if px <= x <= px + pw and py <= y <= py + ph and "#cota" in s
+    ]
+    assert not en_planta
+    assert any(s == "Ref." for _, _, s in tambor)

@@ -338,6 +338,14 @@ def escribir_dossier(datos: Datos, destino: Path | str) -> Path:
         lienzo.setFont("Helvetica", 7)
         lienzo.drawString(15 * mm, 9 * mm, _limpio(f"{datos.titulo} · {datos.pie}"))
         lienzo.drawRightString(A4[0] - 15 * mm, 9 * mm, f"{doc.page}")
+        # Las vistas del dossier van a escala libre: la frontera con las
+        # plantillas 1:1, dicha en cada página (`emit.estilo.NO_MEDIR`).
+        from reportlab.lib.colors import HexColor
+
+        from emit.estilo import COTA, NO_MEDIR
+
+        lienzo.setFillColor(HexColor(COTA))
+        lienzo.drawCentredString(A4[0] / 2, 9 * mm, _limpio(NO_MEDIR))
         lienzo.restoreState()
 
     flujo: list[Any] = []
