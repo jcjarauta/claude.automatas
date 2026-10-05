@@ -605,6 +605,7 @@ absorbe el alabeo es la flexura, y 0,5 es todo su recorrido.
 
 | Fecha | Contrato | Cambio | Motivo |
 | --- | --- | --- | --- |
+| 2026-10-05 | Bastidor | **Cada distal bajo su proximal**: orden proximal 1, distal 1, proximal 2, distal 2; `eje_pivote_largo` de 66 a **69,5**; nuevos `perno_codo_largo` (6,5) y `casquillo_punta_largo` (4) | El perno del codo 1 bajaba del plano 1 al 3 y atravesaba el del proximal 2: -6 mm en planta, y no se veía porque el perno no estaba dibujado. Ahora cada codo une dos planos contiguos y la holgura mínima de los ejes del varillaje es 13,3 mm. No toca contratos congelados (docs/propuesta_codo.md) |
 | 2026-10-04 | Bastidor, base | **Más capacidad por vuelta**: brazos de seguidor 45 / **50 / 55** (radios base 55 / 50,0 / 45,8), `relacion_varillaje` de 6 a **8** con un cabestrante de sector **R 56** y tambor **R 7**; base de 240 a **256**; derivados recalculados (tangencia, vano, abrazados, mordaza, `tope_angulo`) | Escribir varias palabras por vuelta: de unos 190 mm de tinta a 314, a cambio de 1,78 mm de peor caso en la punta en vez de 1,30. R 64 con tambor R 8 no cabía en los 68 entre ejes. No toca contratos congelados: el calaje no depende de la relación |
 | 2026-09-29 | Fase | Congelado. Pasador de índice Ø3 a 18 mm sobre +X, igual en las tres levas | El cartucho de una pieza deja el error de fase fuera de lo posible, en vez de fuera de lo probable |
 | 2026-09-29 | Eje | Congelado Ø10 h7, pila de 19 mm, giro horario | Medidas corrientes de catálogo; la pila sale de la geometría y está comprobada |

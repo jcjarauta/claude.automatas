@@ -107,6 +107,7 @@ def _miembros(nombre: str) -> str:
                 "pinza",
                 "lamina_flexura_",
                 "portaminas",
+                "casquillo_punta",
             ),
             "punta",
         ),
@@ -129,7 +130,7 @@ def _miembros(nombre: str) -> str:
     for n in (1, 2):
         if nombre in {f"proximal_{n}", f"eje_pivote_{n}", f"tambor_{n}", f"tornillo_tambor_{n}"}:
             return f"brazo_{n}"
-        if nombre == f"distal_{n}":
+        if nombre in {f"distal_{n}", f"perno_codo_{n}", f"arandela_codo_{n}"}:
             return f"distal_{n}"
     return "fijo"
 

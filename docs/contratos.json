@@ -706,9 +706,9 @@
         },
         {
           "nombre": "eje_pivote_largo",
-          "valor": 0.066,
+          "valor": 0.0695,
           "unidad": "m",
-          "descripcion": "Largo del eje de pivote, el mismo para los dos: del collar de 3 bajo el proximal al circlip 1,5 sobre el tambor, cuya cara alta queda a 44,5 del plato 1. El derecho pide 65,5 y el izquierdo 62; uno solo de 66 es un corte de barra y lo que sobra queda bajo el proximal. Eran 55 hasta que la pila subió 8 para el cubo y el muñón del cartucho, y 63 hasta el calzo de 3 del sector (tests/emit/test_montaje.py lo ata a la pila)",
+          "descripcion": "Largo del eje de pivote, el mismo para los dos: del collar de 3 bajo el proximal al circlip 1,5 sobre el tambor. 69,5 y no 66: con cada distal bajo su proximal (propuesta del codo, 2026-10-05) el proximal 2 baja un plano y es el que manda. Derivado, con test",
           "tolerancia": ""
         },
         {
@@ -1143,6 +1143,20 @@
           "valor": 0.02,
           "unidad": "m",
           "descripcion": "Del plato 2 al plato 3: reductor_bahia. Derivado, con test",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "perno_codo_largo",
+          "valor": 0.0065,
+          "unidad": "m",
+          "descripcion": "Pasador del codo: dos pletinas de 3 y la arandela de 0,5 entre ellas, enrasado por las dos caras. Encima del proximal está el plato a 1 mm y debajo del distal pasa el otro proximal: no puede asomar. Derivado, con test",
+          "tolerancia": ""
+        },
+        {
+          "nombre": "casquillo_punta_largo",
+          "valor": 0.004,
+          "unidad": "m",
+          "descripcion": "Casquillo entre los dos distales en el tubo de la punta: el plano vacío del proximal 2 y las dos holguras de 0,5. Derivado, con test",
           "tolerancia": ""
         }
       ]

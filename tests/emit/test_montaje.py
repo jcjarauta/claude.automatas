@@ -421,3 +421,74 @@ def test_el_montaje_coloca_las_piezas_que_dice_el_listado():
     for pieza in ("mordaza", "calzo_sector", "sector", "tambor", "seguidor"):
         assert cuenta[pieza] == LISTADO[pieza].cantidad, pieza
     assert cuenta["collar"] == LISTADO["collar"].cantidad
+
+
+def test_ningun_eje_del_varillaje_atraviesa_un_brazo_que_no_es_suyo():
+    """El perno de cada codo, el tubo de la punta y los ejes de pivote bajan
+    o suben por los planos de los brazos. Medido en planta sobre toda la caja
+    de escritura —bordes y diagonales—, cada uno tiene que librar en 3 mm los
+    brazos de los planos que cruza. Con los dos proximales arriba, el perno
+    del codo 1 cruzaba el plano del proximal 2: -6 mm, y no se veía porque
+    el perno no estaba dibujado (docs/propuesta_codo.md)."""
+    import numpy as np
+    from shapely.geometry import LineString, Point
+
+    from compile.escribiente import Escribiente
+    from emit.montaje import ORDEN_DE_LOS_BRAZOS, _punta
+
+    c = contrato_mm()
+    m = Escribiente()
+    sep, prox, dist = c["brazo_separacion"] / 2, c["brazo_proximal"], c["brazo_distal"]
+    ancho_barra = c["brazo_extremo_diametro"] / 2
+    plano = {
+        n.replace("proximal_", "P").replace("distal_", "D"): i
+        for i, n in enumerate(ORDEN_DE_LOS_BRAZOS)
+    }
+    w, h, cy = (
+        float(m.caja_ancho) * 1000,
+        float(m.caja_alto) * 1000,
+        float(m.caja_centro_y) * 1000,
+    )
+    puntos = []
+    for t in np.linspace(0.0, 1.0, 25):
+        puntos += [
+            (-w / 2 + w * t, cy - h / 2),
+            (-w / 2 + w * t, cy + h / 2),
+            (-w / 2, cy - h / 2 + h * t),
+            (w / 2, cy - h / 2 + h * t),
+            (-w / 2 + w * t, cy - h / 2 + h * t),
+        ]
+    peor = math.inf
+    for p1, p2 in m.brazo.inversa(np.array(puntos) / 1000.0):
+        pivotes = [(-sep, 0.0), (sep, 0.0)]
+        codos = [
+            (pivotes[0][0] + prox * math.cos(p1), prox * math.sin(p1)),
+            (pivotes[1][0] + prox * math.cos(p2), prox * math.sin(p2)),
+        ]
+        punta = _punta(codos[0], codos[1], dist)
+        cuerpos = {
+            "P1": LineString([pivotes[0], codos[0]]).buffer(ancho_barra),
+            "P2": LineString([pivotes[1], codos[1]]).buffer(ancho_barra),
+            # El distal es curvo: su cuerda engordada con la flecha lo cubre.
+            "D1": LineString([codos[0], punta]).buffer(ancho_barra + c["distal_flecha"]),
+            "D2": LineString([codos[1], punta]).buffer(ancho_barra + c["distal_flecha"]),
+        }
+        verticales = [
+            (codos[0], c["brazo_extremo_diametro"] / 2, plano["P1"], plano["D1"], ()),
+            (codos[1], c["brazo_extremo_diametro"] / 2, plano["P2"], plano["D2"], ()),
+            (punta, c["punta_tubo_diametro"] / 2, -1, plano["D2"], ("D1", "D2")),
+            (pivotes[0], c["brazo_eje_diametro"] / 2, -1, plano["P1"], ("P1",)),
+            (pivotes[1], c["brazo_eje_diametro"] / 2, -1, plano["P2"], ("P2",)),
+        ]
+        for xy, r, de, a, suyos in verticales:
+            lo, hi = min(de, a), max(de, a)
+            for brazo, k in plano.items():
+                if lo < k < hi and brazo not in suyos:
+                    peor = min(peor, cuerpos[brazo].distance(Point(xy)) - r)
+    assert peor >= 3.0, f"un eje del varillaje pasa a {peor:.1f} mm de un brazo que cruza"
+
+
+def test_el_perno_del_codo_y_el_casquillo_de_la_punta_llenan_su_hueco():
+    c = contrato_mm()
+    assert c["perno_codo_largo"] == pytest.approx(2 * c["brazo_espesor"] + c["brazo_arandela"])
+    assert c["casquillo_punta_largo"] == pytest.approx(c["brazo_espesor"] + 2 * c["brazo_arandela"])

@@ -190,6 +190,7 @@ def tornilleria() -> list[Fijacion]:
             "ejes de la mesa",
         ),
         Fijacion("DIN 7 Ø2 × 16", n["garra"], "pasador de la garra"),
+        Fijacion("DIN 988 6 × 12 × 0,5", n["perno_codo"], "arandela de cada codo del cinco barras"),
         Fijacion("DIN 7 Ø3 × 6", n["placa_tope"], "pasadores de tope, de pie en la placa"),
         Fijacion("arandela de presión Ø2", n["bieleta"], "bieleta en el balancín"),
     ]

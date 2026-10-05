@@ -1,6 +1,6 @@
 # Propuesta · el codo del cinco barras y las uniones que faltan
 
-2026-10-05 · estado: **propuesta, pendiente de aprobar**
+2026-10-05 · estado: **aprobada; pasos 1 y 2 hechos** (orden A, eje de 69,5, perno del codo, arandela y casquillo de la punta). El paso 3, la tornillería dibujada, va con el bloque B del dossier.
 
 ## 1. El problema
 

@@ -227,12 +227,16 @@ def alturas(c: dict[str, float] | None = None) -> dict[str, tuple[float, float]]
     )
     # El varillaje, de arriba abajo bajo el plato 1: cada brazo en su plano,
     # 3 de pletina y medio de arandela entre uno y otro. Con 1 de desnivel
-    # los proximales se solapaban donde se cruzan.
+    # los proximales se solapaban donde se cruzan. **Cada distal justo debajo
+    # de su proximal**: así cada codo une dos planos contiguos y su perno no
+    # atraviesa el plano de otro brazo. Con los dos proximales arriba, el
+    # perno del codo 1 cruzaba el plano del proximal 2, que pasa por debajo
+    # del codo 1 porque los proximales se cruzan (docs/propuesta_codo.md).
     paso = c["brazo_espesor"] + c["brazo_arandela"]
     tope = p1[0] - HOLGURA_AXIAL
     brazos = {
         nombre: (tope - (i + 1) * c["brazo_espesor"] - i * c["brazo_arandela"], tope - i * paso)
-        for i, nombre in enumerate(("proximal_1", "proximal_2", "distal_1", "distal_2"))
+        for i, nombre in enumerate(ORDEN_DE_LOS_BRAZOS)
     }
     # El tambor, centrado en el sector: coplanarios, que es lo que sustituye
     # a las pestañas.
@@ -268,6 +272,9 @@ def alturas(c: dict[str, float] | None = None) -> dict[str, tuple[float, float]]
         **brazos,
     }
 
+
+ORDEN_DE_LOS_BRAZOS = ("proximal_1", "distal_1", "proximal_2", "distal_2")
+"""De arriba abajo bajo el plato 1. Cada distal bajo su proximal."""
 
 JUEGO_GIRATORIO = 0.02
 """Juego diametral de un pasador que gira en su agujero (H7/h8 en Ø2)."""
@@ -371,7 +378,7 @@ GRUPOS: tuple[Grupo, ...] = (
         "El brazo que lleva la punta por el papel",
         "#e74c3c",
         1.0,
-        ("proximal_", "distal_"),
+        ("proximal_", "distal_", "perno_codo_", "arandela_codo_", "casquillo_punta"),
     ),
     Grupo(
         "levantamiento",
@@ -835,6 +842,34 @@ def colocar(
                     + c["brazo_origen_giro"],
                     al_marco(codo_plano),
                     z[f"distal_{n}"][0],
+                ),
+                True,
+            )
+        )
+        # El codo: un pasador enrasado calado en el distal, que gira en el
+        # proximal, con una arandela de 0,5 entre los dos cubos.
+        from build123d import Pos
+
+        cx, cy = al_marco(codo_plano)
+        piezas.append(
+            Colocada(
+                f"perno_codo_{n}",
+                Pos(cx, cy, z[f"distal_{n}"][0]) * hecho["perno_codo"],
+                True,
+            )
+        )
+        piezas.append(
+            Colocada(
+                f"arandela_codo_{n}",
+                _cilindro(
+                    c["brazo_extremo_diametro"] / 2.0,
+                    (cx, cy, z[f"distal_{n}"][1]),
+                    (cx, cy, z[f"proximal_{n}"][0]),
+                )
+                - _cilindro(
+                    c["brazo_perno_diametro"] / 2.0 + 0.1,
+                    (cx, cy, z[f"distal_{n}"][1] - 1.0),
+                    (cx, cy, z[f"proximal_{n}"][0] + 1.0),
                 ),
                 True,
             )
@@ -1462,6 +1497,9 @@ def _portalapiz(
 
     tubo = z["punta_tubo"]
     poner("tubo_punta", Pos(0, 0, tubo[0]) * hecho["tubo_punta"])
+    # Entre los dos distales queda el plano del proximal 2, vacío en la punta:
+    # lo llena un casquillo en el tubo.
+    poner("casquillo_punta", Pos(0, 0, z["distal_2"][1]) * hecho["casquillo_punta"])
     # Marco del cinco barras con el origen en la punta: el brazo va a +Y.
     poner("brazo_horquilla", Pos(0, 0, tubo[1]) * Rot(Z=90) * hecho["brazo_horquilla"])
     pie = tubo[1] + c["horquilla_espesor"]

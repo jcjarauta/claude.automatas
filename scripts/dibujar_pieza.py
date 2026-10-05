@@ -84,6 +84,8 @@ PERFIL_DE = {
     "soporte_mesa": PERFILES["soporte_mesa"],
     "orejeta_mesa": PERFILES["orejeta_mesa"],
     "tubo_punta": PERFILES["tubo_punta"],
+    "perno_codo": PERFILES["perno_codo"],
+    "casquillo_punta": PERFILES["casquillo_punta"],
     "brazo_horquilla": PERFILES["brazo_horquilla"],
     "poste_horquilla": PERFILES["poste_horquilla"],
     "pinza": PERFILES["pinza"],

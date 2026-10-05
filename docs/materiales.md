@@ -17,14 +17,14 @@ Barra, tubo y alambre se piden por largo: el de cada pieza más 2 mm de corte. L
 | chapa de latón de 4 | chapa | chapa CuZn39Pb3 de 4 | 1 532 mm² | soporte_mesa ×4, poste_horquilla ×1 |
 | chapa de latón de 6 | chapa | chapa CuZn39Pb3 de 6 | 13 860 mm² | mordaza ×2, volante ×1, apoyo_balancin ×2 |
 | fleje 1.4310 de 0,15 | fleje | fleje inoxidable de muelle, 0,15 | 1 476 mm² | lamina_flexura ×2 |
-| barra W10 h6 rectificada | barra | eje de precisión Ø10 h6 CF53, cortado a medida | 270 mm | eje_pivote ×2, eje_manivela ×1, munon ×1, eje_motriz ×1 |
+| barra W10 h6 rectificada | barra | eje de precisión Ø10 h6 CF53, cortado a medida | 277 mm | eje_pivote ×2, eje_manivela ×1, munon ×1, eje_motriz ×1 |
 | acero plata Ø1,5 | barra | acero plata Ø1,5 h9 | 324 mm | eje_mesa_movil ×2, eje_mesa_fijo ×4 |
 | acero plata Ø4 h6 | barra | acero plata Ø4 h6 | 99 mm | eje_balancin ×1 |
-| acero plata Ø6 | barra | acero plata Ø6 h9 | 11 mm | bulon_tirante ×1 |
+| acero plata Ø6 | barra | acero plata Ø6 h9 | 28 mm | bulon_tirante ×1, perno_codo ×2 |
 | cuerda de piano Ø2 | alambre | cuerda de piano Ø2, recta | 86 mm | bieleta ×1 |
 | latón, barra de Ø4 | barra | barra de latón Ø4 | 116 mm | tirante ×1 |
 | latón, barra de Ø16 | barra | barra de latón CuZn39Pb3 Ø16 | 113 mm | tambor ×2, casquillo_rueda ×1, collar ×9, garra ×1 |
-| latón, barra de Ø25 | barra | barra de latón CuZn39Pb3 Ø25 | 29 mm | eje_cartucho ×1 |
+| latón, barra de Ø25 | barra | barra de latón CuZn39Pb3 Ø25 | 35 mm | casquillo_punta ×1, eje_cartucho ×1 |
 | latón, barra cuadrada de 16 | barra | barra cuadrada de latón de 16 | 30 mm | pinza ×1 |
 | latón, barra de 6 × 5 | barra | pletina de latón 6 × 5 | 84 mm | orejeta_mesa ×2 |
 | latón, tubo 13/10,6 | tubo | tubo de latón 13 × 1,2 | 18 mm | tubo_punta ×1 |
@@ -57,6 +57,7 @@ Las cantidades salen de las piezas del listado: si cambia cuántos sectores o co
 | DIN 6799 para eje Ø4 | 2 | eje del balancín, por fuera |
 | DIN 6799 para eje Ø1,5 | 8 | ejes de la mesa |
 | DIN 7 Ø2 × 16 | 1 | pasador de la garra |
+| DIN 988 6 × 12 × 0,5 | 2 | arandela de cada codo del cinco barras |
 | DIN 7 Ø3 × 6 | 3 | pasadores de tope, de pie en la placa |
 | arandela de presión Ø2 | 1 | bieleta en el balancín |
-| **total** | **70** | |
+| **total** | **72** | |

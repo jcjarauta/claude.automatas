@@ -365,6 +365,8 @@ def despiece() -> list[tuple[int, str, int, str, str]]:
         "palanca_lapiz",
         "brazo_proximal",
         "brazo_distal",
+        "perno_codo",
+        "casquillo_punta",
         "volante",
         "manivela",
         "eje_balancin",

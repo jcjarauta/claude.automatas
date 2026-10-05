@@ -522,6 +522,16 @@ FICHAS: dict[str, Ficha] = {
         simetrico=True,
         datum="mesa_eje_diametro_radio",
     ),
+    "perno_codo": Ficha(
+        "sección del pasador del codo",
+        {"brazo_perno_diametro_radio": 1},
+        datum="brazo_perno_diametro_radio",
+    ),
+    "casquillo_punta": Ficha(
+        "anillo: el casquillo entre los dos distales",
+        {"distal_punta_diametro_radio": 1, "punta_tubo_diametro_radio": 1},
+        datum="punta_tubo_diametro_radio",
+    ),
     "tubo_punta": Ficha(
         "anillo: el tubo de la punta",
         {"punta_tubo_diametro_radio": 1, "punta_tubo_interior_diametro_radio": 1},

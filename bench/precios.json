@@ -303,9 +303,9 @@
     },
     {
       "concepto": "Tornillería y retención inox A2",
-      "referencia": "surtido de docs/materiales.md: DIN 912, 7991, 913, 439, 705, 6799 y 7, M2 a M4",
+      "referencia": "surtido de docs/materiales.md: DIN 912, 7991, 913, 439, 705, 6799, 7 y 988, M2 a M4",
       "proveedor": "Ferretería Campollano",
-      "cantidad": 70,
+      "cantidad": 72,
       "precio": 0.06,
       "iva_incluido": true,
       "verificado": false,

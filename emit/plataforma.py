@@ -707,6 +707,8 @@ PERFILES = {
     "casquillo_bieleta": lambda c: casquillo_bieleta(c),
     "tirante": lambda c: varilla("tirante_diametro")(c),
     "bulon_tirante": lambda c: varilla("brazo_perno_diametro")(c),
+    "perno_codo": lambda c: varilla("brazo_perno_diametro")(c),
+    "casquillo_punta": lambda c: anillo("distal_punta_diametro", "punta_tubo_diametro")(c),
     "mesa": lambda c: mesa(c),
     "biela_mesa": lambda c: biela_mesa(c),
     "eje_mesa_movil": lambda c: varilla("mesa_eje_diametro")(c),
@@ -1480,6 +1482,42 @@ LISTADO: dict[str, Ficha] = {
         ),
         material="acero plata Ø6",
         proceso="torneado + taladro transversal Ø4",
+    ),
+    "perno_codo": Ficha(
+        texto("pasador Ø{brazo_perno_diametro} enrasado"),
+        2,
+        (
+            Variable("cota", "brazo_perno_diametro", "Ø", "m6"),
+            Variable("cota", "perno_codo_largo", "largo", en_el_perfil=False),
+        ),
+        ("barra", "perno_codo_largo"),
+        "El codo une dos planos contiguos y no puede asomar por ninguna cara: encima del "
+        "proximal está el plato a 1 mm y debajo del distal pasa el otro proximal. Por eso es "
+        "un pasador enrasado y no un tornillo con tuerca.",
+        montaje=(
+            "Calado a presión en el cubo del codo del distal, enrasado por debajo; entra "
+            "deslizante en el cubo del proximal, con la arandela de 0,5 entre los dos, y queda "
+            "enrasado por arriba. No lleva retención: la altura del distal la fija el tubo de la "
+            "punta y la del proximal su collar."
+        ),
+        material="acero plata Ø6",
+        proceso="corte a medida y chaflán",
+    ),
+    "casquillo_punta": Ficha(
+        texto("casquillo entre los dos distales, en el tubo de la punta"),
+        1,
+        (
+            Variable("cota", "distal_punta_diametro", "Ø exterior"),
+            Variable("cota", "punta_tubo_diametro", "Ø interior", "H8"),
+            Variable("cota", "casquillo_punta_largo", "largo", en_el_perfil=False),
+        ),
+        ("barra", "casquillo_punta_largo"),
+        "Con cada distal bajo su proximal, entre los dos distales queda el plano del "
+        "proximal 2, que en la punta está vacío: el casquillo lo llena y mantiene los dos "
+        "cubos en su plano.",
+        montaje="En el tubo de la punta, entre el cubo del distal 2, debajo, y el del distal 1.",
+        material="latón, barra de Ø25",
+        proceso="torneado",
     ),
     "mesa": Ficha(
         texto("placa donde va la tarjeta"),
