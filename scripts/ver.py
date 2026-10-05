@@ -5,6 +5,7 @@
     uv run --group cad python scripts/ver.py --conjunto --step build/montaje.step
     uv run --group cad python scripts/ver.py --conjunto --grupos cartucho,entre_puntos
     uv run --group cad python scripts/ver.py --conjunto --sacado 80 --vista planta
+    uv run --group cad python scripts/ver.py --conjunto --explosion
 
 En `--conjunto` las piezas van **agrupadas por subsistema** (`emit.montaje.GRUPOS`),
 cada grupo de un color y el bastidor translúcido, y se imprime la tabla de
@@ -122,6 +123,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     partes.add_argument("--sacado", type=float, default=0.0, help="saca el cartucho, en mm")
     partes.add_argument("--vista", choices=sorted(VISTAS), default="iso")
+    partes.add_argument(
+        "--explosion",
+        action="store_true",
+        help="cada grupo sale como un bloque, como en el dossier (emit.explosion)",
+    )
     op = partes.parse_args(argv)
 
     if not op.conjunto and op.pieza is None:
@@ -175,6 +181,13 @@ def _mostrar_por_grupos(op) -> int:
 
     piezas = _piezas(op.theta, op.sacado)
     print(auditoria(piezas))
+    if op.explosion:
+        from emit.explosion import explosionar_conjunto
+
+        fuera, distancias = explosionar_conjunto([(p.nombre, s) for p, s in piezas])
+        movidas = dict(fuera)
+        piezas = [(p, movidas[p.nombre]) for p, _ in piezas]
+        print("explosión (mm):", ", ".join(f"{g} {d:.0f}" for g, d in distancias.items()))
     if op.nivel:
         from emit.montaje import NIVELES
 

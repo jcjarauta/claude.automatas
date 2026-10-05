@@ -104,3 +104,35 @@ def test_cada_pagina_dice_que_no_se_mide_sobre_ella(tmp_path, monkeypatch):
     pdf = escribir_dossier(datos("commit prueba"), tmp_path / "d.pdf").read_bytes()
     paginas = pdf.count(b"/Type /Page") - pdf.count(b"/Type /Pages")
     assert pdf.count(f"({NO_MEDIR}) Tj".encode("latin-1")) == paginas
+
+
+def _celdas(tabla) -> list[list[str]]:
+    return [
+        [c.getPlainText() if hasattr(c, "getPlainText") else str(c) for c in fila]
+        for fila in tabla._cellvalues
+    ]
+
+
+def test_el_indice_lleva_toda_marca_con_su_documento_y_hoja():
+    """Fase 5: cada cosa marcada, en el orden de montaje, con dónde está
+    dibujada; y por orden alfabético, remitiendo a la marca."""
+    pytest.importorskip("build123d", reason="hace falta el kernel: uv sync --group cad")
+    from reportlab.lib.styles import getSampleStyleSheet
+
+    from emit.dossier import _indice
+    from scripts.dossier import datos
+
+    d = datos("commit prueba")
+    estilo = getSampleStyleSheet()["BodyText"]
+    por_marca, _, alfabetico = _indice(d, 500.0, estilo, estilo)
+    filas = _celdas(por_marca)[1:]
+    assert {f[0] for f in filas} == {codigo for codigo, _ in d.marcas.values()}
+    tambor = next(f for f in filas if f[1] == "tambor")
+    assert tambor[0] == "P-AMP-03"
+    assert tambor[5:] == ["fichas_amplificador.pdf", "4"]
+    # En el orden de montaje: el bastidor, lo primero; las levas, lo último.
+    assert filas[0][4].endswith("bastidor")
+    assert filas[-1][4].endswith("levas")
+    nombres = [f[0] for f in _celdas(alfabetico)[1:]]
+    assert nombres == sorted(nombres)
+    assert "tambor" in nombres

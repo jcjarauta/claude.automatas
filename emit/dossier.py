@@ -243,6 +243,9 @@ class Datos:
     """(serie, nombre) → (marca, plano), del registro `docs/numeracion.json`.
     Una pieza fabricada se busca por su nombre, una comercial por el suyo y
     una línea de tornillería por «designación · para»."""
+    paginas: dict[tuple[str, str], tuple[str, int]] = field(default_factory=dict)
+    """(serie, nombre) → (documento, hoja) donde está dibujado: el índice
+    (`emit.numeracion.paginas`)."""
 
 
 def _vista_flowable(vista: Vista, ancho: float, alto: float, titulo: str = "") -> Any:
@@ -321,6 +324,53 @@ def _esquema_flowable(esquema: Any, ancho: float, alto: float) -> Any:
             )
         )
     return dibujo
+
+
+def _indice(datos: Datos, ancho: float, celda: Any, h2: Any) -> list[Any]:
+    """Las dos tablas del índice: por marca, en el orden de montaje, y por
+    nombre, remitiendo a la marca."""
+    from reportlab.platypus import Paragraph
+
+    serie_de = {"piezas": 0, "comerciales": 1, "tornilleria": 2}
+    paso_de = {g: i for i, g in enumerate(ORDEN_DE_MONTAJE, start=1)}
+    grupo_de_sigla = {g.sigla: g.nombre for g in GRUPOS}
+    que: dict[tuple[str, str], tuple[str, int, str]] = {}
+    for n, k, material, *_ in datos.fabricadas:
+        que[("piezas", n)] = (n, k, material)
+    for n, k, d in datos.comerciales:
+        que[("comerciales", n)] = (n, k, d)
+    for d, k, para in datos.tornilleria:
+        que[("tornilleria", f"{d} · {para}")] = (f"{d}, {para}", k, "")
+
+    entradas = []
+    for clave, (codigo, _) in datos.marcas.items():
+        if clave not in que or clave not in datos.paginas:
+            continue
+        grupo = grupo_de_sigla[codigo.split("-")[1]]
+        orden = (paso_de[grupo], serie_de[clave[0]], codigo)
+        entradas.append((orden, clave, codigo, grupo))
+    entradas.sort()
+
+    filas = [["Marca", "Qué", "Ud.", "Material o designación", "Paso", "Documento", "Hoja"]]
+    for (paso, _, _), clave, codigo, grupo in entradas:
+        nombre, k, descripcion = que[clave]
+        documento, hoja = datos.paginas[clave]
+        filas.append(
+            [codigo, nombre, str(k), descripcion, f"{paso}. {grupo}", documento, str(hoja)]
+        )
+    anchos = (0.1, 0.24, 0.05, 0.25, 0.13, 0.17, 0.06)
+    salida = [_tabla(filas, [ancho * f for f in anchos], celda)]
+
+    salida.append(Paragraph("Por orden alfabético", h2))
+    filas = [["Pieza", "Marca", "Documento", "Hoja"]]
+    filas += sorted(
+        [que[clave][0], codigo, datos.paginas[clave][0], str(datos.paginas[clave][1])]
+        for _, clave, codigo, _ in entradas
+        if clave[0] != "tornilleria"
+    )
+    anchos = (0.4, 0.15, 0.3, 0.15)
+    salida.append(_tabla(filas, [ancho * f for f in anchos], celda))
+    return salida
 
 
 def _tabla(filas: list[list[str]], anchos: list[float], estilo: Any, cabecera: bool = True) -> Any:
@@ -417,6 +467,21 @@ def escribir_dossier(datos: Datos, destino: Path | str) -> Path:
     flujo.append(_vista_flowable(proyectar(datos.piezas, "isométrica"), ancho, 150 * mm))
     flujo.append(Spacer(1, 3 * mm))
     flujo.append(_leyenda(GRUPOS, celda, ancho))
+
+    # --- índice -------------------------------------------------------------------
+    if datos.paginas:
+        flujo.append(PageBreak())
+        flujo.append(Paragraph("Índice: dónde está cada cosa", h1))
+        flujo.append(
+            Paragraph(
+                "Todo lo que hay encima de la mesa, por su marca: qué es, cuántas, en qué paso "
+                "se monta y en qué documento y hoja está dibujado. Las piezas tienen ficha "
+                "propia; los comerciales y la tornillería, la hoja de su grupo. Al final, por "
+                "orden alfabético.",
+                cuerpo,
+            )
+        )
+        flujo.extend(_indice(datos, ancho, celda, h2))
 
     # --- vistas ortográficas ----------------------------------------------------
     flujo.append(PageBreak())

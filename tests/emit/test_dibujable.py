@@ -118,3 +118,26 @@ def test_el_cruce_dice_lo_que_falta_con_el_nombre_de_la_pieza():
     assert all(f.startswith("prueba:") for f in pendientes)
     assert any("R3 en (20, 0) con el centro sin situar" in f for f in pendientes)
     assert any("tramo de" in f for f in pendientes)
+
+
+@pytest.mark.slow
+def test_el_indice_dice_la_hoja_en_que_esta_de_verdad_cada_ficha(grupo):
+    """El índice no cuenta hojas aparte: lee el registro en el mismo orden en
+    que se escriben las fichas. Si no, cada pieza nueva lo desplazaría una."""
+    from emit.fichas import hojas_de
+    from emit.numeracion import cargar, paginas
+
+    fichas, hojas = grupo
+    donde = paginas(cargar())
+    escritas = hojas_de(fichas)
+    for p in fichas.piezas:
+        indice = donde[("piezas", p.nombre)]
+        assert indice.documento == f"fichas_{fichas.grupo.nombre}.pdf"
+        assert indice.hoja == escritas[p.nombre], p.nombre
+        assert p.plano in hojas[indice.hoja - 1], f"{p.plano} no está en la hoja {indice.hoja}"
+    suyas = {
+        n
+        for (s, n), pg in donde.items()
+        if s == "piezas" and pg.documento.endswith(f"_{fichas.grupo.nombre}.pdf")
+    }
+    assert suyas == {p.nombre for p in fichas.piezas}

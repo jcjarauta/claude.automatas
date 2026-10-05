@@ -1343,6 +1343,13 @@ def _ficha_de_grupo(cv: Any, g: FichasDeGrupo, hoja: str, version: str) -> None:
     )
 
 
+def hojas_de(g: FichasDeGrupo) -> dict[str, int]:
+    """Pieza → hoja en que `escribir_fichas` pone su ficha. La hoja 1 es la
+    del grupo. El índice del dossier lo saca del registro
+    (`emit.numeracion.paginas`) y un test lo cruza con esto."""
+    return {p.nombre: i for i, p in enumerate(g.piezas, start=2)}
+
+
 def escribir_fichas(
     g: FichasDeGrupo, destino: Path | str, version: str, comprimir: bool = True
 ) -> Path:
@@ -1366,8 +1373,9 @@ def escribir_fichas(
     total = 1 + len(g.piezas)
     _ficha_de_grupo(cv, g, f"1/{total}", version)
     cv.showPage()
-    for i, p in enumerate(g.piezas, start=2):
-        _ficha_de_pieza(cv, p, g.grupo, g.contrato, f"{i}/{total}", version)
+    hojas = hojas_de(g)
+    for p in g.piezas:
+        _ficha_de_pieza(cv, p, g.grupo, g.contrato, f"{hojas[p.nombre]}/{total}", version)
         cv.showPage()
     cv.save()
     return destino
@@ -1398,6 +1406,7 @@ __all__ = [
     "escribir_fichas",
     "grupo",
     "grupo_de",
+    "hojas_de",
     "variable_de",
     "vista_de_pieza",
 ]

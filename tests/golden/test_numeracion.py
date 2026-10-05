@@ -70,3 +70,38 @@ def test_la_tornilleria_del_catalogo_es_la_de_la_lista():
 
     linea = next(p for p in catalogo() if p.nombre == "tornilleria")
     assert linea.cantidad == sum(f.cantidad for f in tornilleria())
+
+
+# ---------------------------------------------------------------------------
+# El índice: dónde está dibujada cada marca
+# ---------------------------------------------------------------------------
+
+
+def test_cada_marca_tiene_documento_y_hoja():
+    from emit.numeracion import paginas
+
+    registro = cargar()
+    donde = paginas(registro)
+    assert set(donde) == set(marcas(registro))
+    assert donde[("piezas", "tambor")].documento == "fichas_amplificador.pdf"
+    # Hoja 1, la de grupo; después una por pieza, en el orden de su marca.
+    assert donde[("piezas", "eje_pivote")].hoja == 2
+    assert donde[("piezas", "tambor")].hoja == 4
+    assert donde[("comerciales", "cinta_amplificador")].hoja == 1
+
+
+def test_un_numero_dado_de_baja_no_deja_hoja_vacia():
+    from emit.numeracion import paginas
+
+    registro = {
+        "g": {
+            "sigla": "GGG",
+            "piezas": {"1": "a", "2": None, "3": "c"},
+            "comerciales": {"1": "k"},
+            "tornilleria": {},
+        }
+    }
+    donde = paginas(registro)
+    assert [donde[("piezas", n)].hoja for n in ("a", "c")] == [2, 3]
+    assert donde[("comerciales", "k")].hoja == 1
+    assert donde[("piezas", "a")].documento == "fichas_g.pdf"

@@ -103,6 +103,39 @@ def marcas(registro: Registro) -> dict[tuple[str, str], Marca]:
     return salida
 
 
+DOCUMENTO_DE_FICHAS = "fichas_{grupo}.pdf"
+"""El PDF de fichas de cada grupo: hoja de grupo y una ficha por pieza."""
+
+
+@dataclass(frozen=True)
+class Pagina:
+    documento: str
+    hoja: int
+
+
+def paginas(registro: Registro) -> dict[tuple[str, str], Pagina]:
+    """(serie, nombre) → en qué documento y hoja está dibujado.
+
+    Es el orden en que `emit.fichas.escribir_fichas` escribe: la hoja 1 es
+    la de grupo, que lleva comerciales y tornillería; después, una hoja por
+    pieza, en el orden de su marca. Un número dado de baja no deja hoja
+    vacía. No se cuentan hojas en ningún otro sitio: el test cruza esto con
+    lo que de verdad lleva escrito cada hoja."""
+    salida: dict[tuple[str, str], Pagina] = {}
+    por_grupo: dict[str, list[Marca]] = {}
+    for m in marcas(registro).values():
+        por_grupo.setdefault(m.grupo, []).append(m)
+    for grupo, suyas in por_grupo.items():
+        documento = DOCUMENTO_DE_FICHAS.format(grupo=grupo)
+        piezas = sorted((m for m in suyas if m.serie == "piezas"), key=lambda m: m.numero)
+        for hoja, m in enumerate(piezas, start=2):
+            salida[(m.serie, m.nombre)] = Pagina(documento, hoja)
+        for m in suyas:
+            if m.serie != "piezas":
+                salida[(m.serie, m.nombre)] = Pagina(documento, 1)
+    return salida
+
+
 Inventario = dict[str, dict[str, list[str]]]
 """grupo → serie → lo que existe hoy, en el orden en que se monta."""
 
@@ -169,10 +202,12 @@ def dar_de_alta(registro: Registro, inventario: Inventario) -> tuple[Registro, l
 
 
 __all__ = [
+    "DOCUMENTO_DE_FICHAS",
     "REGISTRO",
     "SERIES",
     "Inventario",
     "Marca",
+    "Pagina",
     "Registro",
     "cargar",
     "comparar",
@@ -180,4 +215,5 @@ __all__ = [
     "diferencias",
     "guardar",
     "marcas",
+    "paginas",
 ]

@@ -50,7 +50,7 @@ def datos(version: str | None = None):
     from emit.dossier import Datos
     from emit.materiales import tornilleria
     from emit.numeracion import cargar as cargar_registro
-    from emit.numeracion import marcas
+    from emit.numeracion import marcas, paginas
     from emit.plataforma import LISTADO
     from scripts.ver import _piezas
 
@@ -79,6 +79,7 @@ def datos(version: str | None = None):
         marcas={
             (m.serie, m.nombre): (m.codigo, m.hoja) for m in marcas(cargar_registro()).values()
         },
+        paginas={clave: (p.documento, p.hoja) for clave, p in paginas(cargar_registro()).items()},
     )
 
 

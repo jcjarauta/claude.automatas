@@ -1,6 +1,6 @@
 # Propuesta · la documentación completa: numeración, explosión, índice, estilo y fichas dibujables
 
-2026-10-05 · estado: **aprobada; fases 1 a 4 hechas**, 5 y 6 pendientes
+2026-10-05 · estado: **aprobada; fases 1 a 5 hechas**, 6 pendiente
 
 Dos encargos que se juntan aquí: el bloque B del dossier (numeración única,
 explosión de conjunto, índice, escala y estilo) y que **cada ficha de pieza
@@ -98,6 +98,15 @@ material o designación, paso de montaje y **en qué documento y página** está
 su ficha. Ordenado por marca, y una segunda tabla alfabética que remite a la
 primera. Los números de página salen de cómo se escriben las fichas (cada
 `escribir_fichas` devuelve el mapa pieza → página), no se cuentan aparte.
+
+> **Hecho así (fase 5).** `emit.numeracion.paginas(registro)` da documento
+> y hoja de cada marca, en el mismo orden en que escribe
+> `emit.fichas.escribir_fichas` (`hojas_de`): hoja 1 la de grupo, con
+> comerciales y tornillería; después una por pieza, por marca; una baja no
+> deja hoja vacía. Un test lo cruza con lo que de verdad lleva escrito cada
+> hoja de los nueve grupos con piezas. El índice va en la página 2 del
+> dossier. Remite a `fichas_levas.pdf` para la plancha de POM: esa hoja de
+> grupo la escribe la fase 6.
 
 ## 4. Escala y medida
 
