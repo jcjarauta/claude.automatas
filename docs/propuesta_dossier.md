@@ -1,6 +1,6 @@
 # Propuesta · la documentación completa: numeración, explosión, índice, estilo y fichas dibujables
 
-2026-10-05 · estado: **propuesta, pendiente de aprobar**
+2026-10-05 · estado: **aprobada; fases 1, 2 y 3 hechas**, 4 a 6 pendientes
 
 Dos encargos que se juntan aquí: el bloque B del dossier (numeración única,
 explosión de conjunto, índice, escala y estilo) y que **cada ficha de pieza
@@ -178,6 +178,12 @@ anillos concéntricos: lo que acota la ficha basta.)
    grupos.
 
 ---
+
+## Lo hecho
+
+- **Fase 1** (5f2c98c): `docs/numeracion.json`, 84 marcas, golden de altas y bajas; marca y plano en las tres tablas del dossier y en las fichas.
+- **Fase 2** (853024b): `emit/acotado.py` con cota angular, `emit/estilo.py`, «no medir sobre esta hoja», referencias numeradas en vez de nombres en el dibujo.
+- **Fase 3**: `emit/dibujable.py` lee del perfil cómo se construye la pieza (tangentes, caras planas, tramos libres) y la ficha rotula lo que falta: centros de arco con su propia cota, caras planas con distancia, cuerda y lado, longitudes de tramos libres, cotas derivadas de referencia entre paréntesis y la nota de extrusión. **De 68 faltas a 0** en los nueve grupos con piezas; `tests/emit/test_dibujable.py` lo cruza y busca cada cota en el PDF.
 
 ## Fases
 
