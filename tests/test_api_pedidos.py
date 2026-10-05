@@ -249,7 +249,7 @@ def test_el_valle_que_publica_la_interfaz_es_el_del_nucleo():
     el del núcleo en vez de llevar su propio 0,5."""
     from core.tipografia import ENLACE
 
-    assert cliente.get("/api/fuentes").json()["enlace"] == ENLACE
+    assert cliente.get("/api/opciones").json()["enlace"] == ENLACE
 
 
 def test_la_tinta_deja_poner_en_porcentaje_lo_que_el_enlace_inventa():
@@ -260,3 +260,56 @@ def test_la_tinta_deja_poner_en_porcentaje_lo_que_el_enlace_inventa():
     # Y es una longitud de verdad, no la caja: una cursiva recorre mucho
     # más de lo que mide de ancho.
     assert datos["tinta_mm"] > datos["ancho_mm"]
+
+
+# ---------------------------------------------------------------------------
+# El selector de tarjeta
+# ---------------------------------------------------------------------------
+
+
+def test_la_interfaz_ofrece_el_catalogo_entero_con_su_caja():
+    """El selector se construye desde aquí: si un formato no sale, no se
+    puede pedir aunque esté en `docs/tarjetas/`."""
+    from compile.tarjetas import tarjetas
+
+    datos = cliente.get("/api/opciones").json()
+    assert sorted(t["nombre"] for t in datos["tarjetas"]) == tarjetas()
+    assert datos["tarjeta_por_defecto"] in tarjetas()
+    for t in datos["tarjetas"]:
+        assert t["caja_mm"][0] < t["papel_mm"][0], f"{t['nombre']}: la caja no cabe en el papel"
+        assert t["caja_mm"][1] < t["papel_mm"][1]
+
+
+def test_la_tarjeta_cambia_el_veredicto():
+    """Es la razón de que exista el selector. «Gràcies» hay que medirla en
+    el A7 y sale limpia en la tarjeta de visita: el formato es la palanca
+    de capacidad más grande que tiene la máquina."""
+    a7 = cliente.post("/api/capacidad", json={"texto": "Gracies", "tarjeta": "a7_apaisado"}).json()
+    visita = cliente.post(
+        "/api/capacidad", json={"texto": "Gracies", "tarjeta": "tarjeta_de_visita"}
+    ).json()
+    assert a7["caja_mm"] == [80.0, 24.0]
+    assert visita["caja_mm"] == [65.0, 20.0]
+    assert a7["estado"] == "falta_medir"
+    assert visita["estado"] == "si"
+
+
+def test_una_tarjeta_que_no_existe_es_una_respuesta_y_no_una_caida():
+    respuesta = cliente.post("/api/capacidad", json={"texto": "hola", "tarjeta": "inventada"})
+    assert respuesta.status_code == 422
+    assert "inventada" in respuesta.json()["detail"]
+
+
+def test_la_vista_previa_enseña_lo_que_se_escribe_y_su_caja():
+    """Dibujar la composición cruda y no la encajada escondía justo lo que
+    el selector decide: si la frase llena la tarjeta o le sobra medio
+    papel. La caja viene con ella para poder pintarla alrededor."""
+    datos = cliente.post("/api/trazos", json={"texto": "Pau", "tarjeta": "a7_apaisado"}).json()
+    assert datos["caja"] == [-40.0, 88.0, 80.0, 24.0]
+    xs = [p[0] for t in datos["encajado"] for p in t]
+    ys = [p[1] for t in datos["encajado"] for p in t]
+    # Encajado quiere decir DENTRO de la caja, con el margen del redondeo.
+    assert min(xs) >= -40.1
+    assert max(xs) <= 40.1
+    assert min(ys) >= 87.9
+    assert max(ys) <= 112.1

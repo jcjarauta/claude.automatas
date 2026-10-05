@@ -1,9 +1,9 @@
 {
   "nombre": "a7_apaisado",
-  "descripcion": "La tarjeta de siempre: un A7 tumbado, con la frase en una linea. Deja 12,5 de margen a los lados y 25 delante y detras, que dan una caja de 80 x 24. El contrato todavia dice 22 de margen y 30 de caja, y con esos 30 la leva derecha se autointerseca con cualquier frase alta: «hola» tecleada no se puede fabricar. Bajar el margen es la correccion pendiente, y no mueve ni el papel ni la base",
+  "descripcion": "La tarjeta de siempre: un A7 tumbado, con la frase en una línea. Es el formato con más sitio del catálogo, y por eso el que antes se queda corto con una frase larga.",
   "papel_ancho": 0.105,
   "papel_alto": 0.074,
   "margen_lados": 0.0125,
   "margen_fondo": 0.025,
-  "procedencia": "ISO 216, A7 (74 x 105 mm) puesto apaisado. Congelado en docs/contratos.md: el papel se centra en la caja de escritura y su borde cercano queda a 10,45 del canto del plato"
+  "procedencia": "ISO 216, A7 (74 × 105 mm) puesto apaisado. Congelado en docs/contratos.md: el papel se centra en la caja de escritura y su borde cercano queda a 10,45 del canto del plato"
 }

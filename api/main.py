@@ -33,8 +33,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-from compile.escribiente import Compilacion, Escribiente, compilar
+from compile.escribiente import Compilacion, Escribiente, compilar, encajar_en_la_caja
 from compile.renglones import compilar_por_renglones
+from compile.tarjetas import cargar_tarjeta, maquina_para, tarjetas
 from compile.texto import ALTURA_DE_X, composicion_de, fuentes, huecos_de
 from core.errors import ErrorDeDominio
 from core.escritura import Escritura
@@ -48,6 +49,11 @@ PEDIDOS = RAIZ / "build" / "pedidos"
 
 app = FastAPI(title="Escribiente · pedidos", docs_url="/api/docs")
 
+TARJETA_POR_DEFECTO = "a7_apaisado"
+"""El formato del contrato. `test_la_tarjeta_por_defecto_es_la_del_contrato`
+cruza su caja contra la de `Escribiente()`: si alguien cambia una sin la
+otra, la vista previa y el paquete dejarían de decir lo mismo."""
+
 
 # ---------------------------------------------------------------------------
 # Lo que entra y lo que sale
@@ -60,6 +66,9 @@ class Peticion(BaseModel):
     levas más y cambiarlo a mitad de la frase. Por eso lo parte quien pide y
     no el programa."""
     fuente: str = "cursiva"
+    tarjeta: str = TARJETA_POR_DEFECTO
+    """El formato del catálogo. Decide la caja de escritura, que es la
+    palanca de capacidad más grande que tiene la máquina."""
     altura_de_x_mm: float = Field(default=float(a_mm(ALTURA_DE_X)), gt=1.0, le=60.0)
     enlace: float = Field(default=ENLACE, ge=0.0, le=2.0)
 
@@ -91,9 +100,32 @@ def _componer(peticion: Peticion) -> Composicion:
 # ---------------------------------------------------------------------------
 
 
-@app.get("/api/fuentes")
-def listar_fuentes() -> dict[str, Any]:
-    return {"fuentes": fuentes(), "altura_de_x_mm": float(a_mm(ALTURA_DE_X)), "enlace": ENLACE}
+@app.get("/api/opciones")
+def listar_opciones() -> dict[str, Any]:
+    """Lo que el formulario necesita para construirse: las fuentes, las
+    tarjetas con su caja, y los valores por defecto del núcleo.
+
+    El valle del enlace sale de aquí y no de un 0,5 escrito en la página:
+    dos sitios con el mismo número se separan."""
+    catalogo = [cargar_tarjeta(n) for n in tarjetas()]
+    return {
+        "fuentes": fuentes(),
+        "tarjetas": [
+            {
+                "nombre": t.nombre,
+                "descripcion": t.descripcion,
+                "papel_mm": [round(a_mm(t.papel_ancho), 1), round(a_mm(t.papel_alto), 1)],
+                "caja_mm": [
+                    round(a_mm(Metros(t.caja_ancho)), 1),
+                    round(a_mm(Metros(t.caja_alto)), 1),
+                ],
+            }
+            for t in catalogo
+        ],
+        "tarjeta_por_defecto": TARJETA_POR_DEFECTO,
+        "altura_de_x_mm": float(a_mm(ALTURA_DE_X)),
+        "enlace": ENLACE,
+    }
 
 
 @app.post("/api/trazos")
@@ -119,8 +151,19 @@ def ver_trazos(peticion: Peticion) -> dict[str, Any]:
         for t in escritura.trazos
         for a, b in itertools.pairwise([(float(x), float(y)) for x, y in t.puntos])
     )
+    # La vista previa enseña la escritura YA ENCAJADA, que es lo que se
+    # fabrica, y la caja alrededor. Sin la caja no se ve si la frase llena
+    # la tarjeta o le sobra medio papel, que es justo lo que el selector de
+    # formato decide. `encajar_en_la_caja` es una escala y un
+    # desplazamiento: cuesta microsegundos y cabe en el camino instantáneo.
+    maquina = _maquina(peticion)
+    encajada = encajar_en_la_caja(escritura, maquina)
+    ancho, alto = a_mm(maquina.caja_ancho), a_mm(maquina.caja_alto)
+    centro = a_mm(maquina.caja_centro_y)
     return {
         "trazos": _trazos_mm(escritura),
+        "encajado": _trazos_mm(encajada),
+        "caja": [round(x, 3) for x in (-ancho / 2.0, centro - alto / 2.0, ancho, alto)],
         "renglones": [list(r) for r in compuesta.renglones],
         "huecos": sorted(round(h, 3) for r in separaciones for h in r),
         "tinta_mm": round(a_mm(Metros(tinta)), 1),
@@ -188,7 +231,16 @@ def _medida(compilacion: Compilacion) -> dict[str, Any]:
     }
 
 
-def _compilaciones(compuesta: Composicion, simular: bool) -> list[Compilacion]:
+def _maquina(peticion: Peticion) -> Escribiente:
+    try:
+        return maquina_para(cargar_tarjeta(peticion.tarjeta))
+    except (FileNotFoundError, ValueError) as fallo:
+        raise HTTPException(status_code=422, detail=str(fallo)) from fallo
+
+
+def _compilaciones(
+    compuesta: Composicion, simular: bool, maquina: Escribiente
+) -> list[Compilacion]:
     """Una compilación por renglón, o una sola si no hay saltos de línea.
 
     Con un renglón no se pasa por `compilar_por_renglones` para que el
@@ -197,9 +249,9 @@ def _compilaciones(compuesta: Composicion, simular: bool) -> list[Compilacion]:
     renglones, y eso lo vigila el golden.
     """
     if len(compuesta.renglones) == 1:
-        return [compilar(compuesta.escritura, simular_el_trazo=simular)]
+        return [compilar(compuesta.escritura, maquina, simular_el_trazo=simular)]
     return compilar_por_renglones(
-        compuesta.escritura, compuesta.renglones, simular_el_trazo=simular
+        compuesta.escritura, compuesta.renglones, maquina, simular_el_trazo=simular
     )
 
 
@@ -221,10 +273,16 @@ def medir_capacidad(peticion: Peticion) -> dict[str, Any]:
     reparte entre renglones no son los grados: son las letras.
     """
     compuesta = _componer(peticion)
-    medidas = [_medida(c) for c in _compilaciones(compuesta, simular=False)]
+    medidas = [_medida(c) for c in _compilaciones(compuesta, False, _maquina(peticion))]
     peor = min(medidas, key=lambda m: ORDEN[m["estado"]])
+    caja = cargar_tarjeta(peticion.tarjeta)
     return {
         "estado": peor["estado"],
+        "tarjeta": peticion.tarjeta,
+        "caja_mm": [
+            round(a_mm(Metros(caja.caja_ancho)), 1),
+            round(a_mm(Metros(caja.caja_alto)), 1),
+        ],
         "renglones": medidas,
         "cartuchos": len(medidas),
         "levas": 3 * len(medidas),
@@ -259,18 +317,21 @@ def hacer_pedido(peticion: Peticion) -> dict[str, Any]:
     pedido: dict[str, Any] = {
         "nombre": peticion.texto.replace("\n", " "),
         "trazos": _trazos_mm(compuesta.escritura),
+        # Al JSON, no a un argumento: el CLI escribe el paquete con ella y
+        # el mismo archivo tiene que dar el mismo paquete dentro de un año.
+        "tarjeta": peticion.tarjeta,
     }
     # Sin `renglones` el CLI compila una sola vuelta, que es lo de siempre.
     if len(compuesta.renglones) > 1:
         pedido["renglones"] = [list(r) for r in compuesta.renglones]
     entrada.write_text(json.dumps(pedido, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 
-    compilaciones = _compilaciones(compuesta, simular=True)
+    maquina = _maquina(peticion)
+    compilaciones = _compilaciones(compuesta, True, maquina)
     # El paquete lo escribe el CLI, no esta capa: un solo sitio donde
     # vive qué archivos lleva un pedido.
     compilar_desde_cli([str(entrada), "--out", str(carpeta)])
 
-    maquina = Escribiente()
     ancho = a_mm(maquina.caja_ancho)
     alto = a_mm(maquina.caja_alto)
     centro_y = a_mm(maquina.caja_centro_y)

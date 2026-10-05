@@ -91,3 +91,72 @@ def test_todo_formato_del_catalogo_escribe_los_casos_de_referencia(nombre, caso)
         f"la tarjeta «{nombre}» escribe «{caso}» recortando {recortadas} leva(s): la letra "
         f"sale redondeada y cuánto no se sabe sin simular. Achica la caja"
     )
+
+
+# ---------------------------------------------------------------------------
+# La tarjeta por defecto, y que llegue hasta el paquete
+# ---------------------------------------------------------------------------
+
+
+def test_la_tarjeta_por_defecto_es_la_del_contrato():
+    """El gemelo positivo del test que se borró al bajar `caja_alto`.
+
+    La interfaz ofrece `a7_apaisado` por defecto y el CLI, sin tarjeta en el
+    pedido, usa `Escribiente()`. Si las dos cajas se separaran, la vista
+    previa y el paquete dirían cosas distintas **sin que nada protestara**,
+    que es exactamente lo que pasó durante meses con los 30 de alto.
+    """
+    from api.main import TARJETA_POR_DEFECTO
+    from compile.escribiente import Escribiente
+
+    contrato = Escribiente()
+    defecto = maquina_para(cargar_tarjeta(TARJETA_POR_DEFECTO))
+    assert float(defecto.caja_ancho) == pytest.approx(float(contrato.caja_ancho))
+    assert float(defecto.caja_alto) == pytest.approx(float(contrato.caja_alto))
+
+
+def test_la_tarjeta_del_pedido_llega_al_compilador():
+    """**La trampa de este cambio.** El paquete lo escribe el CLI con SU
+    máquina, así que una tarjeta que se quedara en la interfaz daría una
+    vista previa con una caja y un DXF con otra. Por eso va en el JSON del
+    pedido, como los renglones, y no en un argumento.
+    """
+    import json
+    import tempfile
+    from pathlib import Path
+
+    from compile.renglones import leer_pedido
+
+    with tempfile.TemporaryDirectory() as tmp:
+        ruta = Path(tmp) / "pedido.json"
+        ruta.write_text(
+            json.dumps({"nombre": "x", "trazos": [[[0, 0], [10, 5]]], "tarjeta": "a7_apaisado"}),
+            encoding="utf-8",
+        )
+        assert leer_pedido(ruta).tarjeta == "a7_apaisado"
+
+        ruta.write_text(
+            json.dumps({"nombre": "x", "trazos": [[[0, 0], [10, 5]]]}), encoding="utf-8"
+        )
+        assert leer_pedido(ruta).tarjeta is None, "sin tarjeta, la caja del contrato"
+
+
+@pytest.mark.parametrize("nombre", tarjetas())
+def test_cada_tarjeta_da_una_geometria_distinta(nombre):
+    """Dos formatos tienen que dar dos cartuchos. Si la tarjeta se perdiera
+    por el camino, los perfiles saldrían iguales y nadie lo notaría hasta
+    tener las levas cortadas."""
+    from compile.escribiente import Escribiente
+
+    base = compilar(CASOS["tecleada"](), simular_el_trazo=False)
+    suyo = compilar(
+        CASOS["tecleada"](), maquina=maquina_para(cargar_tarjeta(nombre)), simular_el_trazo=False
+    )
+    igual_que_el_contrato = float(cargar_tarjeta(nombre).caja_ancho) == pytest.approx(
+        float(Escribiente().caja_ancho)
+    )
+    perfiles_iguales = all(
+        float(base.perfiles[k].radio_maximo) == pytest.approx(float(suyo.perfiles[k].radio_maximo))
+        for k in base.perfiles
+    )
+    assert perfiles_iguales == igual_que_el_contrato

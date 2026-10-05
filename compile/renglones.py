@@ -16,11 +16,13 @@ en_la_caja=True)`).
 congelado): todos los cartuchos de un pedido, y de todos los pedidos, se
 montan sobre los mismos brazos.
 
-El pedido dice qué trazos van en cada renglón:
+El pedido dice qué trazos van en cada renglón, y en qué tarjeta:
 
-    {"nombre": "...", "trazos": [...], "renglones": [[0, 1, 2], [3, 4]]}
+    {"nombre": "...", "trazos": [...], "renglones": [[0, 1, 2], [3, 4]],
+     "tarjeta": "tarjeta_de_visita"}
 
-Sin `renglones` es un pedido de una vuelta, como siempre.
+Sin `renglones` es un pedido de una vuelta, como siempre. Sin `tarjeta`,
+la caja del contrato.
 """
 
 from __future__ import annotations
@@ -42,6 +44,14 @@ class Pedido:
     escritura: Escritura
     renglones: Renglones | None
     """Qué trazos van en cada renglón, de arriba abajo. `None`: una vuelta."""
+    tarjeta: str | None = None
+    """En qué formato se escribe, por nombre del catálogo (`docs/tarjetas/`).
+    `None`: la caja del contrato.
+
+    Va en el pedido y no en un argumento del CLI porque **es parte de lo
+    que se encarga**, como los renglones: el mismo JSON tiene que dar el
+    mismo paquete dentro de un año. Y tiene que llegar hasta el CLI, o el
+    DXF saldría con una caja y la vista previa con otra."""
 
 
 def leer_pedido(ruta: Path | str) -> Pedido:
@@ -59,7 +69,7 @@ def leer_pedido(ruta: Path | str) -> Pedido:
     renglones = None if crudos is None else tuple(tuple(int(i) for i in r) for r in crudos)
     if renglones is not None:
         comprobar(renglones, len(escritura.trazos))
-    return Pedido(escritura=escritura, renglones=renglones)
+    return Pedido(escritura=escritura, renglones=renglones, tarjeta=datos.get("tarjeta"))
 
 
 def comprobar(renglones: Renglones, trazos: int) -> None:

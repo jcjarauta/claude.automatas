@@ -24,6 +24,7 @@ from compile.energia import Accionamiento, analizar, relacion_del_contrato, rpm_
 from compile.escribiente import Compilacion, Escribiente, compilar
 from compile.informe import escribir_informe, resumen
 from compile.renglones import compilar_por_renglones, leer_pedido
+from compile.tarjetas import cargar_tarjeta, maquina_para
 from compile.tolerancias import presupuesto_de_error
 from compile.version import version_del_repositorio
 from core.energy.humano import Transmision
@@ -105,7 +106,12 @@ def main(argv: list[str] | None = None) -> int:
     opciones = partes.parse_args(argv)
 
     pedido = leer_pedido(opciones.entrada)
-    maquina = Escribiente()
+    # La tarjeta la trae el pedido, no la línea de órdenes: es parte de lo
+    # que se encarga. Y tiene que entrar AQUÍ, porque esta máquina es la que
+    # usan la hoja patrón y el presupuesto además del compilador.
+    maquina = (
+        Escribiente() if pedido.tarjeta is None else maquina_para(cargar_tarjeta(pedido.tarjeta))
+    )
     capacidad = None if opciones.muestras is None else Capacidad(muestras=opciones.muestras)
     if pedido.renglones is None:
         trabajos = [(compilar(pedido.escritura, maquina, capacidad), opciones.out)]

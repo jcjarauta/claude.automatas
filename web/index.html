@@ -45,7 +45,9 @@
   /* El vuelo: por dónde pasa la punta con el lápiz levantado. No queda en
      el papel del cliente, pero dice si la levantada ocurre donde debe. */
   .vuela{fill:none;stroke:var(--mal);stroke-width:.4;opacity:.4;stroke-dasharray:2 2}
-  .caja-escritura{fill:none;stroke:var(--guia);stroke-dasharray:3 2;stroke-width:.5}
+  /* El rectángulo que la punta puede recorrer dentro de la tarjeta.
+     Estaba declarado desde el primer día y no lo dibujaba nadie. */
+  .caja-escritura{fill:none;stroke:var(--guia);stroke-dasharray:4 3;stroke-width:.6}
   .veredicto{margin-top:14px;padding:12px;border-radius:6px;border-left:4px solid}
   .veredicto.si{background:#eef7f1;border-color:var(--ok)}
   .veredicto.no{background:#fbeeee;border-color:var(--mal)}
@@ -102,6 +104,10 @@
     <label for="fuente">Letra</label>
     <select id="fuente"></select>
 
+    <label for="tarjeta">Dónde se escribe</label>
+    <select id="tarjeta"></select>
+    <p class="leyenda" id="lt">—</p>
+
     <div class="par">
       <div>
         <label for="altura">Altura de x · <span id="va">10</span> mm</label>
@@ -140,10 +146,14 @@ let ultimo = null
 // polilínea dibuja rayas de una letra a otra, y entre dos renglones una
 // diagonal que cruza la hoja entera. Es lo mismo que hace `emit/patron.py`
 // para el papel desde el principio.
-const dibujar = (trazos, simulado) => {
+const dibujar = (trazos, simulado, caja) => {
   const tinta = (simulado && simulado.tinta) || []
   const vuelo = (simulado && simulado.vuelo) || []
-  const todos = trazos.flat().concat(tinta.flat(), vuelo.flat())
+  // La caja entra en el encuadre: si no, una frase corta se dibujaría
+  // gigante y no se vería que le sobra media tarjeta.
+  const esquinas = caja
+    ? [[caja[0], caja[1]], [caja[0] + caja[2], caja[1] + caja[3]]] : []
+  const todos = trazos.flat().concat(tinta.flat(), vuelo.flat(), esquinas)
   if (!todos.length) { $('#v').innerHTML = ''; return }
   const xs = todos.map(p => p[0]), ys = todos.map(p => p[1])
   const m = 6
@@ -151,7 +161,10 @@ const dibujar = (trazos, simulado) => {
   const y0 = Math.min(...ys) - m, y1 = Math.max(...ys) + m
   const camino = t => 'M' + t.map(p => `${p[0].toFixed(2)},${(y1 + y0 - p[1]).toFixed(2)}`).join('L')
   $('#v').setAttribute('viewBox', `${x0} ${y0} ${x1 - x0} ${y1 - y0}`)
-  $('#v').innerHTML =
+  const marco = caja
+    ? `<rect class="caja-escritura" x="${caja[0]}" y="${(y1 + y0 - caja[1] - caja[3]).toFixed(2)}"
+         width="${caja[2]}" height="${caja[3]}"/>` : ''
+  $('#v').innerHTML = marco +
     trazos.map(t => `<path class="trazo" d="${camino(t)}"/>`).join('') +
     vuelo.map(t => `<path class="vuela" d="${camino(t)}"/>`).join('') +
     tinta.map(t => `<path class="sim" d="${camino(t)}"/>`).join('')
@@ -160,6 +173,7 @@ const dibujar = (trazos, simulado) => {
 const pide = () => ({
   texto: $('#texto').value,
   fuente: $('#fuente').value,
+  tarjeta: $('#tarjeta').value,
   altura_de_x_mm: +$('#altura').value,
   enlace: +$('#enlace').value,
 })
@@ -220,13 +234,17 @@ const previa = async () => {
     body: JSON.stringify(pide())})
   const j = await res.json()
   if (!res.ok) { $('#d').innerHTML = `<span class="mal">${j.detail}</span>`; return }
-  ultimo = j.trazos
-  dibujar(j.trazos, null)
+  ultimo = j.encajado || j.trazos
+  dibujar(ultimo, null, j.caja)
   marcas(j.huecos || [], j.tinta_mm || 0)
   const nr = (j.renglones || [[]]).length
+  const pts = (j.encajado || j.trazos).flat()
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1])
+  const an = (Math.max(...xs) - Math.min(...xs)).toFixed(1)
+  const al = (Math.max(...ys) - Math.min(...ys)).toFixed(1)
   $('#d').textContent = `${j.trazos.length} trazos`
     + (nr > 1 ? ` en ${nr} renglones` : '')
-    + ` · ${j.ancho_mm} × ${j.alto_mm} mm antes de encajar`
+    + ` · se escribe a ${an} × ${al} mm`
 }
 
 const pedir = async () => {
@@ -344,10 +362,25 @@ const luego = () => {
 }
 ;['texto', 'altura', 'enlace'].forEach(k => $('#' + k).addEventListener('input', luego))
 $('#fuente').addEventListener('change', () => { previa(); mide() })
+$('#tarjeta').addEventListener('change', () => { dicetarjeta(); previa(); mide() })
 $('#b').addEventListener('click', pedir)
 
-fetch('/api/fuentes').then(r => r.json()).then(j => {
+let TARJETAS = {}
+const dicetarjeta = () => {
+  const t = TARJETAS[$('#tarjeta').value]
+  $('#lt').innerHTML = t
+    ? `Papel de <b>${t.papel_mm[0]} × ${t.papel_mm[1]} mm</b>, y se escribe en
+       <b>${t.caja_mm[0]} × ${t.caja_mm[1]}</b> de ellos. ${t.descripcion}`
+    : ''
+}
+
+fetch('/api/opciones').then(r => r.json()).then(j => {
   $('#fuente').innerHTML = j.fuentes.map(f => `<option>${f}</option>`).join('')
+  j.tarjetas.forEach(t => { TARJETAS[t.nombre] = t })
+  $('#tarjeta').innerHTML = j.tarjetas.map(t =>
+    `<option value="${t.nombre}"${t.nombre === j.tarjeta_por_defecto ? ' selected' : ''}>`
+    + `${t.nombre.replace(/_/g, ' ')} · ${t.caja_mm[0]} × ${t.caja_mm[1]} mm</option>`).join('')
+  dicetarjeta()
   // El valle lo mide el núcleo y es el `ENLACE` por defecto: repetir aquí
   // el 0,5 sería un segundo sitio donde vive el mismo número.
   VALLE = j.enlace

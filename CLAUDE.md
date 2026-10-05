@@ -1141,6 +1141,24 @@ falla si el esquema versionado se queda atrás.
   formato no es programar, igual que añadir una fuente o una pieza
   comercial.
 
+  **La tarjeta va en el JSON del pedido, no en un argumento del CLI**, y
+  por la misma razón que los renglones: es parte de lo que se encarga, y el
+  mismo archivo tiene que dar el mismo paquete dentro de un año. Además es
+  la única forma de que llegue donde hace falta — **el paquete lo escribe
+  el CLI con SU máquina**, así que una tarjeta que se quedara en la interfaz
+  daría una vista previa con una caja y un DXF con otra. Lo pincha
+  `test_la_tarjeta_del_pedido_llega_al_compilador`, y
+  `test_la_tarjeta_por_defecto_es_la_del_contrato` cruza la que ofrece la
+  interfaz contra `Escribiente()`: es el gemelo positivo del test que se
+  borró al bajar `caja_alto`.
+
+  Y la ficha la lee **quien elige el formato**, no quien programa. La
+  primera versión llevaba en `descripcion` el porqué del margen y una nota
+  sobre el contrato; al enseñarla en la página era prosa de desarrollo y,
+  peor, **ya estaba caducada** —citaba los 30 de alto el mismo día que
+  bajaron a 24—. El porqué vive en el registro de cambios, que es donde se
+  busca.
+
   Y es la palanca de capacidad más grande de las cuatro, por encima del
   enlace y de los renglones: con 80 × 24 «Montserrat» hay que medirla y con
   40 × 14 sale limpia. Una decisión así se toma por pedido, así que no
@@ -1205,6 +1223,12 @@ falla si el esquema versionado se queda atrás.
   `--reload`, el HTML nuevo recibía la respuesta vieja, no encontraba los
   tramos y **no dibujaba ninguna simulación**. La captura salía «arreglada»
   —ni una raya falsa— porque no había nada pintado.
+
+  Y pasó **otra vez con los datos**, que es peor porque `--reload` no
+  protege: `cargar_fuente` y `cargar_tarjeta` llevan `lru_cache` y uvicorn
+  solo vigila los `.py`, así que tocar un JSON de `docs/` no se nota hasta
+  reiniciar. La página enseñaba la descripción vieja de la tarjeta con el
+  archivo nuevo en disco.
 
   Es la familia del `text-anchor` con una vuelta más: no basta con que la
   comprobación mire lo que mira el render; tiene que mirar **el render de
