@@ -38,6 +38,10 @@ def _hojas(pdf: Path) -> int:
     return datos.count(b"/Type /Page") - datos.count(b"/Type /Pages")
 
 
+def _cuantas(n: int, una: str, varias: str = "") -> str:
+    return f"{n} {una if n == 1 else varias or una + 's'}"
+
+
 def main(argv: list[str] | None = None) -> int:
     from emit.dibujable import faltas, perfil_de
     from emit.dossier import ORDEN_DE_MONTAJE, escribir_dossier
@@ -79,7 +83,7 @@ def main(argv: list[str] | None = None) -> int:
         pendientes.append(f"== {nombre}: {len(suyas)} faltas en {len(g.piezas)} piezas")
         pendientes += [f"   {f}" for f in suyas]
         fichas.append((nombre, ruta, list(g.sin_ficha)))
-        print(f"{ruta.name}: {_hojas(ruta)} hojas")
+        print(f"{ruta.name}: {_cuantas(_hojas(ruta), 'hoja')}")
     total = sum(1 for linea in pendientes if linea.startswith("   "))
     pendientes.append(f"TOTAL {total}")
     (destino / "dibujable.txt").write_text("\n".join(pendientes) + "\n", encoding="utf-8")
@@ -105,13 +109,14 @@ def main(argv: list[str] | None = None) -> int:
         "| Comando | Resultado | Qué es |",
         "| --- | --- | --- |",
         f"| `{COMANDO} scripts/dossier.py` | [dossier.pdf](dossier.pdf) "
-        f"({_hojas(dossier)} págs.) | Dossier de montaje: portada, índice, explosión de "
-        "conjunto, vistas, despiece, secuencia, procedimientos, comprobación final |",
+        f"({_cuantas(_hojas(dossier), 'pág.', 'págs.')}) | Dossier de montaje: portada, "
+        "índice, explosión de conjunto, vistas, despiece, secuencia, procedimientos, "
+        "comprobación final |",
     ]
     for nombre, ruta, _ in fichas:
         lineas.append(
             f"| `{COMANDO} scripts/fichas.py {nombre}` | [{ruta.name}]({ruta.name}) "
-            f"({_hojas(ruta)} hojas) | {por_grupo[nombre].objetivo} |"
+            f"({_cuantas(_hojas(ruta), 'hoja')}) | {por_grupo[nombre].objetivo} |"
         )
     lineas += [
         f"| `{COMANDO} scripts/numeracion.py` | [numeracion.txt](numeracion.txt) | "

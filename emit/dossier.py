@@ -358,7 +358,7 @@ def _indice(datos: Datos, ancho: float, celda: Any, h2: Any) -> list[Any]:
         filas.append(
             [codigo, nombre, str(k), descripcion, f"{paso}. {grupo}", documento, str(hoja)]
         )
-    anchos = (0.1, 0.24, 0.05, 0.25, 0.13, 0.17, 0.06)
+    anchos = (0.1, 0.22, 0.05, 0.22, 0.13, 0.22, 0.06)
     salida = [_tabla(filas, [ancho * f for f in anchos], celda)]
 
     salida.append(Paragraph("Por orden alfabético", h2))
