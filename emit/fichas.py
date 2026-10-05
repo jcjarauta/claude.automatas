@@ -1214,6 +1214,44 @@ def _vista_en(
     return e, ox, oy
 
 
+DESPIECE = (MARGEN + 96.0, 100.0, 80.0, 78.0)
+"""x, y, ancho, alto en mm de la hoja: dónde va el despiece, globos incluidos."""
+
+RADIO_GLOBO = 3.0
+
+
+def despiece_en_hoja(g: FichasDeGrupo) -> Any:
+    """El despiece de la hoja de grupo, ya en mm de la hoja: lo que se dibuja,
+    la caja de cada pieza y los globos (`emit.explosion.Esquema`). Lo dibuja
+    `_ficha_de_grupo` y lo mide el test: los globos ni se pisan ni tapan
+    ninguna pieza."""
+    from emit.explosion import VISTA_ISOMETRICA, Esquema, ancla_de, caja_de, colocar_globos
+
+    origen, arriba, mira = VISTA_ISOMETRICA
+    propias = []
+    for marca, nombre, solido in g.despiece:
+        visibles, _ = solido.project_to_viewport(origen, arriba, mira)
+        propias.append((marca, nombre, [_polilinea(a) for a in visibles]))
+    x0, y0, x1, y1 = caja_de([q for _, _, polis in propias for q in polis])
+    # Sitio para una columna de globos a cada lado.
+    x, y, w, h = DESPIECE
+    hueco = 3.4 * RADIO_GLOBO
+    e = min((w - 2 * hueco) / (x1 - x0), h / (y1 - y0))
+    ox = x + w / 2 - (x0 + x1) / 2 * e
+    oy = y + h / 2 - (y0 + y1) / 2 * e
+
+    esquema = Esquema()
+    anclas: dict[str, tuple[float, float]] = {}
+    for marca, nombre, polis in propias:
+        en_hoja = [[(ox + px * e, oy + py * e) for px, py in q] for q in polis]
+        esquema.lineas += [(g.grupo.color, 0.45, q) for q in en_hoja]
+        esquema.cajas[nombre] = caja_de(en_hoja)
+        anclas.setdefault(str(marca), ancla_de(en_hoja))
+    todo = caja_de([q for _, _, q in esquema.lineas])
+    esquema.globos = colocar_globos(list(anclas.items()), todo[0], todo[2], RADIO_GLOBO)
+    return esquema
+
+
 def _ficha_de_grupo(cv: Any, g: FichasDeGrupo, hoja: str, version: str) -> None:
     from reportlab.lib.colors import HexColor
 
@@ -1233,50 +1271,32 @@ def _ficha_de_grupo(cv: Any, g: FichasDeGrupo, hoja: str, version: str) -> None:
     cv.drawString((MARGEN + 4) * MM, 182 * MM, "SITUACIÓN EN LA MÁQUINA")
     _vista_en(cv, situacion, MARGEN + 4, 100, 84, 80)
 
-    # El despiece: un canal del grupo, explosionado, con un globo por marca.
+    # El despiece: el grupo entero, explosionado, con un globo por marca.
     cv.setFont("Helvetica-Bold", 7)
     cv.setFillColor(HexColor("#41464d"))
     cv.drawString((MARGEN + 94) * MM, 182 * MM, "DESPIECE (el grupo entero, explosionado)")
-    from emit.dossier import Vista
-
-    lineas = []
-    anclas: list[tuple[int, Any]] = []
-    origen, arriba = (600.0, -800.0, 600.0), (0.0, 0.0, 1.0)
-    for marca, _nombre, solido in g.despiece:
-        visibles, _ = solido.project_to_viewport(origen, arriba, (0, 0, 60))
-        polis = [_polilinea(a) for a in visibles]
-        lineas += [(g.grupo.color, 0.45, p) for p in polis]
-        xs = [x for p in polis for x, _ in p]
-        ys = [y for p in polis for _, y in p]
-        anclas.append((marca, ((min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2)))
-    izquierda, derecha = MARGEN + 96.0, MARGEN + 176.0
-    e, ox, oy = _vista_en(
-        cv, Vista(tuple(lineas)), izquierda + 10, 100, derecha - izquierda - 20, 78
-    )
-    # Los globos, en dos columnas a los lados del despiece y sin pisarse:
-    # cada uno a la altura de su pieza, empujado hacia abajo si no cabe.
-    primeras: dict[int, tuple[float, float]] = {}
-    for marca, (ax, ay) in anclas:
-        primeras.setdefault(marca, ((ox + ax * e), (oy + ay * e)))
-    columnas: dict[bool, list[float]] = {True: [], False: []}
+    esquema = despiece_en_hoja(g)
+    cv.setStrokeColor(HexColor(g.grupo.color))
+    for _color, grosor, puntos in esquema.lineas:
+        cv.setLineWidth(grosor * 0.6 * MM)
+        camino = cv.beginPath()
+        camino.moveTo(puntos[0][0] * MM, puntos[0][1] * MM)
+        for px, py in puntos[1:]:
+            camino.lineTo(px * MM, py * MM)
+        cv.drawPath(camino, stroke=1, fill=0)
     cv.setLineWidth(0.2 * MM)
-    for marca, (px, py) in sorted(primeras.items(), key=lambda m: -m[1][1]):
-        a_la_izquierda = px < (izquierda + derecha) / 2
-        ocupadas = columnas[a_la_izquierda]
-        by = py
-        while any(abs(by - o) < 8.0 for o in ocupadas):
-            by -= 2.0
-        ocupadas.append(by)
-        bx = izquierda + 3 if a_la_izquierda else derecha - 3
+    for globo in esquema.globos:
+        (px, py), (bx, by) = globo.ancla, globo.centro
+        lado = 1 if px > bx else -1
         cv.setStrokeColor(HexColor(TINTA))
-        cv.line(px * MM, py * MM, (bx + (3 if a_la_izquierda else -3)) * MM, by * MM)
+        cv.line(px * MM, py * MM, (bx + lado * globo.radio) * MM, by * MM)
         cv.setFillColor(HexColor("#41464d"))
         cv.circle(px * MM, py * MM, 0.6 * MM, stroke=0, fill=1)
         cv.setFillColor(HexColor("#ffffff"))
-        cv.circle(bx * MM, by * MM, 3 * MM, stroke=1, fill=1)
+        cv.circle(bx * MM, by * MM, globo.radio * MM, stroke=1, fill=1)
         cv.setFillColor(HexColor(TINTA))
         cv.setFont("Helvetica-Bold", 7)
-        cv.drawCentredString(bx * MM, (by - 1.0) * MM, str(marca))
+        cv.drawCentredString(bx * MM, (by - 1.0) * MM, globo.clave)
 
     # La lista de piezas.
     filas = [("Marca", "Pieza", "Cant.", "Material", "Proceso", "Plano")]
@@ -1315,7 +1335,7 @@ def _ficha_de_grupo(cv: Any, g: FichasDeGrupo, hoja: str, version: str) -> None:
     _cajetin(
         cv,
         f"Grupo: {g.grupo.nombre}",
-        f"G-{g.grupo.nombre[:3].upper()}",
+        f"G-{g.grupo.sigla}",
         hoja,
         estilo.ESCALA_VARIAS,
         g.grupo,

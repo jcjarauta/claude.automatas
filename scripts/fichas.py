@@ -20,13 +20,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 RAIZ = Path(__file__).resolve().parent.parent
 
-EXPLOSION = 14.0
-"""mm que sube cada pieza sobre la anterior en el despiece."""
-
 
 def preparar(nombre: str):
     import numpy as np
-    from build123d import Pos
 
     from compile.conjunto import estados
     from compile.escribiente import SEGUIDORES, Escribiente, compilar
@@ -109,13 +105,12 @@ def preparar(nombre: str):
         )
     )
 
-    # El despiece: el grupo entero, cada pieza fabricada subida sobre la
-    # anterior.
-    canal = [p for p in del_grupo if base_de(p.nombre) in marca_de]
-    canal.sort(key=lambda p: (p.solido.bounding_box().min.Z, p.nombre))
+    # El despiece: el grupo entero, explosionado como declara
+    # `emit.explosion.EXPLOSIONES`, en el orden de las marcas.
+    from emit.explosion import explosionar_grupo
+
     despiece = tuple(
-        (marca_de[base_de(p.nombre)], p.nombre, Pos(0, 0, k * EXPLOSION) * p.solido)
-        for k, p in enumerate(canal)
+        explosionar_grupo([(p.nombre, p.solido) for p in del_grupo], g.nombre, marca_de, base_de)
     )
     return FichasDeGrupo(
         grupo=g,

@@ -269,6 +269,60 @@ def _vista_flowable(vista: Vista, ancho: float, alto: float, titulo: str = "") -
     return dibujo
 
 
+def _esquema_flowable(esquema: Any, ancho: float, alto: float) -> Any:
+    """La explosión de conjunto: los bloques en su color y un globo por grupo
+    con su código, unido a su bloque. Todo lo que se dibuja sale del esquema
+    (`emit.explosion.esquema_de_conjunto`), que es lo que mide el test."""
+    from reportlab.graphics.shapes import Circle, Drawing, Line, PolyLine, String
+    from reportlab.lib.colors import HexColor
+
+    siglas = {g.nombre: g.sigla for g in GRUPOS}
+    colores = {g.nombre: g.color for g in GRUPOS}
+    cajas = [g.caja() for g in esquema.globos] + list(esquema.cajas.values())
+    x0 = min(c[0] for c in cajas)
+    y0 = min(c[1] for c in cajas)
+    x1 = max(c[2] for c in cajas)
+    y1 = max(c[3] for c in cajas)
+    escala = min(ancho / (x1 - x0), alto / (y1 - y0))
+    dx = (ancho - (x1 - x0) * escala) / 2.0
+
+    def p(x: float, y: float) -> tuple[float, float]:
+        return dx + (x - x0) * escala, (y - y0) * escala
+
+    dibujo = Drawing(ancho, alto)
+    for color, grosor, puntos in esquema.lineas:
+        plano: list[float] = []
+        for x, y in puntos:
+            plano += list(p(x, y))
+        dibujo.add(PolyLine(plano, strokeColor=HexColor(color), strokeWidth=grosor * 0.8))
+    for globo in esquema.globos:
+        ax, ay = p(*globo.ancla)
+        cx, cy = p(*globo.centro)
+        r = globo.radio * escala
+        dibujo.add(Line(ax, ay, cx, cy, strokeColor=HexColor("#41464d"), strokeWidth=0.4))
+        dibujo.add(
+            Circle(
+                cx,
+                cy,
+                r,
+                strokeColor=HexColor(colores[globo.clave]),
+                fillColor=HexColor("#ffffff"),
+                strokeWidth=1.2,
+            )
+        )
+        dibujo.add(
+            String(
+                cx,
+                cy - 2.6,
+                f"G-{siglas[globo.clave]}",
+                fontName="Helvetica-Bold",
+                fontSize=7,
+                textAnchor="middle",
+            )
+        )
+    return dibujo
+
+
 def _tabla(filas: list[list[str]], anchos: list[float], estilo: Any, cabecera: bool = True) -> Any:
     from reportlab.lib import colors
     from reportlab.platypus import Paragraph, Table, TableStyle
@@ -375,6 +429,31 @@ def escribir_dossier(datos: Datos, destino: Path | str) -> Path:
         _vista_flowable(proyectar(datos.piezas, "perfil"), medio, 90 * mm, "Perfil"),
     ]
     flujo.append(Table([lado], colWidths=[ancho / 2, ancho / 2]))
+
+    # --- explosión de conjunto ----------------------------------------------------
+    from emit.explosion import EXPLOSIONES, esquema_de_conjunto
+
+    esquema = esquema_de_conjunto(datos.piezas)
+    flujo.append(PageBreak())
+    flujo.append(Paragraph("De qué está hecha: la explosión de conjunto", h1))
+    flujo.append(
+        Paragraph(
+            "Cada grupo como un bloque, en su color y con su código de grupo, que es el de su "
+            "hoja de fichas. La dirección de cada bloque está declarada; cuánto sale no: es lo "
+            "justo para no tocar a los bloques anteriores.",
+            cuerpo,
+        )
+    )
+    flujo.append(_esquema_flowable(esquema, ancho, 165 * mm))
+    filas = [["Grupo", "Código", "Sale hacia", "Cuánto (mm)"]]
+    siglas = {g.nombre: g.sigla for g in GRUPOS}
+    for nombre, distancia in esquema.distancias.items():
+        eje = EXPLOSIONES[nombre].eje_conjunto
+        hacia = (
+            "queda quieto" if eje == (0.0, 0.0, 0.0) else f"({eje[0]:g}, {eje[1]:g}, {eje[2]:g})"
+        )
+        filas.append([nombre, f"G-{siglas[nombre]}", hacia, f"{distancia:.0f}"])
+    flujo.append(_tabla(filas, [ancho * f for f in (0.3, 0.15, 0.35, 0.2)], celda))
 
     # --- despiece -----------------------------------------------------------------
     flujo.append(PageBreak())

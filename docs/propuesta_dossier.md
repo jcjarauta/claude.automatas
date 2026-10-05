@@ -1,6 +1,6 @@
 # Propuesta · la documentación completa: numeración, explosión, índice, estilo y fichas dibujables
 
-2026-10-05 · estado: **aprobada; fases 1, 2 y 3 hechas**, 4 a 6 pendientes
+2026-10-05 · estado: **aprobada; fases 1 a 4 hechas**, 5 y 6 pendientes
 
 Dos encargos que se juntan aquí: el bloque B del dossier (numeración única,
 explosión de conjunto, índice, escala y estilo) y que **cada ficha de pieza
@@ -75,6 +75,15 @@ altura; se generaliza a los diez grupos y se comprueba que existe en todos.
 **De conjunto** (página nueva del dossier). Cada grupo se desplaza como un
 bloque, de su centro hacia fuera del centro de la máquina, con
 `separacion_conjunto` declarada por grupo; color y código de grupo.
+
+> **Hecho así (fase 4).** Las declaraciones viven en `emit/explosion.py`
+> (`EXPLOSIONES`), no en `Grupo`: el montaje no tiene por qué saber de
+> dibujo. De conjunto se declara solo la **dirección** (`eje_conjunto`); la
+> distancia se deriva: la menor, en pasos de 2 mm, a la que la caja del
+> bloque en la isométrica queda a 12 mm de los ya colocados. Se imprime en
+> una tabla al pie de la página. En la hoja de grupo, el globo apunta al
+> punto dibujado de la pieza más cercano al centro de su caja (el centro a
+> secas cae en el hueco de una U). Tests en `tests/emit/test_explosion.py`.
 
 **Que no se pisen.** Se mide, como
 `test_dos_rotulos_de_la_banda_de_arriba_no_se_tapan`: cajas de los bloques
