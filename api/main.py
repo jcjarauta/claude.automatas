@@ -36,10 +36,10 @@ from pydantic import BaseModel, Field
 from compile.escribiente import Compilacion, Escribiente, compilar, encajar_en_la_caja
 from compile.renglones import compilar_por_renglones
 from compile.tarjetas import cargar_tarjeta, maquina_para, tarjetas
-from compile.texto import ALTURA_DE_X, composicion_de, fuentes, huecos_de
+from compile.texto import ALTURA_DE_X, cargar_fuente, composicion_de, fuentes, huecos_de
 from core.errors import ErrorDeDominio
 from core.escritura import Escritura
-from core.tipografia import ENLACE, Composicion
+from core.tipografia import Composicion
 from core.units import TAU, Metros, a_mm, mm
 from emit.patron import patron_de
 
@@ -70,7 +70,10 @@ class Peticion(BaseModel):
     """El formato del catálogo. Decide la caja de escritura, que es la
     palanca de capacidad más grande que tiene la máquina."""
     altura_de_x_mm: float = Field(default=float(a_mm(ALTURA_DE_X)), gt=1.0, le=60.0)
-    enlace: float = Field(default=ENLACE, ge=0.0, le=2.0)
+    enlace: float | None = Field(default=None, ge=0.0, le=2.0)
+    """Sin él manda el **valle de la fuente**, que cada una declara: la
+    cursiva enlaza y la de palo seco no, así que un número solo para las dos
+    le inventaría rayas a una de ellas."""
 
 
 def _trazos_mm(escritura: Escritura) -> list[list[list[float]]]:
@@ -106,10 +109,19 @@ def listar_opciones() -> dict[str, Any]:
     tarjetas con su caja, y los valores por defecto del núcleo.
 
     El valle del enlace sale de aquí y no de un 0,5 escrito en la página:
-    dos sitios con el mismo número se separan."""
+    dos sitios con el mismo número se separan. Y va **por fuente**, porque
+    no todas enlazan: la cursiva junta lo que la letra inglesa ya trae
+    dibujado y la de palo seco no junta nada."""
     catalogo = [cargar_tarjeta(n) for n in tarjetas()]
     return {
-        "fuentes": fuentes(),
+        "fuentes": [
+            {
+                "nombre": n,
+                "enlace": cargar_fuente(n).enlace,
+                "enlaza": cargar_fuente(n).enlace > 0.0,
+            }
+            for n in fuentes()
+        ],
         "tarjetas": [
             {
                 "nombre": t.nombre,
@@ -124,7 +136,6 @@ def listar_opciones() -> dict[str, Any]:
         ],
         "tarjeta_por_defecto": TARJETA_POR_DEFECTO,
         "altura_de_x_mm": float(a_mm(ALTURA_DE_X)),
-        "enlace": ENLACE,
     }
 
 

@@ -39,7 +39,12 @@ acento compuesto se escala y no lo es. Redondear a entero movería la marca
 un noveno de altura de x, que se ve."""
 
 ENLACE = 0.5
-"""Hasta dónde se enlazan dos trazos seguidos, en alturas de x.
+"""El valle de la cursiva, y el valor por defecto de una fuente que no
+declare el suyo. **Cada fuente tiene el suyo** —vive en `Fuente.enlace`—
+porque no todas enlazan: la de palo seco no junta ni una letra con la
+siguiente, así que su valle es cero y este número le haría inventar tinta.
+
+Hasta dónde se enlazan dos trazos seguidos, en alturas de x.
 
 **Medido sobre la fuente, no elegido.** En la Hershey cursiva los huecos
 entre trazos consecutivos de una palabra caen en dos grupos separados:
@@ -100,6 +105,15 @@ class Glifo(BaseModel):
     """Cuánto corre el cursor hasta la letra siguiente."""
     trazos: list[list[PuntoDeFuente]]
     """Vacío en el espacio, que avanza y no dibuja."""
+    trazos_de_marca: int = 0
+    """Cuántos de los primeros trazos son la marca de un acento.
+
+    **Una marca no se enlaza nunca**, ni con lo que viene antes ni con la
+    letra que lleva debajo: para dibujar un acento se levanta el lápiz, y eso
+    no es una distancia que un umbral pueda decidir. Sin esto, el grave de
+    «Mònica» —que acaba a 0,497 alturas de x del arranque de la «o», con el
+    valle de la cursiva en 0,50— se unía por tres milésimas y la máquina
+    bajaba una raya recta desde el acento hasta dentro de la letra."""
 
 
 class Fuente(BaseModel):
@@ -115,6 +129,21 @@ class Fuente(BaseModel):
     es positiva y las mayúsculas quedan por encima, en negativo."""
     altura_mayuscula: float
     altura_de_x: float
+    """Lo que mide una «x». **Se mide sobre la «x»**, no se deduce de la línea
+    base: en la cursiva coinciden —el alto de la x cae en y = 0— y en la de
+    palo seco no, que llega a -5 y mide 14 donde la línea base dice 9. Un
+    56 % de diferencia en la unidad con la que se miden el enlace y la
+    escala de partida."""
+    enlace: float = Field(default=ENLACE, ge=0.0, le=2.0)
+    """El valle **de esta fuente**, en alturas de x: por debajo, los enlaces
+    que la letra ya trae dibujados; por encima, levantadas de verdad.
+
+    Es dato de la fuente y no una constante del programa porque depende de
+    cómo esté dibujada. La cursiva tiene dos grupos de huecos separados y el
+    valle en medio; la de palo seco **no enlaza nada**, así que su hueco más
+    corto entre letras ya es una levantada y su valle es cero. Poner el de la
+    cursiva en la de palo seco juntaría letras con una raya recta que la
+    fuente no dibuja."""
     glifos: dict[str, Glifo]
 
     def faltan(self, texto: str) -> list[str]:
@@ -318,29 +347,38 @@ def acentuar(fuente: Fuente) -> dict[str, Glifo]:
             trazos=[
                 [(round(x, DECIMALES), round(y, DECIMALES)) for x, y in t] for t in puestos + trazos
             ],
+            trazos_de_marca=len(puestos),
         )
     return compuestos
 
 
-def _trazos_colocados(texto: str, fuente: Fuente, escala: float) -> list[list[tuple[float, float]]]:
+TrazoColocado = tuple[list[tuple[float, float]], bool]
+"""Un trazo en metros y si es la marca de un acento, que no se enlaza."""
+
+
+def _trazos_colocados(texto: str, fuente: Fuente, escala: float) -> list[TrazoColocado]:
     """Los glifos puestos en fila, ya en metros y con la y hacia arriba."""
     cursor, salida = 0.0, []
     for letra in texto:
         glifo = fuente.glifos[letra]
-        for trazo in glifo.trazos:
+        for numero, trazo in enumerate(glifo.trazos):
             salida.append(
-                [
-                    ((x - glifo.lado_izquierdo + cursor) * escala, (fuente.linea_base - y) * escala)
-                    for x, y in trazo
-                ]
+                (
+                    [
+                        (
+                            (x - glifo.lado_izquierdo + cursor) * escala,
+                            (fuente.linea_base - y) * escala,
+                        )
+                        for x, y in trazo
+                    ],
+                    numero < glifo.trazos_de_marca,
+                )
             )
         cursor += glifo.avance
     return salida
 
 
-def _enlazar(
-    trazos: list[list[tuple[float, float]]], hasta: float
-) -> list[list[tuple[float, float]]]:
+def _enlazar(trazos: list[TrazoColocado], hasta: float) -> list[list[tuple[float, float]]]:
     """Une los trazos seguidos cuyo hueco no llega a `hasta`, en metros.
 
     Con `hasta` a cero se ve la fuente sin sus enlaces, pero **un hueco de
@@ -349,18 +387,24 @@ def _enlazar(
     que es como la fuente almacena una «n». Dejarlos sueltos hace levantar
     el lápiz y bajarlo en el mismo punto: 16° de la vuelta —el doble del
     arco de levantamiento— para dibujar exactamente lo mismo.
+
+    **Contra una marca de acento no se une nunca**, por cerca que caiga: se
+    levanta el lápiz para dibujar un acento, y eso no lo decide un umbral.
     """
     if not trazos:
-        return trazos
-    salida = [list(trazos[0])]
-    for trazo in trazos[1:]:
-        if math.dist(salida[-1][-1], trazo[0]) <= hasta:
+        return []
+    primero, venia_una_marca = trazos[0]
+    salida = [list(primero)]
+    for puntos, es_marca in trazos[1:]:
+        hueco = math.dist(salida[-1][-1], puntos[0])
+        if es_marca or venia_una_marca or hueco > hasta:
+            salida.append(list(puntos))
+        else:
             # El punto repetido no aporta nada y deja una cuerda de
             # longitud cero, que es lo que `redondear_esquinas` no sabe
             # mirar.
-            salida[-1].extend(trazo[1:] if math.dist(salida[-1][-1], trazo[0]) == 0.0 else trazo)
-        else:
-            salida.append(list(trazo))
+            salida[-1].extend(puntos[1:] if hueco == 0.0 else puntos)
+        venia_una_marca = es_marca
     return salida
 
 
@@ -388,7 +432,7 @@ def componer(
     texto: str,
     fuente: Fuente,
     altura_de_x: Longitud,
-    enlace: float = ENLACE,
+    enlace: float | None = None,
     nombre: str = "",
     hueco: float = HUECO_ENTRE_RENGLONES,
 ) -> Composicion:
@@ -411,6 +455,11 @@ def componer(
     """
     texto = unicodedata.normalize("NFC", texto)
     _comprobar(texto, fuente)
+    # Sin enlace dado manda el de la fuente: el valle es suyo, no del
+    # programa. Cero es un valor legítimo —la de palo seco no enlaza— así
+    # que la ausencia se dice con None y no con un cero.
+    if enlace is None:
+        enlace = fuente.enlace
 
     escala = float(altura_de_x) / fuente.altura_de_x
     # Enlazar **por renglón**: en la lista plana, el último trazo de uno y
@@ -473,10 +522,15 @@ def huecos(
     _comprobar(texto, fuente)
     salida: list[tuple[float, ...]] = []
     for linea in texto.split("\n"):
-        trazos = [t for t in _trazos_colocados(linea, fuente, escala) if _vale(t)]
+        trazos = [(t, m) for t, m in _trazos_colocados(linea, fuente, escala) if _vale(t)]
         salida.append(
             tuple(
-                math.dist(a[-1], b[0]) / float(altura_de_x) for a, b in itertools.pairwise(trazos)
+                math.dist(a[-1], b[0]) / float(altura_de_x)
+                for (a, marca_a), (b, marca_b) in itertools.pairwise(trazos)
+                # Un hueco contra una marca no lo decide el enlace, así que
+                # no se enseña: pintarlo bajo el deslizante prometería una
+                # unión que no va a ocurrir.
+                if not marca_a and not marca_b
             )
         )
     return tuple(salida)
@@ -501,7 +555,7 @@ def escribir(
     texto: str,
     fuente: Fuente,
     altura_de_x: Longitud,
-    enlace: float = ENLACE,
+    enlace: float | None = None,
     nombre: str = "",
 ) -> Escritura:
     """El texto de una tirada, sin partir en renglones.

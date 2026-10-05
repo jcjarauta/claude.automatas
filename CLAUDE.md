@@ -75,7 +75,7 @@ uv run python scripts/dibujar_pieza.py mordaza --out build/mordaza.svg  # el boc
 uv run python -m compile.cli demo/hola.json --out build/   # compilar un pedido
 uv run python -m compile.cli demo/hola.json --corte 28      # con un presupuesto real del taller
 uv run --group web uvicorn api.main:app --reload           # la interfaz de pedidos, en http://127.0.0.1:8000
-uv run python scripts/extraer_fuente.py cursiva            # SOLO al añadir una fuente (compone los acentos)
+uv run python scripts/extraer_fuente.py                     # SOLO al añadir una fuente (las extrae todas, con sus acentos)
 npm --prefix web run dev                                   # frontend en local
 ```
 
@@ -140,6 +140,7 @@ bench/                # Datos del banco de ensayo y calibraciones medidas
   precios.json        #   Precios de catálogo, con fecha y enlace por línea
 docs/
   fuentes/            #   Una fuente monotrazo por archivo. Dato, no dependencia
+                      #   Dos: la cursiva inglesa y la de palo seco
   tarjetas/           #   Un formato de papel por archivo, con su caja derivada
 web/                  #   index.html: la interfaz local de pedidos
 tests/
@@ -1127,6 +1128,71 @@ falla si el esquema versionado se queda atrás.
   escribe, o se está mirando un dibujo que la máquina no hace. Es la
   familia del `text-anchor`: una comprobación que modela el render tiene
   que mirar lo que el render mira.
+
+- **De las 32 Hershey solo hay DOS caras latinas monotrazo, y está
+  medido.** El resto dibuja cada letra con **dos pasadas paralelas**
+  —duplex, que es como se engorda un trazo con pluma—, y aquí cada pasada
+  es una levantada más: el `~` de la cursiva en grande, aplicado a las
+  veintiséis letras. Se detecta sin saber el nombre de la fuente, mirando
+  si dos trazos de un glifo se recorren a menos de un quinto de la altura
+  de x uno del otro, y lo vigila
+  `test_ninguna_fuente_dibuja_una_letra_con_dos_pasadas`.
+
+  Quedan siete, y cuatro no son caras nuevas: `greek` y `greeks` llevan el
+  alfabeto griego en las posiciones latinas —«Arrels» sale «Αρρελσ»—,
+  `scripts` tiene las mismas letras que `cursive` con las cifras a doble
+  trazo, y `rowmans` y `meteorology` tienen **las 52 letras idénticas** a
+  `futural`, byte a byte, pese a llamarse «roman» una y «meteorología» la
+  otra. Así que el catálogo son la cursiva inglesa y la de palo seco, y
+  no hay una tercera que buscar dentro de Hershey.
+
+  Lo que cuestan no se parece: «Arrels» son 2 trazos en cursiva y **10** en
+  palo seco, porque una cursiva viene enlazada y una de palo seco no junta
+  ni una letra con la siguiente. Medido contra el A7: en palo seco cabe un
+  nombre —«Begoña», «Núria»— y no caben dos —«Juan Carlos», 15 trazos—. Es
+  una letra para una palabra, y el medidor lo enseña antes de prometerlo.
+
+- **El alto de la x no es la distancia a la línea base, y acertaba por
+  casualidad.** El extractor guardaba `altura_de_x = linea_base`, que en la
+  cursiva vale porque su «x» arranca justo en y = 0. En la de palo seco la
+  x sube a -5 y mide **14** donde la línea base dice 9: un **56 %** de
+  error en la unidad con la que se miden el enlace y la escala de partida.
+
+  Y no se habría visto: `encajar` reescala la frase para que quepa en la
+  caja, así que el tamaño final sale bien y lo que sale mal es todo lo que
+  se mide en alturas de x. Ahora **se mide sobre la «x»**, el número de la
+  cursiva no se mueve —sigue siendo 9— y lo cruza
+  `test_el_alto_de_la_x_de_cada_fuente_es_el_que_mide_su_x`.
+
+- **El valle del enlace es de la fuente, no del programa.** `ENLACE = 0,5`
+  se midió sobre la cursiva, donde los huecos caen en dos grupos separados
+  —hasta 0,458 los enlaces que la letra inglesa trae dibujados, de 0,567
+  en adelante las levantadas— con una banda vacía de 0,108 en medio.
+
+  En la de palo seco **no hay dos grupos**: su hueco más corto son 0,357
+  alturas de x y ya es una levantada, porque no enlaza nada. Con el 0,5 de
+  la cursiva le juntaría letras con una raya recta que la fuente no dibuja.
+  Así que el valle vive en el JSON de cada fuente, la interfaz lo recoge al
+  cambiar de letra y `test_el_enlace_de_cada_fuente_cae_en_un_valle` exige
+  que moverlo ±0,04 no cambie lo que une: un umbral que se puede mover sin
+  que cambie nada es un valle, y uno que parte el grupo por la mitad es un
+  número elegido.
+
+- **Un acento no se enlaza nunca, y por tres milésimas se enlazaba.** Para
+  dibujar un acento se levanta el lápiz: eso es lo que **es** una marca, no
+  una distancia que un umbral pueda decidir. El grave de «Mònica» acaba a
+  **0,497** alturas de x del arranque de la «o» y el valle de la cursiva
+  está en 0,500, así que se unían y la máquina bajaba una raya recta desde
+  el acento hasta dentro de la letra. Se veía perfectamente.
+
+  Lo encontró el test del valle al añadir los nombres acentuados al corpus,
+  no mirando el dibujo: los acentos habían cambiado la distribución de
+  huecos y el valle medido sobre texto sin tildes ya no era un valle. El
+  arreglo no es mover el umbral —0,458 es un enlace de verdad y bajarlo
+  rompería todos— sino que `Glifo.trazos_de_marca` diga cuáles son marca y
+  `_enlazar` no una contra ellas por cerca que caigan. Los huecos contra
+  una marca tampoco se enseñan bajo el deslizante: pintarlos prometería una
+  unión que no va a ocurrir.
 
 - **Cada vuelo del lápiz se come grados de la vuelta, así que enlazar
   decide si una frase cabe.** En la Hershey cursiva los huecos entre

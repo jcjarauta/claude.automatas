@@ -185,10 +185,15 @@ const pide = () => ({
 // los trazos crudos de la fuente.
 //
 // VALLE es el reparto medido sobre la fuente: por debajo están los enlaces
-// que la letra inglesa ya trae dibujados, por encima las levantadas de
-// verdad. Pasado ahí se gana capacidad a cambio de dibujar rayas que la
-// letra no tiene, y eso tiene que verse antes de arrastrar, no después.
+// que la letra ya trae dibujados, por encima las levantadas de verdad.
+// Pasado ahí se gana capacidad a cambio de dibujar rayas que la letra no
+// tiene, y eso tiene que verse antes de arrastrar, no después.
+//
+// Va POR FUENTE y se recoge al cambiarla: la cursiva enlaza y la de palo
+// seco no junta ni una letra con la siguiente, así que su valle es cero y
+// el 0,5 de la cursiva le inventaría rayas rectas entre letras.
 let VALLE = 0.5
+const FUENTES = {}
 const TOPE = 1.2
 
 const marcas = (huecos, tinta) => {
@@ -213,16 +218,22 @@ const marcas = (huecos, tinta) => {
   const raya = forzados.reduce((a, h) => a + h, 0) * (+$('#altura').value)
   const parte = tinta ? ` —un ${(100 * raya / tinta).toFixed(0)} % más de tinta—` : ''
   $('#lh').innerHTML = !huecos.length
-    ? 'El enlace une los trazos que casi se tocan, como hace la letra inglesa.'
+    ? (VALLE
+      ? 'El enlace une los trazos que casi se tocan, como hace la letra inglesa.'
+      : 'Esta letra no enlaza: cada hueco es un vuelo.')
     : `Une <b>${unidos} de ${huecos.length} huecos</b> de esta frase. `
       + (forzados.length
         ? `<b class="mal">${forzados.length} pasan del valle</b>: la fuente los declara
            levantadas, y unirlos añade <b class="mal">${raya.toFixed(0)} mm de raya</b>
            que la letra no tiene${parte}. Caen por donde el ojo espera que la cursiva
            enlace, así que en el dibujo no se notan.`
-        : 'Todos por debajo del valle, que son los enlaces que la letra inglesa ya trae '
-          + 'dibujados. Cada hueco que queda es un vuelo, y cada vuelo se come grados '
-          + 'de la vuelta.')
+        : (VALLE
+          ? 'Todos por debajo del valle, que son los enlaces que la letra inglesa ya trae '
+            + 'dibujados. Cada hueco que queda es un vuelo, y cada vuelo se come grados '
+            + 'de la vuelta.'
+          : 'Esta letra <b>no enlaza</b>: su valle es cero y cada hueco es un vuelo. '
+            + 'Subir el deslizante no descubre enlaces, dibuja rayas rectas entre letras '
+            + 'que la fuente no tiene.'))
 }
 
 const previa = async () => {
@@ -361,7 +372,18 @@ const luego = () => {
   clearTimeout(tc); tc = setTimeout(mide, 450)
 }
 ;['texto', 'altura', 'enlace'].forEach(k => $('#' + k).addEventListener('input', luego))
-$('#fuente').addEventListener('change', () => { previa(); mide() })
+$('#fuente').addEventListener('change', () => { dicefuente(); previa(); mide() })
+
+// Al cambiar de letra el deslizante se recoloca en el valle de la nueva.
+// Dejarlo donde estaba pondría el 0,5 de la cursiva en una fuente que no
+// enlaza, y la frase saldría con rayas rectas entre letras sin que nadie
+// lo hubiera pedido.
+function dicefuente () {
+  const f = FUENTES[$('#fuente').value]
+  if (!f) return
+  VALLE = f.enlace
+  $('#enlace').value = f.enlace
+}
 $('#tarjeta').addEventListener('change', () => { dicetarjeta(); previa(); mide() })
 $('#b').addEventListener('click', pedir)
 
@@ -375,16 +397,18 @@ const dicetarjeta = () => {
 }
 
 fetch('/api/opciones').then(r => r.json()).then(j => {
-  $('#fuente').innerHTML = j.fuentes.map(f => `<option>${f}</option>`).join('')
+  j.fuentes.forEach(f => { FUENTES[f.nombre] = f })
+  $('#fuente').innerHTML = j.fuentes.map(f =>
+    `<option value="${f.nombre}">${f.nombre.replace(/_/g, ' ')}`
+    + `${f.enlaza ? '' : ' · no enlaza'}</option>`).join('')
   j.tarjetas.forEach(t => { TARJETAS[t.nombre] = t })
   $('#tarjeta').innerHTML = j.tarjetas.map(t =>
     `<option value="${t.nombre}"${t.nombre === j.tarjeta_por_defecto ? ' selected' : ''}>`
     + `${t.nombre.replace(/_/g, ' ')} · ${t.caja_mm[0]} × ${t.caja_mm[1]} mm</option>`).join('')
   dicetarjeta()
-  // El valle lo mide el núcleo y es el `ENLACE` por defecto: repetir aquí
-  // el 0,5 sería un segundo sitio donde vive el mismo número.
-  VALLE = j.enlace
-  $('#enlace').value = j.enlace
+  // El valle lo mide el núcleo, fuente por fuente: repetir aquí el 0,5
+  // sería un segundo sitio donde vive el mismo número.
+  dicefuente()
   previa(); mide()
 })
 </script>

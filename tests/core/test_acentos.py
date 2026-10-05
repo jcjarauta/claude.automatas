@@ -22,7 +22,7 @@ import unicodedata
 import pytest
 
 from core.errors import LetraDesconocida
-from core.tipografia import ACENTOS, DECIMALES, Fuente, Glifo, acentuar, componer
+from core.tipografia import ACENTOS, DECIMALES, Fuente, Glifo, acentuar, componer, huecos
 from core.units import mm
 
 pytestmark = pytest.mark.core
@@ -285,6 +285,36 @@ def test_una_fuente_sin_las_marcas_se_queja() -> None:
     )
     with pytest.raises(LetraDesconocida, match=r"\^"):
         acentuar(sin_marcas)
+
+
+def test_un_acento_nunca_se_enlaza_con_su_letra() -> None:
+    """Para dibujar un acento se levanta el lápiz. Siempre, cueste lo que
+    cueste y esté donde esté la marca.
+
+    No es una distancia, es lo que **es** una marca, y por eso no lo puede
+    decidir el enlace. Pasó con «Mònica»: el grave acababa a 0,497 alturas
+    de x del arranque de la «o» y el valle de la cursiva está en 0,50, así
+    que por tres milésimas se unían y la máquina bajaba una raya recta desde
+    el acento hasta dentro de la letra. Se veía bien y era un trazo que la
+    letra no tiene.
+    """
+    fuente = fuente_de_prueba()
+    entera = fuente.model_copy(update={"glifos": {**fuente.glifos, **acentuar(fuente)}})
+    for enlace in (0.0, 0.5, 2.0):
+        suelta = componer("a", entera, altura_de_x=mm(10.0), enlace=enlace)
+        acentuada = componer("á", entera, altura_de_x=mm(10.0), enlace=enlace)
+        assert len(acentuada.escritura.trazos) == len(suelta.escritura.trazos) + 1, (
+            f"con enlace {enlace} la marca se ha pegado a la letra"
+        )
+
+
+def test_los_huecos_que_se_ensenan_son_los_que_el_enlace_decide() -> None:
+    """Un hueco contra una marca no se puede unir, así que no sale en la
+    lista: pintarlo bajo el deslizante prometería una unión que no va a
+    ocurrir, que es justo lo que el deslizante existe para no hacer."""
+    fuente = fuente_de_prueba()
+    entera = fuente.model_copy(update={"glifos": {**fuente.glifos, **acentuar(fuente)}})
+    assert huecos("aa", entera, altura_de_x=mm(10.0)) == huecos("áa", entera, altura_de_x=mm(10.0))
 
 
 def test_el_texto_descompuesto_se_escribe_igual() -> None:

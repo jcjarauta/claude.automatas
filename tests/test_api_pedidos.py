@@ -250,13 +250,33 @@ def test_los_huecos_dicen_cuantos_trazos_van_a_salir():
         assert len(datos["trazos"]) == quedan + 1, f"con enlace {enlace}"
 
 
-def test_el_valle_que_publica_la_interfaz_es_el_del_nucleo():
+def test_el_valle_que_publica_la_interfaz_es_el_de_cada_fuente():
     """La página marca el valle en el deslizante y el motor lo usa por
     defecto. Dos números iguales en dos sitios se separan: la página lee
-    el del núcleo en vez de llevar su propio 0,5."""
-    from core.tipografia import ENLACE
+    el de la fuente en vez de llevar su propio 0,5.
 
-    assert cliente.get("/api/opciones").json()["enlace"] == ENLACE
+    Y va **por fuente**: con un solo número, elegir la de palo seco dejaría
+    el deslizante en el valle de la cursiva y la frase saldría con rayas
+    rectas entre letras que la fuente no dibuja.
+    """
+    from compile.texto import cargar_fuente
+
+    ofrecidas = cliente.get("/api/opciones").json()["fuentes"]
+    assert ofrecidas, "la interfaz no ofrece ninguna letra"
+    for f in ofrecidas:
+        assert f["enlace"] == cargar_fuente(f["nombre"]).enlace
+        assert f["enlaza"] == (f["enlace"] > 0.0)
+
+
+def test_sin_enlace_manda_el_de_la_fuente():
+    """Y no el de la cursiva. Es lo que impide que cambiar de letra en el
+    formulario arrastre el valle de la anterior."""
+    from compile.texto import composicion_de
+
+    for nombre in ("cursiva", "palo_seco"):
+        pedido = {"texto": "Arrels", "fuente": nombre}
+        datos = cliente.post("/api/trazos", json=pedido).json()
+        assert len(datos["trazos"]) == len(composicion_de("Arrels", fuente=nombre).escritura.trazos)
 
 
 def test_la_tinta_deja_poner_en_porcentaje_lo_que_el_enlace_inventa():

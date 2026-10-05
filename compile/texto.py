@@ -14,7 +14,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from core.escritura import Escritura
-from core.tipografia import ENLACE, Composicion, Fuente, componer
+from core.tipografia import Composicion, Fuente, componer
 from core.tipografia import huecos as _huecos
 from core.units import Longitud, mm
 
@@ -54,14 +54,15 @@ def composicion_de(
     texto: str,
     fuente: str = "cursiva",
     altura_de_x: Longitud = ALTURA_DE_X,
-    enlace: float = ENLACE,
+    enlace: float | None = None,
     nombre: str = "",
 ) -> Composicion:
     """El texto con esa fuente, repartido en renglones por sus saltos de
     línea. Un renglón es un cartucho.
 
     `nombre` es el del pedido —va grabado en cada leva—; sin él se usa el
-    propio texto, que es lo que quiere un cliente.
+    propio texto, que es lo que quiere un cliente. Sin `enlace` manda el
+    **valle de la fuente**, que cada una declara en su JSON.
     """
     return componer(
         texto, cargar_fuente(fuente), altura_de_x=altura_de_x, enlace=enlace, nombre=nombre
@@ -82,7 +83,7 @@ def escritura_de(
     texto: str,
     fuente: str = "cursiva",
     altura_de_x: Longitud = ALTURA_DE_X,
-    enlace: float = ENLACE,
+    enlace: float | None = None,
     nombre: str = "",
 ) -> Escritura:
     """El texto escrito con esa fuente, listo para compilar de una tirada."""
