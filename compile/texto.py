@@ -14,7 +14,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from core.escritura import Escritura
-from core.tipografia import ENLACE, Fuente, escribir
+from core.tipografia import ENLACE, Composicion, Fuente, componer
 from core.units import Longitud, mm
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -49,14 +49,25 @@ def cargar_fuente(nombre: str = "cursiva") -> Fuente:
     return Fuente.model_validate(json.loads(ruta.read_text(encoding="utf-8")))
 
 
+def composicion_de(
+    texto: str,
+    fuente: str = "cursiva",
+    altura_de_x: Longitud = ALTURA_DE_X,
+    enlace: float = ENLACE,
+) -> Composicion:
+    """El texto con esa fuente, repartido en renglones por sus saltos de
+    línea. Un renglón es un cartucho."""
+    return componer(texto, cargar_fuente(fuente), altura_de_x=altura_de_x, enlace=enlace)
+
+
 def escritura_de(
     texto: str,
     fuente: str = "cursiva",
     altura_de_x: Longitud = ALTURA_DE_X,
     enlace: float = ENLACE,
 ) -> Escritura:
-    """El texto escrito con esa fuente, listo para compilar."""
-    return escribir(texto, cargar_fuente(fuente), altura_de_x=altura_de_x, enlace=enlace)
+    """El texto escrito con esa fuente, listo para compilar de una tirada."""
+    return composicion_de(texto, fuente, altura_de_x, enlace).escritura
 
 
-__all__ = ["ALTURA_DE_X", "cargar_fuente", "escritura_de", "fuentes"]
+__all__ = ["ALTURA_DE_X", "cargar_fuente", "composicion_de", "escritura_de", "fuentes"]

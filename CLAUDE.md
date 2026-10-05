@@ -93,7 +93,7 @@ core/                 # PURO. Geometría, cinemática, energía.
   errors.py           #   Excepciones de dominio
   units.py            #   Constructores con unidad. Nada de floats desnudos.
   escritura.py        #   Front-end: frase -> tres pistas θ (arco, reparto, capacidad)
-  tipografia.py       #   C0 · un texto tecleado -> trazos, con una fuente monotrazo
+  tipografia.py       #   C0 · un texto tecleado -> trazos y renglones, en monotrazo
   cam/
     synth.py          #   C2 · curva de paso y perfil
     offset.py         #   C2 · offset por radio de rodillo
@@ -1078,6 +1078,50 @@ falla si el esquema versionado se queda atrás.
   incluidos los que la fuente declara levantadas. La frase cabe porque ha
   dejado de ser la frase. Por encima del valle, el enlace cambia capacidad
   por fidelidad y eso tiene que verse en la interfaz.
+
+- **Un renglón es un cartucho, no una línea de texto.** Una vuelta del
+  árbol escribe un renglón, así que partir una frase en dos cuesta **tres
+  levas más** y obliga a cambiar el cartucho a media frase. Es una decisión
+  de dinero, no de maquetación, y por eso la toma quien pide —un salto de
+  línea— y no el programa por su cuenta.
+
+  Lo que sí se mide solo es el **interlineado**: sale de lo que miden las
+  letras que de verdad hay en el texto, ascendente más descendente más
+  `HUECO_ENTRE_RENGLONES`, y no de un número elegido. En la Hershey cursiva
+  el ascendente llega a 2,78 alturas de x y el descendente a 1,33, así que
+  con mayúsculas y jotas el salto ronda las 4,4. El mismo salto en todos
+  los pares, para que las líneas base queden en rejilla: calcularlo par a
+  par dejaría un renglón pegado y el siguiente suelto según lleve o no una
+  jota.
+
+  Y se **enlaza por renglón**, no sobre la lista plana: ahí el último trazo
+  de uno y el primero del siguiente son consecutivos, y con un enlace
+  holgado se unirían en una diagonal que además metería un trazo en dos
+  cartuchos a la vez.
+
+- **`Simulacion.escritos` dibujado de una tirada inventa rayas.** Quita los
+  puntos en vuelo y devuelve los demás seguidos, así que unirlos con una
+  polilínea traza líneas de una letra a otra que la máquina no dibuja. Con
+  dos renglones es peor: une dos cartuchos que ni comparten vuelta, y sale
+  una diagonal cruzando la hoja.
+
+  Lo llamativo es que **ya estaba resuelto en el otro emisor**:
+  `emit/patron.py` parte el recorrido en tramos desde el primer día, y su
+  propio docstring dice por qué —«sin partirlo, la hoja mostraría líneas
+  que la máquina no dibuja»—. Dos renderizadores del mismo recorrido y solo
+  uno miraba la altura. La web usa ahora `patron_de`, con lo que el vuelo
+  sale punteado igual que en el papel.
+
+- **Mirar la página no sirve si el servidor sirve el código de ayer.** La
+  página se lee del disco en cada petición y el Python no: con uvicorn sin
+  `--reload`, el HTML nuevo recibía la respuesta vieja, no encontraba los
+  tramos y **no dibujaba ninguna simulación**. La captura salía «arreglada»
+  —ni una raya falsa— porque no había nada pintado.
+
+  Es la familia del `text-anchor` con una vuelta más: no basta con que la
+  comprobación mire lo que mira el render; tiene que mirar **el render de
+  ahora**. Si una captura mejora justo donde se esperaba, comprueba que lo
+  que se ve es lo nuevo y no un hueco.
 
 - **Lo que hace lenta la compilación es exactamente lo que hace incierto el
   veredicto.** Medido con «Gracias» (siete trazos): el reparto de θ, la

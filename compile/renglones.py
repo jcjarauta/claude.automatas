@@ -85,9 +85,15 @@ def compilar_por_renglones(
     maquina: Escribiente | None = None,
     capacidad: Capacidad | None = None,
     limites: LimitesLeva | None = None,
+    simular_el_trazo: bool = True,
 ) -> list[Compilacion]:
     """Un cartucho por renglón. Cada uno con su veredicto: que un renglón no
-    quepa no es una excepción, es lo que hay que contarle al cliente."""
+    quepa no es una excepción, es lo que hay que contarle al cliente.
+
+    `simular_el_trazo` se pasa tal cual a cada renglón: sin él es la vista
+    previa, que para antes de recorrer las levas (ver `compilar`). Aquí pesa
+    el triple, porque son tres cartuchos.
+    """
     maquina = maquina or Escribiente()
     comprobar(renglones, len(escritura.trazos))
     colocada = encajar_en_la_caja(escritura, maquina)
@@ -101,6 +107,7 @@ def compilar_por_renglones(
             capacidad,
             limites,
             en_la_caja=True,
+            simular_el_trazo=simular_el_trazo,
         )
         for numero, indices in enumerate(renglones, start=1)
     ]

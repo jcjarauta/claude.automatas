@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import itertools
 import math
+from dataclasses import dataclass
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -46,6 +47,42 @@ entre los dos.
 Importa más de lo que parece: **cada vuelo del lápiz se come grados de
 la vuelta del árbol**, así que enlazar o no decide si una frase cabe.
 """
+
+
+HUECO_ENTRE_RENGLONES = 0.3
+"""Aire entre lo más bajo de un renglón y lo más alto del siguiente, en
+alturas de x.
+
+**El interlineado no se elige, se mide.** Lo que no puede pasar es que una
+mayúscula del renglón de abajo se meta en la «g» del de arriba, así que la
+distancia entre líneas base sale de lo que de verdad miden las letras que
+hay en el texto —ascendente más descendente— y esto es solo el hueco que
+queda en medio. En la Hershey cursiva el ascendente llega a 2,78 alturas de
+x y el descendente a 1,33, así que con mayúsculas y jotas el salto ronda las
+4,4.
+
+Tres décimas porque tiene que verse en el papel: con dos renglones en una
+caja de 30 mm la altura de x acaba rondando los 5 mm, y 0,3 de eso son
+milímetro y medio de blanco. Es un mínimo para que se lea, no un gusto
+tipográfico.
+"""
+
+
+@dataclass(frozen=True)
+class Composicion:
+    """Un texto compuesto, y qué trazos son de cada renglón.
+
+    Van juntos porque se calculan juntos y por separado se desincronizan: la
+    agrupación se hace **después** de tirar los trazos que no valen, así que
+    unos índices calculados aparte apuntarían a otra cosa.
+    """
+
+    escritura: Escritura
+    renglones: tuple[tuple[int, ...], ...]
+    """Los índices de los trazos de cada renglón, de arriba abajo. Es lo que
+    `compile.renglones` necesita para hacer un cartucho por renglón."""
+    interlineado: Longitud
+    """Lo que hay entre dos líneas base. Cero con un solo renglón."""
 
 
 class Glifo(BaseModel):
@@ -126,23 +163,35 @@ def _vale(trazo: list[tuple[float, float]]) -> bool:
     return any(a != b for a, b in itertools.pairwise(trazo))
 
 
-def escribir(
+def componer(
     texto: str,
     fuente: Fuente,
     altura_de_x: Longitud,
     enlace: float = ENLACE,
     nombre: str = "",
-) -> Escritura:
-    """El texto, como lo escribiría una pluma: trazos en orden y en metros.
+    hueco: float = HUECO_ENTRE_RENGLONES,
+) -> Composicion:
+    """El texto en trazos, repartido en renglones por sus saltos de línea.
 
     `altura_de_x` es lo que medirá una «o», y es la única escala que se
     da: el resto lo recoloca `encajar` cuando la frase entra en la caja de
     escritura. `enlace` va en alturas de x, no en metros, para que una
     frase grande y una pequeña se enlacen igual.
+
+    **Un renglón es un cartucho, no una línea de texto.** Una vuelta del
+    árbol escribe un renglón y hay que cambiar el cartucho para el
+    siguiente, así que partir una frase cuesta tres levas más. Aquí solo se
+    compone; quién parte y dónde es decisión de quien hace el pedido.
+
+    **Se compone entero y a una sola escala.** Si cada renglón se escalara
+    por su cuenta, las letras de «Feliz» no medirían lo que las de
+    «cumpleaños». Por eso la agrupación sale de aquí y no de compilar tres
+    veces por separado.
     """
     if not texto.strip():
         raise ValueError("el texto está vacío: no hay nada que escribir")
-    if faltan := fuente.faltan(texto):
+    # El salto de línea no es un carácter de la fuente: es maquetación.
+    if faltan := fuente.faltan(texto.replace("\n", "")):
         raise LetraDesconocida(
             f"la fuente «{fuente.nombre}» no tiene "
             + ", ".join(f"«{c}»" for c in faltan)
@@ -150,11 +199,76 @@ def escribir(
         )
 
     escala = float(altura_de_x) / fuente.altura_de_x
-    trazos = _enlazar(_trazos_colocados(texto, fuente, escala), enlace * float(altura_de_x))
-    buenos = [Trazo(puntos=[(Metros(x), Metros(y)) for x, y in t]) for t in trazos if _vale(t)]
-    if not buenos:
+    # Enlazar **por renglón**: en la lista plana, el último trazo de uno y
+    # el primero del siguiente son consecutivos, y con un enlace holgado se
+    # unirían en una raya en diagonal que además dejaría un trazo en dos
+    # renglones a la vez.
+    lineas = [
+        [
+            t
+            for t in _enlazar(_trazos_colocados(linea, fuente, escala), enlace * float(altura_de_x))
+            if _vale(t)
+        ]
+        for linea in texto.split("\n")
+    ]
+    # Una línea en blanco no es un renglón: sería un cartucho con tres levas
+    # lisas, que se cobra y no escribe nada.
+    lineas = [linea for linea in lineas if linea]
+    if not lineas:
         raise ValueError(f"«{texto}» no deja ni un trazo que dibujar")
-    return Escritura(nombre=nombre or texto, trazos=buenos)
+
+    salto = _interlineado(lineas, hueco * float(altura_de_x))
+    trazos: list[Trazo] = []
+    renglones: list[tuple[int, ...]] = []
+    for numero, linea in enumerate(lineas):
+        primero = len(trazos)
+        trazos += [
+            Trazo(puntos=[(Metros(x), Metros(y - numero * salto)) for x, y in t]) for t in linea
+        ]
+        renglones.append(tuple(range(primero, len(trazos))))
+    return Composicion(
+        escritura=Escritura(nombre=nombre or texto.replace("\n", " "), trazos=trazos),
+        renglones=tuple(renglones),
+        interlineado=Metros(salto if len(lineas) > 1 else 0.0),
+    )
 
 
-__all__ = ["ENLACE", "Fuente", "Glifo", "escribir"]
+def _interlineado(lineas: list[list[list[tuple[float, float]]]], hueco: float) -> float:
+    """Lo que hay que bajar de una línea base a la siguiente, en metros.
+
+    Sale de lo que **miden las letras que hay**, no de un número elegido:
+    el descendente más largo de todo el texto más el ascendente más alto,
+    más el hueco. Se usa el mismo salto en todos los pares para que las
+    líneas base queden en rejilla; calcularlo par a par daría un renglón
+    pegado y el siguiente suelto según lleven o no una jota.
+    """
+    ys = [y for linea in lineas for trazo in linea for _, y in trazo]
+    if not ys:
+        return 0.0
+    return (max(ys) - min(ys)) + hueco
+
+
+def escribir(
+    texto: str,
+    fuente: Fuente,
+    altura_de_x: Longitud,
+    enlace: float = ENLACE,
+    nombre: str = "",
+) -> Escritura:
+    """El texto de una tirada, sin partir en renglones.
+
+    Es `componer` visto por un lado. No tiene implementación propia a
+    propósito: dos caminos que componen lo mismo se separan.
+    """
+    return componer(texto, fuente, altura_de_x, enlace, nombre).escritura
+
+
+__all__ = [
+    "ENLACE",
+    "HUECO_ENTRE_RENGLONES",
+    "Composicion",
+    "Fuente",
+    "Glifo",
+    "componer",
+    "escribir",
+]

@@ -18,8 +18,9 @@
   .caja{background:var(--papel);border:1px solid var(--borde);border-radius:6px;padding:16px}
   label{display:block;margin:12px 0 4px;font-size:12px;font-weight:700;color:#555}
   label:first-child{margin-top:0}
-  input[type=text],select{width:100%;padding:8px;border:1px solid var(--borde);
+  input[type=text],select,textarea{width:100%;padding:8px;border:1px solid var(--borde);
        border-radius:4px;font:inherit}
+  textarea{resize:vertical;line-height:1.35}
   input[type=range]{width:100%}
   .par{display:flex;gap:10px}
   .par>div{flex:1}
@@ -31,6 +32,9 @@
   .trazo{fill:none;stroke:var(--tinta);stroke-width:1.1;stroke-linecap:round;
        stroke-linejoin:round}
   .sim{fill:none;stroke:var(--mal);stroke-width:.8;opacity:.85}
+  /* El vuelo: por dónde pasa la punta con el lápiz levantado. No queda en
+     el papel del cliente, pero dice si la levantada ocurre donde debe. */
+  .vuela{fill:none;stroke:var(--mal);stroke-width:.4;opacity:.4;stroke-dasharray:2 2}
   .caja-escritura{fill:none;stroke:var(--guia);stroke-dasharray:3 2;stroke-width:.5}
   .veredicto{margin-top:14px;padding:12px;border-radius:6px;border-left:4px solid}
   .veredicto.si{background:#eef7f1;border-color:var(--ok)}
@@ -58,10 +62,18 @@
   .barra .vuelo{color:#4a4a4a;
        background:repeating-linear-gradient(45deg,#c9c4ba,#c9c4ba 4px,#ddd9d1 4px,#ddd9d1 8px)}
   .barra .pasada{width:100%;background:var(--mal);color:#fff}
-  .estado{margin-top:10px;font-size:14px;font-weight:700}
+  .estado{margin:0 0 10px;font-size:15px;font-weight:700}
   .estado.si{color:var(--ok)} .estado.falta{color:var(--aviso)} .estado.no{color:var(--mal)}
   .estado small{display:block;font-weight:400;color:#666;font-size:12px;margin-top:2px}
   .midiendo{color:#999;font-size:12px;margin-top:10px}
+  .renglon{margin-top:12px}
+  .renglon:first-child{margin-top:0}
+  .rotulo{display:flex;justify-content:space-between;font-size:11px;color:#666;
+       margin-bottom:3px}
+  .rotulo b{font-weight:700}
+  .rotulo .si{color:var(--ok)} .rotulo .falta{color:var(--aviso)} .rotulo .no{color:var(--mal)}
+  .coste{font-size:12px;color:#555;margin:0 0 10px;padding:7px 9px;background:#faf8f4;
+       border:1px solid var(--borde);border-radius:4px}
 </style>
 
 <header>
@@ -72,7 +84,10 @@
 <main>
   <form class="caja" id="f" onsubmit="return false">
     <label for="texto">Qué tiene que escribir</label>
-    <input type="text" id="texto" value="Arrels" maxlength="120" autocomplete="off">
+    <textarea id="texto" rows="3" maxlength="240" spellcheck="false">Arrels</textarea>
+    <p class="leyenda">Cada <b>salto de línea</b> es un renglón, y un renglón es un
+      cartucho aparte: tres levas más y hay que cambiarlo a media frase. Lo bueno es
+      que así cabe lo que de una tirada no cabe.</p>
 
     <label for="fuente">Letra</label>
     <select id="fuente"></select>
@@ -98,7 +113,8 @@
   <div class="caja">
     <svg id="v" viewBox="0 0 200 70" preserveAspectRatio="xMidYMid meet"></svg>
     <p class="leyenda">En negro, lo que has pedido. En rojo, <b>lo que escribirán las
-      levas</b>: sale de recorrerlas, no de repetir el dibujo.</p>
+      levas</b>: sale de recorrerlas, no de repetir el dibujo. Punteado, el vuelo —por
+      dónde pasa la punta con el lápiz levantado, que en el papel no queda.</p>
     <div class="medidor" id="c"></div>
     <div id="r"></div>
   </div>
@@ -108,8 +124,15 @@
 const $ = s => document.querySelector(s)
 let ultimo = null
 
+// `simulado` llega partido en tramos de tinta y de vuelo, no como un
+// recorrido seguido: unir los puntos con el lápiz apoyado con una sola
+// polilínea dibuja rayas de una letra a otra, y entre dos renglones una
+// diagonal que cruza la hoja entera. Es lo mismo que hace `emit/patron.py`
+// para el papel desde el principio.
 const dibujar = (trazos, simulado) => {
-  const todos = trazos.flat().concat(simulado || [])
+  const tinta = (simulado && simulado.tinta) || []
+  const vuelo = (simulado && simulado.vuelo) || []
+  const todos = trazos.flat().concat(tinta.flat(), vuelo.flat())
   if (!todos.length) { $('#v').innerHTML = ''; return }
   const xs = todos.map(p => p[0]), ys = todos.map(p => p[1])
   const m = 6
@@ -119,7 +142,8 @@ const dibujar = (trazos, simulado) => {
   $('#v').setAttribute('viewBox', `${x0} ${y0} ${x1 - x0} ${y1 - y0}`)
   $('#v').innerHTML =
     trazos.map(t => `<path class="trazo" d="${camino(t)}"/>`).join('') +
-    (simulado && simulado.length ? `<path class="sim" d="${camino(simulado)}"/>` : '')
+    vuelo.map(t => `<path class="vuela" d="${camino(t)}"/>`).join('') +
+    tinta.map(t => `<path class="sim" d="${camino(t)}"/>`).join('')
 }
 
 const pide = () => ({
@@ -140,8 +164,10 @@ const previa = async () => {
   if (!res.ok) { $('#d').innerHTML = `<span class="mal">${j.detail}</span>`; return }
   ultimo = j.trazos
   dibujar(j.trazos, null)
-  $('#d').textContent =
-    `${j.trazos.length} trazos · ${j.ancho_mm} × ${j.alto_mm} mm antes de encajar`
+  const nr = (j.renglones || [[]]).length
+  $('#d').textContent = `${j.trazos.length} trazos`
+    + (nr > 1 ? ` en ${nr} renglones` : '')
+    + ` · ${j.ancho_mm} × ${j.alto_mm} mm antes de encajar`
 }
 
 const pedir = async () => {
@@ -153,18 +179,29 @@ const pedir = async () => {
     const j = await res.json()
     if (!res.ok) { $('#r').innerHTML = `<div class="veredicto no"><h2>No se puede</h2>${j.detail}</div>`; return }
     dibujar(j.trazos, j.simulado)
-    const inc = j.incidencias.map(i => `<p class="inc ${i.gravedad}">
-        <b>${i.mensaje}</b><span>${i.sugerencia || ''}</span></p>`).join('')
-    const enlaces = j.archivos.map(a =>
-      `<a href="/api/pedido/${j.pedido}/${a}" download>${a}</a>`).join('')
-    // Las métricas vienen en metros, como todo lo que sale del núcleo.
-    const err = j.metricas.error_trazo_maximo
+    // Un archivo por renglón, agrupado: con tres cartuchos hay tres
+    // `informe.md` y una lista plana no diría de cuál es cada uno.
+    const uno = j.renglones.length === 1
+    const paquetes = j.renglones.map(m => {
+      // Las métricas vienen en metros, como todo lo que sale del núcleo.
+      const err = m.metricas.error_trazo_maximo
+      const inc = m.incidencias.map(i => `<p class="inc ${i.gravedad}">
+          <b>${i.mensaje}</b><span>${i.sugerencia || ''}</span></p>`).join('')
+      const enlaces = m.archivos.map(a =>
+        `<a href="/api/pedido/${j.pedido}/${a}" download>${a.split('/').pop()}</a>`).join('')
+      return (uno ? '' : `<p class="rotulo"><span><b>Renglón ${m.numero}</b> ·
+          ${m.apto ? 'se puede fabricar' : 'así no'}</span></p>`)
+        + (err !== undefined ? `<p class="inc"><span>Error de trazo simulado:
+            ${(err * 1000).toFixed(3)} mm en el peor punto. Es el error del MODELO;
+            el de la máquina lo da la cadena de tolerancias.</span></p>` : '')
+        + inc + `<div class="fila">${enlaces}</div>`
+    }).join('')
     $('#r').innerHTML = `<div class="veredicto ${j.apto ? 'si' : 'no'}">
         <h2>${j.apto ? 'Se puede fabricar' : 'Así no se puede fabricar'}</h2>
-        ${err !== undefined ? `<p class="inc"><span>Error de trazo simulado:
-          ${(err * 1000).toFixed(3)} mm en el peor punto. Es el error del MODELO;
-          el de la máquina lo da la cadena de tolerancias.</span></p>` : ''}
-        ${inc}</div><div class="fila">${enlaces}</div>`
+        ${uno ? '' : `<p class="inc"><span>${j.cartuchos} cartuchos, ${j.levas} levas.
+          La frase se entrega entera, así que un renglón que no salga deja fuera el
+          pedido aunque los demás estén bien.</span></p>`}
+        ${paquetes}</div>`
   } finally {
     $('#b').disabled = false; $('#b').textContent = 'Hacer el cartucho'
   }
@@ -176,10 +213,13 @@ const pedir = async () => {
 // pares de escribir. Si las dos fueran al mismo ritmo, teclear iría a tirones.
 
 const TEXTOS = {
-  si:    ['Cabe en una vuelta', 'Nada que recortar: las tres levas salen enteras.'],
+  si:    ['Cabe', 'Nada que recortar: las levas salen enteras.'],
   falta: ['Cabe, pero hay que medirla', ''],
-  no:    ['No cabe en una vuelta', 'Enlaza más, acorta la frase o repártela en renglones.'],
+  no:    ['No cabe', 'Enlaza más, acorta la frase, o parte un renglón en dos pulsando ' +
+          'Intro donde quieras cortar.'],
 }
+
+const ESTADO_CORTO = {si: 'cabe', falta: 'falta medir', no: 'no cabe'}
 
 let serie = 0
 const mide = async () => {
@@ -197,27 +237,45 @@ const mide = async () => {
   if (mio !== serie) return
   if (!res.ok) { $('#c').innerHTML = `<p class="midiendo mal">${j.detail}</p>`; return }
 
-  const r = j.reparto, total = r.tinta_grados + r.vuelo_grados
-  const pc = g => (100 * g / total).toFixed(1) + '%'
-  // Con los mínimos desbordados el reparto es un apaño para poder enseñar
-  // algo, no un presupuesto: pintarlo partido en tinta y vuelo daría una
-  // barra tranquilizadora debajo de un «no cabe».
-  const barra = r.cabe_por_minimos
-    ? `<div class="tinta" style="width:${pc(r.tinta_grados)}">${r.tinta_grados}° escribiendo</div>
-       <div class="vuelo" style="width:${pc(r.vuelo_grados)}">${r.vuelo_grados}° en el aire</div>`
-    : `<div class="pasada">los mínimos piden ${r.necesario_grados}° y la vuelta son 360°</div>`
-  const clase = {si: 'si', falta: 'falta', no: 'no'}[j.estado] || 'falta'
-  const [titulo, pie] = TEXTOS[{si: 'si', falta_medir: 'falta', no: 'no'}[j.estado]]
-  const inc = j.incidencias.map(i => `<p class="inc ${i.gravedad}">
-      <b>${i.mensaje}</b><span>${i.sugerencia || ''}</span></p>`).join('')
+  const cuantos = j.renglones.length
+  const clase = {si: 'si', falta_medir: 'falta', no: 'no'}[j.estado]
+  const [titulo, pie] = TEXTOS[clase]
+  const coste = cuantos === 1 ? '' :
+    `<p class="coste"><b>${cuantos} renglones = ${cuantos} cartuchos, ${j.levas} levas.</b>
+      Cada renglón se escribe en una vuelta y hay que cambiar el cartucho entre uno y
+      otro. Todos salen a la misma escala: la frase se encaja entera, no renglón a
+      renglón.</p>`
+
+  // El veredicto, primero. Con tres renglones el detalle ocupa media
+  // pantalla y el titular quedaba debajo de todo, que es donde no se lee.
+  const cuerpo = j.renglones.map((m, i) => {
+    const r = m.reparto, total = r.tinta_grados + r.vuelo_grados
+    const pc = g => (100 * g / total).toFixed(1) + '%'
+    // Con los mínimos desbordados el reparto es un apaño para poder enseñar
+    // algo, no un presupuesto: pintarlo partido en tinta y vuelo daría una
+    // barra tranquilizadora debajo de un «no cabe».
+    const barra = r.cabe_por_minimos
+      ? `<div class="tinta" style="width:${pc(r.tinta_grados)}">${r.tinta_grados}° escribiendo</div>
+         <div class="vuelo" style="width:${pc(r.vuelo_grados)}">${r.vuelo_grados}° en el aire</div>`
+      : `<div class="pasada">los mínimos piden ${r.necesario_grados}° y la vuelta son 360°</div>`
+    const suyo = {si: 'si', falta_medir: 'falta', no: 'no'}[m.estado]
+    const rotulo = cuantos === 1 ? '' :
+      `<div class="rotulo"><span>Renglón ${i + 1} · una vuelta</span>
+        <b class="${suyo}">${ESTADO_CORTO[suyo]}</b></div>`
+    const inc = m.incidencias.map(x => `<p class="inc ${x.gravedad}">
+        <b>${x.mensaje}</b><span>${x.sugerencia || ''}</span></p>`).join('')
+    return `<div class="renglon">${rotulo}<div class="barra">${barra}</div>${inc}</div>`
+  }).join('')
+
   $('#c').innerHTML = `
-    <div class="barra">${barra}</div>
-    <p class="leyenda">${r.cabe_por_minimos
-      ? 'Una vuelta de manivela son 360°. Cada vez que el lápiz se levanta se come su parte, '
-        + 'y lo rayado no deja nada en el papel.'
-      : 'Cada trazo pide unos grados mínimos y cada levantada el doble del arco de subida. '
-        + 'Sumados pasan de la vuelta, así que no hay reparto posible.'}</p>
-    <p class="estado ${clase}">${titulo}${pie ? `<small>${pie}</small>` : ''}</p>${inc}`
+    <p class="estado ${clase}">${titulo}${pie ? `<small>${pie}</small>` : ''}</p>
+    ${coste}
+    <p class="leyenda">${j.renglones.every(m => m.reparto.cabe_por_minimos)
+      ? 'Una vuelta de manivela son 360°. Cada vez que el lápiz se levanta se come su '
+        + 'parte, y lo rayado no deja nada en el papel.'
+      : 'Cada trazo pide unos grados mínimos y cada levantada el doble del arco de '
+        + 'subida. Sumados pasan de la vuelta, así que no hay reparto posible.'}</p>
+    ${cuerpo}`
 }
 
 let t, tc

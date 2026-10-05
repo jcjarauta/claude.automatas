@@ -31,12 +31,14 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-from compile.escribiente import Compilacion, compilar
-from compile.texto import ALTURA_DE_X, escritura_de, fuentes
+from compile.escribiente import Compilacion, Escribiente, compilar
+from compile.renglones import compilar_por_renglones
+from compile.texto import ALTURA_DE_X, composicion_de, fuentes
 from core.errors import ErrorDeDominio
 from core.escritura import Escritura
-from core.tipografia import ENLACE
+from core.tipografia import ENLACE, Composicion
 from core.units import TAU, Metros, a_mm, mm
+from emit.patron import patron_de
 
 RAIZ = Path(__file__).resolve().parent.parent
 PAGINA = RAIZ / "web" / "index.html"
@@ -51,7 +53,10 @@ app = FastAPI(title="Escribiente · pedidos", docs_url="/api/docs")
 
 
 class Peticion(BaseModel):
-    texto: str = Field(min_length=1, max_length=120)
+    texto: str = Field(min_length=1, max_length=240)
+    """Un salto de línea es un renglón, y **un renglón es un cartucho**: tres
+    levas más y cambiarlo a mitad de la frase. Por eso lo parte quien pide y
+    no el programa."""
     fuente: str = "cursiva"
     altura_de_x_mm: float = Field(default=float(a_mm(ALTURA_DE_X)), gt=1.0, le=60.0)
     enlace: float = Field(default=ENLACE, ge=0.0, le=2.0)
@@ -65,9 +70,9 @@ def _trazos_mm(escritura: Escritura) -> list[list[list[float]]]:
     ]
 
 
-def _componer(peticion: Peticion) -> Escritura:
+def _componer(peticion: Peticion) -> Composicion:
     try:
-        return escritura_de(
+        return composicion_de(
             peticion.texto,
             fuente=peticion.fuente,
             altura_de_x=mm(peticion.altura_de_x_mm),
@@ -96,9 +101,11 @@ def ver_trazos(peticion: Peticion) -> dict[str, Any]:
     Compilar tarda segundos; ver cómo queda la frase tiene que ser
     inmediato o nadie prueba una segunda opción.
     """
-    escritura = _componer(peticion)
+    compuesta = _componer(peticion)
+    escritura = compuesta.escritura
     return {
         "trazos": _trazos_mm(escritura),
+        "renglones": [list(r) for r in compuesta.renglones],
         "ancho_mm": round(a_mm(escritura.ancho), 2),
         "alto_mm": round(a_mm(escritura.alto), 2),
     }
@@ -148,6 +155,36 @@ def _reparto(compilacion: Compilacion) -> dict[str, float]:
     }
 
 
+ORDEN = {"no": 0, "falta_medir": 1, "si": 2}
+"""De peor a mejor. El estado del pedido es el **peor** de sus renglones:
+que dos de tres quepan no sirve de nada, porque la frase se entrega entera."""
+
+
+def _medida(compilacion: Compilacion) -> dict[str, Any]:
+    veredicto = compilacion.veredicto
+    return {
+        "estado": _estado(compilacion),
+        "reparto": _reparto(compilacion),
+        "incidencias": [i.model_dump(mode="json") for i in veredicto.incidencias],
+        "metricas": {k: round(v, 5) for k, v in veredicto.metricas.items()},
+    }
+
+
+def _compilaciones(compuesta: Composicion, simular: bool) -> list[Compilacion]:
+    """Una compilación por renglón, o una sola si no hay saltos de línea.
+
+    Con un renglón no se pasa por `compilar_por_renglones` para que el
+    camino de siempre siga siendo literalmente el de siempre: un pedido de
+    una vuelta tiene que dar el mismo DXF que antes de que existieran los
+    renglones, y eso lo vigila el golden.
+    """
+    if len(compuesta.renglones) == 1:
+        return [compilar(compuesta.escritura, simular_el_trazo=simular)]
+    return compilar_por_renglones(
+        compuesta.escritura, compuesta.renglones, simular_el_trazo=simular
+    )
+
+
 @app.post("/api/capacidad")
 def medir_capacidad(peticion: Peticion) -> dict[str, Any]:
     """¿Cabe la frase? El mismo camino del pedido, parado antes de simular.
@@ -160,14 +197,24 @@ def medir_capacidad(peticion: Peticion) -> dict[str, Any]:
     No es un atajo ni una estimación: es `compilar` con una parada. Un
     predictor aparte diría que cabe algo que luego no cabe, y esa es la
     manera más rápida de que nadie se fíe de la vista previa.
+
+    Con varios renglones se mide **cada uno por su lado**, porque cada uno
+    es un cartucho con su propia vuelta y su propio veredicto. Lo que se
+    reparte entre renglones no son los grados: son las letras.
     """
-    compilacion = compilar(_componer(peticion), simular_el_trazo=False)
-    veredicto = compilacion.veredicto
+    compuesta = _componer(peticion)
+    medidas = [_medida(c) for c in _compilaciones(compuesta, simular=False)]
+    peor = min(medidas, key=lambda m: ORDEN[m["estado"]])
     return {
-        "estado": _estado(compilacion),
-        "reparto": _reparto(compilacion),
-        "incidencias": [i.model_dump(mode="json") for i in veredicto.incidencias],
-        "metricas": {k: round(v, 5) for k, v in veredicto.metricas.items()},
+        "estado": peor["estado"],
+        "renglones": medidas,
+        "cartuchos": len(medidas),
+        "levas": 3 * len(medidas),
+        # Compatibilidad con el camino de un solo renglón, que es el 90 % de
+        # los pedidos: los dos campos de siempre, los del peor renglón.
+        "reparto": peor["reparto"],
+        "incidencias": peor["incidencias"],
+        "metricas": peor["metricas"],
     }
 
 
@@ -178,58 +225,126 @@ def _nombre_de_carpeta(texto: str) -> str:
 
 @app.post("/api/pedido")
 def hacer_pedido(peticion: Peticion) -> dict[str, Any]:
-    """Compila el pedido y deja el paquete en disco. Puede tardar."""
+    """Compila el pedido y deja el paquete en disco. Puede tardar.
+
+    Con varios renglones salen varios cartuchos, cada uno en su carpeta
+    `renglon_N`. Eso ya lo sabe hacer el CLI desde que existe
+    `compile.renglones`: aquí solo se escribe el reparto en el JSON del
+    pedido y se le deja hacer.
+    """
     from compile.cli import main as compilar_desde_cli
 
-    escritura = _componer(peticion)
+    compuesta = _componer(peticion)
     carpeta = PEDIDOS / _nombre_de_carpeta(peticion.texto)
     carpeta.mkdir(parents=True, exist_ok=True)
     entrada = carpeta / "escritura.json"
-    entrada.write_text(
-        json.dumps(
-            {"nombre": peticion.texto, "trazos": _trazos_mm(escritura)},
-            ensure_ascii=False,
-            indent=1,
-        )
-        + "\n",
-        encoding="utf-8",
-    )
+    pedido: dict[str, Any] = {
+        "nombre": peticion.texto.replace("\n", " "),
+        "trazos": _trazos_mm(compuesta.escritura),
+    }
+    # Sin `renglones` el CLI compila una sola vuelta, que es lo de siempre.
+    if len(compuesta.renglones) > 1:
+        pedido["renglones"] = [list(r) for r in compuesta.renglones]
+    entrada.write_text(json.dumps(pedido, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 
-    compilacion = compilar(escritura)
-    veredicto = compilacion.veredicto
+    compilaciones = _compilaciones(compuesta, simular=True)
     # El paquete lo escribe el CLI, no esta capa: un solo sitio donde
     # vive qué archivos lleva un pedido.
     compilar_desde_cli([str(entrada), "--out", str(carpeta)])
 
-    simulado = (
-        [
-            [round(a_mm(Metros(x)), 3), round(a_mm(Metros(y)), 3)]
-            for x, y in compilacion.simulacion.escritos
-        ]
-        if compilacion.simulacion is not None
-        else []
-    )
+    maquina = Escribiente()
+    ancho = a_mm(maquina.caja_ancho)
+    alto = a_mm(maquina.caja_alto)
+    centro_y = a_mm(maquina.caja_centro_y)
+    caja = (-ancho / 2.0, centro_y - alto / 2.0, ancho, alto)
+
+    def _simulado(compilacion: Compilacion) -> dict[str, list[list[list[float]]]]:
+        """El recorrido partido en tramos, como en la hoja de trazo patrón.
+
+        **Dibujado de una tirada, miente.** `Simulacion.escritos` quita los
+        puntos en vuelo, así que unir lo que queda con una polilínea traza
+        rayas de una letra a otra que la máquina no dibuja. Con dos
+        renglones es aún peor: los une entre sí, y son dos cartuchos que no
+        comparten vuelta. `emit.patron` ya resolvía esto para el papel —
+        «sin partirlo, la hoja mostraría líneas que la máquina no dibuja»—
+        y lo que faltaba era que la pantalla mirase lo mismo.
+        """
+        if compilacion.simulacion is None:
+            return {"tinta": [], "vuelo": []}
+        patron = patron_de(
+            nombre=compilacion.escritura.nombre,
+            puntos=compilacion.simulacion.puntos,
+            altura=compilacion.simulacion.altura,
+            caja=caja,
+            error_del_modelo=compilacion.simulacion.error_maximo * 1000.0,
+        )
+
+        def _redondo(tramos: object) -> list[list[list[float]]]:
+            return [[[round(x, 3), round(y, 3)] for x, y in t] for t in tramos]  # type: ignore[attr-defined]
+
+        return {"tinta": _redondo(patron.escritos), "vuelo": _redondo(patron.vuelo)}
+
+    uno = len(compilaciones) == 1
+    renglones: list[dict[str, Any]] = [
+        {
+            "numero": numero,
+            "carpeta": "" if uno else f"renglon_{numero}",
+            "apto": c.veredicto.apto,
+            "incidencias": [i.model_dump(mode="json") for i in c.veredicto.incidencias],
+            "metricas": {k: round(v, 5) for k, v in c.veredicto.metricas.items()},
+            "trazos": _trazos_mm(c.escritura),
+            "simulado": _simulado(c),
+            "archivos": sorted(_relativos(carpeta / ("" if uno else f"renglon_{numero}"), carpeta)),
+        }
+        for numero, c in enumerate(compilaciones, start=1)
+    ]
     return {
         "pedido": carpeta.name,
-        "apto": veredicto.apto,
-        "incidencias": [i.model_dump(mode="json") for i in veredicto.incidencias],
-        "metricas": {k: round(v, 5) for k, v in veredicto.metricas.items()},
-        "trazos": _trazos_mm(compilacion.escritura),
-        "simulado": simulado,
-        "archivos": sorted(
-            f.name for f in carpeta.rglob("*") if f.is_file() and f.name != "escritura.json"
-        ),
+        # Entero o nada: la frase se entrega completa, así que un renglón
+        # que no cabe deja el pedido fuera aunque los otros dos salgan.
+        "apto": all(r["apto"] for r in renglones),
+        "cartuchos": len(renglones),
+        "levas": 3 * len(renglones),
+        "renglones": renglones,
+        # Lo de siempre, para el camino de un solo renglón: la unión de todo.
+        "incidencias": [i for r in renglones for i in r["incidencias"]],
+        "metricas": renglones[0]["metricas"],
+        "trazos": [t for r in renglones for t in r["trazos"]],
+        "simulado": {
+            "tinta": [t for r in renglones for t in r["simulado"]["tinta"]],
+            "vuelo": [t for r in renglones for t in r["simulado"]["vuelo"]],
+        },
+        "archivos": sorted({a for r in renglones for a in r["archivos"]}),
     }
 
 
-@app.get("/api/pedido/{pedido}/{archivo}")
+def _relativos(donde: Path, raiz: Path) -> list[str]:
+    """Los archivos del paquete, con su ruta desde la carpeta del pedido.
+
+    Con renglones el paquete sale en subcarpetas, así que el nombre a secas
+    ya no basta: tres `informe.md` colapsarían en uno y los enlaces de
+    descarga se pisarían entre sí.
+    """
+    if not donde.is_dir():
+        return []
+    return [
+        str(f.relative_to(raiz)).replace("\\", "/")
+        for f in donde.rglob("*")
+        if f.is_file() and f.name != "escritura.json"
+    ]
+
+
+@app.get("/api/pedido/{pedido}/{archivo:path}")
 def descargar(pedido: str, archivo: str) -> FileResponse:
     carpeta = (PEDIDOS / pedido).resolve()
     ruta = (carpeta / archivo).resolve()
-    # Sin esto, un `archivo` con «..» sirve cualquier cosa del disco.
-    if not ruta.is_file() or PEDIDOS.resolve() not in ruta.parents:
+    # Sin esto, un `archivo` con «..» sirve cualquier cosa del disco. Y se
+    # comprueba contra la carpeta DEL PEDIDO, no contra `pedidos`: con la
+    # raíz valdría «../otro-pedido/informe.md», que no saca nada del disco
+    # pero tampoco es lo que el enlace dice que es.
+    if not ruta.is_file() or carpeta not in ruta.parents:
         raise HTTPException(status_code=404, detail="no existe")
-    return FileResponse(ruta, filename=archivo)
+    return FileResponse(ruta, filename=Path(archivo).name)
 
 
 @app.get("/")

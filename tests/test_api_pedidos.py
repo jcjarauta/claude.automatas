@@ -128,3 +128,92 @@ def test_una_frase_desbordada_no_pinta_una_barra_tranquilizadora():
     cabe = cliente.post("/api/capacidad", json={"texto": "Arrels"}).json()
     assert cabe["reparto"]["cabe_por_minimos"] == 1.0
     assert cabe["reparto"]["necesario_grados"] < 360.0
+
+
+# ---------------------------------------------------------------------------
+# Renglones: un salto de línea es un cartucho más
+# ---------------------------------------------------------------------------
+
+
+def test_sin_saltos_de_linea_sigue_habiendo_un_solo_cartucho():
+    """El camino de siempre tiene que seguir siendo literalmente el de
+    siempre: es el 90 % de los pedidos y lo vigila el golden."""
+    datos = cliente.post("/api/capacidad", json={"texto": "Arrels"}).json()
+    assert datos["cartuchos"] == 1
+    assert datos["levas"] == 3
+    assert len(datos["renglones"]) == 1
+
+
+def test_cada_salto_de_linea_es_un_cartucho_y_tres_levas_mas():
+    """El coste tiene que salir en la respuesta, no deducirlo quien mire:
+    partir una frase no es maquetar, es fabricar otro cartucho."""
+    datos = cliente.post("/api/capacidad", json={"texto": "Feliz\naniversari"}).json()
+    assert datos["cartuchos"] == 2
+    assert datos["levas"] == 6
+
+
+def test_el_estado_del_pedido_es_el_del_peor_renglon():
+    """La frase se entrega entera: que dos de tres quepan no sirve de nada.
+    Aquí el primero sale limpio y el segundo no, y manda el segundo."""
+    datos = cliente.post("/api/capacidad", json={"texto": "Feliz\nMontserrat"}).json()
+    estados = [r["estado"] for r in datos["renglones"]]
+    assert estados[0] == "si"
+    assert estados[1] == "falta_medir"
+    assert datos["estado"] == "falta_medir"
+
+
+def test_partir_en_renglones_salva_una_frase_que_no_cabia():
+    """Es para lo que existen. De una tirada, los mínimos de 22 trazos
+    piden 484° y no hay reparto posible; en tres renglones, dos salen
+    limpios y el tercero solo queda por medir."""
+    frase = "Feliz aniversari Montserrat"
+    entera = cliente.post("/api/capacidad", json={"texto": frase}).json()
+    assert entera["estado"] == "no"
+
+    partida = cliente.post("/api/capacidad", json={"texto": frase.replace(" ", "\n")}).json()
+    assert partida["estado"] != "no"
+    assert [r["estado"] for r in partida["renglones"]][:2] == ["si", "si"]
+
+
+def test_una_linea_en_blanco_no_se_cobra_como_cartucho():
+    """Tres levas lisas que no escriben nada. Lo filtra la composición, y
+    aquí se comprueba que llega filtrado hasta la respuesta."""
+    datos = cliente.post("/api/capacidad", json={"texto": "Arrels\n\n  \nFeliz"}).json()
+    assert datos["cartuchos"] == 2
+
+
+def test_el_salto_de_linea_no_se_busca_en_la_fuente():
+    """La fuente no tiene «\\n» y no tiene por qué: un salto de línea es
+    maquetación, no una letra. Si se comprobara con el resto del texto,
+    cualquier frase de dos renglones daría «la fuente no tiene»."""
+    assert cliente.post("/api/capacidad", json={"texto": "Arrels\nFeliz"}).status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# El trazo simulado, partido
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.slow
+def test_el_trazo_simulado_llega_partido_y_sin_rayas_inventadas():
+    """`Simulacion.escritos` quita los puntos en vuelo, así que unir lo que
+    queda con una polilínea traza rayas de una letra a otra que la máquina
+    no dibuja; con dos renglones, una diagonal entre dos cartuchos que ni
+    siquiera comparten vuelta.
+
+    `emit.patron` ya partía el recorrido para el papel —«sin partirlo, la
+    hoja mostraría líneas que la máquina no dibuja»— y lo que faltaba era
+    que la pantalla mirase lo mismo. Se comprueba por dentro de cada tramo:
+    entre dos puntos seguidos la punta avanza décimas, así que un salto
+    grande es una raya inventada.
+    """
+    import itertools
+    import math
+
+    datos = cliente.post("/api/pedido", json={"texto": "Arrels\nFeliz"}).json()
+    tinta = datos["simulado"]["tinta"]
+    assert len(tinta) > 2, "el recorrido tiene que venir en tramos, no de una tirada"
+    assert datos["simulado"]["vuelo"], "el vuelo también se dibuja, punteado"
+
+    saltos = [math.dist(a, b) for tramo in tinta for a, b in itertools.pairwise(tramo)]
+    assert max(saltos) < 2.0, f"dentro de un tramo la punta da un salto de {max(saltos):.1f} mm"
