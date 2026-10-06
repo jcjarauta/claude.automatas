@@ -27,6 +27,10 @@ cad = [
     # para exportar STEP y, a partir de E6, para las vistas del dossier.
     # Nada de lo que calcula el proyecto depende de él.
     "build123d>=0.9",
+    # El visor de VS Code (OCP CAD Viewer): ver el regulador montado y moverlo
+    # con la dinámica simulada, sin salir del editor. Solo lo usan los scripts
+    # de `scripts/`; nada de core/, compile/ ni emit/ lo importa.
+    "ocp_vscode>=2.6",
 ]
 
 [build-system]

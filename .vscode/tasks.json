@@ -1,0 +1,30 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Ver el regulador del reloj (tiempo real)",
+      "type": "shell",
+      "command": "uv run --group cad python scripts/ver_regulador.py --escala 1",
+      "problemMatcher": [],
+      "detail": "Abre antes el visor: Ctrl+Mayús+P → OCP CAD Viewer: Open viewer"
+    },
+    {
+      "label": "Ver el regulador del reloj (cámara lenta ×10, escape de cerca)",
+      "type": "shell",
+      "command": "uv run --group cad python scripts/ver_regulador.py --escala 1 --lento 10 --detalle",
+      "problemMatcher": []
+    },
+    {
+      "label": "Ver el arranque del reloj (20 s)",
+      "type": "shell",
+      "command": "uv run --group cad python scripts/ver_regulador.py --tramo arranque --lento 1",
+      "problemMatcher": []
+    },
+    {
+      "label": "Ver el regulador a escala 2 (cámara lenta ×10)",
+      "type": "shell",
+      "command": "uv run --group cad python scripts/ver_regulador.py --escala 2 --lento 10 --detalle",
+      "problemMatcher": []
+    }
+  ]
+}

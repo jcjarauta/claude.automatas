@@ -15,7 +15,10 @@ documentación para fabricarla.
 ## Reglas que no se rompen
 
 1. **Todo programa es función de θ**, el ángulo del eje maestro. Nunca del tiempo.
-   Si aparece un `dt` dentro de `core/`, algo está mal planteado.
+   Si aparece un `dt` dentro de `core/`, algo está mal planteado. El reloj tiene
+   una excepción declarada y acotada en `docs/reloj/expediente.md` («La regla
+   del tiempo»): el oscilador mide en segundos y `compile/regulador.py` integra
+   en el tiempo; nada más. La defiende `tests/reloj/test_arquitectura_reloj.py`.
 2. **`core/` es puro.** Sin red, sin disco, sin Onshape, sin FastAPI. Entra dato,
    sale dato. Todo depende de `core/`; `core/` no depende de nada del proyecto.
 3. **SI dentro, mm fuera.** Metros, radianes, newtons y julios en todo `core/`.

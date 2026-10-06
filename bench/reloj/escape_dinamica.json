@@ -1,0 +1,44 @@
+{
+  "maquina": "reloj",
+  "ensayo": "R2 · el regulador en movimiento (péndulo, áncora y rueda de escape)",
+  "fecha": "2026-10-06",
+  "medido": false,
+  "fuente": "compile/regulador.py",
+  "porque": "Lo que la dinámica necesita y no sale de ninguna cota: rozamientos, restitución y la horquilla, que aún no existe. Todo estimado. Cuando R2 mida el par mínimo, μ y e se ajustan hasta que la simulación lo reproduzca: la diferencia entre lo predicho y lo medido es lo que el modelo no sabe de la madera.",
+  "estimado": {
+    "rozamiento_paleta": {
+      "valor": 0.3,
+      "rango": [
+        0.2,
+        0.4
+      ],
+      "porque": "Diente de contrachapado de abedul contra paleta de latón, en seco. Madera sobre metal de tabla: 0,2 a 0,4."
+    },
+    "restitucion": {
+      "valor": 0.3,
+      "rango": [
+        0.1,
+        0.5
+      ],
+      "porque": "Choque del diente contra el arco de reposo. La madera amortigua; el latón no. Sin medir: el tictac del banco dirá si rebota."
+    },
+    "rozamiento_eje_rueda": {
+      "valor": 0.3,
+      "rango": [
+        0.2,
+        0.45
+      ],
+      "porque": "Eje de acero calibrado de Ø10 en un agujero de Ø10 en madera, sin casquillo ni aceite."
+    },
+    "radio_polea_banco": {
+      "valor": 0.01,
+      "unidad": "m",
+      "porque": "Radio del cordón de la pesa sobre el eje de la rueda en el banco R2. La carga radial sobre el eje es el peso de la pesa más el de la rueda, y el rozamiento del eje va con ella: con una polea pequeña la pesa es grande y el eje roza más."
+    }
+  },
+  "supuestos": {
+    "coaxialidad": "SUPUESTO, NO DECISIÓN: el eje del áncora y el punto de flexión del péndulo se toman coaxiales, así que el áncora gira exactamente θ. La altura real del eje del áncora respecto al datum del péndulo es cota del paso 6 (bastidor); si no son coaxiales, la horquilla transmite con una relación algo distinta de 1 y el tablero de horquilla roza.",
+    "horquilla": "PROVISIONAL: pletina de latón de 2 × 10 que baja del eje del áncora 150 mm y abraza la varilla con dos dedos. No existe todavía en ningún contrato.",
+    "eje_ancora": "Sin rozamiento propio: con la coaxialidad supuesta, el áncora cuelga de la suspensión y su eje no carga."
+  }
+}

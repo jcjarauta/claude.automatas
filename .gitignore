@@ -31,6 +31,7 @@ htmlcov/
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
+!.vscode/tasks.json
 
 # Frontend (llega en E7)
 web/node_modules/

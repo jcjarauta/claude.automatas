@@ -128,6 +128,8 @@ def test_el_material_se_reconoce_por_su_principio():
     """El campo lleva el espesor pegado porque es lo que se pide en la tienda."""
     assert densidad_de("POM 5 mm") == DENSIDADES["POM"]
     assert densidad_de("contrachapado de abedul 9 mm") == DENSIDADES["contrachapado de abedul"]
+    # Las paletas del escape del reloj son de latón.
+    assert densidad_de("latón de 4") == pytest.approx(8500.0)
 
 
 def test_un_material_desconocido_no_se_inventa():

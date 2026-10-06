@@ -73,8 +73,19 @@ Es lo mismo que decía la ontología del baseline y nunca se había construido: 
 capa **0c, base de tiempo**, que genera θ. En el escribiente esa capa es una
 mano girando una manivela. Aquí es un péndulo, y por eso aquí sí hay segundos.
 
+**La segunda frontera: la simulación del regulador.** Para ver el péndulo, el
+áncora y la rueda moviéndose como se moverían —y para predecir el par mínimo
+que mide el banco R2— hay que integrar en el tiempo, con choques y rozamientos.
+Eso vive **fuera del núcleo**, en `compile/regulador.py`, y es el único sitio
+del repositorio que integra ecuaciones en el tiempo. Lo que integra lo toma de
+funciones de θ del núcleo: la geometría del contacto (`core/reloj/contacto.py`,
+C12c), el péndulo (C11) y las inercias de los polígonos (`core/solido.py`).
+`core/` sigue sin un solo `dt`.
+
 Un test lo defiende: `tests/reloj/test_arquitectura_reloj.py` comprueba que
-ningún módulo de `core/reloj/` salvo `pendulo.py` menciona unidades de tiempo.
+ningún módulo de `core/reloj/` salvo `pendulo.py` usa unidades de tiempo, que
+en `core/` no hay integradores y que `compile/regulador.py` es el único módulo
+que llama a `solve_ivp`.
 
 ## Qué lo hace órgano temporal, y no solo un reloj bonito
 

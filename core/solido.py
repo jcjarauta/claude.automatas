@@ -39,6 +39,7 @@ DENSIDADES: Final[dict[str, float]] = {
     "DM": 750.0,
     "aluminio": 2700.0,
     "acero": 7850.0,
+    "latón": 8500.0,
 }
 """kg/m³ nominales de catálogo. En cuanto el banco pese una pieza de verdad,
 el número medido manda y este queda de valor por defecto."""

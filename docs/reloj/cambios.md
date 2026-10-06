@@ -869,3 +869,59 @@ obligatorios en la definitiva.
 ideal con banda de ±0,3 y escala de ángulos para una aguja), plantillas de
 rueda, yugo y tres juegos de paletas (4,4 / 5,0 / 5,5) y el protocolo con la
 tabla diente a diente. Juzga cada ancho antes de escribir nada.
+
+## 2026-10-06 · El regulador en movimiento: lo que pasa de verdad en el escape
+
+`compile/regulador.py` integra en el tiempo el péndulo con el áncora y la
+rueda de escape, con el bloqueo, el impulso, la caída, el choque y los
+rozamientos. Es la segunda frontera de la regla del tiempo
+(`docs/reloj/expediente.md`). La geometría del contacto que usa sale de
+`core/reloj/contacto.py` (C12c), en función de θ, y coincide con la marcha de
+`graham.py` por otro camino. **No cambia ningún contrato**: es la geometría
+propuesta del banco R2 (`docs/reloj/escape-r2.json`), y lo incierto (μ, e,
+rozamiento del eje, polea) está en `bench/reloj/escape_dinamica.json`.
+
+### Lo que no se esperaba: la amplitud la pone el rozamiento, no la pesa
+
+En el reposo, el rozamiento del diente sobre el arco frena al péndulo con un
+par proporcional al de la rueda, igual que el impulso. Al subir la pesa suben
+los dos, y la amplitud apenas se mueve: la decide **μ de la paleta**.
+
+| μ diente/paleta | Amplitud con 4 mN·m | Par para ±3° (con eje / sin eje) |
+| --- | --- | --- |
+| 0,2 | 3,3° | 2,8 / 1,7 mN·m |
+| 0,25 | — | 5,2 / 2,7 mN·m |
+| 0,3 (estimado) | 2,5° | **no se llega** / 6,1 mN·m |
+
+Con 0,3 el rozamiento del reposo se lleva casi el doble de lo que pierde el
+propio péndulo (balance a 4 mN·m: 0,81 frente a 0,42 × 10⁻⁴ J por
+oscilación). Lo que mide R2 primero, por tanto, no es solo el par: es si ±3°
+se alcanza, y a qué μ corresponde.
+
+### Los números para R2 (escala 1)
+
+- **Par de parada**: 1,15 mN·m en el eje de la rueda (0,62 sin el
+  rozamiento del eje). Por debajo, ninguna amplitud se sostiene.
+- **Arranca solo** soltado desde 1,66°: justo pasada la esquina de suelta
+  (±1,65°). Soltado a 1°, la rueda retrocede con la ligadura y se para.
+- **Isocronismo** entre 1,5 y 3 veces el par de parada: la marcha se mueve
+  10,6 s/día; 7,9 de ellos los pone el escape. El impulso va de +0,25° a
+  −1,65°, casi todo después del centro, y eso atrasa más cuanto más fuerte es
+  (Airy). Es una propiedad de esta geometría, no del modelo.
+- **La geometría vale hasta 8,84°** (después la paleta se atasca); en todo
+  el rango del banco la amplitud no pasa de 4,4°.
+
+### Escala 2
+
+La rueda grande tiene 19 veces la inercia, y **no importa**: la caída se
+alarga pero lo que se pierde en el choque es el mismo trabajo del par. Lo que
+sí importa es **su peso sobre el eje de madera**: el par de parada pasa de
+1,15 a 2,26 mN·m (sin rozamiento del eje, de 0,62 a 0,66), y el de ±3° con
+μ = 0,2, de 2,8 a 4,4 mN·m.
+
+### Lo que se puede ver
+
+`uv run --group cad python scripts/ver_regulador.py --lento 10 --detalle` lo
+anima en el visor de VS Code desde la simulación (también hay tareas de VS
+Code); `--graficas` y `--informe` dejan las gráficas y estos números en
+`build/regulador/`.
