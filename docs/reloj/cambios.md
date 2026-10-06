@@ -919,6 +919,17 @@ sí importa es **su peso sobre el eje de madera**: el par de parada pasa de
 1,15 a 2,26 mN·m (sin rozamiento del eje, de 0,62 a 0,66), y el de ±3° con
 μ = 0,2, de 2,8 a 4,4 mN·m.
 
+### El eje de la rueda no va en el péndulo
+
+Con el áncora coaxial a la suspensión, la varilla del péndulo baja justo por
+detrás del centro de la rueda. En el primer montaje el eje de la rueda iba
+del tablero a la esfera y la atravesaba. Ahora gira entre un **puente
+delantero** y una **platina trasera** —los provisionales del banco R2— y
+acaba en ella; detrás van la horquilla y el péndulo, y solo el eje del áncora
+cruza la platina. `tests/reloj/test_regulador_3d.py` comprueba en todo el
+recorrido del áncora (±8,8°) que el eje y la rueda no tocan el péndulo ni la
+horquilla, y que nada de lo que oscila atraviesa el banco.
+
 ### Lo que se puede ver
 
 `uv run --group cad python scripts/ver_regulador.py --lento 10 --detalle` lo

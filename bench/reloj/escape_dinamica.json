@@ -39,6 +39,7 @@
   "supuestos": {
     "coaxialidad": "SUPUESTO, NO DECISIÓN: el eje del áncora y el punto de flexión del péndulo se toman coaxiales, así que el áncora gira exactamente θ. La altura real del eje del áncora respecto al datum del péndulo es cota del paso 6 (bastidor); si no son coaxiales, la horquilla transmite con una relación algo distinta de 1 y el tablero de horquilla roza.",
     "horquilla": "PROVISIONAL: pletina de latón de 2 × 10 que baja del eje del áncora 150 mm y abraza la varilla con dos dedos. No existe todavía en ningún contrato.",
-    "eje_ancora": "Sin rozamiento propio: con la coaxialidad supuesta, el áncora cuelga de la suspensión y su eje no carga."
+    "eje_ancora": "Sin rozamiento propio: con la coaxialidad supuesta, el áncora cuelga de la suspensión y su eje no carga.",
+    "platina_y_puente": "PROVISIONAL (banco R2): el eje de la rueda gira entre un puente delantero y una platina trasera y acaba en ella; la horquilla y el péndulo van detrás de la platina. Con el áncora coaxial a la suspensión, la varilla baja por detrás del centro de la rueda, así que el eje de la rueda NO puede llegar al plano del péndulo. Solo el eje del áncora atraviesa la platina. El bastidor definitivo es el paso 6."
   }
 }

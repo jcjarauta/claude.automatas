@@ -10,16 +10,30 @@ Es un ensamblaje con nombres jerárquicos para animar cada parte por su ruta,
 con cada nodo puesto en su eje de giro y sus piezas en el marco del nodo: el
 visor gira cada nodo alrededor de su origen.
 
-    /regulador/banco      tablero, ejes y soporte de la suspensión (quietos)
+    /regulador/banco      tablero, platina, puente, ejes y soporte (quietos)
     /regulador/rueda      la rueda de escape, en su eje
     /regulador/ancora     yugo, paletas y horquilla, en el eje del áncora
     /regulador/pendulo    fleje, varilla, vástago y lenteja, en la flexión
     /regulador/testigos   marcas de contacto y caída, que el visor esconde
 
-Planos, de delante (+z, la esfera) a atrás: rueda y paletas; yugo; horquilla;
-péndulo; tablero. **Supuesto, no decisión**: el eje del áncora y la flexión
-del péndulo son coaxiales (`bench/reloj/escape_dinamica.json`); por eso el
-eje del áncora acaba en la horquilla y no llega al plano del fleje.
+Planos, de delante (+z, la esfera) a atrás:
+
+    puente delantero         z  10 … 14
+    rueda y paletas          z   0 …  4
+    yugo                     z -4,5 … -0,5
+    platina trasera          z -14 … -8
+    horquilla                z -18 … -16
+    péndulo (varilla)        z -28 … -20
+    tablero del banco        z -70 … -52
+
+**El eje de la rueda no llega al péndulo.** Con el áncora coaxial a la
+suspensión, la varilla baja justo por detrás del centro de la rueda: el eje
+de la rueda gira entre el puente y la platina trasera y acaba en ella, y la
+horquilla y el péndulo van detrás. Solo el eje del áncora atraviesa la
+platina, hasta la horquilla. Platina y puente son los **provisionales** del
+banco R2 (ROADMAP: «una platina provisional»); el bastidor de verdad es el
+paso 6. **Supuesto, no decisión**: el eje del áncora y la flexión del
+péndulo son coaxiales (`bench/reloj/escape_dinamica.json`).
 """
 
 from __future__ import annotations
@@ -36,13 +50,15 @@ MM: Final[float] = 1000.0
 ESPESOR_ESCAPE: Final[float] = 4.0
 """mm: rueda, yugo y paletas, del contrato `ancora_espesor`."""
 
-# Profundidad (z, mm) de cada plano: la cara de delante y la de atrás.
+# Profundidad (z, mm) de cada plano: la cara de detrás y la de delante.
+PLANO_PUENTE: Final[tuple[float, float]] = (10.0, 14.0)
 PLANO_RUEDA: Final[tuple[float, float]] = (0.0, 4.0)
 PLANO_YUGO: Final[tuple[float, float]] = (-4.5, -0.5)
-PLANO_HORQUILLA: Final[tuple[float, float]] = (-9.0, -7.0)
-PLANO_PENDULO: Final[float] = -16.0
-"""Centro del plano del péndulo: la varilla de 8 va de -20 a -12."""
-PLANO_TABLERO: Final[tuple[float, float]] = (-58.0, -40.0)
+PLANO_PLATINA: Final[tuple[float, float]] = (-14.0, -8.0)
+PLANO_HORQUILLA: Final[tuple[float, float]] = (-18.0, -16.0)
+PLANO_PENDULO: Final[float] = -28.0
+"""El fleje; la varilla de 8 va delante de él, de -28 a -20."""
+PLANO_TABLERO: Final[tuple[float, float]] = (-70.0, -52.0)
 
 COLORES: Final[dict[str, str]] = {
     "madera": "#c8a165",
@@ -165,17 +181,15 @@ def piezas_del_ancora(reg: Regulador) -> list[Any]:
     pletina = _prisma(h, zh, o)
     ancho_v = c["varilla_ancho"] * MM
     largo = HORQUILLA["largo"] * MM
-    z_atras = PLANO_PENDULO - c["varilla_espesor"] * MM - 1.0
+    z_atras = PLANO_PENDULO - 1.0
     for lado in (-1.0, 1.0):
         x0 = lado * (ancho_v / 2 + 0.5)
         x1 = x0 + lado * 2.0
         pletina += _caja((min(x0, x1), max(x0, x1)), (-largo, -largo + 10.0), (z_atras, zh[1]))
     piezas.append(_con(pletina, "horquilla", "laton"))
-    # El eje del áncora, de la horquilla a delante de la paleta.
+    # El eje del áncora, de la horquilla al puente: atraviesa la platina.
     piezas.append(
-        _con(
-            _cilindro_z((0.0, 0.0), float(a.eje) * MM, (zh[0], PLANO_RUEDA[1] + 4)), "eje", "acero"
-        )
+        _con(_cilindro_z((0.0, 0.0), float(a.eje) * MM, (zh[0], PLANO_PUENTE[1])), "eje", "acero")
     )
     return piezas
 
@@ -214,6 +228,28 @@ def ensamblaje(reg: Regulador) -> Any:
     )
 
     tablero = _caja((-160.0, 160.0), (ey - largo_total - 60, ey + 120), PLANO_TABLERO)
+    eje_d = float(reg.ancora.eje) * MM
+    # La platina trasera PROVISIONAL, con el paso del eje del áncora y el
+    # asiento del de la rueda, y cuatro columnas al tablero.
+    abajo, arriba = -75.0, ey + 45.0
+    platina = _caja((-75.0, 75.0), (abajo, arriba), PLANO_PLATINA)
+    platina -= _cilindro_z((ex, ey), eje_d + 0.4, (PLANO_PLATINA[0] - 1, PLANO_PLATINA[1] + 1))
+    platina -= _cilindro_z((0.0, 0.0), eje_d, (PLANO_PLATINA[0] - 1, PLANO_PLATINA[1] + 1))
+    columnas = None
+    for x, y in (
+        (-65.0, abajo + 10),
+        (65.0, abajo + 10),
+        (-65.0, arriba - 10),
+        (65.0, arriba - 10),
+    ):
+        col = _cilindro_z((x, y), 10.0, (PLANO_TABLERO[1], PLANO_PLATINA[0]))
+        columnas = col if columnas is None else columnas + col
+    # El puente delantero PROVISIONAL: una barra por delante de la rueda y del
+    # áncora, sobre dos pilares fuera del alcance de dientes y yugo.
+    puente = _caja((-8.0, 8.0), (abajo + 15, arriba - 15), PLANO_PUENTE)
+    puente -= _cilindro_z((ex, ey), eje_d + 0.4, (PLANO_PUENTE[0] - 1, PLANO_PUENTE[1] + 1))
+    pilares = _cilindro_z((0.0, abajo + 25), 8.0, (PLANO_PLATINA[1], PLANO_PUENTE[0]))
+    pilares += _cilindro_z((0.0, arriba - 25), 8.0, (PLANO_PLATINA[1], PLANO_PUENTE[0]))
     soporte = _caja(
         (ex - c["soporte_ancho"] * MM / 2, ex + c["soporte_ancho"] * MM / 2),
         (
@@ -230,14 +266,18 @@ def ensamblaje(reg: Regulador) -> Any:
         (ey + 20.0, ey + 60.0),
         (PLANO_TABLERO[1], PLANO_PENDULO - c["soporte_espesor"] * MM / 2),
     )
-    eje_rueda = _cilindro_z(
-        (0.0, 0.0), float(reg.ancora.eje) * MM, (PLANO_TABLERO[1], PLANO_RUEDA[1] + 6)
-    )
+    # El eje de la rueda gira entre la platina y el puente: no pasa de la cara
+    # de detrás de la platina, así que nunca llega a la horquilla ni al péndulo.
+    eje_rueda = _cilindro_z((0.0, 0.0), eje_d, (PLANO_PLATINA[0], PLANO_PUENTE[1]))
     banco = Compound(
         children=[
             _con(tablero, "tablero", "tablero", 0.35),
             _con(soporte, "soporte_suspension", "madera"),
             _con(eje_rueda, "eje_rueda", "acero"),
+            _con(platina, "platina", "madera", 0.55),
+            _con(columnas, "columnas", "acero"),
+            _con(puente, "puente", "madera", 0.55),
+            _con(pilares, "pilares", "acero"),
         ],
         label="banco",
     )
@@ -250,4 +290,24 @@ def ensamblaje(reg: Regulador) -> Any:
     )
 
 
-__all__ = ["COLORES", "ensamblaje", "piezas_del_ancora", "piezas_del_pendulo", "testigos"]
+def piezas_en_mundo(conjunto: Any, theta_grados: float = 0.0) -> dict[str, Any]:
+    """Cada pieza del ensamblaje en el marco del mundo, con el péndulo y el
+    áncora girados `theta_grados`: para comprobar holguras sin el visor."""
+    from build123d import Rot
+
+    salida: dict[str, Any] = {}
+    for nodo in conjunto.children:
+        giro = Rot(Z=theta_grados) if nodo.label in ("pendulo", "ancora") else Rot(Z=0)
+        for pieza in nodo.children:
+            salida[f"{nodo.label}/{pieza.label}"] = nodo.location * giro * pieza
+    return salida
+
+
+__all__ = [
+    "COLORES",
+    "ensamblaje",
+    "piezas_del_ancora",
+    "piezas_del_pendulo",
+    "piezas_en_mundo",
+    "testigos",
+]
